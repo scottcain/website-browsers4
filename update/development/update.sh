@@ -41,3 +41,5 @@ steps/update_strains_database.pl      ${RELEASE}
 steps/load_autocomplete_db.pl         ${RELEASE}
 
 steps/compile_orthology_resources.pl  ${RELEASE}
+
+util/build_new_papers_list.pl /usr/local/acedb/elegans
