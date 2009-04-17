@@ -1,0 +1,27 @@
+TODO
+
+Failover:
+	icmp pinging of remote servers (or Carp)
+	Cache stats reporting / rrdtool / cachemgr
+	logging (set to the wormbase logformat)
+
+Monit:
+
+
+Test:
+	Data uploads in the genome browser
+	site map
+	* RSS feeds
+	nBrowse
+	seq/aligner
+	access statistics - authentication is not working
+	* movable type
+	ontology browser
+	cachemgr
+	Geomap - BROKEN?
+	mailarchive
+
+
+
+	
+

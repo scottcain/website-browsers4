@@ -1,0 +1,176 @@
+WormBase VMWare images
+
+OS:     Fedora Core 5, base install
+Disks:  8 
+Perl:   5.8.8
+
+
+
+Services:
+---------
+
+MySQL:
+	Data dir located at /mnt/wormbase/mysql
+
+
+base VMWare image, using Fedora Core 5.
+
+Prepared by T. Harris, Aug 2006 (harris@cshl.edu).
+
+Preconfigured with Acedb, mysql, httpd, etc and suitable
+users and groups.
+
+Virtual disk size
+-----------------
+This uses a default virtual disk size of 8 GB.  If you
+need more space, you should attach one of the growable
+virtual SCSI partitions (described below).
+
+Users
+-----------------
+A generic user "wormbase" (pass: wermbace) exists that
+is suitable for driving services necessary for the site.
+This user has sudo access.
+
+The root user password is the same.
+
+
+
+Procedure for distributing a new freeze:
+# Go into the directory containing the VMware image
+ cd vmware/IMAGENAME
+# Save the 10 (or 50, or 200) gigabyte disk there (<50k download, expands on use)
+ wget http://www.thoughtpolice.co.uk/vmware/howto/10-gig-scsi-disk.vmdk.zip
+ wget http://www.thoughtpolice.co.uk/vmware/howto/50-gig-scsi-disk.vmdk.zip
+ wget http://www.thoughtpolice.co.uk/vmware/howto/200-gig-scsi-disk.vmdk.zip
+# Uncompress the disk image
+ unzip 10-gig-scsi-disk.vmdk.zip
+# Rename the 10 gigabyte disk image to something useful
+ mv 10-gig-scsi-disk.vmdk YOUR-FILENAME.vmdk
+# Edit the .vmx file for the image
+ vi *.vmx
+# Add the two lines:
+ scsi0:1.present = "TRUE"
+ scsi0:1.fileName = "YOUR-FILENAME.vmdk"
+
+# Now prepare the partition for use
+
+# Boot the VM
+# Your new disk should be /dev/sdb, confirm this:
+ fdisk -l /dev/sdb
+# It must read "Disk /dev/sdb doesn't contain a valid partition table".
+# If it says anything else, STOP.
+# Now create a partition
+ fdisk /dev/sdb
+# Type "n" for new partition
+# Type "p" for a primary partition
+# Enter "1" for the Partition number
+# Accept the defaults for First cylinder, Last cylinder
+# Type "w" to write changes to disk
+# Now format the partition
+ mkfs.ext3 /dev/sdb1
+
+# Use the partition
+
+# Make a mountpoint
+ mkdir /mnt/wormbase
+# Mount the disk
+ mount /dev/sdb1 /mnt/wormbase
+
+# The disk will not be there when you reboot. To fix:
+
+# Edit fstab
+ vi /etc/fstab
+# Add the line:
+ /dev/sdb1     /mnt/wormbase     ext3     defaults     0 2
+
+
+
+
+Compress the image
+-------------------
+Change to the directory above your VM folder, e.g. cd /home/USERNAME/vmware
+Delete the log file, i.e. rm VMWARE-IMAGE/*log
+Create a zip archive of the directory, i.e. 
+tar -czvf VMWARE-IMAGE.tgz VMWARE-IMAGE/
+You're done!
+
+
+
+
+
+Expand the disk to a suitable size
+vmare-distrib/vmware-vdiskmanager -x 40GB wormbase-fedora-fc5-i386.vmdk
+
+
+
+
+
+Grant Mysql privileges to appropriate databases.
+
+The base config already has:
+elegans
+elegans_gmap
+elegans_pmap
+briggsae
+
+
+
+
+
+Copy all relevant files to /mtn/wormbase/build
+
+Untar as necessary
+
+Modify httpd.conf and elegans.pm
+
+
+
+
+The base package includes the followinng Perl modules:
+
+Ace
+Bundle::CPAN
+LWP
+Cache::Cache
+Cache::FileCache
+Apache::GTopLimit
+   Bio::PrimerDesigner
+CGI
+CGI::Session
+CGI::Cache
+Date::Calc
+Date::Manip
+DB_File
+DBI
+DBD::mysql
+Digest::MD5
+GD
+GD::SVG
+GTop
+HTML::Parser
+HTML::TokeParser
+IO::Scalar
+IO::String
+MIME::Lite
+Net::FTP
+Proc::Simple
+readline
+Search::Indexer
+SOAP::Lite
+Statistics::OLS
+Storable
+SVG
+SVG::Graph
+Term::ReadLine
+Test::Pod
+Text::Shellwords
+Time::Format
+WeakRef
+XML::SAX
+XML::Parser
+XML::DOM
+XML::Writer
+XML::Twig
+XML::Simple
+

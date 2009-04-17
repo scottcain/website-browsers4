@@ -1,0 +1,112 @@
+The files in this directory automate updates to the production cluster.
+
+Todd Harris, 27 Aug 2007
+
+IMPORTANT NOTE:
+Some of the scripts in this directory execute scripts
+on remote servers requiring super-user privileges.
+The user running ths scripts must:
+
+1) have sudo access on the remote box
+2) have NOPASSWD set for the following cmds: killall,
+   apachectl, and the xinetd and mysqld init scripts.
+3) have already exchanged ssh keys with production nodes
+4) have ~.ssh/config with short hostnames or appropriate 
+   environment aliases set.
+
+The relevant sudoers command is:
+todd      localhost=NOPASSWD:/usr/local/apache/bin/apachectl,\
+                             /etc/rc.d/init.d/mysqld,\
+                             /etc/rc.d/init.d/xinted,\
+                             /usr/bin/killall
+
+
+update.sh NEW_WS_VERSION OLD_WS_VERSION
+
+   This is a wrapper script around the push* and update scripts.
+   I HAVEN'T TESTED THIS YET!
+
+
+===========================
+DESCRIPTION
+===========================
+
+push_software.sh [restart]
+
+   Push new software located in the staging directory (/usr/local/wormbase-production)
+   out to all nodes.  Pass an optional boolean true to make the servers restart
+   httpd, too (useful in cases where new libraries are pushed out).
+
+push_databases.sh WSVERSION
+  
+   Push new acedb and / or mysql databases onto nodes.  You must specify
+   the WSVERSION.  This calls the following support scripts (described below) 
+   in turn:
+
+         push_databases-acedb.sh
+         push_databases-mysql.sh
+         push_support_databases.sh
+
+restart_services.sh   
+
+   Restart sgifaceserver, xinetd, mysqld, httpd (as appropriate) acrosss nodes
+   following an update.
+
+cvs_tag_relase.sh WSXXX
+
+   Tag the software in the staging direcctory (/usr/local/wormbase-production).
+
+create_software_release.sh WSXXX
+
+   Create a software release on the FTP site.
+
+send_release_notification.pl
+
+   Run from one of the production nodes to send the release notification.
+
+
+===========================
+SUPPORT SCRIPTS
+===========================
+
+conf
+
+   Server listings, typically used by dsh for batch execution of commands. Note
+   that the servernames themselves need to be Host aliases in your ~/.ssh/config
+   or shell environment and ssh keys should already be established.
+
+pull_software.sh
+
+   Pull software onto a production node from the staging repository.  Intended to
+   be run from one of the production nodes.
+
+purge_old_releases.sh WSXXX
+    
+   Remove releases eaerlier than WSXXX from servers listed in conf/all-nodes.conf
+
+push_databases-acedb.sh WSXXX
+
+   Push acedb database out to servers listed in conf/nodes-acedb.conf
+
+push_databases-mysql.sh WSXXX
+
+   Push databases out to servers listed in conf/nodes-mysql.conf
+
+push_support_databases.sh WSXXX
+
+   Pull in archival databases hosted on the FTP site into a directory
+   structure organized by version, method (species: WSXXX/blast/c_brenneri)
+   then sync this directory to the host driving searches.
+
+   This needs to be run after the development site has been updated. It would
+   be great if the version was dynamic or a symlink pointed to the current
+   version.
+
+
+
+
+
+
+
+
+ 

@@ -1,0 +1,275 @@
+#!/usr/bin/perl
+
+# WormBase Update Checklist
+# T. Harris, 12/2007
+
+# CGI checklist for ensuring that all necessary
+# update tasks are complete
+
+# This uses the XML-ized description of tasks located
+# at projects/wormbase/admin/docs/update_process.xml
+
+
+use strict;
+use Time::ParseDate;
+use Date::Format;  # For converting stringified dates to RFC822
+use Ace::Browser::AceSubs;
+use ElegansSubs;
+use CGI qw(:standard :form *div *table *center);
+
+my @order = ('Analyze Logs',
+	     'Prepare for update',
+	     'Update production nodes',
+	     'Build virtual machine',
+	     'Update development server');
+
+my @steps = (
+	     'Analyze Logs'
+	     => [
+		 concatenate_logs => { description => 'concatenate access logs',
+				       command     => 'concatenate_logs.sh WSXXX',
+				       host        => 'fe.wormbase.org',
+				       notes       => 'script rsyncs concatenated logs to brie6 automatically',
+				   },
+		 analyze_logs     => { description => 'analyze access logs using Analog/Report Magic',
+				       command     => 'analyze_logs.sh WSXXX',
+				       machine     => 'brie6.cshl.edu' },
+		 ],
+	     
+	     'Prepare for update'
+	     => [ checkout_new_code => { description => 'Checkout new code into staging directory',
+					 command     => 'cd /usr/local/wormbase-production; cvs -n update',
+					 machine     => 'brie3.cshl.org',
+					 notes       => 'reconcile CVS conflicts first',
+				     },
+		  update_rss_library => { description => 'Update RSS library (cgi-perl/lib/RSS/ObjectHistory.pm with release date',
+					  notes       => 'Adding the date of release of the new database allows us to build RSS feeds for newly updated objects',
+					  machine     => 'brie3.cshl.org',
+				      },
+		  cvs_tag_software   => { description => 'CVS tag production software',
+					  command     => 'admin/update/production/cvs_tag_release WSXXX',
+					  notes       => 'WSXXX corresponds to the version being released',
+					  machine     => 'brie3.cshl.org',
+				      },
+		  create_software_release => { description => 'Create a software release',
+					       command => 'admin/update/production/create_software_release.pl WSXXX',
+					       notes   => 'WSXXX corresponds to the database version being released',
+					       machine => 'brie3.cshl.org',
+					   },
+		  package_databases  => { description => 'Package databases for release',
+					  command     => 'admin/update/development/package_databases.p',
+					  notes       => 'Make sure the MySQL databases for the release are 775 first and that you are a member of the mysql group!',
+					  machine     => 'brie3.cshl.org',
+				      },
+		  update_standard_urls => {description => 'Update standard_urls.xml with the release date',
+					   notes       => 'The standard_urls.xml file is at wormbase/html/standard_urls/standard_urls.xml.  The standard urls data directory is located on brie6 and is maintained by admin/maintenance/maintain_standard_urls.pl',
+				       },
+		  ]
+	     
+	     'Update production nodes'
+	     => [
+		 
+		 push_software => { description => 'Push software on the production nodes',
+				    command     => 'admin/update/production/push_software.sh',
+				    machine     => 'brie3.cshl.org',
+				    notes       => 'Software will be pushed sequentially by rsync onto nodes located in conf/nodes_all.conf',
+				},
+		 push_databases => { description => 'Push databases onto select nodes as necessary',
+				     command     => 'admin/update/production/push_databases.sh WSXXX',
+				     machine     => 'brie3.cshl.org',
+				     notes       => 'This script calls push_databases-acedb.sh, push-database-mysql.sh, and push_support_database.sh, delivering acedb, mysql, and support DBs to select nodes as specified in conf/nodes_acedb.conf, nodes-mysql.conf, etc.  Prior to updating select databases for static releases are decompressed into the databases directory.'},
+
+		 restart_services => { description => 'Restart necessary services on production nodes',
+				   },
+		 
+		 update_wiki      => { description => 'Update release notes on the wiki',
+				   },
+		 
+		 update_paper_list => { description => 'Update the list of new papers for this release',
+					command     => 'admin/update/development/build_new_paper_list.pl /usr/local/acedb/elegans_WSXXX',
+					machine     => 'brie3.cshl.org',
+					notes       => 'WSXXX is the version of the database being rolled out',
+				    },
+		 add_release_to_hp => { description => 'Add release announcement to the home page via movable type',
+				    },
+		 
+		 send_release_announcement => { description => 'Send a release announcement to the mailing lists',
+						command     => 'admin/update/production/send_release_notification.pl',
+						machine     => 'brie6.cshl.edu',
+					    },
+		 ],
+		 
+	     'Build Virtual Machine' 
+	     => [
+		 
+		 
+		 ],
+	     
+	     
+	     'Update development server' 
+	     => [
+		 build_new_release => {},
+		 
+		 ],
+
+	     );
+
+
+OpenDatabase;
+PrintTop(undef,undef,'Add An Item To An RSS Feed At WormBase');
+print_form() unless param();
+do_preview() if param('Preview Entry');
+do_submit()  if param('Add Entry');
+PrintBottom;
+
+
+
+				  
+
+
+
+sub print_form {
+  print start_div({-id=>'narrowcontainer'});
+
+  foreach my $category (@order) {
+      my @steps = @{$steps->{$categpry}};
+      foreach my $step (@steps) {
+
+
+  print start_form();
+  print
+      table(
+	    TR(th({-align=>'left'},'Feed'),td(popup_menu(-name=>'feed',-values=>[keys %FEEDS]))),
+	    TR(th({-align=>'left',-width=>100},'Title'),
+	       td(textfield({-name=>'title',-size=>50}))),
+	    TR(td('&nbsp;'),td(i('Enter a brief title for the item.',br,'eg: WormBase has been updated to WS127'))),
+
+	    TR(td({-colspan=>2},'&nbsp;')),
+	    TR(th({-align=>'left',-width=>100},'Link'),
+	       td(textfield({-name=>'link',-size=>50}))),
+	    TR(td('&nbsp;'),td(
+			       i('Enter a link for the item.',
+				 br,
+				 'The title will be hyperlinked using this URL in RSS viewers and aggregators.',br,
+				 'eg: http://www.wormbase.org/db/gene/gene?name=unc-26'))),
+
+	    TR(td({-colspan=>2},'&nbsp;')),
+	    TR(th({-align=>'left',-valign=>'top',-width=>100},'Description'),
+	       td(textarea({-name=>'description',-columns=>50,-rows=>10}))),
+	    TR(td('&nbsp;'),td(
+			       i('Enter a brief description of the item.'))),
+
+	    TR(td({-colspan=>2},'&nbsp;')),
+	    TR(th({-align=>'left',-width=>100},'Posted by'),
+	       td(textfield({-name=>'posted_by',-size=>50}))),
+
+	    TR(td({-colspan=>2},'&nbsp;')),
+	    TR(td('&nbsp'),td({-align=>'right'},submit(-name=>'Preview Entry'))));
+  print end_form;
+  print end_div;
+}
+
+
+
+sub do_preview {
+  my ($title,$link,$desc,$time,$posted_by,$feed) = get_params();
+  print h2('Preview Entry');
+  print start_div({-id=>'narrowcontainer'});
+
+  if ($title && $link && $desc && $posted_by) {
+    print div({-class=>'block'},
+	      'Your entry will appear similar to this in RSS news viewers and aggregators:');
+    
+    print div({-class=>'paddedbox'},
+	      'To be posted to the ' . b(param('feed')) . ' RSS feed.');
+    print div({-class=>'paddedbox'},
+	      a({-href=>$link},$title),br,
+	      $desc,br,
+	      "[Posted $time by $posted_by]");
+    
+    print div({-class=>'block'},
+	      'If acceptable, click "Add Entry" to add this item to the RSS feed; otherwise, edit the item below.');
+    print start_center(),
+      start_form(),
+	hidden({-name=>'feed'},-value=>$feed),
+	hidden({-name=>'title'},-value=>$title),
+	hidden({-name=>'link'},-value=>$link),
+	hidden({-name=>'description'},-value=>$desc),
+	hidden({-name=>'posted_by'},-value=>$posted_by),
+	submit({-name=>'Add Entry'}),
+	  end_form(),
+	    end_center;
+  } else {
+    print div({-class=>'warning'},
+	      'All fields must be filled in to add an item to the RSS feed. Please edit your entry below');
+  }
+
+  print end_div;
+  print p,hr,p;
+  print_form();
+}
+
+
+
+sub do_submit {
+  # Add the entry to the bottom of the news_feed-entries.xml document
+  my ($title,$link,$desc,$time,$posted_by,$feed) = get_params();
+  my $item = <<END;
+
+<item>
+   <title>$title</title>
+   <link>$link</link>
+   <description>$desc</description>
+   <date>$time</date>
+   <posted_by>$posted_by</posted_by>
+</item>
+
+END
+;
+
+  # Dynamically select the feed to use
+  my $file = RSS_DIR . '/' . $FEEDS{$feed} unless !$FEEDS{$feed};
+  open OUT,">>$file" or die "Warning: Could not open the entries file at $file for writing: $! $file";
+  print OUT $item;
+  close OUT;
+
+  # Now generate the RSS feed
+  my $result = system("/usr/local/wormbase-admin/rss/generate_feed.pl $feed $FEEDS{$feed} xml");
+
+  print start_div({-id=>'narrowcontainer'});
+  print div({-class=>'block'},
+	    "The following entry was added to the $feed RSS news feed");
+  print div({-class=>'paddedbox'},
+	    a({-href=>$link},$title),br,
+	    $desc,br,
+	    "[Posted at $time by $posted_by]");
+  print end_div;
+  print p;
+  print start_center(),
+    'Add ' . a({-href=>'/db/private/manage_newsfeeds'},'another news item') . ' to a feed at WormBase.',
+      end_center();
+}
+
+sub get_params {
+  my $title     = param('title');
+  my $link      = param('link');
+  my $desc      = param('description');
+  my $time      = get_time_string();
+  my $posted_by = param('posted_by');
+  my $feed      = param('feed');
+  return ($title,$link,$desc,$time,$posted_by,$feed);
+}
+
+sub get_time_string {
+  my $time = localtime();
+  my $time_template = '%a, %d %b %Y %T %Z';   # RFC 822 compliant time format
+  my $fmtime = time2str($time_template,parsedate($time));
+  return $fmtime;
+}
+
+
+
+
+
+
+

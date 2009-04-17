@@ -1,0 +1,10 @@
+This directory contains configuration files related to
+servers and administrative tasks at WormBase.  Note that
+it DOES NOT contain configuration for the web app, which 
+is located in its own directory.
+
+This directory should not be shared publically as it
+contains sensitive information related to our hardware
+structure.
+
+Todd Harris (09.25.2007)

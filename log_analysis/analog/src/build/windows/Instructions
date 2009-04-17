@@ -1,0 +1,5 @@
+These Makefiles for Microsoft Visual C++ contributed by
+  Takayuki Matsuki <matsuki@tokyo-kasei.ac.jp>
+
+unzip make-msvc++.zip within the analog folder
+Then within the src folder, run the command "nmake /f analog.mak"

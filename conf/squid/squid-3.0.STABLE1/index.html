@@ -1,0 +1,362 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!-- $Id: index.html,v 1.421 2006/01/20 17:59:31 todd Exp $-->
+<html>
+<head>
+    <title>WormBase - Home Page</title>
+    <!-- Load dependent stylesheets and scripts via wormbase.js -->
+       <script type="text/javascript" src="/js/wormbase.js"></script>
+       <script type="text/javascript">balloonOK = true;</script> 
+<link rel="alternate" type="application/atom+xml" title="Atom" href="http://www.wormbase.org/rss/wormbase-live-atom.xml" />
+<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.wormbase.org/rss/wormbase-live.xml" />
+
+<link rel="stylesheet" href="/stylesheets/wormbase.css">
+</head>
+
+
+<body onLoad="goAutoComplete();sf()">
+<script type="text/javascript">
+  function c(p){location.href=p;return false;}
+  var balloon  = new Balloon;
+  balloon.maxWidth = 300;
+  balloon.helpUrl  = "/db/misc/help";
+</script>
+<table border="0" cellpadding="4" cellspacing="1" width="100%">
+<tr>
+<td bgcolor="#b4cbdb" align="center" style="cursor:pointer" nowrap onClick="c('/')">
+			  <a href="/" class="bactive" ><font color="#FFFF99"><b>Home</b></font></a></td>
+<td bgcolor="#5870a3" align="center" style="cursor:pointer" nowrap onClick="c('/db/seq/gbrowse/elegans/')">
+			  <a href="/db/seq/gbrowse/elegans/" class="binactive" onMouseOver="balloon.showTooltip(event,'Genome')"><font color="#FFFFFF">Genome</font></a></td>
+<td bgcolor="#5870a3" align="center" style="cursor:pointer" nowrap onClick="c('/db/searches/blast_blat')">
+			  <a href="/db/searches/blast_blat" class="binactive" onMouseOver="balloon.showTooltip(event,'Blast / Blat')"><font color="#FFFFFF">Blast / Blat</font></a></td>
+<td bgcolor="#5870a3" align="center" style="cursor:pointer" nowrap onClick="c('http://www.wormbase.org/biomart/martview')">
+			  <a href="http://www.wormbase.org/biomart/martview" class="binactive" onMouseOver="balloon.showTooltip(event,'WormMart')"><font color="#FFFFFF">WormMart</font></a></td>
+<td bgcolor="#5870a3" align="center" style="cursor:pointer" nowrap onClick="c('/db/searches/advanced/dumper')">
+			  <a href="/db/searches/advanced/dumper" class="binactive" onMouseOver="balloon.showTooltip(event,'Batch Sequences')"><font color="#FFFFFF">Batch Sequences</font></a></td>
+<td bgcolor="#5870a3" align="center" style="cursor:pointer" nowrap onClick="c('/db/searches/strains')">
+			  <a href="/db/searches/strains" class="binactive" onMouseOver="balloon.showTooltip(event,'Markers')"><font color="#FFFFFF">Markers</font></a></td>
+<td bgcolor="#5870a3" align="center" style="cursor:pointer" nowrap onClick="c('/db/gene/gmap')">
+			  <a href="/db/gene/gmap" class="binactive" onMouseOver="balloon.showTooltip(event,'Genetic Maps')"><font color="#FFFFFF">Genetic Maps</font></a></td>
+<td bgcolor="#5870a3" align="center" style="cursor:pointer" nowrap onClick="c('/db/curate/submit')">
+			  <a href="/db/curate/submit" class="binactive" onMouseOver="balloon.showTooltip(event,'Submit')"><font color="#FFFFFF">Submit</font></a></td>
+<td bgcolor="#5870a3" align="center" style="cursor:pointer" nowrap onClick="c('/db/misc/site_map?format=searches')">
+			  <a href="/db/misc/site_map?format=searches" class="binactive" onMouseOver="balloon.showTooltip(event,'Searches')"><font color="#FFFFFF"><b>Searches</b></font></a></td>
+<td bgcolor="#5870a3" align="center" style="cursor:pointer" nowrap onClick="c('/db/misc/site_map')">
+			  <a href="/db/misc/site_map" class="binactive" ><font color="#FFFFFF"><b>Site Map</b></font></a></td>
+</tr>
+</table><!-- End WormBase Header --><img align="right" border="0" src="/images/image_new_colour.jpg" alt="WormBase Banner" /><a href="/"><h3>WormBase Release WS184</h3></a><br clear="all" />
+<!-- MTInclude module="wormbase_alert" -->
+<div class="news" id="mainSearch">
+   <div id=debug></div>
+   <form name="searchform" METHOD="GET" ACTION="/db/searches/basic">
+   <b>Find:</b>
+	  <i>
+	    <select name="class" id="class_search_menu" default="AnyGene" onChange="queryAppend(this)">
+	      <option value="Any">Anything</option>
+	      <option selected value="AnyGene">Any Gene</option>
+	      <option  value="Author_Person">Author/Person</option>
+	      <option  value="Variation">Allele</option>
+	      <option  value="Cell">Cell/Tissue</option>
+	      <option  value="Clone">Clone</option>
+
+	      <option  value="Model">Database Model</option>
+	      <option  value="GO_term">Gene Ontology Term</option>
+	      <option  value="Gene_class">Gene Class</option>
+	      <option  value="Genetic_map">Genetic Map</option>
+	      <option  value="Accession_number">Genbank Accession Number</option>
+	      <option  value="Paper">Literature Search</option>
+
+	      <option  value="Microarray_results">Microarray Expression Experiment</option>
+	      <option  value="Operon">Operon</option>
+	      <option  value="Phenotype">Phenotype</option>
+	      <option  value="PCR_Product">Primer Pair</option>
+	      <option  value="Protein">Protein, Any</option>
+	      <option  value="Wormpep">Protein, C. elegans</option>
+	      <option  value="Motif">Protein Family or Motif</option>
+
+	      <option  value="RNAi">RNAi Experiment</option>
+	      <option  value="Sequence">Sequence, Any</option>
+	      <option  value="Genome_sequence">Sequence, C. elegans Genomic</option>
+	      <option  value="Strain">Strains</option>
+	      <option  value="Y2H">Y2H interaction</option>
+	    </select></i>
+
+
+	    <span id="autoCompleteSearch" style="position:relative">
+              <input id="autoCompleteInput" type="text" name="query" autocomplete="off"onKeyDown="skipAutoComplete(event)">
+            </span>
+	    <div id=autoCompleteContainer></div>
+            <input type="submit" id="autoCompleteSubmit" name="Search" value="Search">
+          <br><br>
+
+          <table style="margin:0px auto">
+           <tr>
+            <td style="vertical-align:bottom">
+	     <input type="checkbox" name="exact" value="on">
+            </td>
+            <td style="vertical-align:bottom">
+              <a class="nakedlinks"
+                  onmouseover="balloon.showTooltip(event,'Exact')"
+                 href="javascript:void(0)">Exact match</a>
+            </td>
+            <td style="vertical-align:bottom">
+	      <input type="checkbox" name="asXML" value="on">
+            </td>
+            <td style="vertical-align:bottom">
+              <a class="nakedlinks"
+                  onmouseover="balloon.showTooltip(event,'XML')"
+                 href="javascript:void(0)">Results as XML</a>
+            </td>
+            <td style="vertical-align:bottom">
+	      <input type="checkbox" name="searchtype" value="Paper" id="literature" onClick="setClass(this,11)">
+            </td>
+            <td style="vertical-align:bottom">
+               <a class="nakedlinks"
+	           onmouseover="balloon.showTooltip(event,'Literature')" 
+href="http://www.textpresso.org/cgi-bin/wb/tfw.cgi">Literature Search</a>
+
+	    </td>
+              <span id="autoCompleteCheckbox" style="display:none">
+               <td style="vertical-align:bottom">
+	        <input type="checkbox" id="enableAutoComplete" onClick="autoCompletion(this)">&nbsp;
+	       </td>
+               <td style="vertical-align:bottom">
+                 <a class="nakedlinks"
+                     onmouseover="balloon.showTooltip(event,'Suggest')" 
+                    href="http://www.wormbase.org/wiki/index.php/UserGuide:Autocompletion"
+                    target="_new">Wormbase Suggest</a>
+               </td>
+               </span>
+              </tr>
+            </table>
+    </form>
+</div>
+
+
+
+
+<table border="0" cellpadding="2" cellspacing="0" width="100%">
+
+<!--    <tr><td class="news"colspan="3">&nbsp;</td></tr>-->
+    <tr><td class="white" colspan="3">&nbsp;</td></tr> 
+    
+    <tr><td class="newsheaderside" width="40%">Web Site Directory</td>
+        <td class="white" width="4%">&nbsp;</td>
+        <td class="newsheadermain" width="56%">News and Notes</td></tr> 
+
+    <tr><td valign=TOP class="news" width="40%">
+
+  <font size=2>
+  <b>Release Notes</b>
+    <a href="http://www.sanger.ac.uk/Projects/C_elegans/WORMBASE/current/wormpep_changes.shtml">New/Changed Genes</a>, 
+    <a href="http://www.wormbase.org/wiki/index.php/Release_notes">release notes</a><br><br>
+  <b>General Searches</b>
+    <a href="/db/searches/class_query">WormBase Class Browser</a>,
+    <a href="/db/searches/wb_query">Wormbase Query Language Search</a>, 
+    <a href="/db/searches/aql_query">AQL Search</a><br><br> 
+  <b>Sequences</b>
+    <a href="/db/seq/gbrowse?source=wormbase"><i>C. elegans</i> Genome</a>,
+    <a href="/db/seq/gbrowse?source=briggsae"><i>C. briggsae</i> Genome</a>, 
+    <a href="/db/gene/gene"><b>Gene</b></a>,
+    <a href="/db/searches/blast_blat">Blast / Blat</a>, 
+    <a href="/db/searches/epcr">e-PCR</a>, 
+    <a href="/db/ontology/gene">Gene Ontology</a>, 
+    <a href="/db/seq/ebsyn">Synteny Viewer</a>,
+    <a href="http://www.wormbase.org/cisortho/">Cis-Elements (CisOrtho)</a>,
+
+  <br><br>
+  <b>Cells and Gene Expression</b>
+    <a href="/db/searches/pedigree">Cell and Pedigree</a>,
+    <a href="/db/searches/neuron_display">Neurons</a>,
+    <a href="/db/searches/expr_search">Expression Pattern</a>,
+    <a href="/db/gene/expr_profile">Expression profile</a> <br><br>
+  <b>Genetics, Strains, and Phenotypes</b>
+    <a href="/db/searches/interval">Genetic interval</a>,
+    <a href="/db/gene/rearrange?name=eDf2;class=Rearrangement">Rearrangements</a>,
+    <a href="/db/seq/clone?name=JC8">Clone</a>,
+    <a href="/db/gene/variation?name=b1021;class=Variation">Allele</a>,
+    <a href="/db/searches/strains">SNPs, Markers, and Strains</a>,
+    <a href="/db/gene/strain?name=EG1000">Strain Report</a>, 
+    <a href="/db/misc/phenotype">Phenotypes</a>, 
+    <a href="/db/searches/rnai_search">RNAi</a><br><br>
+  <b>Batch Queries</b>
+    <a href="http://www.wormbase.org/biomart/martview">WormMart</a> [<a href="http://www.wormbase.org/wiki/index.php/Data_mining:WormMart">about...</a>],
+    <a href="/db/searches/batch_genes">Batch Genes</a>, 
+    <a href="/db/searches/advanced/dumper">Batch Sequences</a>
+   <br><br>
+
+  <b>Downloads and Data Mining</b>
+    <a href="http://www.wormbase.org/wiki/index.php/Downloads"><b>Bulk Downloads</b></a>,
+    <a href="http://www.wormbase.org/wiki/index.php/Linking_To_WormBase">Linking to WormBase</a> 
+    and <a href="http://www.wormbase.org/wiki/index.php/Data_mining">Data Mining...</a><br><br>
+
+  <b>Community</b>
+  <a href="http://www.wormbase.org/wiki/index.php/Meetings"><b>Worm Meetings</b></a>, 
+  <a href="http://www.wormbase.org/forums/">Worm Community Discussion Forum</a>,    
+<a href="http://www.wormbase.org/wiki">WormBase Wiki</a>, <a href="http://www.wormbase.org/wiki/index.php/Mailing_lists">Mailing Lists</a>
+
+ <br /><br />
+  <b>About WormBase</b>
+    <a href="http://www.wormbase.org/wiki/index.php/User_Guide">User's Guide</a>, 
+       <a href="http://www.wormbase.org/wiki/index.php/Nomenclature">C. elegans gene and protein nomenclature</a>,
+    <a href="http://www.wormbase.org/wiki/index.php/WormBase_Newsletters">Newsletters</a>,
+    <a href="/about/mission.html">Mission Statement</a>,
+    <a href="http://www.wormbase.org/wiki/index.php/Citing_WormBase">Citing Wormbase</a>,
+    <a href="/about/positions.html">Positions available</a>,
+    <a href="http://www.wormbase.org/wiki/index.php/WormBase_Consortium">People</a>,
+    <a href="http://www.wormbase.org/wiki/index.php/Acceptable_use_policy">Acceptable Use Policy</a>
+
+  <br><br>
+  <b>RSS News Feeds</b>
+    <a href="http://www.wormbase.org/rss/wormbase-live.xml">WormBase News</a>,
+    <a href="http://www.wormbase.org/rss/wormbase-dev.xml">Development News</a>,
+    <a href="http://www.wormbase.org/rss/wormmart.xml">WormMart News</a>,
+    WormBaseWiki: <a href="feed://www.wormbase.org/wiki/index.php?title=Special:Newpages&feed=rss">New pages</a>, <a href="feed://www.wormbase.org/wiki/index.php?title=Special:Recentchanges&feed=rss">Recent changes</a>,
+    <a href="http://www.wormbase.org/wiki/index.php/RSS_news_feeds">About News Feeds</a>
+  </font>
+
+  <td class="white" width="4%">  
+  <td class="white" width="56%" valign=TOP>  
+  <!-- Begin News -->
+  <ul>
+  <font size=2>
+                          
+                     <li><b>December 09, 2007: New interface for the Textpresso literature search</b><br />
+		     <a href="http://www.textpresso.org/">Textpresso</a> -- the software that powers the WormBase Literature Search -- has a new user interface.  Available directly from the WormBase home page (select the "Literature" option), Textpresso searches individual sentences in the full text of 9461 papers and 24,526 abstracts.
+                              
+                          
+                     <li><b>December 02, 2007: New release of WormBase: WS184</b><br />
+		     WormBase has been updated to the WS184 release of the database (<a href="http://www.wormbase.org/wiki/Release_notes/">release notes</a>, <a href="ftp://ftp.wormbase.org/pub/wormbase/people/tharris/vmx/WS184">WS184 virtual machine</a>).
+                              
+                          
+                     <li><b>November 21, 2007: C. elegans genomics and systems biology meeting July 24-25</b><br />
+		     A new topics meeting (C. elegans genomics and systems biology) for 2008 has been announced.  Please see <a href="http://www.wormbase.org/forums/index.php?topic=347.msg530;topicseen#msg530">this post</a> on the Worm Community Forum for details.
+                              
+                          
+                     <li><b>November 13, 2007: New release of WormBase: WS183</b><br />
+		     WormBase has been updated to the WS183 release of the database.
+                              
+                     
+<li><a href="/mt/wormbase/archives.html"><b>Old News.</b></a></li>
+</ul>
+<h3 class="newsheadermain">5 Most Recent <a href="http://www.wormbase.org/forums/" class="nochange">Worm Community Forum</a> Posts</h3>
+<script language="javascript"
+src="http://www.wormbase.org/db/misc/inline_feed?src=http%3A%2F%2Fwww.wormbase.org%2Fforums%2Findex.php%3Faction%3D.xml&show_board=1;link_board=1;show_poster=1;link_poster=1"
+type="text/javascript"></script>
+
+</font>
+</ul>
+  <!-- End News -->
+
+  </td></tr>
+   
+  <tr><td class="white">&nbsp;</td>
+      <td class="white">&nbsp;</td>
+      <td class="white">&nbsp;</td></tr> 
+
+  <tr><td class="newsheaderside">Links</td>
+      <td class="white">&nbsp;</td>
+      <td class="newsheadermain">Mirror Sites, Data Freezes and Data Mining Server</td></tr> 
+	<tr><td valign=TOP class="news" width="40%" ><font size=2>
+	  <b>Worm Reagents</b>
+	  <a href="http://www.its.caltech.edu/~wormbase/userguide/OtherResource/ObtainingReagents.html#elegans_genomic">
+	    <i>C. elegans</i> genomic clones</a>,
+	  <i>C. briggsae</i> genomic clones (<a href="http://bacpac.chori.org/library.php?id=26">information</a>, 
+	  <a href="http://bacpac.chori.org/ordering_information.htm">ordering</a>),
+	  <a href="http://www.its.caltech.edu/~wormbase/userguide/OtherResource/ObtainingReagents.html#ykest">YK EST clones</a>,
+	  <a href="http://biosci.umn.edu/CGC/strains/">CGC strains</a>,
+          <a href="ftp://caltech.wormbase.org/pub/annots/rnai/">RNAi clone mapping</a>,
+	  Knockouts (<a href="http://celeganskoconsortium.omrf.org/">KO Consortium</a>, 
+	  <a href="http://shigen.lab.nig.ac.jp/c.elegans/index.jsp">NBP-Japan</a>),
+	  <a href="http://elegans.bcgsc.bc.ca">SAGE</a>,
+         <a href="http://elegans.swmed.edu/parts/parts.html">C. elegans anatomy parts list</a><br>
+         GeneService [<a href="http://www.geneservice.co.uk/products/clones/Celegans_Fos.jsp">Fosmid clones</a>, <a href="http://www.geneservice.co.uk/products/rnai/index.jsp">RNAi libraries</a>, <a href="http://www.geneservice.co.uk/products/cdna/Celegans_ORF.jsp">ORFeome v1.1</a>, <a href="http://www.geneservice.co.uk/products/clones/Celegans_Prom.jsp">Promoterome</a>], 
+	  OpenBiosystems [<a href="http://www.openbiosystems.com/Genomics/Model%20Organism%20Resources/Worm%20Resources/C%5F%20elegans%20ORF%20Collection/">Orfeome v1.1</a>],  
+	  Fire vectors (<a href="ftp://ftp.wormbase.org/pub/wormbase/datasets/fire_vectors/">Full list</a>,
+	    <a href="http://www.addgene.org/Andrew_Fire">via AddGene</a>),
+	  Microarrays (<a href="http://www.affymetrix.com/products/arrays/specific/celegans.affx">Affymetrix</a>, 
+	  <a href="http://www.chem.agilent.com/Scripts/PDS.asp?lPage=29452">Agilent</a>, 
+	  <a href="http://genome.wustl.edu/genome/celegans/microarray/ma_gen_info.cgi">WUSTL</a>),
+	  <br><br>
+
+    <b>Related Databases and Web Sites</b>
+    <a href="http://www.nematode.net/">Nematode.net</a>,
+    <a href="http://www.wormatlas.org">WormAtlas</a>,
+    <a href="/about/mods.html">Other Model Organism Databases</a>
+    <a href="http://elegans.swmed.edu/">Leon Avery's WWW</a>
+    and more (<a href="about/about_Celegans.html"><b>Resources</b></a>)<br><br>
+
+   <b>Key Publications</b>
+    <a href="http://www.wormbook.org"><b>WormBook</b></a>,
+    <a href="http://www.ncbi.nlm.nih.gov/books/bv.fcgi?call=bv.View..ShowTOC&rid=ce2.TOC"><i>C. elegans</i> II book (1997)</a>,
+    <a href="http://www.wormatlas.org/MoW_built0.92/toc.html"><b>The Mind of a Worm</b> (White <i>et al</i>, 1986)</a>,    
+    <a href="/papers/31_Brenner74.pdf"><b>The Genetics of <i>C. elegans</i></b> (Brenner, 1974)</a>,
+    <a href="http://www.wormatlas.org/durbinv1.2/durbinindex.html">Durbin Ph.D. thesis (1987)</a>,
+    <a href="/papers/1900-maupas/index.html">Modes et formes... (Maupas, 1900)</a>, 
+    <a href="http://www.wormbase.org/wiki/index.php/Downloads#Literature_citations">all citations in EndNote format</a><br><br>
+
+    <b>Useful Software</b>
+    <a href="http://stein.cshl.org/AcePerl/">AcePerl</a>,
+    <a href="http://www.gmod.org">GMOD</a>,
+    <a href="http://www.bioperl.org">BioPerl</a>,
+    <a href="http://www.acedb.org">ACeDB</a>,
+    <a href="http://www.mysql.com">MySQL</a>,
+    <a href="http://www.textpresso.org">Textpresso</a>, 
+    <a href="http://www.bcgsc.ca/gc/bomge/sockeye/">Sockeye Genome Browser</a><br><br>
+
+    <b>Worm Genome Sequence Centers</b>
+    <a href="http://www.sanger.ac.uk/Projects/C_elegans/">Wellcome Trust Sanger Institute <i>C. elegans</i> Site</a>,
+    <a href="http://genome.wustl.edu/genome.cgi?GENOME=Caenorhabditis%20elegans">Washington University <i>C. elegans</i> Site</a> and <a href="http://
+genome.wustl.edu/genome/celegans/celegans_snp.cgi">SNP site</a> 
+    </font>
+  </td>
+  <td class="white" width="4%"></td>
+  <td class="white" width="56%" valign=TOP> 
+  <font size=2>
+  <b>Main Site</b>
+     <a href="http://www.wormbase.org/">CSHL (NY, USA)</a><br>
+  <b>Development Site</b>
+     <a href="http://dev.wormbase.org">CSHL (NY, USA)</a><br><br>
+  <b>Mirror Sites</b>
+  <ul>
+	<li><a href="http://imbb.wormbase.org/">IMBB (Crete, Greece)</a>
+        <li><a href="http://caltech.wormbase.org/">Caltech (Pasadena, CA, USA)</a>
+        <li><a href="http://crfb-3.univ-mrs.fr/">University Marseille (Marseille, France)</a>
+        <li><a href="http://wormbase.sanger.ac.uk/">Wellcome/Sanger (Cambridge, UK)</a>
+<!--	<li><a href="http://ccbb.wormbase.org">CCBB (Daejeon, South Korea)</a> -->
+
+  </ul>
+
+<form name="freezes" action="/db/misc/redirect">
+ <b>Data Freezes: </b>
+<select name="url" onChange="redirect(this.value)">
+       <option selected="selected" value="--">--</option>
+       <option value="http://ws170.wormbase.org">WS170 (09 Feb 2007)</option>
+       <option value="http://ws160.wormbase.org">WS160 (31 Jul 2006)</option>
+       <option value="http://ws150.wormbase.org">WS150 (30 Nov 2005)</option>
+       <option value="http://ws140.wormbase.org">WS140 (26 Mar 2005)</option>
+       <option value="http://ws130.wormbase.org">WS130 (16 Aug 2004)</option>
+       <option value="http://ws120.wormbase.org">WS120 (07 Mar 2004)</option>
+       <option value="http://ws110.wormbase.org">WS110 (01 Oct, 2003)</option>
+       <option value="http://ws100.wormbase.org">WS100 (10 May 2003)</option>
+</select>
+<noscript><input type="submit" value="Go"></input></noscript>
+</form>
+
+<p>
+  <b>Data Mining Server </b>
+     <a href="http://aceserver.cshl.org">aceserver</a> (CSHL, NY, USA; <a href="http://www.wormbase.org/wiki/index.php/Data_mining"><b>about data mining</b></a>)<br>
+  </font>
+<p>
+<small>WormBase is supported by a grant from the National Human
+Genome Research Institute at the US National Institutes of Health #
+P41 HG02223 and the British Medical Research Council.</small>
+</p>
+	  </td>
+	</tr>
+    </table>
+    <br>
+    <hr>
+<!-- served from brie6.cshl.edu -->
+<script src="http://www.google-analytics.com/urchin.js" type="text/javascript"></script><script type="text/javascript">_uacct = "UA-2587143-1";  _udn="wormbase.org"; urchinTracker();</script><table width="100%"><tr><td class="small" align="left"><a href="mailto:webmaster@wormbase.org">webmaster@www.wormbase.org</a></td> <td class="small" align="right"><a href="/copyright.html">Copyright Statement</a></td></tr> <tr><td class="small" align="left"><a target="_blank" href="/db/misc/feedback">Send comments or questions to WormBase</a></td> <td class="small" align="right"><a href="/privacy.html">Privacy Statement</a></td></tr></table>
+</body>
+</html>

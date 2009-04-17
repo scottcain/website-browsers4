@@ -1,0 +1,70 @@
+Using dsh to execute multiple commands across servers.
+
+
+==================================
+Overview: To run commands across all nodes:
+==================================
+dsh -M -w -g nodes_all -- '/usr/local/wormbase-lib/GBrowse-production/perl Makefile.PL `cat GGB.def`'
+
+Any commands that need to be run as root will need to have root's ssh keeys set up and 
+distributed across the cluster.
+
+
+
+See this blog post for additional details:
+http://blog.unixlore.net/2006/03/remotely-administering-groups-of.html
+
+Installation:
+========================================
+1. Fetch and install libdshconfig
+ 
+$ wget http://www.netfort.gr.jp/%7Edancer/software/downloads/libdshconfig-0.20.13.tar.gz
+$ tar xzf libdshconfig* ; cd libdshconfig
+$ ./configure ; make
+# make install
+
+2. Fetch and install dsh
+
+$ wget http://www.netfort.gr.jp/%7Edancer/software/downloads/dsh-0.25.9.tar.gz
+$ tar xzf dsh* ; cd dsh*
+$ ./configure ; make
+# make install
+
+
+Configuration
+========================================
+The configuration files are installed at /usr/local/etc/dsh.
+I removed these and symlinked them to a version in svn repository.
+
+1. Create lists of hostnames in ${HOME}/.dsh/groups/group_name, one host per line:
+
+~/.dsh/groups/nodes_all:
+brie6
+aceserver
+gene
+vab
+blast
+
+~/.dsh/groups/nodes_acedb
+brie6
+aceserver
+
+~/.dsh/groups/nodes_mysql
+brie6
+vab
+gene
+aceserver
+blast
+
+
+2. Set up your ssh keys
+
+3. Test it out!
+
+dsh -M -w -g all_nodes -- 'w'
+
+
+
+
+
+

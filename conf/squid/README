@@ -1,0 +1,369 @@
+Installing and Configuring Squid as a reverse proxy
+
+NOTE: This document refers to Squid 3.0.PRE7, a prerelease version!
+Squid 3.0 is due out sometime fall 2007.
+
+INTRODUCTION
+
+
+Squid (http://www.squid-cache.org/) is a proxy caching server.  When run
+in reverse fashion (refered to as reverse-proxy or http acceleration),
+it can be used to cache the output of a webserver. The end result?
+Faster response time for clients since pages are served from a cache,
+bypassing overhead associated with page generation.  And since fewer requests
+are levied against back end servers, other queries are accelerated.
+
+Building Squid
+
+Note: We are using a pre-release version of Squid 3.0 It has new
+features that make http acceleration vastly easier to implement than
+older versions.
+
+ todd> cd ~/src
+ todd> wget http://www.squid-cache.org/Versions/v3/3.0/squid-3.0.PRE7.tar.gz
+ todd> cd ../build
+ todd> tar xzf ../src/squid*
+ todd> cd squid*
+
+ The current configure command looks like this:
+ todd> ./configure --prefix=/usr/local/squid-VERSION \
+               --enable-removal-policies=heap,lru \
+               --enable-icmp \
+               --enable-delay-pools \
+               --enable-useragent-log \
+	       --enable-referer-log \
+	       --enable-ssl \
+               --disable-wccp \
+               --enable-snmp \
+               --enable-cachemgr-hostname=www.wormbase.org
+
+Although these use enable/disable syntax, these parameters just give
+us the option of enabling select features in the configuration file.
+
+  --prefix : where to install
+  --enable-removal-policies : algorithms squid uses for determining
+                              how to remove items from the cache
+  --enable-delay-pools : delay pools allow squid to selectively control bandwidth for clients
+  --enable-useragent-log : allow for logging of the User Agent
+  --enable-referer-log : allow logging of the Referrer
+  --enable-ssl : enable SSL proxying
+  --disable-wccp : turn of wccp; We might need this for multiple caches
+  --enable-snmp : allow snmp to query squid for monitoring
+  --enable-cahcemgr--hostname : where the cache mgr runs
+
+To run config at a later date with the same parameters:
+ 
+ todd> ./config.status --recheck
+
+ todd> make
+ todd> sudo make install
+
+CONFIGURING THE SYSTEM
+
+Create a symlink for easier upgrades
+
+ todd> cd /usr/local
+ todd> sudo ln -s squid-{VERSION} squid
+
+Creating users and groups
+
+Since squid will need to listen to ports less than 1000, it needs to
+be run with root privileges.  Squid, however, should not be run as root.
+Instead, create a squid user and group.
+
+ $ sudo /usr/sbin/useradd squid -d /usr/local/squid
+
+In the squid.conf file, we will set parameters that tell squid to run
+as the squid user/group.
+
+Secure directory permissions
+               
+Directory permissions should be secured as follows.
+               
+  Path                  owner:group   octal
+  /usr/local/squid      root:root     775
+  /usr/local/squid/bin  root:root     775
+  /usr/local/squid/etc  root:squid    2775
+  /usr/local/squid/var  squid:squid   2775
+  /usr/local/squid/logs squid:squid   2775 // create this first
+
+CONFIGURING SQUID
+
+Squid has a million configuration options some of them apparently
+contradictory at first glance.  Here are the critical ones for our
+installation.
+
+But before we begin, copy the configuration file somewhere.  You might
+want to place it in a (protected) directory under revision control.
+You will need to tweak it *a lot* during the initial configuration.
+
+cp /usr/local/etc/squid.conf /home/todd/projects/wormbase/admin/conf/squid-3.0.PRE7.conf
+
+When we launch squid, we'll tell it to use this configuration file
+instead of the default file in squid/etc.
+
+The items below are described in the order in which they appear in the
+default squid configuration file.  I haven't dicussed options left in
+their default state.
+
+1. Tell Squid to listen to port 80 in http acceleration mode
+
+When working as a proxy cache, squid listens on port 3128. In http
+acceleration mode, we want squid to listen on port 80, the standard
+http port. We'll tell our httpd instance to listen to another port.
+
+  # The defaultsite directive needs to be set to the name of the machine.
+  # Q: What should this be set to for a multi-squid architecture?
+  http_port 80 accel defaultsite=www.wormbase.org
+
+2. Tell Squid where our back end machines live, and to balance between them.
+
+One of the confusing things about the squid configuration is its
+format. Some of the arguments are positional, but the ends of lines
+can contain long strings of options.
+
+We tell squid about our back end servers using the cache_peer
+directive. cache_peer is a bit of a misnomer in reverse proxy
+configurations.  It specifies the name of other caches the squid can
+query.  In reverse proxy, this is really the name of the back end
+servers.
+
+Here's an example. I've split the line with a slash for readability.
+
+ cache_peer 143.48.220.56 parent 8080 0 no-query originserver \
+       background-ping weighted-round-robin name=vab
+
+cache_peers can be other squids or http servers.  This directive tells
+squid that there is a cache_peer at 143.48.220.56, that it's a parent,
+listening on port 8080, ICMPs are sent on port 0, we won't send ICP
+queries.  Specifying originserver tells squid it's in acceleration mode.
+
+We'll use background-ping to detect it's state for failover, and we'll
+use weighted round robin for load balancing.  WRR sends queries to
+back end servers based on their round trip time (RTT). Finally, we
+give the server a convenient name for generating ACLs.
+
+Here are the rest of our current servers:
+
+  cache_peer 143.48.220.99 parent 8080 0 no-query originserver background-ping weighted-round-robin name=gene
+  cache_peer 143.48.220.41 parent 8080 0 no-query originserver background-ping weighted-round-robin name=blast
+  cache_peer 143.48.220.28 parent 8080 0 no-query originserver background-ping weighted-round-robin name=aceserver
+
+The following servers don't participate in load-balancing.
+
+Crestone serves static content, the Wiki, the Worm Community Forum,
+etc.
+  cache_peer 143.48.220.119 parent 8080 0 no-query originserver name=crestone
+
+Formaggio hosts the lab wiki.
+  cache_peer 143.48.31.42   parent 80   0 no-query originserver name=formaggio
+
+The following servers are virtual machines running on various servers.
+  cache_peer 143.48.220.208 parent 8080 0 no-query originserver background-ping weighted-round-robin name=ws170
+
+
+3. Turn off the default hierarchy stoplist
+
+Disable the default hierarchy_stoplist. We *do* want to check other
+caches for possibly dynamic content.
+
+  # hierarchy_stoplist cgi-bin ?
+
+4. Force select elements to never be cache used the "cache" tag
+
+Set up acls and acl operators that prevent certain items from never
+being cached. Disable the default option. We DO want to cache dynamic
+content that might derive from cgi-bin (even though we don't use that
+path because it's fugly).
+
+Don't fill up the cache with gbrowse requests.  Too many
+possibilities.
+
+ acl gbrowse urlpath_regex -i /db/seq/gbrowse
+ cache deny gbrowse
+ 
+ acl forums urlpath_regex -i /forums
+ cache deny forums
+
+ acl wiki urlpath_regex -i /wiki
+ cache deny wiki
+
+ acl nbrowse urlpath_regex -i /nbrowse
+ cache deny nbrowse
+
+5. Increase the cache_mem directive
+
+  cache_mem 16 MB
+
+6. Tweak the cache_dir
+
+  cache_dir ufs /usr/local/squid/var/cache 150 32 256
+
+TESTING: This needs to point to the squid symlink. It currently isn't
+in the conf file during testing.
+
+7. Set the log format to the apache style combined
+
+  logformat combined %>a %ui %un [%tl] "%rm %ru HTTP/%rv" %Hs %<st "%{Referer}>h" "%{User-Agent}>h" %Ss:%Sh
+
+Q: Does this EXACTLY mimic the apache structure?
+
+8. Change the access log location, name, and format
+
+  access_log /usr/local/squid/logs/access_log combined
+
+TESTING: As above, this should point to the squid symlink. It doesn't currently.
+
+9.  Turn of logfile reaming during rotation. We have a custom solution.
+
+logfile_rotate 0
+
+10. Turn on emulate_httpd_log
+
+TESTING: Does this override the logformat? Why do they have this and
+not just an httpd logformat?
+
+  emulate_httpd_log on
+
+11. Configure the refresh delay for requests to /db/, and block refresh requests.
+
+  refresh_pattern   -i db 10000 %100 30000
+  refresh_pattern   . 0 20% 10000 reload-into-ims
+
+12. Access Controls
+
+Set up acls for who can access the cache.
+
+  acl vab       dstdomain www.wormbase.org
+  acl gene      dstdomain www.wormbase.org
+  acl blast     dstdomain www.wormbase.org
+  acl aceserver dstdomain www.wormbase.org
+
+  # Grant our site access to the http_port
+  acl wormbase dstdomain www.wormbase.org
+
+
+  # Allow wormbase to access the http port
+  http_access allow wormbase
+
+  # Set up some acls so that I can easily redirect
+  # specific requests to select back end servers
+
+  # Cases that need to be handled (this is probably a URL rewrite)
+  # 1. pull out the server for dynamically generated images
+
+  # 2. Blast, blat and epcr go the the blast server
+  acl blast_page urlpath_regex -i blast_blat
+  acl epcr_page  urlpath_regex -i epcr
+  acl forums     urlpath_regex -i forums
+  acl wiki       urlpath_regex -i wiki
+
+
+
+13. Set up some administrative options
+
+User, group, and administrator
+
+ cache_effective_user squid
+ cache_effective_group squid
+ cache_mgr todd@tharris.org
+
+14. Force select request to always go to the origin servers: nBrowse,
+gBrowse, wiki, and forums.
+
+TESTNG is this right?
+
+ always_direct allow nbrowse 
+ always_direct allow forums 
+ always_direct allow wiki
+ always_direct allow gbrowse
+
+
+
+15. Allow specific peers access to the cache using cache_peer_allow
+
+  # FORMAT: cache_peer_access server_symbolic_name allow acl
+  cache_peer_access vab allow vab
+  cache_peer_access gene allow gene
+  cache_peer_access blast allow blast
+  cache_peer_access aceserver allow aceserver
+  cache_peer_access formaggio allow formaggio
+
+
+
+TEST OUT THE SQUID SERVER
+
+Test it out
+sudo /usr/local/squid/sbin/squid -N -d 1 -D -z -f /usr/local/squid/etc/squid.conf
+
+We want to be able to see that Squid's actually doing something
+useful, so we increase the debug level (using -d 1) and tell it not to
+dissapear into the background (using -N.) If your machine is not
+connected to the Internet (you are doing a trial squid-install on your
+home machine, for example) you should use the -D flag too, since Squid
+tries to do DNS lookups for a few common domains, and dies with an
+error if it is not able to resolve them.  The -z flag is only
+necessary the first time squid is run or whenever a new cache
+directory is added.  It serves to initialize the cache directory.
+
+
+Try connecting:
+squidclient -p 80 http://localhost/
+
+
+
+
+
+
+
+
+This can be handled with ACLs and cache_peer directives.
+I need to account for all the elements in the current redirector
+(or just simplify the redirector)
+
+
+
+5. Possible configuration options
+
+dead_peer_timeout
+
+(Also see the connect-timeout option for cache_peer)
+
+take a look at the snmp stuff
+
+visible hostnmae
+unique_hostname
+
+
+
+What other cnofigurations do I need?
+
+
+  use 'forceddomain=name' to forcibly set the Host header
+             of requests forwarded to this peer. Useful in accelerator
+             setups where the server (peer) expects a certain domain
+             name and using redirectors to feed this domain name
+             is not feasible.
+
+
+
+acl sites_server dstdomain www.example.com example.com ??? WHAT IS THE RIGHT ACL HERE?
+
+
+
+
+
+
+=item Testing the squid configuration file
+
+After making changes to your configuration file, it is a good idea to
+check its syntax.
+
+        squid -k parse
+
+
+
+
+
+
+redirectors are now called url_rewrite 

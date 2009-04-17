@@ -1,0 +1,39 @@
+CreateBLASTDatabases MUST be run before LoadGenomicGFFDB
+
+
+
+
+
+* update dev site - update_wormbase-WRAPPER.sh WSXXX CB25
+* update strains - update_pipeline_addendums.sh
+* update standard urls with release data - do manually
+* patch GFF if necessary (and check that the temporary_gff patches made it to the DB)
+
+* package databases - development/package_database.pl
+* create the list of papers new in this release - development/build_new_papers_lists.pl
+
+# 15. Build the autocomplete database :
+cd /usr/local/wormbase/update_scripts/autocomplete/meta
+./create_autocomplete_db.sh [NEW_VERSION] [MYSQL_USER] [MYSQL_PASS]
+./do_load_of_db.sh [WSVERSION] [/path/to/acedb]
+
+
+# 16. Create new RSS feeds for genes (how best to do this - run under cron on 
+production?) - also need to add in release date for the new release
+
+
+Update the strains database
+
+
+
+# Update strains
+/usr/local/wormbase/util/strain_search/UPDATE_STRAINS
+
+# Add in the release to standard URLs
+#perl -p -i -e 
+#'s|<target></target>|<release><version>${VERSION}</version><release_date>${DATE}</release_date><available>yes</available></release>|g' 
+#/usr/local/wormbase-production/html/standard_urls/standard_urls.xml
+
+
+
+

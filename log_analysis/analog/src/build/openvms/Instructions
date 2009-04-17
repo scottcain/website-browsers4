@@ -1,0 +1,4 @@
+make-vms.zip contains OpenVMS build scripts, which have to be unzipped within
+the analog source directory.
+
+Full instructions can be found in the file startux.html in the analog docs.

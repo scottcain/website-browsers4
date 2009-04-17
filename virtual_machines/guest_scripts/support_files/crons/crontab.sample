@@ -1,0 +1,11 @@
+# Rotate WormBase logs
+30 12 * * * /usr/local/wormbase/crons/rotate_logs.pl
+
+# Ensure that the serverlog.wrm file doesn't get too large
+30 1 * * * /usr/local/wormbase/crons/purge_acedb_logs.sh
+
+# Restart httpd periodically just for good measure
+0 1,7,13,19 * * * /usr/local/apache/bin/apachectl graceful
+
+# Ensure that MySQL is up
+*/30 * * * * /usr/local/wormbase/crons/restart_mysqld.pl

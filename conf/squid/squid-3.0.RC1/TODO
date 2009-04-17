@@ -1,0 +1,21 @@
+1. expression images
+2. nBrowse
+3. geomap
+
+4. stalling pages - what server?
+5. Is be1 ready to go?
+
+6. cache deny (and old no_cache parameters)
+
+
+7. logging
+
+
+  emulate apache logs
+
+8. ROUNDROBINE PARENT  vs ANY_PARENT
+
+
+9. Cache config (size, ram, etc)
+
+10. ICP pinging of backend nodes

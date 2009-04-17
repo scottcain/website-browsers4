@@ -1,0 +1,5 @@
+The scripts in this directory maintain various aspects
+of the site.  Most are intended to be run as cron jobs
+and are not part of the update pipeline proper.
+
+

@@ -1,0 +1,40 @@
+MAILTO=toddcron@gmail.com
+#################
+# WormBase jobs
+#################
+
+# Rotate logs as necessary
+30 12 * * * /usr/local/wormbase/bin/rotatelogs.pl
+
+# remove unaccessed ace image files
+# Do not do this! It will break images that are referenced from the squid cache
+#30 2 * * * * /usr/bin/find /var/tmp/ace_images -type f -atime +20 -print -exec rm {} \;
+
+# rotate acedb logs
+0,15,30,45 * * * * /usr/local/wormbase-admin/log_maintenance/rotation/purge_acedb_logs.sh 
+# Let's automatically restart ace. It has been having memory issues recently
+#15 0,6,12,18 * * * /usr/local/wormbase-admin/monitoring/restart_ace.sh    
+
+
+
+
+
+# Mail diskinfo to sysadmin
+#0 2 * * 5 /root/scripts/diskinfo.sh | /bin/mail -s "Brie6 Disk Info" sysadmin
+
+# CHECK ON SERVICES
+# MySQL
+*/5 * * * * /usr/local/wormbase/util/admin/restart_mysqld.pl
+
+# HTTPD
+0,15,30,45 * * * * /usr/local/apache/bin/apachectl graceful
+
+#check load
+0-59 * * * * /home/peter/loadcheck.sh > /dev/null 2>&1
+                                                       
+
+
+
+
+
+

@@ -1,0 +1,50 @@
+Build and configure
+--------------------
+cd squid-3.0.STABLE1/
+./configure --prefix=/usr/local/squid-VERSION \
+            --enable-removal-policies=heap,lru \
+            --enable-icmp \
+            --enable-delay-pools \
+            --enable-useragent-log \               
+            --enable-referer-log \  
+            --enable-ssl \ 
+            --disable-wccp \
+            --enable-snmp \
+            --enable-cachemgr-hostname=www.wormbase.org
+
+make
+sudo make install
+
+This will install squid into
+
+  /usr/local/squid-3.0.STABLE1
+
+
+
+
+
+Fix permissions
+----------------
+cd /usr/local/squid-3.0.STABLE1
+sudo chown -R squid:squid var logs
+cd /usr/local
+sudo rm squid // if symlink
+sudo ln -s squid-3.0.STABLE1 squid
+
+
+Initialize the cache
+---------------------
+
+sudo /usr/local/squid-3.0.STABLE1/sbin/squid -N -d 9 -z -f \
+/home/todd/projects/wormbase/admin/conf/squid/squid-3.0.STABLE1/squid.conf
+
+
+Start squid
+------------
+sudo /usr/local/squid-3.0.STABLE1/sbin/squid -N -d 9 -f 
+/home/todd/projects/wormbase/admin/conf/squid/squid-3.0.STABLE1/squid.conf
+
+Add the -X flag to enable full debugging.
+
+Debugging ACLs:
+debug_options ALL,1 33,2

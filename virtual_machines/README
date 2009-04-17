@@ -1,0 +1,248 @@
+How to build a virtual machine for release
+
+Aceserver is the current staging machine.
+
+
+1.  Establish empty virtual disks and set up core vmx
+
+cd /usr/local/vmx/admin/virtual_machines
+./prepare_virtual_machine.sh WSXXX YYYY.MM.DD
+
+2. Boot the VMX
+
+3. Build the VMDKs
+
+guest> cd ~/bin
+guest> ./build_vmdks.sh WSXXX
+
+This script will populate the VMDKs with the appropriate databases.
+You'll need to authenticate several times. This is intentional; I
+do not want to inadvertently ship a virtual machine with SSH keys!
+
+4. Pull the software
+
+guest> ~/bin/pull_software.sh
+
+4. Shut down the guest
+
+5. Package the VMX and transfer to FTP site
+
+package_vmx.sh WSXXX YYYY.MM.DD
+
+
+Scripts in guest_scripts are intended to be run from WITHIN the guest OS.
+
+
+
+
+
+
+
+How to add a virtual disk
+
+Creating a new virtual disk
+1. Shut down your VMX
+
+2. In the console, click "Edit virtual machine settings"
+
+3. Click "Add"
+
+4. Select "Hard Drive" and then "next"
+
+5. Choose SCSI
+
+6. Enter the path: /usr/local/vmx/20GB.vmdk/20GB.vmdk
+
+7. Boot your virtual machine
+
+8. Partition
+
+sudo fdisk /dev/[partition path]
+options, in order:
+n
+p
+1
+w
+
+9. Format
+
+sudo mkfs -t ext3 /dev/[partition path]1
+
+
+To use a virtual disk:
+
+1. Copy the base size of interest
+
+cp -r 20GB.vmdk c_briggsae-CB25-2007.02.00.gff
+
+Format: genus_species-VERSION-YEAR.MONTH.DAY.type
+
+
+
+mount the drive
+
+- mkdir /usr/local/mysql/data/remanei_preliminary-2005.08.00
+// This should probably be dynamic
+sudo mount -t ext3 /dev/[partition path]1 /usr/local/mysql/data/remanei_preliminary-2005.08.00
+
+
+
+
+Mounting drives automatically:
+
+We do not want to use fstab for mounting drives.
+Instead, these should be mounted by a shell script after boot.
+We will mount these DIRECTLY to where they should be in the file system
+
+
+# The legacy C. briggsae database
+cd /usr/local/mysql/data
+
+# Do a conditioanl check to see if dataset is available
+# Clear out debris
+rm -rf briggsae_CB25
+mkdir briggsae_20070200_CB25 [species]_[YEAR][MONTH][DAY]_[VERSION]
+sudo mount -t ext3 /dev/sdb1 /usr/local/mysql/data/briggsae_20070200_CB25
+ln -s briggsae_20070200_CB25 briggsae_CB25
+
+briggsae CB25  /dev/sdb1
+remanei  prelimianry  /dev/sdc1
+
+
+
+
+What happens to the VMX if a drive is specified but not present?
+
+
+
+
+
+Mac App:
+
+Scehdule tab
+
+  Check for new version
+ if present, download
+
+get new VMX
+get datasets
+untar
+modify .vmx 
+
+Required scripts:
+	- One to transfer/analyze logs automatically (THIS NEEDS TO BE DONE!)
+	- One that periodically shrinks the disk
+	      This should also be included with releases, too
+
+
+Prep to finish
+---------------
+				WS100	WS110	WS120	WS130	WS140	WS150	WS160	LIVE
+Rename userpass to wormbase	X	X	X	X	X	X	X
+Set firefox to launch auto	X	X	X	X	X	X	X
+Set bookmarks			X	X	X	X	X	X	X
+Expand size of cache		X	X	X	X	X	X	X
+Turn off expiry of cache	X	X	X	X	X	X	X
+Modify configuration files	X	X	X	X	X	X	X
+Correct version of GBrowse?	X	X	X	X	X	X	X
+Correct version of Ace.pm?	X	X	X	X	X	X	X
+Correct version of bioperl?	X	X	X	X	X	X	X
+ACEDB?				X	X	X	X	X	X	X
+Install crons			X	X	X	X	X	X	X
+Install BLAST			X	X	X	X	X	X	X
+Install BLAT			X	X	X	X	X	X	X
+Modify scripts for caching	X	-	-	-	-	-	X
+Delete unneccessary files	X	X	X	X	X	X	X
+Install VMWare tools		X	X	X	X	X	X	X
+Check on localdefs.pm		X	X	X	X	X	X	X	
+Defrag/Shrink disks		X	X	X	X	X	X	X	
+Package and send to brie3       X	X	X	X	X	X	X	
+RAM				256	500	500	500	500	500	500
+
+
+
+Remaining to do
+----------------
+	- Run precaching script
+	- Make sure SSH enabled in RL3
+
+     - Figure out what the machines' names should be
+	      Set this up in httpd.conf, localdefs.pm, system settings, vmx
+
+	      Servers need to have localdefs.pm point to servername, not localhost or else blat will not work
+
+     cronjobs
+     ---------
+     - server monitoring - stopping and starting (or should I just preiodically restart the VM??
+
+     httpd configuration
+     -------------------
+     Figure out how many servers should be started as a default
+
+
+
+Hosting freezes
+----------------
+       2.  What about RAM requirements for each machine?
+		250 MB to 1 GB
+
+       3. Can I route VMX traffic through fe.wormbase.org?       
+
+		Some issues remain, but should be feasible
+
+       4. Decide on differences between hosted servers and those made available for distribuition
+
+          Desktop:
+	  
+	  Mirror / server:
+
+	  I could generally have desktop/ and server/ releases where
+	  server releases are only created for each frozen release.
+	  Alternatively, perhaps we'd like to create WMs for EACH
+	  RELEASE and use these to actually drive the site?
+
+
+       Web-based console interface
+       # Ask peter for a suitable test machine
+       # Do I need to open port 8033?
+
+	 Try routing 
+	     http://www.wormbase.org/freezes/console/ to http://backend:8033/
+	 And then each freeze as	 
+	     http://www.wormbase.org/freezes/WS100/ to http://backend_ip/
+	 And then eventually
+	     http://ws100.wormbase.org/ -> www.wormbase.org -> http://backend_ip/
+
+Mirrors
+---------
+Script to fetch torrent, unpack, launch, and configure
+
+
+
+Prospects for using VMs generally across the site
+----------
+988PD-YD5A6-26554-4C62M - brie6
+9A8MR-Y418Q-2F17N-417U0 - freeze1.wormbase.org
+90RYW-YF12K-2D1G1-49P1T - freeze2.wormbase.org
+9ADM8-Y4N23-2F4G0-43HLR
+90RYX-YF52L-24154-4C7LT
+9AWM9-YFJ02-245G4-436T4
+9AXMW-Y618Q-24575-493UE
+9ARMR-Y4H06-241GH-4RNAN
+929YT-Y65A2-26075-41LC5
+98WP9-Y6583-2F1G1-416AT
+
+
+
+1.03
+9AMFT-YUZDT-2EK6H-493H1
+9AHDX-YKZDX-2G7F5-4C7UD
+985F8-YKYDW-2GKFM-49KCE
+901FW-YHC49-273F5-49MT8
+9A1DT-YRG4X-273F4-433CH
+9A568-YHZDD-2G66J-4CQ25
+90H6R-YUFDW-2E64H-494T0
+984FT-YUAF8-25LD1-4CJKX
+9854D-YHUDW-2EPDJ-43QTJ
+9054T-YKFF8-27LF0-41P2E
+

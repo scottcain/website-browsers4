@@ -1,0 +1,106 @@
+===========================
+WormBase update process
+
+T. Harris, 12/2007
+===========================
+
+
+DEPRECATED: Analyze logs:
+-----------------------------------------------------
+1. fe> concatenate_logs.sh WSXXX
+2. brie6> analyze_logs.sh WSXXX 
+
+Notes:
+	* WSXXX is the current LIVE release
+	* requires sudo privileges
+	* make sure there is sufficient disk space on fe and brie6!
+
+Prepare for update:
+-----------------------------------------------------
+1. Update wormbase/cgi-perl/lib/RSS/ObjectHistory.pm with release date
+   so feeds can be generated.
+
+2. update standard urls with release data - do manually
+
+	/usr/local/wormbase/html/standard_urls/standard_urls.xml
+
+	The standard URLs directory is located on brie6 and
+	maintained automatically by cron.
+	maintenance/maintain_standard_urls.pl
+
+3. Checkout new updates in brie3:wormbase-production; reconcile conflicts
+
+4. Tag the software
+   
+   brie3> cvs_tag_relase.sh WSXXX // The new version being pushed out.
+
+
+5. Create software release: 
+
+
+   brie3> create_software_release.sh WSXXX // The new version being pushed out.
+
+
+Update production:
+-----------------------------------------------------
+
+0. Make sure the nodes are ready to go: 
+
+   brie3> prepare_nodes.sh
+
+1. Push software:
+ 
+   brie3> push_software.sh
+
+2. Push databases: 
+
+  !! mysql datadir must be 2775
+
+   brie3> push_databases-acedb.sh   WSVERSION
+   brie3> push_databases-mysql.sh   WSVERSION
+   brie3> push_support_databases.sh WSVERSION
+
+   You can also try the wrapper script:
+   brie3> push_databases.sh WSVERSION
+
+3. brie3> restart_services.sh   
+
+4. Send announcement: 
+
+   brie6> send_release_notification.pl
+
+5. Update release notes on the wiki
+
+6. Update list of new papers:
+
+   brie3:wormbase/admin/update/development/build_new_paper_list.pl \
+       /usr/local/acedb/elegans_WSXXX
+
+7. Add the release announcement to the home page via MT
+
+
+Build VM:
+-----------------------------------------------------
+1. be1> prepare_virtual_machine.sh WSXXX YYYY.MM.DD
+2. be1> vmware-cmd /usr/local/vmx/wormbase-live-server/wormbase.vmx start
+3. be1> vmware-cmd /usr/local/vmx/wormbase-live-server/wormbase.vmx getguestinfo "ip"
+4. be1> ssh wormbase@[IP]
+5. vm> bin/pull_software.sh
+6. vm> bin/build_vmdks.sh WSXXXX
+7. vm> shutdown -h now
+8. be1> package_vmx.sh WSXXX YYYY.MM.DD
+
+
+Update development
+-----------------------------------------------------
+1. brie3> update_scripts/update_wormbase-WRAPPER.sh WSXXX CB25
+2. brie3> /usr/local/wormbase/util/strain_search/UPDATE_STRAINS
+
+3. Build the autocomplete database
+
+  brie3> cd /usr/local/wormbase/update_scripts/autocomplete/meta
+  ./create_autocomplete_db.sh [NEW_VERSION] [MYSQL_USER] [MYSQL_PASS]
+  ./do_load_of_db.sh [WSVERSION] [/path/to/acedb]
+ 
+4. Convert GFF2 -> GFF3
+
