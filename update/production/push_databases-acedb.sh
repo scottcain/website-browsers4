@@ -12,7 +12,7 @@ fi
 
 # These nodes host the Acedb database
 #ACEDB_NODES=`cat conf/nodes_acedb.conf`
-ACEDB_NODES=("be1 brie6 aceserver")
+ACEDB_NODES=("be1 brie6")
 #ACEDB_NODES=("brie6 aceserver")
 #ACEDB_NODES=("aceserver")
 ACEDB_ROOT=/usr/local/acedb
