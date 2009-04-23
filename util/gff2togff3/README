@@ -1,0 +1,23 @@
+Converting GFF2 to GFF3.  
+
+The MultiGenome analysis project needs GFF3.  Unforunately,
+we still aren't generating it.  Instead I will convert our
+existing GFF2 files into GFF3 and hope this will be 
+sufficient!
+
+* I'm not sure if this will adequately handle every
+  species and every feature that we have annotated!
+
+
+
+
+ > gunzip c_remanei.WS200.gff.gz 
+ > ../projects/wormbase/admin/update/development/util/wormbase_gff2togff3.pl --species remanei --gff c_remanei.WS200.gff.gz --output 
+c_remanei.gff3.temp 
+
+Sort 
+ > sort -k9,9 c_remanei.gff3.temp | gzip -c > c_remanei.WS200.gff3.gz
+
+
+
+
