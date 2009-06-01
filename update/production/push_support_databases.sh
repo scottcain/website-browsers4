@@ -13,7 +13,8 @@ then
 fi
 
 SUPPORT_DB_DIR=/usr/local/wormbase/databases
-SUPPORT_DB_NODES=("blast aceserver gene vab brie6");
+SUPPORT_DB_NODES=("blast.wormbase.org aceserver.cshl.edu gene.wormbase.org 
+                  vab.wormbase.org brie6.cshl.edu");
 #SUPPORT_DB_NODES=("blast");
 
 # The repository of archived databases
@@ -118,9 +119,9 @@ alert "Pushing the support databases dir on database nodes..."
 for NODE in ${SUPPORT_DB_NODES}
 do
   alert " ${NODE}:"
-  if [ "${NODE}" == "blast" ]
+  if [ "${NODE}" == "blast.wormbase.org" ]
   then
-  	if rsync --progress -Ca --exclude *bak* \
+  	if rsync --progress -Cavv --exclude *bak* \
 	 	${SUPPORT_DB_DIR}/${VERSION} ${NODE}:${SUPPORT_DB_DIR}
  	then
       		success "Successfully pushed support databases onto ${NODE}"
