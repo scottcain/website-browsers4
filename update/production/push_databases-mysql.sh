@@ -11,7 +11,8 @@ fi
 
 MYSQL_DATA_DIR=/usr/local/mysql/data
 MYSQL_NODES=`cat conf/nodes_mysql.conf`
-MYSQL_NODES=("brie6 be1 vab gene blast aceserver")
+MYSQL_NODES=("brie6.cshl.edu be1.wormbase.org vab.wormbase.org 
+              gene.wormbase.org blast.wormbase.org  aceserver.cshl.edu")
 MYSQL_DATABASES=("c_brenneri
                   c_briggsae 
                   c_elegans 
@@ -20,7 +21,6 @@ MYSQL_DATABASES=("c_brenneri
                   c_remanei 
                   c_japonica 
                   p_pacificus
-
 ")
 #                  clustal
 #                  nbrowse_wormbase
