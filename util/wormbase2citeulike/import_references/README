@@ -1,0 +1,50 @@
+Author: Todd Harris (info@toddharris.net)
+
+Purpose: Import the entire corpus of C. elegans literature into CiteULike.
+
+This directory contains files suitable for migrating all Pubmed
+references that cite C. elegans into citeulike.org.
+
+Strategy:
+
+1. Use Texmed to search PubMed and retrieve BibTex entries.
+
+(CiteULike can't import PubMed in batch)
+
+http://www.sbg.bio.ic.ac.uk/~mueller/TeXMed/
+
+I set up my own local installation on brie3 and modified it to suit my needs.
+
+http://dev.wormbase.org/db/misc/TexMed
+
+Modified code now part of this distro.
+
+
+2.  Reformat BibTex entries.
+
+The bibtex entries from TeXMed have some problems.  Clean them up.
+
+./clean_bibtext.pl bibtext_entries.pl
+
+This will create a single file for each year in refs/.
+
+
+
+8/2008
+-------------
+Currently, importing references into citeulike results in major buggotea.
+Citeulike does not try and uniquify these references and match them to other
+references already in the database.
+
+
+
+Directory contents:
+
+README -- this file
+TeXMed-modified.tgz -- TeXMed CGI with modified output and limits
+clean_bibtext.pl -- cleans output from TeXMed
+fetch_elegans_refs_from_citeulike.pl -- parses out references tagged with elegans
+       from a citeulike bibtext library 
+refs_bibtex -- references in (unparsed) bibtext format
+refs_by_year -- output dir from clean_bibtex.pl
+test.ref -- a test bibtex reference
