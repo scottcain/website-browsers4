@@ -1,0 +1,32 @@
+Scripts and files for simplified interaction with CiteuLike
+
+Author : Todd Harris (info@toddharris.net)
+Date   : 8/2008 
+
+
+README
+	This file. Duh.
+
+import_references/
+	Scripts for importing a huge number of references in batch.
+
+plugins/
+	The official plug-in source from citeulike.org.
+	This was *originally* checked out via svn but has
+	since been checked in to my private repository to
+	simplify development across machines.
+
+plugins-wormbase
+	WormBase-specific plugin files.  These are maintained
+	outside of the citeulike directory for easy updating
+ 	from that source.  Symlinks in plugins/ point to these files.
+
+plugins/original_source.tgz
+	The checked out source from the citeuelike.org
+	subversion repository.  Unpack and svn update
+	to get up-to-date source.
+
+
+
+To test:
+cd
