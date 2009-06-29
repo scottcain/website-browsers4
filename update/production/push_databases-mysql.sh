@@ -9,7 +9,10 @@ then
   exit
 fi
 
-MYSQL_DATA_DIR=/usr/local/mysql/data
+LOCAL_MYSQL_DATA_DIR=/var/lib/mysql
+
+# For now, the old mysql data dir on the remote servers does not map to the same space as development
+REMOTE_MYSQL_DATA_DIR=/usr/local/mysql/data
 MYSQL_NODES=`cat conf/nodes_mysql.conf`
 MYSQL_NODES=("brie6.cshl.edu be1.wormbase.org vab.wormbase.org 
               gene.wormbase.org blast.wormbase.org  aceserver.cshl.edu")
@@ -58,12 +61,12 @@ do
   for DB in ${MYSQL_DATABASES} 
   do
     TARGET=${DB}_${VERSION}
-    if rsync -Ca --exclude *bak* ${MYSQL_DATA_DIR}/${TARGET} ${NODE}:${MYSQL_DATA_DIR}
+    if rsync -Ca --exclude *bak* ${LOCAL_MYSQL_DATA_DIR}/${TARGET} ${NODE}:${REMOTE_MYSQL_DATA_DIR}
     then
       success "Successfully pushed ${DB} onto ${NODE}"
       
       # Set up appropriate symlinks and permissions
-      if ssh ${NODE} "cd ${MYSQL_DATA_DIR}; rm ${DB};  ln -s ${TARGET} ${DB}"
+      if ssh ${NODE} "cd ${REMOTE_MYSQL_DATA_DIR}; rm ${DB};  ln -s ${TARGET} ${DB}"
       then
 	  success "Successfully symlinked ${DB} -> ${TARGET}"
       else

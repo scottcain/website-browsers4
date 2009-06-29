@@ -8,8 +8,8 @@
 export RSYNC_RSH=ssh
 DO_RESTART=$1
 
-STAGING_DIRECTORY=/usr/local/wormbase-production/
-TARGET_DIRECTORY=/usr/local/wormbase
+STAGING_DIRECTORY=/usr/local/wormbase/website-classic-staging
+TARGET_DIRECTORY=/usr/local/wormbase/website-classic
 NODES=`cat conf/nodes_all.conf`
 #NODES=`cat conf/be_only.conf`
 #NODES=gene
@@ -38,7 +38,7 @@ function success() {
 }
 
 
-alert "Pusing software onto nodes..."
+alert "Pushing software onto nodes..."
 for NODE in ${NODES}
 do
 

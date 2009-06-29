@@ -2,8 +2,8 @@
 
 use strict;
 
-use constant ELEGANS  => '/usr/local/acedb/elegans';
-use constant RELEASENOTES => '/usr/local/wormbase/html/release_notes';
+use constant ELEGANS  => '/usr/local/wormbase/acedb/wormbase';
+use constant RELEASENOTES => '/usr/local/wormbase/website-classic/html/release_notes';
 
 my $real  = readlink(ELEGANS) or die "Can't read link: $!";
 my ($release) = $real=~ /elegans_(WS\d+)/;

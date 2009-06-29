@@ -6,7 +6,7 @@
 
 STAGING_HOST=rsync://dev.wormbase.org
 RSYNC_MODULE=wormbase-live/
-TARGET_DIRECTORY=/usr/local/wormbase
+TARGET_DIRECTORY=/usr/local/wormbase/website-classic-staging
 
 SEPERATOR="==========================================="
 

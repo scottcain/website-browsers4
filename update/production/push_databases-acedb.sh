@@ -15,8 +15,8 @@ fi
 ACEDB_NODES=("be1.wormbase.org brie6.cshl.edu aceserver.cshl.org")
 #ACEDB_NODES=("brie6 aceserver")
 #ACEDB_NODES=("aceserver")
-ACEDB_ROOT=/usr/local/acedb
-ACEDB_DIR=/usr/local/acedb/elegans_${VERSION}
+ACEDB_ROOT=/usr/local/wormbase/acedb
+ACEDB_DIR=/usr/local/wormbase/acedb/wormbase_${VERSION}
 
 SEPERATOR="==========================================="
 

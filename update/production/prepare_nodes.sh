@@ -1,7 +1,9 @@
 #!/bin/bash
 
 NODES=`cat conf/nodes_all.conf`
-MYSQL_DATA_DIR=/usr/local/mysql/data
+
+# For now, the remote data direcotry does not map to the local staging path
+REMOTE_MYSQL_DATA_DIR=/usr/local/mysql/data
 
 SEPERATOR="==========================================="
 
@@ -41,5 +43,5 @@ do
   done
   
   # Fix permissions on the mysql data dir
-  ssh ${NODE} chmod 2775 ${MYSQL_DATA_DIR}
+  ssh ${NODE} chmod 2775 ${REMOTE_MYSQL_DATA_DIR}
 done
