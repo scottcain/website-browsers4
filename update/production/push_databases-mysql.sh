@@ -24,8 +24,9 @@ MYSQL_DATABASES=("c_brenneri
                   c_remanei 
                   c_japonica 
                   p_pacificus
+                  clustal
 ")
-#                  clustal
+
 #                  nbrowse_wormbase
 # autocomplete
 
