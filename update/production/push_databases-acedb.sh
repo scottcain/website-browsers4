@@ -10,15 +10,9 @@ then
   exit
 fi
 
-# These nodes host the Acedb database
-#ACEDB_NODES=`cat conf/nodes_acedb.conf`
-ACEDB_NODES=("be1.wormbase.org brie6.cshl.edu aceserver.cshl.org")
-#ACEDB_NODES=("brie6 aceserver")
-#ACEDB_NODES=("aceserver")
-ACEDB_ROOT=/usr/local/wormbase/acedb
-ACEDB_DIR=/usr/local/wormbase/acedb/wormbase_${VERSION}
 
-SEPERATOR="==========================================="
+# Pull in my configuration variables shared across scripts
+source update.conf
 
 function alert() {
   msg=$1
@@ -39,8 +33,64 @@ function success() {
   echo "  ${msg}."
 }
 
-alert "Pushing Acedb onto acedb nodes..."
+alert "Pushing Acedb onto staging node..."
+if rsync -Ca ${ACEDB_DIR} ${STAGING_NODE}:${ACEDB_ROOT}
+then
+  success "Successfully pushed acedb onto ${STAGING_NODE}"
 
+   # Set up the symlink
+   if ssh ${STAGING_NODE} "cd ${ACEDB_ROOT}; rm elegans;  ln -s ${ACEDB_DIR} elegans"
+   then
+         success "Successfully symlinked elegans -> ${ACEDB_DIR}"
+   else
+	 failure "Symlinking failed"
+   fi
+
+   # Fix permissions
+   if ssh ${STAGING_NODE} "cd ${ACEDB_DIR}; chgrp -R acedb * ; cd database ; chmod 666 block* log.wrm serverlog.wrm ; rm -rf readlocks"
+   then
+	 success "Successfully fixed permissions on ${ACEDB_DIR}"
+   else
+	 failure "Fixing permissions on ${ACEDB_DIR} failed"
+   fi
+
+  else
+    failure "Pushing acedb onto ${STAGING_NODE} failed"
+fi
+
+alert "Pushing Acedb onto production nodes..."
+for NODE in ${ACEDB_NODES}
+do
+  alert " ${NODE}:"
+  if ssh ${STAGING_NODE} "rsync -Ca ${ACEDB_DIR} ${NODE}:${ACEDB_ROOT}"
+  then
+    success "Successfully pushed acedb onto ${NODE}"
+
+    # Set up the symlink
+    if ssh ${STAGING_NODE} "ssh ${NODE} 'cd ${ACEDB_ROOT}; rm elegans;  ln -s ${ACEDB_DIR} elegans'"
+    then
+	  success "Successfully symlinked elegans -> ${ACEDB_DIR}"
+    else
+	  failure "Symlinking failed"
+    fi
+
+    # Fix permissions
+    if ssh ${STAGING_NODE} "ssh ${NODE} 'cd ${ACEDB_DIR}; chgrp -R acedb * ; cd database ; chmod 666 block* log.wrm serverlog.wrm ; rm -rf readlocks'"
+    then
+	  success "Successfully fixed permissions on ${ACEDB_DIR}"
+    else
+	  failure "Fixing permissions on ${ACEDB_DIR} failed"
+    fi
+
+  else
+    failure "Pushing acedb onto ${NODE} failed"
+  fi
+done
+
+
+
+exit
+# Original: when not necessary to pass through intermediate staging server
 for NODE in ${ACEDB_NODES}
 do
   alert " ${NODE}:"

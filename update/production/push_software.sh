@@ -8,15 +8,9 @@
 export RSYNC_RSH=ssh
 DO_RESTART=$1
 
-STAGING_DIRECTORY=/usr/local/wormbase/website-classic-staging
-TARGET_DIRECTORY=/usr/local/wormbase/website-classic
-NODES=`cat conf/nodes_all.conf`
-#NODES=`cat conf/be_only.conf`
-#NODES=gene
-#NODES=vab
-#NODES=be1
+# Pull in my configuration variables shared across scripts
+source update.conf
 
-SEPERATOR="==========================================="
 
 function alert() {
   msg=$1
@@ -38,12 +32,52 @@ function success() {
 }
 
 
-alert "Pushing software onto nodes..."
-for NODE in ${NODES}
-do
 
+
+
+
+# Original: not necessary to pass through brie3
+alert "Pushing software onto ${STAGING_NODE}"
+if rsync -Ca --exclude databases --exclude mt ${SITE_STAGING_DIRECTORY} ${STAGING_NODE}:${SITE_TARGET_DIRECTORY}
+  then
+    success "Successfully pushed software onto ${STAGING_NODE}..."
+  else
+    failure "Pushing software onto ${STAGING_NODE} failed..."
+    exit
+fi
+
+
+alert "Pushing software onto nodes..."
+for NODE in ${SITE_NODES}
+do
   alert " Updating ${NODE}..."
-  if rsync -Ca --exclude databases --exclude mt ${STAGING_DIRECTORY} ${NODE}:${TARGET_DIRECTORY}
+  if ssh ${STAGING_NODE} "rsync -Ca --exclude databases --exclude mt ${SITE_TARGET_DIRECTORY} ${NODE}:${SITE_TARGET_DIRECTORY}"
+  then
+    success "Successfully pushed software onto ${NODE}..."
+  else
+    failure "Pushing software onto ${NODE} failed..."
+    exit
+  fi
+done
+
+# Is a restart necessary?
+if [ "${DO_RESTART}" ]
+then
+   ./restart_services.sh
+fi
+
+exit
+
+
+
+
+
+# Original: not necessary to pass through brie3
+alert "Pushing software onto nodes..."
+for NODE in ${SITE_NODES}
+do
+  alert " Updating ${NODE}..."
+  if rsync -Ca --exclude databases --exclude mt ${SITE_STAGING_DIRECTORY} ${NODE}:${SITE_TARGET_DIRECTORY}
   then
     success "Successfully pushed software onto ${NODE}..."
   else

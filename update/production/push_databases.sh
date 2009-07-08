@@ -6,6 +6,9 @@
 # (both keys and config). You will also need to be a member
 # of the acedb and mysql groups.
 
+# Pull in my configuration variables shared across scripts
+source update.conf
+
 VERSION=$1
 
 if [ ! "$VERSION" ]
@@ -13,8 +16,6 @@ then
   echo "Usage: $0 WSXXX"
   exit
 fi
-
-SEPERATOR="==========================================="
 
 function alert() {
   msg=$1
