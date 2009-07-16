@@ -64,10 +64,10 @@ chdir '/usr/local/wormbase-production/html';
 rsync('/usr/local/wormbase/html/strains .');
 
 # Finally, keep the build dir in sync with the nodes
-chdir '/usr/local/wormbase-lib';
-rsync('. vab\:\/usr\/local\/wormbase-lib');
-rsync('. gene\:\/usr\/local\/wormbase-lib');
-rsync('. blast\:\/usr\/local\/wormbase-lib');
-rsync('. aceserver\:\/usr\/local\/wormbase-lib');
-rsync('. be1\:\/usr\/local\/wormbase-lib');
-rsync('. brie6\:\/usr\/local\/wormbase-lib');
+#chdir '/usr/local/wormbase-lib';
+#rsync('. vab\:\/usr\/local\/wormbase-lib');
+#rsync('. gene\:\/usr\/local\/wormbase-lib');
+#rsync('. blast\:\/usr\/local\/wormbase-lib');
+#rsync('. aceserver\:\/usr\/local\/wormbase-lib');
+#rsync('. be1\:\/usr\/local\/wormbase-lib');
+#rsync('. brie6\:\/usr\/local\/wormbase-lib');
