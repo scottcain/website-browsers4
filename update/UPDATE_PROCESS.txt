@@ -17,18 +17,21 @@ Notes:
 
 Prepare for update:
 -----------------------------------------------------
-1. Update wormbase/cgi-perl/lib/RSS/ObjectHistory.pm with release date
+1. Update wormbase/website-classic/cgi-perl/lib/RSS/ObjectHistory.pm with release date
    so feeds can be generated.
 
 2. update standard urls with release data - do manually
 
-	/usr/local/wormbase/html/standard_urls/standard_urls.xml
+	/usr/local/wormbase/website-classic/html/standard_urls/standard_urls.xml
 
 	The standard URLs directory is located on brie6 and
 	maintained automatically by cron.
 	maintenance/maintain_standard_urls.pl
 
 3. Checkout new updates in brie3:wormbase-production; reconcile conflicts
+
+  cd /usr/local/wormbase/website-classic-staging
+  cvs -n update > /usr/local/wormbase/logs/production_updates/WSXXX.log
 
 4. Tag the software
    
