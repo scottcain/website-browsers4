@@ -32,13 +32,9 @@ function success() {
 }
 
 
-
-
-
-
 # Original: not necessary to pass through brie3
 alert "Pushing software onto ${STAGING_NODE}"
-if rsync -Ca --exclude databases --exclude mt ${SITE_STAGING_DIRECTORY} ${STAGING_NODE}:${SITE_TARGET_DIRECTORY}
+if rsync -Cav --exclude localdefs.pm --exclude cache/ --exclude session/ --exclude databases/ --exclude tmp/ --exclude ace_images/ --exclude mt/ ${SITE_STAGING_DIRECTORY}/ ${STAGING_NODE}:${SITE_TARGET_DIRECTORY}
   then
     success "Successfully pushed software onto ${STAGING_NODE}..."
   else
@@ -51,7 +47,7 @@ alert "Pushing software onto nodes..."
 for NODE in ${SITE_NODES}
 do
   alert " Updating ${NODE}..."
-  if ssh ${STAGING_NODE} "rsync -Ca --exclude databases --exclude mt ${SITE_TARGET_DIRECTORY} ${NODE}:${SITE_TARGET_DIRECTORY}"
+  if ssh ${STAGING_NODE} "rsync -Cav --exclude localdefs.pm --exclude cache --exclude session/ --exclude databases/ --exclude mt/ --exclude tmp/ --exclude ace_images/ ${SITE_TARGET_DIRECTORY}/ ${NODE}:${SITE_TARGET_DIRECTORY}"
   then
     success "Successfully pushed software onto ${NODE}..."
   else
