@@ -20,10 +20,9 @@ my %servers = (
 #	       unc       => 'vab.wormbase.org',
 ###	       unc       => 'vab.wormbase.org:8080',
 	       crestone  => 'crestone.cshl.edu:8080',
-#	       gene      => 'gene.wormbase.org:8080',
-	       gene      => 'vab.wormbase.org:8080',
+	       gene      => 'gene.wormbase.org:8080',
+#	       gene      => 'vab.wormbase.org:8080',
 	       vab       => 'vab.wormbase.org:8080',
-###	       vab       => 'vab.wormbase.org',
 ###	       vab      => 'gene.wormbase.org:8080',
 	       'local'   => 'brie6.cshl.org:8080',
 	       biomart   => 'biomart.wormbase.org',
@@ -168,24 +167,13 @@ while (<>) {
 	# Where should gbrowse go?
 	# Should we send it all to brie3?
     } elsif ($uri =~ /seq\/gbrowse/ || $uri =~ /gbrowse\/tmp/ || $uri =~ /gbgff/ 
-	     || $uri =~ /ace_images\/gbrowse/ || $uri =~ /gbrowse_img/ || $uri =~ /aligner/) {
+	     || $uri =~ /tmp\/gbrowse/ || $uri =~ /gbrowse_img/ || $uri =~ /aligner/) {
 #	$destination = $servers{vab};
 	$destination = $servers{brie3};
 	print ERR "1 routing to: $destination $uri\n" if DEBUG;
-    } elsif ($uri =~ /api\/citeulike/) {
-	$destination = $servers{gene};
-#    } elsif ($uri =~ /freezes/ || $uri =~ /vmx/) {
-#	if ($uri =~ /vmx/) {
-# 	    $destination = $servers{unc}
-#	} else {
-##	    $destination = 'ws170.wormbase.org';
-#	}
 
-	# Send the gene page to brie6. Geez, we almost need a server just for that.
-    } elsif ($uri =~ /gene\/gene/) {	 	
-	# Let's send most httpd requests to vab instead.
-#	$destination = $servers{unc};
-#	$destination = $servers{gene};
+	# Send the gene and sequence pages to vab.
+    } elsif ($uri =~ /gene\/gene/) {
 	$destination = $servers{vab};
 
     } elsif ($uri =~ /stats/ && $uri !~ /database/ && $uri !~ /forum/) {
@@ -194,6 +182,7 @@ while (<>) {
 
 	#  A bit of a misnomer - let gene handle variation, protein, and sequence. Heh.
     } elsif ($uri =~ /gene\/variation/
+	     || $uri =~ /seq\/sequence/
 	     || $uri =~ /gene\/strain/
 	     || $uri =~ /ontology/
 	     || $uri =~ /protein/
@@ -202,12 +191,12 @@ while (<>) {
 # for revealing identity of back end machine for images.
 #	     || $uri =~ /seq\/protein/
 #	     || $uri =~ /ace_images\/elegans/
-	     || $uri =~ /seq\/sequence/
 	     || $uri =~ /seq\/clone/ 
 	     || $uri =~ /misc\/person/
 	     || $uri =~ /misc\/paper/
 	     || $uri =~ /cell/
-	     || $uri =~ /db\/misc\/session/     # session management
+	     || $uri =~ /db\/misc\/session/  # session management
+	     || $uri =~ /api\/citeulike/
 	     ) {
 
 	$destination = $servers{gene};
