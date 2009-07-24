@@ -2,9 +2,16 @@
 #this is appropriate for a typical redhat system
 #will need to be modified for others
 
+$HOSTNAME=`hostname`;
+$PIDFILE='/etc/httpd/run/httpd.pid';
+
+
+if ($HOSTNAME =~ /wb\-dev/) {
+  $PIDFILE='/var/run/apache2.pid';
+}
+
 $LOGPATH    = '/usr/local/wormbase/logs';
-#$PIDFILE    = '/var/run/apache2.pid';
-$PIDFILE    = '/etc/httpd/run/httpd.pid';
+
 $MAXCYCLE   = 7;
 $GZIP       = '/usr/bin/gzip';
 
