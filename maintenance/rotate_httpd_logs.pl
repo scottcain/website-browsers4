@@ -3,7 +3,8 @@
 #will need to be modified for others
 
 $LOGPATH    = '/usr/local/wormbase/logs';
-$PIDFILE    = '/var/run/apache2.pid';
+#$PIDFILE    = '/var/run/apache2.pid';
+$PIDFILE    = '/etc/httpd/run/httpd.pid';
 $MAXCYCLE   = 7;
 $GZIP       = '/usr/bin/gzip';
 
