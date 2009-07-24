@@ -7,6 +7,8 @@ use FindBin qw($Bin);
 use IO::File;
 our $AUTOLOAD;
 
+## test
+
 my %config =  (
 	       root => '/usr/local/wormbase',
 	       
@@ -19,7 +21,7 @@ my %config =  (
 	       mirror_dir => '/tmp/temporary_update_dir',
 	       
 	       # acedb and mysql
-	       acedb_root     => '/usr/local/acedb',
+	       acedb_root     => '/usr/local/wormbase/acedb/',
 	       mysql_data_dir => '/usr/local/mysql/data',
 	       
 	       # FTP server access
@@ -30,7 +32,7 @@ my %config =  (
 	       
 	       # Local FTP server
 	       ftp_root            => '/usr/local/ftp',	       
-	       local_ftp_path      => 'pub/wormbase',
+               local_ftp_path      => 'pub/wormbase',
 
 	       # Filenames on the FTP site
 	       filenames => { generic => {
@@ -110,6 +112,12 @@ my %config =  (
 #		       remote_dna_filename     => 'pacificus.dna.gz',
 		       remote_protein_filename => 'ppapep.%s.fa.gz',
 		   },
+ 		   # added for WS204 and up...
+ 		   m_hapla => {
+ 		       #remote_gff2_filename    => '',
+		       remote_dna_filename     => 'm_hapla.%s.dna.gz'
+ 		   },
+
 	       },
 	       fatonib => '/usr/local/blat/bin/faToNib',
 	       
@@ -210,7 +218,7 @@ sub mirror_directory {
     $self->logit->info("  mirroring directory $path from $ftp_server to $local_mirror_path");
     chdir $local_mirror_path or $self->logit->logdie("cannot chdir to local mirror directory: $local_mirror_path");
     
-    my $ftp = Net::FTP::Recursive->new($ftp_server, Debug => 0) or $self->logit->logdie("can't instantiate Net::FTP object");
+    my $ftp = Net::FTP::Recursive->new($ftp_server, Debug => 0, Passive => 1) or $self->logit->logdie("can't instantiate Net::FTP object");
     $ftp->login('anonymous', $contact_email) or $self->logit->logdie("cannot login to remote FTP server");
     $ftp->binary()                           or $self->logit->warn("couldn't switch to binary mode for FTP");
     $ftp->cwd($path)                         or $self->logit->error("cannot chdir to remote dir ($path)") && return;
@@ -233,7 +241,7 @@ sub mirror_file {
     my $cwd = getcwd();
     chdir $local_mirror_path or $self->logit->warn("cannot chdir to local mirror directory: $local_mirror_path");
     
-    my $ftp = Net::FTP->new($ftp_server, Debug => 0) or $self->logit->logdie("cannot construct Net::FTP object");
+    my $ftp = Net::FTP->new($ftp_server, Debug => 0, Passive => 1) or $self->logit->logdie("cannot construct Net::FTP object");
     $ftp->login('anonymous', $contact_email) or $self->logit->logdie("cannot login to remote FTP server");
     $ftp->binary()                           or $self->logit->warn("couldn't switch to binary mode for FTP");
     $ftp->cwd($path)                         or $self->logit->error("cannot chdir to remote dir ($path)");
