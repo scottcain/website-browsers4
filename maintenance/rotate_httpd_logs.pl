@@ -8,6 +8,8 @@ $PIDFILE='/etc/httpd/run/httpd.pid';
 
 if ($HOSTNAME =~ /wb\-dev/) {
   $PIDFILE='/var/run/apache2.pid';
+} elsif ($HOSTNAME =~ /aceserver/) {
+    $PIDFILE = '/usr/local/apache2/logs/httpd.pid';
 }
 
 $LOGPATH    = '/usr/local/wormbase/logs';
