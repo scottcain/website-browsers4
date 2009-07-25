@@ -1,0 +1,304 @@
+#!/bin/sh
+#	Errors levels returned by this script :
+#	0  - success
+#	1  - 
+# 	2  - usage error
+#	3  - squid not started, already running
+#	4  - squid not stopped, not running
+#	5  - squid could not be stopped
+#	6  - squid could not be started
+#	10 - reload attempt, but squid is not running
+#	11 - parsing configuration but squid is not running 
+#	12 - failed to reconfigure squid. try a parse first.
+#
+# Normally squid is reconfigured on the fly. I found no reason to 
+# include a restart option
+#
+###########################################################################
+#
+#
+MACHINE=`uname -n`
+
+# squid pid file
+SQUID_PID=/usr/local/squid/var/logs/squid.pid
+#
+# squid binary
+SQUID=/usr/local/squid/sbin/squid
+#
+# squid configuration file.
+#SQUIDCONF=/usr/local/wormbase-admin/squid/etc/squid.${MACHINE}.conf
+SQUIDCONF=/home/todd/projects/wormbase/admin/squid/etc/squid.${MACHINE}.conf
+
+SQUIDSTART="$SQUID -s -f $SQUIDCONF"
+#
+# 
+# squid defines a shutdown timeout to wait for sockets to close. For a clean 
+# shutdown of the cache, we will issue a shutdown command then wait this many
+# seconds + 1 for this to complete. 
+# A kill by rc.6 often leaves the PID file and squid won't start at next boot.
+HOWLONG=`cat $SQUIDCONF | grep "shutdown_lifetime" | cut -f 2 -d " "`
+HOWLONG2=`expr $HOWLONG + 5`
+#
+#
+ERROR=0
+ARGV="$@"
+#
+# No parameters ?
+#
+if [ "x$ARGV" = "x" ]; then
+    ARGS="help"
+fi
+        
+for ARG in $@ $ARGS
+do
+    # check for pid file
+    if [ -f $SQUID_PID ]; then
+	PID=`cat $SQUID_PID`
+	if [ "x$PID" != "x" ] && kill -0 $PID 2>/dev/null ; then
+	    STATUS="squid (pid $PID) running"
+	    RUNNING=1
+	else
+	    STATUS="squid (pid $PID?) not running"
+	    RUNNING=0
+	fi	
+    else 
+        STATUS="squid (no pid) not running"
+        RUNNING=0
+    fi
+	
+    case $ARG in
+    parse)
+	if [ $RUNNING -eq 0 ]; then
+	    echo "$0 $ARG: squid (pid $PID) not running"
+	    ERROR=11
+	    continue
+	fi
+#
+# Parse squid configuration. Errors are allowed, it is the purpose of this command	
+#    
+	$SQUID -k parse  
+	;;
+    reload)
+	if [ $RUNNING -eq 0 ]; then
+	    echo "$0 $ARG: squid (pid $PID) not running"
+	    ERROR=10
+	    continue
+	fi
+	if $SQUID -k reconfigure ; then
+	    echo "$0 $ARG: squid (pid $PID) reconfigured"
+	else
+	    echo "$0 $ARG: unable to reconfigure squid (pid $PID)"
+	    ERROR=12	
+	fi	    	
+	;;
+    resetcache)
+        if [ $RUNNING -eq 0 ]; then
+            echo "$0 $ARG: $STATUS"
+            ERROR=4
+            continue
+        fi
+        if $SQUID -k shutdown ; then
+            sleep $HOWLONG2
+            #
+            # Is squid PID file still present ? (It shouldn't)
+            #  
+            if [ -f $SQUID_PID ]; then
+                echo "$0 $ARG: failed to stop squid (pid $PID)"
+                ERROR=5
+                continue
+            else
+                echo "$0 $ARG: squid (pid $PID) stopped"
+                RUNNING=0
+            fi
+        else
+            echo "$0 $ARG: failed to stop squid (pid $PID)"
+            ERROR=5
+            continue
+        fi
+  
+      # Reset the swap.state file
+      chmod 666 /usr/local/squid/var/cache/swap.state
+      echo '' > /usr/local/squid/var/cache/swap.state
+      chmod 644 /usr/local/squid/var/cache/swap.state 
+      echo "$0 $ARG: cache cleared and reset"
+
+     # Now restart
+     if [ $RUNNING -eq 1 ]; then
+          echo "$0 $ARG: squid (pid $PID) already running"
+          ERROR=3
+          continue
+      fi   
+       if $SQUIDSTART; then
+            echo "$0 $ARG: squid started"
+       else
+           echo "$0 $ARG: starting squid failed"
+           ERROR=6
+       fi
+       ;;
+
+    deletelogs)
+        if [ $RUNNING -eq 0 ]; then
+            echo "$0 $ARG: $STATUS"
+            ERROR=4
+            continue
+        fi
+        if $SQUID -k shutdown ; then
+            sleep $HOWLONG2
+            #
+            # Is squid PID file still present ? (It shouldn't)
+            #
+            if [ -f $SQUID_PID ]; then
+                echo "$0 $ARG: failed to stop squid (pid $PID)"
+                ERROR=5
+                continue
+            else
+                echo "$0 $ARG: squid (pid $PID) stopped"
+                RUNNING=0
+            fi
+        else
+            echo "$0 $ARG: failed to stop squid (pid $PID)"
+            ERROR=5
+            continue
+        fi 
+ 
+        rm -rf /usr/local/squid/logs/*
+        echo "$0 $ARG: deleting logs"
+
+     # Now restart
+     if [ $RUNNING -eq 1 ]; then
+          echo "$0 $ARG: squid (pid $PID) already running"
+          ERROR=3
+          continue
+      fi
+       if $SQUIDSTART; then
+            echo "$0 $ARG: squid started"
+       else
+           echo "$0 $ARG: starting squid failed"
+           ERROR=6
+       fi    
+
+       ;;
+
+    fullreset)
+        if [ $RUNNING -eq 0 ]; then
+            echo "$0 $ARG: $STATUS"
+            ERROR=4
+            continue
+        fi
+        if $SQUID -k shutdown ; then
+            sleep $HOWLONG2
+            #
+            # Is squid PID file still present ? (It shouldn't)
+            #
+            if [ -f $SQUID_PID ]; then
+                echo "$0 $ARG: failed to stop squid (pid $PID)"
+                ERROR=5
+                continue
+            else
+                echo "$0 $ARG: squid (pid $PID) stopped"
+                RUNNING=0
+            fi
+        else
+            echo "$0 $ARG: failed to stop squid (pid $PID)"
+            ERROR=5
+            continue
+        fi      
+      # Reset the swap.state file  
+      chmod 666 /usr/local/squid/var/cache/swap.state
+      echo '' > /usr/local/squid/var/cache/swap.state
+      chmod 644 /usr/local/squid/var/cache/swap.state
+      echo "$0 $ARG: cache cleared and reset"
+
+     # Delete logs
+     rm -rf /usr/local/squid/logs/*
+     echo "$0 $ARG: deleting logs"              
+
+     # Now restart
+     if [ $RUNNING -eq 1 ]; then
+          echo "$0 $ARG: squid (pid $PID) already running"
+          ERROR=3
+          continue
+      fi
+       if $SQUIDSTART; then
+            echo "$0 $ARG: squid started"
+       else
+           echo "$0 $ARG: starting squid failed"
+           ERROR=6
+       fi   
+       ;;
+
+    stop)
+        if [ $RUNNING -eq 0 ]; then
+	    echo "$0 $ARG: $STATUS"
+	    ERROR=4
+	    continue
+	fi
+#
+# Don't know why a simple kill doesn't always work. PID file and other things 
+# remain and squid will refuse to start.
+# 
+# This is the proper way to stop squid. Put this in your shutdown scripts
+#	    
+	if $SQUID -k shutdown ; then
+	    sleep $HOWLONG2
+	    #
+	    # Is squid PID file still present ? (It shouldn't)
+	    #
+	    if [ -f $SQUID_PID ]; then
+	        echo "$0 $ARG: failed to stop squid (pid $PID)"
+		ERROR=5
+		continue
+	    else	     
+	        echo "$0 $ARG: squid (pid $PID) stopped"
+	    fi	
+	else 
+	    echo "$0 $ARG: failed to stop squid (pid $PID)"
+	    ERROR=5
+	    continue
+	fi	 	
+	;;
+    start)
+        if [ $RUNNING -eq 1 ]; then
+    	    echo "$0 $ARG: squid (pid $PID) already running"
+	    ERROR=3
+	    continue
+	fi
+	if $SQUIDSTART ; then
+	     echo "$0 $ARG: squid started"
+	else
+	    echo "$0 $ARG: starting squid failed"
+	    ERROR=6
+	fi
+	;;
+    status)
+        echo $STATUS
+        continue
+        ;;
+    help)
+        echo "usage: $0 (start|stop|reload|parse|status|help)"
+        cat <<EOF
+	    
+start	   - start squid
+stop	   - stop squid
+reload	   - reload squid configuration
+resetcache - reset the squid cache
+deletelogs - delete the squid httpd-style logs
+fullreset  - reset cache and delete logs
+parse	   - test squid configuration file
+status	   - is squid running?
+help	   - this help message
+
+EOF
+        ERROR=2
+        ;;
+    *)
+        echo "usage: $0 (start|stop|reload|parse|status|resetcache|deletelogs|fullreset|help)"
+        echo "say $0 help for a command summary"
+        ERROR=2
+    esac
+done
+
+exit $ERROR
+
+
+
