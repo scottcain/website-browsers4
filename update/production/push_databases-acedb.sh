@@ -39,7 +39,7 @@ then
   success "Successfully pushed acedb onto ${STAGING_NODE}"
 
    # Set up the symlink
-   if ssh ${STAGING_NODE} "cd ${ACEDB_ROOT}; rm elegans;  ln -s ${ACEDB_DIR} elegans"
+   if ssh ${STAGING_NODE} "cd ${ACEDB_ROOT}; rm wormbase;  ln -s ${ACEDB_DIR} wormbase"
    then
          success "Successfully symlinked elegans -> ${ACEDB_DIR}"
    else
@@ -67,7 +67,7 @@ do
     success "Successfully pushed acedb onto ${NODE}"
 
     # Set up the symlink
-    if ssh ${STAGING_NODE} "ssh ${NODE} 'cd ${ACEDB_ROOT}; rm elegans;  ln -s ${ACEDB_DIR} elegans'"
+    if ssh ${STAGING_NODE} "ssh ${NODE} 'cd ${ACEDB_ROOT}; rm wormbase;  ln -s ${ACEDB_DIR} wormbase'"
     then
 	  success "Successfully symlinked elegans -> ${ACEDB_DIR}"
     else
@@ -87,9 +87,12 @@ do
   fi
 done
 
-
-
 exit
+
+
+
+
+
 # Original: when not necessary to pass through intermediate staging server
 for NODE in ${ACEDB_NODES}
 do
