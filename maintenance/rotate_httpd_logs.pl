@@ -3,12 +3,11 @@
 #will need to be modified for others
 
 $HOSTNAME=`hostname`;
+
 $PIDFILE='/etc/httpd/run/httpd.pid';
-
-
 if ($HOSTNAME =~ /wb\-dev/) {
-  $PIDFILE='/var/run/apache2.pid';
-} elsif ($HOSTNAME =~ /aceserver/) {
+    $PIDFILE='/var/run/apache2.pid';
+} else {
     $PIDFILE = '/usr/local/apache2/logs/httpd.pid';
 }
 
