@@ -2,7 +2,8 @@
 use strict;
 $|++;  # VERY IMPORTANT! Do not buffer output
 
-use constant DEBUG => 0;
+use constant DEBUG => 1;
+use constant DEBUG_FULL => 0;
 
 open ERR,">>/usr/local/squid/var/logs/redirector.debug" if DEBUG;
 
@@ -12,50 +13,28 @@ open ERR,">>/usr/local/squid/var/logs/redirector.debug" if DEBUG;
 #$servers{crestone} = 'crestone.cshl.edu:8080;
 #$servers{biomart}  = 'biomart.wormbase.org';
 
-
 my %servers = (
 	       aceserver => 'aceserver.cshl.org:8080',
 	       blast     => 'blast.wormbase.org:8080',
 	       unc       => 'unc.wormbase.org:8080',
-#	       unc       => 'vab.wormbase.org',
-###	       unc       => 'vab.wormbase.org:8080',
 	       crestone  => 'crestone.cshl.edu:8080',
 	       gene      => 'gene.wormbase.org:8080',
-#	       gene      => 'vab.wormbase.org:8080',
 	       vab       => 'vab.wormbase.org:8080',
-###	       vab      => 'gene.wormbase.org:8080',
 	       'local'   => 'brie6.cshl.org:8080',
 	       biomart   => 'biomart.wormbase.org',
 	       nbrowse   => 'gene.wormbase.org:9002',
 	       nbrowsejsp => 'gene.wormbase.org:9022',
 	       
-	       # Where we are serving static content from
-#	       static    => 'gene.wormbase.org:8080',
+	       # Where we are serving static content from (not currently in use)
 	       static    => 'vab.wormbase.org:8080',
-	       
-	       # Servers converted to the new directory layout
+
 	       freeze1   => 'freeze1.wormbase.org:8080',
 	       freeze2   => 'freeze2.wormbase.org:8080',
 	       
-	       brie3     => 'brie3.cshl.org:8080',
-	       
+	       brie3     => 'brie3.cshl.org:8080',       
 	       be1       => 'be1.wormbase.org:8080',
 	       
 	       );
-
-my %uris2servers = (
-		    '/db/gene/antibody/'   => 'freeze1',
-		    '/db/gene/operon/'     => 'freeze1',
-		    '/db/gene/gene_class/' => 'freeze1',
-		    '/db/gene/motif/'      => 'freeze1',
-		    '/db/gene/regulation/' => 'freeze1',
-		    '/db/misc/site_map/'   => 'freeze1',
-		    '/protein/'            => 'freeze1',
-		    );
-
-
-
-# URIs matching these values will be sent to brie6
 
 # Conditionally set destinations depending on which server we are running.
 # This is simply for emergency purposes if we happen to be running squid on vab or gene.
@@ -67,244 +46,289 @@ while (<>) {
     ($uri,$client,$ident,$method) = split();
     
     my $request = $_;
-    if (DEBUG) {
+    
+    if (DEBUG_FULL) {
 	print ERR "REQUEST: $request\n";
 	print ERR "URI    : $uri\n";
 	print ERR "CLIENT : $client\n\n";
     }
     
-    
     # next unless ($uri =~ m|^http://roundrobin.wormbase.org/(\S*)|);
-    my ($params) = $uri =~ m|^http://.*\.org/(\S*)|;
     
-    my $destination; 
+    # Parse out params from the URI
+    my ($params) = $uri =~ m{^http://.*\.org/(\S*)};
     
-    # Relocated from below - I really hope this doesn't kill anything!
-    # Send blast, blat, and epcr queries to blast.wormbase.org
-    # Blast, BLat, E-pcr
-    if ($uri =~ /searches\/blat/ || $uri =~ /blast_blat/ || $uri =~ /searches\/epcr/ || $uri =~ /panzea/
-	|| $uri =~ /searches\/strains/) {
-	$destination = $servers{blast};
+    # Set up the default destiation
+    my $destination = $servers{brie3};
+    
+    # Instead of a bunch of insane conditional if/else statements,
+    # we will bomb out of the while as soon as we find a good URL.
+    # This still requires soe careful ordering of request evaluation
+    # but it is easier to follow and cleaner code.
+    
+    ##########################################################
+    #
+    #  The computationally intensive gene page
+    #  Check for it first since this is the most prominent request
+    if ($uri =~ m{gene/gene}) {
+	$destination = $servers{be1};
+	print ERR "Routing Gene Page query ($uri) to $destination\n" if DEBUG;
+	$uri = "http://$destination/$params";
+	next;
+    }
+    
+    
+    ##########################################################
+    #
+    #  Dynamic images, specific to generating back-end server
+    #  Server keywords are embedded in the URL and less than 
+    #  6 letters in length forum images are handled elsewhere.
+    #  Currently this INCLUDES GBrowse images.
+    if (($uri =~ m{img/(.*?)/} && $1 < 10 && $uri !~ m{gbrowse_img} && $uri !~ m{forums}
+	 && $uri !~ m{mckay})
+	||
+	($uri =~ m{images/gbrowse/(.*?)/} && $1 < 10 && $uri !~ m{gbrowse_img} && $uri !~ m{forums}
+	 && $uri !~ m{mckay})
+	|| 
+	($uri =~ m{dynamic_images/(.*?)/} && $1 < 10)
 	
-	
-	# Standard URLs
-    } elsif ($uri =~ /genome/) {
-	$destination = $servers{unc};
-	
-	# First, let's map dynamically generated images to their correct backend server
-	# based on the server name stub stashed in the URL
-	# This will NOT include gbrowse images
-#    if ($uri =~ /img\/(.*?)\// && $uri !~ /ace_images\/gbrowse/) {
-	# Server keywords are less than 6 letters in length
-    } elsif (($uri =~ /img\/(.*?)\// && $1 < 10 && $uri !~ /gbrowse_img/ && $uri !~ /forums/
-	      && $uri !~ /mckay/)
-	     ||
-	     ($uri =~ m|images/gbrowse/(.*?)/| && $1 < 10 && $uri !~ /gbrowse_img/ && $uri !~ /forums/
-	      && $uri !~ /mckay/)
-	     || 
-	     ($uri =~ m|dynamic_images/(.*?)/| && $1 < 10)
-	     ||
-	     ($uri =~ m|tmp/gbrowse/(.*?)/| && $1 < 10)
-	     ) {
+	# Uncomment to INCLUDE gbrowse generated images
+	||
+	($uri =~ m{tmp/gbrowse/(.*?)/} && $1 < 10)
+	) {
 	
 	# mckay is tempo hack for images for the blast_blat page. Ugh.
 	my $server = $1;
 	$destination = $servers{$server};
 	
-	print ERR "URI: $uri\n";
-	print ERR "SERVER:  $server\n";
-	print ERR "DESTINATION: $destination\n";	
-	
-	# Redirect WormMart queries to biomart.wormbase.org
-	# ARRGGH!  All sorts of various javascript paths around
-	# Make sure these requests don't end up at blast.wormbase.org
-    } elsif ($uri =~ /biomart/i || $uri =~ /martview/ || $uri =~ /gfx/
-	     || ($uri =~ /Multi/i && $uri !~ /tree/)) {
-#	     || ($uri =~ /js/ && $uri !~ /gbrowse\/js/ && $uri !~ /mt\-static/ && $uri !~ /nbrowse/)
-#	     || $uri =~ /Biomart/i
-#	     || $uri =~ /gfx/
-#	     || $uri =~ /EnsEMBL\.css/i
-#	     || $uri =~ /EnsEMBL\-mac\.css/i
-#	     || $uri =~ /martview/i) {
-	
-	$params =~ s|/Multi/martview|/biomart/martview|;
-	
-	$destination = $servers{biomart};
-	
-	
-	
-    } elsif ($uri =~ /images\/expression/ || $uri =~ /db\/gene\/expression/) {
-	$destination = $servers{static};
-	
-	
-	
-    ##########################################################
-    #
-    #  brie3: the genome browser
-	
-    } elsif ($uri =~ /seq\/gbrowse/ || $uri =~ /gbrowse\/tmp/ || $uri =~ /gbgff/ 
-	     || $uri =~ /tmp\/gbrowse/ || $uri =~ /gbrowse_img/ || $uri =~ /aligner/) {
-#	$destination = $servers{vab};
-	$destination = $servers{brie3};
-	print ERR "1 routing to: $destination $uri\n" if DEBUG;
-	
-	
-    ##########################################################
-    #
-    # vab: gene pages and some cruft below
-	
-    } elsif ($uri =~ /gene\/gene/) {
-	$destination = $servers{vab};
-	
-	
-   ##########################################################
-   #
-   #  be1: sequence and some small things
-    } elsif (
-	     $uri =~ /seq\/sequence/
-	     || $uri =~ /seq\/clone/ 
-	     || $uri =~ /misc\/paper/
-	     || $uri =~ /cell/
-	     || $uri =~ /misc\/person/
-	     ) {
-
-        # back to gene for now
-	$destination = $servers{be1};
+	print ERR "Routing dynamic images ($uri) to $destination\n" if DEBUG;
+	$uri = "http://$destination/$params";
+	next;
+    }	
     
-   
-   ##########################################################
-   #
-   # gene: variation and few others
-
-    } elsif ($uri =~ /gene\/variation/
-	     || $uri =~ /gene\/strain/
-	     || $uri =~ /ontology/
-# seq/protein and ace_images need to be generated on the same server
-# since the protein script does not generate a suitable URL
-# for revealing identity of back end machine for images.
-#	     || $uri =~ /seq\/protein/
-#	     || $uri =~ /ace_images\/elegans/
-	     || $uri =~ /db\/misc\/session/  # session management
-	     || $uri =~ /api\/citeulike/
-	     ) {
-
-	$destination = $servers{gene};
-
-	# Whoops! Squid is running on gene.  Something has gone horribly wrong with fe.wormbase.org
-	# Change the destination for these scripts to vab
-	$destination = $servers{vab} if $server_name =~ /gene/i;
-
-    } elsif ($uri =~ /geomap/ || $uri =~ /geo_map/ || $uri =~ /misc\/wb_people/) {
-	$destination = $servers{gene};
-
-   
-   ##########################################################
-   #
-   #  unc: static content, blogs, rsss
-    } elsif ($uri =~ /stats/ && $uri !~ /database/ && $uri !~ /forum/) {
-	$destination = $servers{unc};
-
-    # Blog, RSS, static content
-    } elsif ($uri =~ /movable/ || $uri =~ /mt\-static/ || $uri =~ /mt\//
-	     || $uri =~ /rss/
-	     || $params eq 'index.html' || $params eq '') {
-	$destination = $servers{unc};
-
-    # The autocomplete database and gbrowse js
-    # This should be available on all backend machines
-    } elsif ($uri =~ /autocomplete/) {
-	$destination = $servers{unc};
+    
+    ##########################################################
+    #
+    #  The Genome Browser and components,
+    #  another often used page
+    
+    if (  $uri =~ m{seq/gbrowse} 
+	  || $uri =~ m{gbgff}
+#	  || $uri =~ m{tmp/gbrowse}    # temporary images; should possibly be included in dynamic images above
+	  || $uri =~ m{gbrowse/tmp}    # temporary images (old structure)
+	  || $uri =~ m{gbrowse_img}   
+	  || $params =~ m{^gbrowse}     # Gbrowse js must be served from same node?
+	  || $uri =~ m{aligner}  
+	  ) {
 	
-    } elsif ($uri =~ /gbrowse\/js/ || $params =~ /^js/) {
-	$destination = $servers{unc};
-
-    # Old mailarchives
-    } elsif ($uri =~ /mailarch/) {
-	$destination = $servers{unc};
+	$destination = $servers{brie3};
 	
-
-
-   ##########################################################
-   #
-   #  freeze1
-
-    } elsif (
-	        $uri =~ /\/db\/gene\/antibody/
-	     || $uri =~ /\/db\/gene\/operon/
-	     || $uri =~ /\/db\/gene\/gene_class/
-	     || $uri =~ /\/db\/gene\/motif/
-	     || $uri =~ /\/db\/gene\/regulation/
-	     || $uri =~ /\/db\/gene\/strain/
-	     || $uri =~ /\/db\/misc\/site_map/	    
-	     || $uri =~ /\/db\/seq\/protein/
-	     ) {
-	$destination = $servers{freeze1};
-
-   
-   ##########################################################
-   #
-   #  freeze2: offline. be1 handles person
-
-#    } elsif ( $uri =~ /misc\/person/ ) {
-#	
-#	$destination = $servers{freeze2};
-
-
-   ##########################################################
-   #
-   #  aceserver: misc queries
-
-    } elsif ($uri =~ /wb_query/ || $uri =~ /aql_query/ || $uri =~ /class_query/ || $uri =~ /cisortho/
-	     || $uri =~ /searches\/batch_genes/ || $uri =~ /searches\/advanced\/dumper/) {
-	$destination = $servers{aceserver};
-	
-
-   ##########################################################
-   #
-   #  crestone: wiki and forums
-
-    } elsif ($uri =~ /wiki/ || $uri =~ /.*\/rearch\/.*/ || $uri =~ /forums/) {
+	print ERR "Routing Genome Browser ($uri) to $destination\n" if DEBUG;
+	$uri = "http://$destination/$params";
+	next;
+    }
+    
+    
+    ##########################################################
+    #
+    #  crestone: wiki and forums
+    if ($uri =~ m{wiki} || $uri =~ m{forums}) {
 	$destination = $servers{crestone};
 	
 	# Hack to get around MediaWiki's weird redirect
 	$params = 'wiki/index.php/Main_Page' if $params eq 'wiki';
-
+	
 	# Catch problems with forum URLs too. Need to append the back slash.
 	$params = 'forums/' if $params eq 'forums';
-
+	
 	$destination = $servers{gene} if $uri =~ /inline_feed/;
-
-
-
-	####### MISC
-
-
-	# The cachemgr resides on the local host. Duh.
-    } elsif ($uri =~ /.*squid\/cachemgr\.cgi/) {
-	print "\n";
-	return;
-
-    } elsif ($uri =~ /nbrowse/i) {
-	$destination = 
-	    ($uri =~ /nbrowse_t/)
-	    ? $servers{nbrowsejsp}
-	: $servers{nbrowse};
-        # Catch problems with select URLs. Need to append the back slash.
-        $params = 'db/nbrowse/temp_data/' if $params eq 'db/nbrowse/temp_data';
-
-    } elsif ($uri =~ /\.html/ || $uri =~ /sitemap.*gz/ || $uri =~ /sitemap.*xml/) {
-	$destination = $servers{unc};
-
-
-
-
-    # Everything else to vab
-    } else {
-	$destination = $servers{vab};
+	
+	print ERR "Routing wiki/forum ($uri) to $destination\n" if DEBUG;
+	$uri = "http://$destination/$params";
+	next;
     }
     
+    
+    
+    ##########################################################
+    #
+    # Searches: blast, blat, epcr, and "strains"
+    if (  $uri =~ m{searches/blat}
+	  || $uri =~ m{blast_blat}
+	  || $uri =~ m{searches/epcr}
+	  || $uri =~ m{searches/strains}
+	  ) {
+	$destination = $servers{blast};
+	
+	print ERR "Routing blast/blat/epcr ($uri) to $destination\n" if DEBUG;
+	$uri = "http://$destination/$params";
+	next;
+    }
+    
+    
+    ##########################################################
+    #
+    #  Various static content; must come BELOW forum/wiki
+    #  Serve basically anything outside of /db from a single box.
+    #  This is mostly static content (gbrowse static handled above)
+    if (  $params !~ m{^db}) {
+	
+	# TODO: EVERYTHING EXCEPT FOR THE BLOG COULD BE RANDOM
+	$destination = $servers{unc};
+	
+	print ERR "Routing static content ($uri) to $destination\n" if DEBUG;
+	$uri = "http://$destination/$params";
+	next;
+    }
+    
+    
+    ##########################################################
+    #
+    #  Manually redistribute some CGIs (Tier I)
+    if (  $uri =~ m{searches/basic}
+	  || $uri =~ m{seq/sequence}	   
+	  || $uri =~ m{seq/clone}
+	  || $uri =~ m{misc/paper}
+	  || $uri =~ m{misc/person}
+	  || $uri =~ m{cell}
+	  ) {
+	
+	$destination = $servers{be1};
+	print ERR "Routing CGIs Tier I ($uri) to $destination\n" if DEBUG;
+	$uri = "http://$destination/$params";	    
+	next;	
+    }
+    
+    
+    ##########################################################
+    #
+    #  Manually redistribute some CGIs (Tier II)
+    if (   $uri =~ m{gene/variation}
+	   || $uri =~ m{gene/strain}
+	   || $uri =~ m{ontology}
+	   || $uri =~ m{db/misc/session}  # session management
+	   || $uri =~ m{api/citeulike}
+	   ) {
+	
+	$destination = $servers{gene};
+	print ERR "Routing CGIs Tier II ($uri) to $destination\n" if DEBUG;
+	$uri = "http://$destination/$params";	    
+	next;	
+    }
+    
+    
+    ##########################################################
+    #
+    #  Manually redistribute some CGIs (Tier III)    
+    if (   $uri =~ m{/db/gene/antibody}
+	   || $uri =~ m{/db/gene/operon}
+	   || $uri =~ m{/db/gene/gene_class}
+	   || $uri =~ m{/db/gene/motif}
+	   || $uri =~ m{/db/gene/regulation}
+	   || $uri =~ m{/db/gene/strain}
+	   || $uri =~ m{/db/misc/site_map}
+	   || $uri =~ m{/db/seq/protein}
+	   ) {
+	$destination = $servers{freeze1};
+	print ERR "Routing CGIs Tier III ($uri) to $destination\n" if DEBUG;
+	$uri = "http://$destination/$params";	    
+	next;	
+    }
+    
+    ##########################################################
+    #
+    #  Manually distribute some CGIs (Tier IV)
+#    if ( $uri =~ /misc\/person/ ) {
+#	
+#	$destination = $servers{freeze2};
+#	print ERR "Routing CGIs Tier III ($uri) to $destination\n" if DEBUG;
+#	$uri = "http://$destination/$params";	    
+#	next;	
+#    }
+
+    
+    ##########################################################
+    #
+    #  aceserver: miscellaneous programmatic queries
+    if (   $uri =~ m{wb_query} 
+	   || $uri =~ m{aql_query}
+	   || $uri =~ m{class_query} 
+	   || $uri =~ m{cisortho}
+	   || $uri =~ m{searches/batch_genes}
+	   || $uri =~ m{searches/advanced/dumper}
+	   ) {
+	$destination = $servers{aceserver};
+	
+	print ERR "Routing query request ($uri) to $destination\n" if DEBUG;
+	$uri = "http://$destination/$params";
+	next;
+    }
+    
+    
+    ##########################################################
+    #
+    #  biomart
+    if (   $uri  =~ m{biomart}i
+	   || $uri  =~ m{martview}
+	   || $uri  =~ m{gfx}
+	   || ($uri =~ m{Multi}i && $uri !~ m{tree})) {
+	
+	# Substitute old params for new
+	$params =~ s|/Multi/martview|/biomart/martview|;
+	
+	$destination = $servers{biomart};
+	
+	print ERR "Routing biomart ($uri) to $destination\n" if DEBUG;
+	$uri = "http://$destination/$params";
+	next;
+    }
+    
+    
+    ##########################################################
+    #
+    #  The cachemgr CGI resides on the localhost
+    if ($uri =~ m{.*squid/cachemgr\.cgi}) {
+	print "\n";
+	return;
+    }
+    
+
+    # This configuration hasn;'t been handled yet
+    if (0) {
+	if (1) {
+	    
+	    # This needs to be migrated
+	    # Standard URLs - NOT HANDLED
+	} elsif ($uri =~ /genome/) {
+	    $destination = $servers{unc};
+	    
+	} elsif ($uri =~ /db\/gene\/expression/) {
+	    $destination = $servers{vab};
+	    
+	    
+	    # This is probably unnecessary
+	    # The autocomplete database
+	    # This should be available on all backend machines
+	} elsif ($uri =~ /autocomplete/) {
+	    $destination = $servers{be1};
+	    
+	    ####### MISC
+	    
+	    # THis should probably be migrated
+	} elsif ($uri =~ /nbrowse/i) {
+	    $destination = 
+		($uri =~ /nbrowse_t/)
+		? $servers{nbrowsejsp}
+	    : $servers{nbrowse};
+	    # Catch problems with select URLs. Need to append the back slash.
+	    $params = 'db/nbrowse/temp_data/' if $params eq 'db/nbrowse/temp_data';
+	    
+	} else {}	
+    }
+    
+    print ERR "Routing fall-through: $uri to default server $destination\n" if DEBUG;    
     $uri = "http://$destination/$params";
-    print ERR "$uri\n" if DEBUG;
+    
 } continue {
     print "$uri\n";
 }
