@@ -3,7 +3,7 @@
 # Sync the 3rd party build directory to production nodes
 
 # Pull in shared variables
-source ../update/production/update.conf
+source /home/tharris/projects/wormbase/admin/update/production/update.conf
 
 USER=todd
 export RSYNC_RSH=ssh
