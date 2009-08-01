@@ -118,7 +118,7 @@ if [ $tomorrowMonth != $todayMonth ]; then
 
   if [ ! ${DEBUG} ]; then
 #    sudo -u ${USER} rsync -avz ${LOGDIR}/with_hosts/ ${USER}@${STATS_HOST}:/usr/local/acedb/wormbase_log_archive/with_hosts
-    sudo -u ${USER} rsync -avz ${LOGDIR}/with_hosts/ ${USER}@${STATS_HOST}:/home/todd/projects/wormbase/log_archive/with_hosts
+    sudo -u ${USER} rsync -avz --exclude *before_concatenation* --exclude=*.bak ${LOGDIR}/with_hosts/ ${USER}@${STATS_HOST}:/home/todd/projects/wormbase/log_archive/with_hosts
 #    sudo -u ${USER} rsync -avz ${LOGDIR}/raw/ ${USER}@${STATS_HOST}:/home/todd/projects/wormbase/log_archive/raw
 
     # Fire off the analyze_logs_by_month.sh script on a suitable macine
