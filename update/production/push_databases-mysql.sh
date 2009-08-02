@@ -42,7 +42,7 @@ alert "Pushing databases to the production staging server ${STAGING_NODE}..."
 for DB in ${MYSQL_DATABASES} 
 do
     TARGET=${DB}_${VERSION}
-    if rsync -Ca --exclude *bak* ${STAGING_MYSQL_DATA_DIR}/${TARGET} ${STAGING_NODE}:${TARGET_MYSQL_DATA_DIR}
+    if rsync -Cav --exclude *bak* ${STAGING_MYSQL_DATA_DIR}/${TARGET} ${STAGING_NODE}:${TARGET_MYSQL_DATA_DIR}
     then
       success "Successfully pushed ${DB} onto ${STAGING_NODE}"
       
@@ -78,7 +78,7 @@ do
   for DB in ${MYSQL_DATABASES} 
   do
     TARGET=${DB}_${VERSION}
-    if ssh ${STAGING_NODE} "rsync -Ca --exclude *bak* ${TARGET_MYSQL_DATA_DIR}/${TARGET} ${NODE}:${TARGET_MYSQL_DATA_DIR}"
+    if ssh ${STAGING_NODE} "rsync -Cav --exclude *bak* ${TARGET_MYSQL_DATA_DIR}/${TARGET} ${NODE}:${TARGET_MYSQL_DATA_DIR}"
     then
       success "Successfully pushed ${DB} onto ${NODE}"
       

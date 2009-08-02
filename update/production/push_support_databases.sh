@@ -35,17 +35,30 @@ function success() {
 
 
 alert "Pushing the support databases directory to the staging production node ${STAGING_NODE}"
-if rsync --progress -Ca --exclude *bak* \
-  	 --exclude blast \
-	 --exclude blat \
-		${SUPPORT_DB_DIRECTORY}/${VERSION} ${STAGING_NODE}:${SUPPORT_DB_DIRECTORY}
+#if rsync --progress -Ca --exclude *bak* \
+#  	 --exclude blast \
+#	 --exclude blat \
+#		${SUPPORT_DB_DIRECTORY}/${VERSION} ${STAGING_NODE}:${SUPPORT_DB_DIRECTORY}
+#then
+#       success "Successfully pushed support databases onto ${NODE}"
+#fi
+
+cd ${SUPPORT_DB_DIRECTORY}
+#tar czf ${VERSION}.tgz ${VERSION}
+if rsync --progress -Ca ${VERSION}.tgz ${STAGING_NODE}:${SUPPORT_DB_DIRECTORY}    
 then
-       success "Successfully pushed support databases onto ${NODE}"
+    success "Successfully push support databases onto ${STAGING_NODE}"
+else
+    failure "Could't push support databases onto ${STAGING_NODE}"
 fi
 
-
-
-
+# Unpack on the staging node
+if ssh ${STAGING_NODE} "cd /usr/local/wormbase/databases; tar xzf ${VERSION}.tgz"
+then 
+    success "Succesfully unpacked the support databases dir on ${STAGING_NODE}"
+else
+    failure "Couldn't unpack on the ${STAGING_NODE}"
+fi
 
 
 for NODE in ${SUPPORT_DB_NODES}
@@ -59,13 +72,14 @@ do
       		success "Successfully pushed support databases onto ${NODE}"
   	fi
    else
-	if ssh ${STAGING_NODE} rsync --progress -Ca --exclude *bak* \
-		--exclude blast \
-		--exclude blat \
-		${SUPPORT_DB_DIRECTORY}/${VERSION} ${NODE}:${SUPPORT_DB_DIRECTORY}
-  	then
-      		success "Successfully pushed support databases onto ${NODE}"
-  	fi
+      # Nobody else needs blast/blat
+      if ssh ${STAGING_NODE} rsync --progress -Ca --exclude *bak* \
+	  --exclude blast/ \
+	  --exclude blat/ \
+	  ${SUPPORT_DB_DIRECTORY}/${VERSION} ${NODE}:${SUPPORT_DB_DIRECTORY}
+      then
+      	  success "Successfully pushed support databases onto ${NODE}"
+      fi
    fi
 done
 

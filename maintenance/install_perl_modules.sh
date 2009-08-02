@@ -6,9 +6,8 @@
 
 # It does require some intervention.
 
-PROJECT=$1
-ROOT=/usr/local/wormbase
-EXTLIB=extlib
+EXTLIBPATH=$1
+DO_CATALYST=$2
 
 # Base set of modules
 MODULES=("LWP
@@ -31,6 +30,7 @@ MODULES=("LWP
           GD::SVG
           GD::Graph
           GD::Graph::pie
+          HTML::Entities
           HTML::TokeParser
           IO::Scalar
           IO::String
@@ -40,7 +40,6 @@ MODULES=("LWP
 	  Net::FTP::Recursive
           Proc::Simple
           Term::ReadKey
-          Search::Indexer
           SOAP::Lite
           Statistics::OLS
           Storable
@@ -60,14 +59,35 @@ MODULES=("LWP
           Data::Stag
           Log::Log4perl
           Flickr::API
+          Flickr::API::Simple
+          Bio::Perl
+          Bio::Graphics
+          Ace
+          Template
           mod_perl2
 ")
 
+CATALYST=("Task::Catalyst
+           Catalyst::Devel
+           Catalyst::Model::DBI
+           Catalyst::Model::Adaptor
+           Catalyst::Plugin::ConfigLoader
+           Catalyst::Plugin::Session
+           Catalyst::Plugin::Session::State
+           Catalyst::Plugin::Session::State::Cookie
+           Catalyst::Plugin::Session::Store::FastMMap
+           Catalyst::Action::RenderView
+           Catalyst::Action::Rest
+           Catalyst::Log::Log4perl
+           Test::YAML::Valid
+           ")
 
-if [ ! "$PROJECT" ]
+
+#          Search::Indexer  Problematic
+
+if [ ! "$EXTLIBPATH" ]
 then
-#  echo "Usage: $0 [classic|classic-gb2|2.0]"
-  echo "Usage: $0 [website-classic|website-classic-gb2|website-2.0]"
+  echo "Usage: $0 [/path/to/extlib] [DO_CATALYST]"
   exit
 fi
 
@@ -92,25 +112,41 @@ function success() {
   echo "  ${msg}."
 }
 
-BASE=${ROOT}/${PROJECT}/${EXTLIB}
-mkdir ${BASE}
-cd ${BASE}
+mkdir -p ${EXTLIBPATH}
+cd ${EXTLIBPATH}
 
 # Set up our environment
 perl -Mlocal::lib=./
 eval $(perl -Mlocal::lib=--self-contained,./)
 
-  # For logging sake, printenv
-echo "\n\nYour PERL5LIB should now be set and ready to install..."
+# For logging sake, printenv
+echo ""
+echo ""
+echo "Your PERL5LIB should now be set and ready to install..."
 printenv | grep PERL5LIB
 
 alert "Here we go..."
 sleep 10
 
+
+
+# Install Catalyst requirements
+if [ "${DO_CATALYST}" ]; then
+    for MODULE in ${CATALYST}
+    do
+	if perl -MCPAN -e "CPAN::install(${MODULE})"
+	then
+	    success "Succesfully installed ${MODULE}"
+	else
+	    failure "Failed to install ${MODULE}; you might want to try it again manually"
+	fi
+    done
+    exit  
+fi
+
 for MODULE in ${MODULES}
 do
-
-    alert "Installing ${MODULE} to ${BASE}"
+    alert "Installing ${MODULE} to ${EXTLIBPATH}"
     
     # Generic build
     if perl -MCPAN -e "CPAN::install(${MODULE})"
@@ -125,21 +161,21 @@ do
       # Let's try to do them now
     
       # MySQL::DBD
-    if "$MODULE" = "DBD::mysql"
-    then
+    if [ "$MODULE" = "DBD::mysql" ]; then
 	cd ~/build/DBD-mysql*
 	make realclean
-	perl Makefile.PL INSTALL_BASE=${BASE} --testuser=root --testpassword=3l3g@nz
+	perl Makefile.PL INSTALL_BASE=${EXTLIBPATH} --testuser=root --testpassword=3l3g@nz
 	make
 	make test
 	make install
     fi
     
       # Flickr::API::Simple is a private module
-    if "$MODULE" = "Flickr::API::Simple"
-    then
+    if [ "$MODULE" = "Flickr::API::Simple" ]; then
 	cd /usr/local/wormbase/build/Flickr-API-Simple
-	perl ./Build.PL --install_base ${BASE}
+	perl ./Build.PL --install_base ${EXTLIBPATH}
 	./Build install
-    fi    
+    fi    	
 done
+
+
