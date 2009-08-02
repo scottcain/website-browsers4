@@ -128,60 +128,7 @@ while (<>) {
 	next;
     }
     
-    
-    ##########################################################
-    #
-    #  crestone: wiki and forums
-    if ($uri =~ m{wiki} || $uri =~ m{forums}) {
-	$destination = $servers{crestone};
-	
-	# Hack to get around MediaWiki's weird redirect
-	$params = 'wiki/index.php/Main_Page' if $params eq 'wiki';
-	
-	# Catch problems with forum URLs too. Need to append the back slash.
-	$params = 'forums/' if $params eq 'forums';
-	
-	$destination = $servers{gene} if $uri =~ /inline_feed/;
-	
-	print ERR "Routing wiki/forum ($uri) to $destination\n" if DEBUG;
-	$uri = "http://$destination/$params";
-	next;
-    }
-    
-    
-    
-    ##########################################################
-    #
-    # Searches: blast, blat, epcr, and "strains"
-    if (  $uri =~ m{searches/blat}
-	  || $uri =~ m{blast_blat}
-	  || $uri =~ m{searches/epcr}
-	  || $uri =~ m{searches/strains}
-	  ) {
-	$destination = $servers{blast};
-	
-	print ERR "Routing blast/blat/epcr ($uri) to $destination\n" if DEBUG;
-	$uri = "http://$destination/$params";
-	next;
-    }
-    
-    
-    ##########################################################
-    #
-    #  Various static content; must come BELOW forum/wiki
-    #  Serve basically anything outside of /db from a single box.
-    #  This is mostly static content (gbrowse static handled above)
-    if (  $params !~ m{^db}) {
-	
-	# TODO: EVERYTHING EXCEPT FOR THE BLOG COULD BE RANDOM
-	$destination = $servers{unc};
-	
-	print ERR "Routing static content ($uri) to $destination\n" if DEBUG;
-	$uri = "http://$destination/$params";
-	next;
-    }
-    
-    
+          
     ##########################################################
     #
     #  Manually redistribute some CGIs (Tier I)
@@ -234,6 +181,7 @@ while (<>) {
 	$uri = "http://$destination/$params";	    
 	next;	
     }
+
     
     ##########################################################
     #
@@ -264,6 +212,22 @@ while (<>) {
 	next;
     }
     
+
+    ##########################################################
+    #
+    # Searches: blast, blat, epcr, and "strains"
+    if (  $uri =~ m{searches/blat}
+	  || $uri =~ m{blast_blat}
+	  || $uri =~ m{searches/epcr}
+	  || $uri =~ m{searches/strains}
+	  ) {
+	$destination = $servers{blast};
+	
+	print ERR "Routing blast/blat/epcr ($uri) to $destination\n" if DEBUG;
+	$uri = "http://$destination/$params";
+	next;
+    }
+     
     
     ##########################################################
     #
@@ -282,8 +246,7 @@ while (<>) {
 	$uri = "http://$destination/$params";
 	next;
     }
-    
-    
+
     ##########################################################
     #
     #  The cachemgr CGI resides on the localhost
@@ -291,7 +254,44 @@ while (<>) {
 	print "\n";
 	return;
     }
-    
+
+ 
+    ##########################################################
+    #
+    #  crestone: wiki and forums
+    if ($uri =~ m{wiki} || $uri =~ m{forums}) {
+	$destination = $servers{crestone};
+	
+	# Hack to get around MediaWiki's weird redirect
+	$params = 'wiki/index.php/Main_Page' if $params eq 'wiki';
+	
+	# Catch problems with forum URLs too. Need to append the back slash.
+	$params = 'forums/' if $params eq 'forums';
+	
+	$destination = $servers{gene} if $uri =~ /inline_feed/;
+	
+	print ERR "Routing wiki/forum ($uri) to $destination\n" if DEBUG;
+	$uri = "http://$destination/$params";
+	next;
+    }
+
+
+    ##########################################################
+    #
+    #  Various static content; must come BELOW forum/wiki
+    #  Serve basically anything outside of /db from a single box.
+    #  This is mostly static content (gbrowse static handled above)
+    if (  $params !~ m{^db}) {
+	
+	# TODO: EVERYTHING EXCEPT FOR THE BLOG COULD BE RANDOM
+	$destination = $servers{unc};
+	
+	print ERR "Routing static content ($uri) to $destination\n" if DEBUG;
+	$uri = "http://$destination/$params";
+	next;
+    }
+
+        
 
     # This configuration hasn;'t been handled yet
     if (0) {

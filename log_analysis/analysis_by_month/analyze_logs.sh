@@ -13,10 +13,10 @@ BINDIR=/home/todd/projects/wormbase/admin/log_analysis
 #LOGDIR=/usr/local/acedb/wormbase_log_archive
 LOGDIR=/home/todd/projects/wormbase/log_archive
 SITE=www.wormbase.org
-HTMLSTATS=/usr/local/wormbase/html/stats
+HTMLSTATS=/usr/local/wormbase/website-classic/html/stats
 ANALOG=${BINDIR}/analog
 RMAGIC=${BINDIR}/rmagic
-TARGET=/usr/local/wormbase/html/stats
+TARGET=/usr/local/wormbase/website-classic/html/stats
 
 if [ ! ${LATEST_RELEASE} ]; then
   echo "Usage: analyze_logs.sh YYYY.MM"
