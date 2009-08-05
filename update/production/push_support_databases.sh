@@ -33,6 +33,7 @@ function success() {
   echo "  ${msg}."
 }
 
+STAGING_NODE=brie6.cshl.org
 
 alert "Pushing the support databases directory to the staging production node ${STAGING_NODE}"
 #if rsync --progress -Ca --exclude *bak* \
@@ -53,12 +54,14 @@ else
 fi
 
 # Unpack on the staging node
-if ssh ${STAGING_NODE} "cd /usr/local/wormbase/databases; tar xzf ${VERSION}.tgz"
+if ssh ${STAGING_NODE} "cd /usr/local/wormbase/nfs/databases; tar xzf ${VERSION}.tgz"
 then 
     success "Succesfully unpacked the support databases dir on ${STAGING_NODE}"
 else
     failure "Couldn't unpack on the ${STAGING_NODE}"
 fi
+
+exit
 
 
 for NODE in ${SUPPORT_DB_NODES}
