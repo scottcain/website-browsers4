@@ -29,9 +29,13 @@ function success() {
 
 
 
-alert "Syncing the 3rd party build directory to the staging production node: ${STAGING_NODE}...";
-rsync -Ca ${THIRD_PARTY_BUILD_HOME}/${THIRD_PARTY_BUILD_DIR} ${USER}@${STAGING_NODE}:${THIRD_PARTY_BUILD_HOME}
+alert "Syncing the 3rd party build directory to the nfs node: ${NFS_NODE}...";
+rsync -Ca ${THIRD_PARTY_BUILD_HOME}/${THIRD_PARTY_BUILD_DIR} ${USER}@${NFS_NODE}:${NFS_ROOT}
 
+exit
+
+
+# No longer required
 for NODE in ${SITE_NODES}
 do
   alert "  Syncing from the staging node to internal node ${NODE}..."
