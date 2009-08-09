@@ -33,9 +33,8 @@ function success() {
   echo "  ${msg}."
 }
 
-STAGING_NODE=brie6.cshl.org
 
-alert "Pushing the support databases directory to the staging production node ${STAGING_NODE}"
+alert "Pushing the support databases directory to the staging production node ${NFS_NODE}"
 #if rsync --progress -Ca --exclude *bak* \
 #  	 --exclude blast \
 #	 --exclude blat \
@@ -45,20 +44,21 @@ alert "Pushing the support databases directory to the staging production node ${
 #fi
 
 cd ${SUPPORT_DB_DIRECTORY}
-#tar czf ${VERSION}.tgz ${VERSION}
-if rsync --progress -Ca ${VERSION}.tgz ${STAGING_NODE}:${SUPPORT_DB_DIRECTORY}    
+tar czf ${VERSION}.tgz ${VERSION}
+if rsync --progress -Cav ${VERSION}.tgz ${NFS_NODE}:${NFS_ROOT}/databases
 then
-    success "Successfully push support databases onto ${STAGING_NODE}"
+    success "Successfully push support databases onto ${NFS_NODE}"
 else
-    failure "Could't push support databases onto ${STAGING_NODE}"
+    failure "Could't push support databases onto ${NFS_NODE}"
 fi
 
 # Unpack on the staging node
-if ssh ${STAGING_NODE} "cd /usr/local/wormbase/nfs/databases; tar xzf ${VERSION}.tgz"
+if ssh ${NFS_NODE} "cd ${NFS_ROOT}/databases; tar xzf ${VERSION}.tgz"
 then 
-    success "Succesfully unpacked the support databases dir on ${STAGING_NODE}"
+    success "Succesfully unpacked the support databases dir on ${NFS_NODE}"
+    ssh ${NFS_NODE} "cd ${NFS_ROOT}/databases; rm -rf ${VERSION}.tgz"
 else
-    failure "Couldn't unpack on the ${STAGING_NODE}"
+    failure "Couldn't unpack on the ${NFS_NODE}"
 fi
 
 exit

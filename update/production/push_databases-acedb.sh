@@ -34,7 +34,7 @@ function success() {
 }
 
 alert "Pushing Acedb onto staging node..."
-if rsync -Ca ${ACEDB_DIR} ${STAGING_NODE}:${ACEDB_ROOT}
+if rsync -Cav ${ACEDB_DIR} ${STAGING_NODE}:${ACEDB_ROOT}
 then
   success "Successfully pushed acedb onto ${STAGING_NODE}"
 
@@ -62,7 +62,7 @@ alert "Pushing Acedb onto production nodes..."
 for NODE in ${ACEDB_NODES}
 do
   alert " ${NODE}:"
-  if ssh ${STAGING_NODE} "rsync -Ca ${ACEDB_DIR} ${NODE}:${ACEDB_ROOT}"
+  if ssh ${STAGING_NODE} "rsync -Cav ${ACEDB_DIR} ${NODE}:${ACEDB_ROOT}"
   then
     success "Successfully pushed acedb onto ${NODE}"
 
