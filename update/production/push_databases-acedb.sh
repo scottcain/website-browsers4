@@ -61,6 +61,12 @@ fi
 alert "Pushing Acedb onto production nodes..."
 for NODE in ${ACEDB_NODES}
 do
+
+  # Skip the staging node - already copied AceDB to it above.
+  if [ ${NODE} = ${STAGING_NODE} ]; then
+      next
+  fi
+
   alert " ${NODE}:"
   if ssh ${STAGING_NODE} "rsync -Cav ${ACEDB_DIR} ${NODE}:${ACEDB_ROOT}"
   then
