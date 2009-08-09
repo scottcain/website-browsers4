@@ -128,17 +128,28 @@ while (<>) {
 	next;
     }
     
-          
+
+    ##########################################################
+    #
+    #  MovableType
+    if ( $uri =~ m{movable}
+	 || $params =~ m{^mt}
+	 || $params eq ''
+	 || $uri eq 'http://www.wormbase.org/'
+	 || $uri eq 'http://wormbase.org/'
+	 ) {
+	$destination = $servers{brie3};
+	
+	print ERR "Routing MT ($uri) to $destination\n" if DEBUG;
+	$uri = "http://$destination/$params";
+	next;
+    }
+    
+    
     ##########################################################
     #
     #  Manually redistribute some CGIs (Tier I)
-    if (  $uri =~ m{searches/basic}
-	  || $uri =~ m{seq/sequence}	   
-	  || $uri =~ m{seq/clone}
-	  || $uri =~ m{misc/paper}
-	  || $uri =~ m{misc/person}
-	  || $uri =~ m{cell}
-	  ) {
+    if (  $uri =~ m{searches/basic} ) {
 	
 	$destination = $servers{be1};
 	print ERR "Routing CGIs Tier I ($uri) to $destination\n" if DEBUG;
@@ -146,10 +157,22 @@ while (<>) {
 	next;	
     }
     
-    
+
     ##########################################################
     #
     #  Manually redistribute some CGIs (Tier II)
+    if (  $uri =~ m{seq/sequence} ) {
+	$destination = $servers{vab};
+	print ERR "Routing CGIs Tier II ($uri) to $destination\n" if DEBUG;
+	$uri = "http://$destination/$params";	    
+	next;	
+    }
+
+
+    
+    ##########################################################
+    #
+    #  Manually redistribute some CGIs (Tier III)
     if (   $uri =~ m{gene/variation}
 	   || $uri =~ m{gene/strain}
 	   || $uri =~ m{ontology}
@@ -158,7 +181,7 @@ while (<>) {
 	   ) {
 	
 	$destination = $servers{gene};
-	print ERR "Routing CGIs Tier II ($uri) to $destination\n" if DEBUG;
+	print ERR "Routing CGIs Tier III ($uri) to $destination\n" if DEBUG;
 	$uri = "http://$destination/$params";	    
 	next;	
     }
@@ -166,33 +189,34 @@ while (<>) {
     
     ##########################################################
     #
-    #  Manually redistribute some CGIs (Tier III)    
+    #  Manually redistribute some CGIs (Tier IV)    
     if (   $uri =~ m{/db/gene/antibody}
 	   || $uri =~ m{/db/gene/operon}
 	   || $uri =~ m{/db/gene/gene_class}
 	   || $uri =~ m{/db/gene/motif}
 	   || $uri =~ m{/db/gene/regulation}
 	   || $uri =~ m{/db/gene/strain}
-	   || $uri =~ m{/db/misc/site_map}
 	   || $uri =~ m{/db/seq/protein}
 	   ) {
 	$destination = $servers{freeze1};
-	print ERR "Routing CGIs Tier III ($uri) to $destination\n" if DEBUG;
+	print ERR "Routing CGIs Tier IV ($uri) to $destination\n" if DEBUG;
 	$uri = "http://$destination/$params";	    
 	next;	
     }
 
+
     
     ##########################################################
     #
-    #  Manually distribute some CGIs (Tier IV)
-#    if ( $uri =~ /misc\/person/ ) {
-#	
-#	$destination = $servers{freeze2};
-#	print ERR "Routing CGIs Tier III ($uri) to $destination\n" if DEBUG;
-#	$uri = "http://$destination/$params";	    
-#	next;	
-#    }
+    #  Manually distribute some CGIs (Tier V)
+    #  Everything that remains in /db/misc
+    if ( $uri =~ m{db/misc} ) {
+	$destination = $servers{freeze2};
+
+	print ERR "Routing CGIs Tier V ($uri) to $destination\n" if DEBUG;
+	$uri = "http://$destination/$params";	    
+	next;	
+    }
 
     
     ##########################################################
