@@ -5,7 +5,8 @@
 use Ace;
 use Bio::DB::GFF;
 use Getopt::Long;
-use lib '/usr/local/wormbase/bin/genetic_map';
+use FindBin qw/$Bin/;
+use lib $Bin;
 use GMap;
 use strict;
 
