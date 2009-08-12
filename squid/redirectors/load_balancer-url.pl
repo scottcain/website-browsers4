@@ -2,7 +2,7 @@
 use strict;
 $|++;  # VERY IMPORTANT! Do not buffer output
 
-use constant DEBUG => 1;
+use constant DEBUG      => 0;
 use constant DEBUG_FULL => 0;
 
 open ERR,">>/usr/local/squid/var/logs/redirector.debug" if DEBUG;
