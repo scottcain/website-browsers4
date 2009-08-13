@@ -8,7 +8,7 @@ use IO::File;
 our $AUTOLOAD;
 
 my %config =  (
-	       root => '/usr/local/wormbase',
+	       root => '/usr/local/wormbase/website-classic',
 	       
 	       directories => {
 			       support_dbs => "databases",
@@ -19,7 +19,7 @@ my %config =  (
 	       mirror_dir => '/tmp/temporary_update_dir',
 	       
 	       # acedb and mysql
-	       acedb_root     => '/usr/local/acedb',
+	       acedb_root     => '/usr/local/wormbase/acedb',
 	       mysql_data_dir => '/usr/local/mysql/data',
 	       
 	       # FTP server access

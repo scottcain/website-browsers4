@@ -13,8 +13,11 @@ sub step { return 'update strains database'; }
 sub run {
     my $self = shift;    
     my $release   = $self->release;
-    
-    $self->strains_dir($self->root . "/html/strains/$release");
+       
+#    $self->strains_dir($self->root . "/html/strains/$release");
+    # Hard-coded for now since root is app root and 
+    # databases are ../
+    $self->strains_dir("/usr/local/wormbase/databases/strains");
     $self->_make_dir($self->strains_dir);
     
     $self->make_html_files();
@@ -35,7 +38,7 @@ sub make_html_files {
     open IN, "<$gopher_file" || die "$!\n";
     
     my $release    = $self->release;
-    my $acedb_path = $self->acedb_root . "/elegans_$release";
+    my $acedb_path = $self->acedb_root . "/wormbase_$release";
     my $db = Ace->connect($acedb_path) || die "Connection failure: ", Ace->error;
     
     my %status=$db->status;
@@ -349,7 +352,7 @@ sub index_files {
     my $strains_dir = $self->strains_dir;
     
     my $release = $self->release;
-    my $acedb   = $self->acedb_root . "/elegans_$release";    
+    my $acedb   = $self->acedb_root . "/wormbase_$release";    
     my $db = Ace->connect($acedb) || die "Connection failure: ", Ace->error;
     
     my $lookupFileName="lookup.strains";
