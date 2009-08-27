@@ -1,5 +1,6 @@
 package Update;
 
+use local::lib '/usr/local/wormbase/website-classic/extlib';
 use strict;
 use Net::FTP::Recursive;
 use Log::Log4perl;
@@ -116,7 +117,12 @@ my %config =  (
  		   m_hapla => {
  		       #remote_gff2_filename    => '',
 		       remote_dna_filename     => 'm_hapla.%s.dna.gz'
- 		   },
+ 		    },
+			m_incognita => {
+ 		      
+ 		      remote_dna_filename     => 'm_incogita.%s.dna.gz'
+ 		    },
+
 
 	       },
 	       fatonib => '/usr/local/blat/bin/faToNib',
