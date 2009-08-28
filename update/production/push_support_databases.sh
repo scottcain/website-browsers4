@@ -34,7 +34,7 @@ function success() {
 }
 
 
-alert "Pushing the support databases directory to the staging production node ${NFS_NODE}"
+alert "Pushing the support databases directory to the nfs node ${NFS_NODE}"
 #if rsync --progress -Ca --exclude *bak* \
 #  	 --exclude blast \
 #	 --exclude blat \
@@ -44,12 +44,22 @@ alert "Pushing the support databases directory to the staging production node ${
 #fi
 
 cd ${SUPPORT_DB_DIRECTORY}
+if rsync -Cav strains ${NFS_NODE}:${NFS_ROOT}/databases
+then
+    success "Succesfully pushed strain database onto nfs node ${NFS_NODE}"
+else
+    failure "Couldn't push stain database onto nfs node ${NFS_NODE}"
+fi
+
+exit
+
+# Now paclage up te full database diretory for the current version
 tar czf ${VERSION}.tgz ${VERSION}
 if rsync --progress -Cav ${VERSION}.tgz ${NFS_NODE}:${NFS_ROOT}/databases
 then
-    success "Successfully push support databases onto ${NFS_NODE}"
+    success "Successfully pushed support databases onto nfs node ${NFS_NODE}"
 else
-    failure "Could't push support databases onto ${NFS_NODE}"
+    failure "Could't push support databases onto the nfs node ${NFS_NODE}"
 fi
 
 # Unpack on the staging node
@@ -60,6 +70,9 @@ then
 else
     failure "Couldn't unpack on the ${NFS_NODE}"
 fi
+
+cd ${SUPPORT_DB_DIRECTORY}
+rm ${VERSION}.tgz
 
 exit
 
