@@ -17,7 +17,7 @@ sub run {
 #    $self->strains_dir($self->root . "/html/strains/$release");
     # Hard-coded for now since root is app root and 
     # databases are ../
-    $self->strains_dir("/usr/local/wormbase/databases/strains");
+    $self->strains_dir("/usr/local/wormbase/databases/$release/strains");
     $self->_make_dir($self->strains_dir);
     
     $self->make_html_files();
