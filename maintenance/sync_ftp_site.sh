@@ -37,6 +37,14 @@ alert "  Syncing from the staging node to the FTP site..."
 if ssh ${STAGING_NODE} "rsync -Cav /usr/local/ftp/pub/wormbase ${FTP_SERVER}:/var/ftp/pub"
     then
       success "Successfully rsynced staging FTP site onto ${FTP_SERVER}"
+
+      # Clear out the staging node
+      if ssh ${STAGING_NODE} "rm -rf /usr/local/ftp/pub/wormbase/*"
+	  then
+	  success "purged the staging node ${STAGING_NODE}"
+      else
+	  failure "Could not purge the staging node ${STAGING_NODE}..."
+      fi
     else
 	failure "Rsyncing ftp staging site onto ${FTP_SERVER} failed"
     fi

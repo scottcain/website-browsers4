@@ -43,17 +43,9 @@ alert "Pushing the support databases directory to the nfs node ${NFS_NODE}"
 #       success "Successfully pushed support databases onto ${NODE}"
 #fi
 
+
+# Package up the full database diretory for the current version
 cd ${SUPPORT_DB_DIRECTORY}
-if rsync -Cav strains ${NFS_NODE}:${NFS_ROOT}/databases
-then
-    success "Succesfully pushed strain database onto nfs node ${NFS_NODE}"
-else
-    failure "Couldn't push stain database onto nfs node ${NFS_NODE}"
-fi
-
-exit
-
-# Now paclage up te full database diretory for the current version
 tar czf ${VERSION}.tgz ${VERSION}
 if rsync --progress -Cav ${VERSION}.tgz ${NFS_NODE}:${NFS_ROOT}/databases
 then
