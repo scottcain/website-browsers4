@@ -48,6 +48,7 @@ if rsync -Cav --exclude extlib \
               --exclude ace_images/ \
               --exclude mt/ \
               --exclude html/rss/ \
+              --exclude html/index.html \
               ${SITE_STAGING_DIRECTORY}/ ${STAGING_NODE}:${SITE_TARGET_DIRECTORY}
   then
     success "Successfully pushed software onto ${STAGING_NODE}..."
