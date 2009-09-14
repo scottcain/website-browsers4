@@ -13,14 +13,16 @@ open ERR,">>/usr/local/squid/var/logs/redirector.debug" if DEBUG;
 #$servers{crestone} = 'crestone.cshl.edu:8080;
 #$servers{biomart}  = 'biomart.wormbase.org';
 
+
+
 my %servers = (
 	       aceserver => 'aceserver.cshl.org:8080',
 	       blast     => 'blast.wormbase.org:8080',
 	       unc       => 'unc.wormbase.org:8080',
 	       crestone  => 'crestone.cshl.edu:8080',
 	       gene      => 'gene.wormbase.org:8080',
+
 	       vab       => 'vab.wormbase.org:8080',
-	       'local'   => 'brie6.cshl.org:8080',
 	       biomart   => 'biomart.wormbase.org',
 	       nbrowse   => 'gene.wormbase.org:9002',
 	       nbrowsejsp => 'gene.wormbase.org:9022',
@@ -34,7 +36,62 @@ my %servers = (
 	       brie3     => 'brie3.cshl.org:8080',       
 	       be1       => 'be1.wormbase.org:8080',
 	       
+	       synteny   => 'mckay.cshl.edu',
+
 	       );
+
+=pod
+
+# 2009.09 - Server migration step 1: be1 and brie3 offline; brie6 up
+my %servers = (
+	       aceserver => 'aceserver.cshl.org:8080',
+	       blast     => 'vab.wormbase.org:8080',
+	       unc       => 'unc.wormbase.org:8080',
+	       crestone  => 'crestone.cshl.edu:8080',
+	       gene      => 'vab.wormbase.org:8080',
+
+	       vab       => 'vab.wormbase.org:8080',
+	       biomart   => 'biomart.wormbase.org',
+	       nbrowse   => 'gene.wormbase.org:9002',
+	       nbrowsejsp => 'gene.wormbase.org:9022',
+	       
+	       # Where we are serving static content from (not currently in use)
+	       static    => 'vab.wormbase.org:8080',
+
+	       freeze1   => 'freeze1.wormbase.org:8080',
+	       freeze2   => 'freeze2.wormbase.org:8080',
+	       
+	       brie3     => 'vab.wormbase.org:8080',       
+	       be1       => 'unc.wormbase.org:8080',	       
+	       );
+
+
+
+# 2009.09 - Server migration step 1: be1 and brie3 offline; brie6 up
+my %servers = (
+	       aceserver => 'aceserver.cshl.org:8080',
+	       blast     => 'blast.wormbase.org:8080',
+	       unc       => 'be1.wormbase.org:8080',
+	       crestone  => 'crestone.cshl.edu:8080',
+	       gene      => 'gene.wormbase.org:8080',
+
+	       vab       => 'vab.wormbase.org:8080',
+	       biomart   => 'biomart.wormbase.org',
+	       nbrowse   => 'gene.wormbase.org:9002',
+	       nbrowsejsp => 'gene.wormbase.org:9022',
+	       
+	       # Where we are serving static content from (not currently in use)
+	       static    => 'vab.wormbase.org:8080',
+
+	       freeze1   => 'freeze1.wormbase.org:8080',
+	       freeze2   => 'freeze2.wormbase.org:8080',
+	       
+	       brie3     => 'be1.wormbase.org:8080',       
+	       be1       => 'be1.wormbase.org:8080',	       
+	       );
+
+
+=cut
 
 # Conditionally set destinations depending on which server we are running.
 # This is simply for emergency purposes if we happen to be running squid on vab or gene.
@@ -78,6 +135,17 @@ while (<>) {
     }
     
     
+    # The synteny browser (for now)
+    if ($uri =~ m{cgi-bin/gbrowse_syn}
+	|| $uri =~ m{gbrowse/tmp/.*synteny}
+	|| $uri =~ m{gbrowse/tmp/compara}
+	) {       
+	$destination = $servers{synteny};
+	$uri = "http://$destination/$params";
+	next;
+    }
+
+
     ##########################################################
     #
     #  Dynamic images, specific to generating back-end server
