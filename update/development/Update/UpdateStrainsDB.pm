@@ -440,8 +440,13 @@ sub index_files {
 	$content=~s/\t/ /g;
 	$content=~s/\s{2,}/ /g;
 	if (! $content) {
+#	    $i++;
 	    next;
 	}
+#	$i++;
+#	print STDERR "$i $genotype\n";
+
+
 	$ix->add($i, $content);
 	$strain_hash{$i}{strain}=$title;
 	$strain_hash{$i}{CGC}=$inCGC;
