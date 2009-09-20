@@ -45,28 +45,28 @@ then
   success "Successfully pushed acedb onto ${STAGING_NODE}"
 
   # Unpack it
-#  if ssh ${STAGING_NODE} "cd ${ACEDB_ROOT}; tar xzf wormbase_${VERSION}.tgz}"
-#  then
-#      success "Successfully unpacked the acedb database..."
-#  else
-#      failure "Coulddn't unpack the acedb on ${STAGING_NODE}..."
-#  fi
+  if ssh ${STAGING_NODE} "cd ${ACEDB_ROOT}; tar xzf wormbase_${VERSION}.tgz}"
+  then
+      success "Successfully unpacked the acedb database..."
+  else
+      failure "Coulddn't unpack the acedb on ${STAGING_NODE}..."
+  fi
   
-#   # Set up the symlink
-#  if ssh ${STAGING_NODE} "cd ${ACEDB_ROOT}; rm wormbase;  ln -s ${ACEDB_DIR} wormbase"
-#  then
-#      success "Successfully symlinked elegans -> ${ACEDB_DIR}"
-#  else
-#      failure "Symlinking failed"
-#  fi
-#  
-#   # Fix permissions
-#  if ssh ${STAGING_NODE} "cd ${ACEDB_DIR}; chgrp -R acedb * ; cd database ; chmod 666 block* log.wrm serverlog.wrm ; rm -rf readlocks"
-#  then
-#      success "Successfully fixed permissions on ${ACEDB_DIR}"
-#  else
-#      failure "Fixing permissions on ${ACEDB_DIR} failed"
-#  fi
+   # Set up the symlink
+  if ssh ${STAGING_NODE} "cd ${ACEDB_ROOT}; rm wormbase;  ln -s ${ACEDB_DIR} wormbase"
+  then
+      success "Successfully symlinked elegans -> ${ACEDB_DIR}"
+  else
+      failure "Symlinking failed"
+  fi
+  
+   # Fix permissions
+  if ssh ${STAGING_NODE} "cd ${ACEDB_DIR}; chgrp -R acedb * ; cd database ; chmod 666 block* log.wrm serverlog.wrm ; rm -rf readlocks"
+  then
+      success "Successfully fixed permissions on ${ACEDB_DIR}"
+  else
+      failure "Fixing permissions on ${ACEDB_DIR} failed"
+  fi
   
 else
     failure "Pushing acedb onto ${STAGING_NODE} failed"
