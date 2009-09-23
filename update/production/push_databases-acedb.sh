@@ -45,7 +45,7 @@ then
   success "Successfully pushed acedb onto ${STAGING_NODE}"
 
   # Unpack it
-  if ssh ${STAGING_NODE} "cd ${ACEDB_ROOT}; tar xzf wormbase_${VERSION}.tgz}"
+  if ssh ${STAGING_NODE} "cd ${ACEDB_ROOT}; tar xzf wormbase_${VERSION}.tgz"
   then
       success "Successfully unpacked the acedb database..."
   else
@@ -72,6 +72,8 @@ else
     failure "Pushing acedb onto ${STAGING_NODE} failed"
 fi
 
+
+
 alert "Pushing Acedb onto production nodes..."
 for NODE in ${ACEDB_NODES}
 do
@@ -87,7 +89,7 @@ do
       success "Successfully pushed acedb onto ${NODE}"
       
   # Unpack it
-      if ssh ${STAGING_NODE} "ssh ${NODE} 'cd ${ACEDB_ROOT}; tar xzf wormbase_${VERSION}.tgz}'"
+      if ssh ${STAGING_NODE} "ssh ${NODE} 'cd ${ACEDB_ROOT}; tar xzf wormbase_${VERSION}.tgz'"
       then
 	  success "Successfully unpacked the acedb database..."
       else
@@ -111,7 +113,7 @@ do
     fi
 
     # Finally, remove the tarball
-    if ssh ${STAGING_NODE} "ssh ${NODE} 'cd ${ACEDB_ROOT} ; rm -rf wormbase_${VERSION}'"
+    if ssh ${STAGING_NODE} "ssh ${NODE} 'cd ${ACEDB_ROOT} ; rm -rf wormbase_${VERSION}.tgz'"
     then
 	success "removed the acedb tarball..."
     else
