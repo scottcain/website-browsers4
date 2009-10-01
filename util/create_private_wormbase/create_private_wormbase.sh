@@ -41,7 +41,7 @@ perl -p -i -e "s|/usr/local/wormbase/logs/classic-access_log|${CURRENTWD}/logs/c
 # Fix perl.startup
 echo "fixing perl.startup"
 cp /usr/local/wormbase/website-classic/conf/perl.startup conf/perl.startup
-perl -p -i -e "s|/usr/local/wormbase/website-classic|{$CURRENTWD}|g" conf/perl.startup
+perl -p -i -e "s|/usr/local/wormbase/website-classic|${CURRENTWD}|g" conf/perl.startup
 
 # apachectl should point to the main httpd.conf file
 echo "fixing apachectl"
