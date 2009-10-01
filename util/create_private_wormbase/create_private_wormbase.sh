@@ -15,30 +15,56 @@ mv wormbase-site/* .
 rm -rf wormbase-site
 cp conf/perl.startup.template conf/perl.startup
 cp conf/localdefs.pm.template conf/localdefs.pm
-cp /usr/local/wormbase-admin/general_admin/create_private_wormbase/support_files/apachectl.template apachectl
-cp /usr/local/wormbase-admin/general_admin/create_private_wormbase/support_files/httpd.conf.template httpd.conf
 
 # Fix the primary httpd.conf file for the server and the apachetl script
-perl -p -i -e "s|Port_target|${PORT}|g" httpd.conf
-perl -p -i -e "s|/Conf_target/|${CURRENTWD}/conf/httpd.conf|g" httpd.conf
-perl -p -i -e "s|/Log_target/|${CURRENTWD}/logs/|g" httpd.conf
-perl -p -i -e "s|User_target|${PERSON}|g" httpd.conf
+cp /home/tharris/projects/wormbase/admin/util/create_private_wormbase/support_files/httpd.conf.template conf/httpd.conf
+#perl -p -i -e "s|Port_target|${PORT}|g" httpd.conf
+#perl -p -i -e "s|/Conf_target/|${CURRENTWD}/conf/httpd.conf|g" httpd.conf
+#perl -p -i -e "s|/Log_target/|${CURRENTWD}/logs/|g" httpd.conf
+#perl -p -i -e "s|User_target|${PERSON}|g" httpd.conf
 #perl -p -i -e "s|/Root_target/|${WD}/${PERSON}/|g" httpd.conf
 
 # Fix a few things inthe main httpd.conf file
-perl -p -i -e "s|/usr/local/wormbase|${CURRENTWD}|g" \
+perl -p -i -e "s|/usr/local/wormbase/website-classic|${CURRENTWD}|g" \
     conf/elegans.pm conf/httpd.conf conf/perl.startup conf/localdefs.pm
 perl -p -i -e "s|/var/tmp/ace_images|${CURRENTWD}/tmp/ace_images|g" conf/httpd.conf
 perl -p -i -e "s|Expires|#Expires|g" conf/httpd.conf
 
+# Fix error and access logs
+mkdir logs
+chmod 777 logs
+perl -p -i -e "s|/usr/local/wormbase/logs/classic-error_log|${CURRENTWD}/logs/classic-error_log|g" conf/httpd.conf
+perl -p -i -e "s|/usr/local/wormbase/logs/classic-access_log|${CURRENTWD}/logs/classic_access_log|g" conf/httpd.conf
+
+# Fix perl.startup
+cp /usr/local/wormbase/website-classic/conf/perl.startup conf/perl.startup
+perl -p -i -e "s|/usr/local/wormbase/website-classic|{$CURRENTWD}|g" conf/perl.startup
+
 # apachectl should point to the main httpd.conf file
+cp /home/tharris/projects/wormbase/admin/util/create_private_wormbase/support_files/apachectl.template apachectl
 perl -p -i -e "s|/Root_target/|${WD}/${PERSON}/|g" apachectl
 
-echo "/usr/local/apache/bin/httpd -f ${CURRENTWD}/conf/httpd.conf -k start -c \"Port ${PORT}\"" >> start_wormbase.sh
+# Get the index page
+cp /usr/local/wormbase/website-classic/html/index.html html/.
+
+# Update the external libraries path
+rm -rf extlib
+ln -s /usr/local/wormbase/website-classic/extlib extlib
+
+# Fix the localdefs
+perl -p -i -e "s|/usr/local/wormbase|${CURRENTWD}|g"
+
+# Set up the cache
+mkdir cache
+chmod 777 cache
+
+# Get the structure images
+cp -r /usr/local/wormbase/website-classic/images/structure-images html/images/.
+
+echo "/usr/local/apache2/bin/httpd -f ${CURRENTWD}/conf/httpd.conf -k start -c \"Port ${PORT}\"" >> start_wormbase.sh
 chmod 755 start_wormbase.sh
 mkdir -p tmp/ace_images
 chmod -R 777 tmp logs cache
 
 cd ${WD}
 sudo chown -R ${PERSON}:wormbase ${PERSON}
-
