@@ -17,7 +17,7 @@ cp conf/perl.startup.template conf/perl.startup
 cp conf/localdefs.pm.template conf/localdefs.pm
 
 # Fix the primary httpd.conf file for the server and the apachetl script
-cp /home/tharris/projects/wormbase/admin/util/create_private_wormbase/support_files/httpd.conf.template conf/httpd.conf
+#cp /home/tharris/projects/wormbase/admin/util/create_private_wormbase/support_files/httpd.conf.template conf/httpd.conf
 #perl -p -i -e "s|Port_target|${PORT}|g" httpd.conf
 #perl -p -i -e "s|/Conf_target/|${CURRENTWD}/conf/httpd.conf|g" httpd.conf
 #perl -p -i -e "s|/Log_target/|${CURRENTWD}/logs/|g" httpd.conf
