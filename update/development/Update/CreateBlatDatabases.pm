@@ -1,6 +1,7 @@
 package Update::CreateBlatDatabases;
 
 use strict;
+use local::lib '/usr/local/wormbase/extlib/classic';
 use Ace;
 use base 'Update';
 use File::Slurp qw(slurp);
@@ -13,12 +14,24 @@ sub run {
     my $self = shift;
     
     my $msg = 'creating blat databases for';
-    my $species = $self->species;
+    
     # Stash some variables so I don't have to keep regenerating them over and over.  
     $self->target_root($self->get_blatdb_dir);
     
+    
+    ## for m_incognita for WS205
+    
+    my $species = $self->species; 
+    
+  	#my @species;
+  	#push @species, 'm_incognita';
+  	#my $species = \@species;
+  
+  ### end for m_incognita for WS205
+    
+    
     foreach my $species (@$species) {
-#      next unless $species =~ /elegans/;
+      #next unless ($species =~ /incognita/);
 	$self->logit->info("  begin: $msg $species");
 	$self->_make_dir($self->mirror_dir);
 	$self->species_root($self->target_root . "/$species");
