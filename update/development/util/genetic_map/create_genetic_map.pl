@@ -2,12 +2,13 @@
 
 # Dump out all markers into a flat file for subsequent processing
 
-use Ace;
+use lib './';
+use local::lib '.';
 use Bio::DB::GFF;
 use Getopt::Long;
-use lib '/usr/local/wormbase/bin/genetic_map';
 use GMap;
 use strict;
+use Ace;
 
 $|++;
 open KLUDGE,">kludge.txt";
@@ -69,16 +70,19 @@ END
 
 # Connect to ace and fetch the database version
 #print STDERR "\n\nConnecting to acedb: " . ($acedb) ? "$acedb\n" : "$host:$port\n";
-my $db = ($acedb)
-  ? Ace->connect(-path=>$acedb)
-  : Ace->connect(-host=>$host,-port=>$port);
+#my $db = ($acedb)
+#  ? Ace->connect(-path=>$acedb)
+#  : Ace->connect(-host=>$host,-port=>$port);
+
+my $db = Ace->connect(-host=>'localhost', -port=>2005);
 
 $version ||= $db->status->{database}{version};
 
+my $passwd = '3l3g\@nz';
 my $gff = Bio::DB::GFF->new(-adaptor     => 'dbi::mysqlace',
-			    -dsn         => "dbi:mysql:database=c_elegans_$version;host=localhost",
+			    -dsn         => 'dbi:mysql:database=c_elegans_'.$version.';host=localhost',
 			    -user        => 'root',
-			    -pass        => 'kentwashere',
+			    -pass        => '3l3g@nz',
 			   ) or die "$!";
 
 
@@ -486,7 +490,11 @@ sub dump_clones {
 
       # What is the extent of the Chromosome in fmap units?
       # And how many bp per fmap unit?
-      my ($chrom_start,$chrom_stop) = $obj->Extent->row;
+
+      my $chrom_start;
+      my $chrom_stop;
+
+      eval {($chrom_start,$chrom_stop) = $obj->Extent->row;}; # my ($chrom_start,$chrom_stop) = $obj->Extent->row;
 
       my $bp    = $CHROM_LENGTHS{$chromosome};
       my $scale = $bp / ($chrom_stop - $chrom_start);
