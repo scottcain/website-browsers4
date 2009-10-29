@@ -56,12 +56,13 @@ sub load_feature {
     $self->logit->debug("dumping $feature...");
     
     my $acedb = $self->acedb_root . '/elegans_' . $self->release;
-    my $cmd = "$Bin/../util/$cmd --acedb $acedb | gzip -cf 1> $gff_archive.gz 2> /dev/null";
+#    my $cmd = "$Bin/../util/$cmd --acedb $acedb | gzip -cf 1> $gff_archive.gz 2> /dev/null";
+    my $cmd = "$Bin/../util/$cmd --host 'localhost' --port 2005 | gzip -cf 1> $gff_archive.gz 2> /dev/null";
     $self->logit->debug("dumping features via cmd $cmd");
     system($cmd);
     
     my $db = $self->target_db;
-    my $load_cmd = "bp_load_gff.pl --dsn $db --user root --password kentwashere $gff_archive.gz 2> /dev/null";
+    my $load_cmd = "bp_load_gff.pl --dsn $db --user root --password 3l3g\@nz $gff_archive.gz 2> /dev/null";
     $self->logit->debug("loading database: $load_cmd");
     system($load_cmd);
 }
