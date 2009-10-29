@@ -1,5 +1,6 @@
 package Update::CreateBlastDatabases;
 
+use local::lib '/usr/local/wormbase/website-classic/extlib';
 use strict;
 use Ace;
 use base 'Update';
@@ -13,20 +14,30 @@ sub run {
   my $self = shift;
   
   my $msg = 'creating blast databases for';
+  
+  ## for m_incognita /h_bacteriophora for WS205
+#  my @species;
+#  push @species, 'm_incognita';
+#  my $species = \@species;
+  
+  ### end for m_incognita for WS205
+  
   my $species = $self->species;
   
   # Stash some variables so I don't have to keep regenerating them over and over.  
   $self->target_root($self->get_blastdb_dir);
   
   foreach my $species (@$species) {
-#	next unless ($species =~ /elegans/);
+#  next unless ($species =~ /incognita/);
+#   next unless ($species =~ /bacteriophora/);
+	next unless ($species =~ /elegans/); ## unless
 #	next if ($species =~ /brenneri/);
 #	next if ($species =~ /malayi/);
 #	next if ($species =~ /japonica/);
 #	next if ($species =~ /briggsae/);
 #	next if ($species =~ /remanei/);
 
-      $self->_make_dir($self->mirror_dir);
+      #$self->_make_dir($self->mirror_dir);
       $self->logit->info("  begin: $msg $species");
       
       $self->species_root($self->target_root . "/$species");
@@ -152,7 +163,7 @@ sub create_est_db {
     $self->logit->info("  generating $species est blast database");
     
     my $release = $self->release;
-    my $acedb   = $self->acedb_root . "/elegans_$release";
+    my $acedb   = "/usr/local/wormbase/acedb_$release"; ## $self->acedb_root . "/elegans
     
     my $custom_filename  = $self->get_filename('est_archive',$species);
     my $generic_filename = $self->get_filename('ests_blast');
