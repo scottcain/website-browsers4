@@ -1,6 +1,7 @@
 package Update::LoadPMAPGFFDB;
 
 use strict;
+use lib '../';
 use base 'Update';
 use DBI;
 use FindBin '$Bin';
@@ -49,12 +50,16 @@ sub load_gffdb {
     # Create the genetic map
     $self->logit->debug("processing $species GFF files");
     
-    my $acedb = $self->acedb_root . '/elegans_' . $self->release;
+    my $acedb = $self->acedb_root . 'wormbase_' . $self->release;
+    
+    # my $acedb = Ace->connect(-host=>'localhsot',-port=>2005);
+    
     my $cmd = "$Bin/../util/create_physical_map.pl $acedb | gzip -cf 1> $gff_archive.gz 2> /dev/null";
     system($cmd);
     
     my $db = $self->target_db;
-    my $load_cmd = "bp_fast_load_gff.pl --create --database $db --user root --password kentwashere $gff_archive.gz 2> /dev/null";
+    my $pass = '3l3g@nz';
+    my $load_cmd = "bp_bulk_load_gff.pl --create --database $db --user root --password  $pass $gff_archive.gz 2> /dev/null";
     $self->logit->debug("loading database: $load_cmd");
     system($load_cmd);
 }
@@ -67,10 +72,13 @@ sub create_database {
   
   my $database = $self->target_db;
   my $user = 'root';
-  my $pass = 'kentwashere';
-  #  system "mysql -u root -pkentwashere -e 'drop database $database'"  or $self->logit->warn("couldn't drop database: $!");
-  system "mysql -u root -pkentwashere -e 'create database $database'" or $self->logit->warn("couldn't create database: $!");
-  system "mysql -u root -pkentwashere -e 'grant all privileges on $database.* to $user\@localhost'";
+  my $pass = '3l3\g@nz';
+  #  system "mysql -u root -p $pass -e 'drop database $database'"  or $self->logit->warn("couldn't drop database: $!");
+  
+  my $pass = '3l3g\@nz';
+  
+  system "mysql -u root -p$pass -e 'create database $database'" or $self->logit->warn("couldn't create database: $!");
+  system "mysql -u root -p$pass -e 'grant all privileges on $database.* to $user\@localhost'";
 }
 
 
@@ -79,7 +87,7 @@ sub check_database {
     $self->logit->debug("checking status of new database");
     
     my $user = 'root';
-    my $pass = 'kentwashere';
+    my $pass = '3l3g@nz';
     
     my $target_db = $self->target_db;
     my $db     = DBI->connect('dbi:mysql:'.$target_db,$user,$pass) or $self->logit->logdie("can't DBI connect to database");
