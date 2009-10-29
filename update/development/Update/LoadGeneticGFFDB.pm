@@ -5,7 +5,8 @@ use base 'Update';
 use DBI;
 use FindBin '$Bin';
 use File::Basename 'basename';
-
+use lib '';
+use local::lib '/home/norie/lib/bin';
 use constant DB_SUFFIX => '_gmap';
 
 # The symbolic name of this step
@@ -38,12 +39,14 @@ sub run {
 sub load_gffdb {
     my ($self,$species) = @_;
     
+    my $pass = '3l3g@nz';
+
     $self->create_database();
     
     $ENV{TMP} = $ENV{TMP} || $ENV{TMPDIR} || $ENV{TEMP} || -d ('/usr/tmp') ? '/usr/tmp' : -d ('/tmp') ? '/tmp' : 
 	die 'Cannot find a suitable temp dir';
     
-    my $custom_gff   = $self->get_filename('genetic_map_gff2_archive',$species);
+    my $custom_gff = $self->get_filename('genetic_map_gff2_archive',$species);
     
     # This is the gff archive that will be loaded
     my $gff_archive = join("/",$self->ftp_root,$self->local_ftp_path,"genomes/$species/genome_feature_tables/GFF2/$custom_gff");
@@ -51,12 +54,12 @@ sub load_gffdb {
     # Create the genetic map
     $self->logit->debug("dumping genetic map data in GFF for  $species GFF");
     
-    my $acedb = $self->acedb_root . '/elegans_' . $self->release;
+    my $acedb = $self->acedb_root . '/wormbase_' . $self->release;
     my $cmd = "$Bin/../util/genetic_map/create_genetic_map.pl --acedb $acedb | gzip -cf > $gff_archive.gz";
     system($cmd) && $self->logit->logdie("Something went wrong generating the genetic map: $!");
     
     my $db = $self->target_db;
-    my $load_cmd = "bp_fast_load_gff.pl --create --database $db --user root --password kentwashere $gff_archive.gz 2> /dev/null";
+    my $load_cmd = "bp_fast_load_gff.pl --create --database $db --user root --password $pass $gff_archive.gz 2> /dev/null";
     $self->logit->debug("loading database: $load_cmd");
     system($load_cmd) && $self->logit->logdie("Something went wrong loading the genetic map: $!");
 }
@@ -69,10 +72,14 @@ sub create_database {
     
     my $database = $self->target_db;
     my $user = 'root';
-    my $pass = 'kentwashere';
+    my $pass = '3l3g@nz';
     #  system "mysql -u root -pkentwashere -e 'drop database $database'"  or $self->logit->warn("couldn't drop database: $!");
-    system "mysql -u root -pkentwashere -e 'create database $database'" or $self->logit->warn("couldn't create database: $!");
-    system "mysql -u root -pkentwashere -e 'grant all privileges on $database.* to $user\@localhost'";
+    my $sys_cmd1 = "mysql -u root -p$pass -e 'create database $database'";
+
+    system ($sys_cmd1) or $self->logit->warn("couldn't create database: $!");
+    my $sys_cmd2 = "mysql -u root -p$pass -e 'grant all privileges on $database.* to $user\@localhost'";
+
+    system ($sys_cmd2);
 }
 
 
@@ -81,7 +88,7 @@ sub check_database {
     $self->logit->debug("checking status of new database");
     
     my $user = 'root';
-    my $pass = 'kentwashere';
+    my $pass = '3l3g\@nz';
     
     my $target_db = $self->target_db;
     my $db     = DBI->connect('dbi:mysql:'.$target_db,$user,$pass) or $self->logit->logdie("can't DBI connect to database");
