@@ -34,7 +34,7 @@ GetOptions ('acedb=s'    => \$acedb,
 my $dbgff = Bio::DB::GFF->new(-adaptor     => 'dbi::mysqlace',
 			      -dsn         => "dbi:mysql:database=c_elegans;host=localhost",
 			      -user        => 'root',
-			      -pass        => 'kentwashere',
+			      -pass        => '3l3g@nz',
 			     ) or die "$!";
 
 if ($help) {
