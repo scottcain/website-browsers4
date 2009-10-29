@@ -10,7 +10,9 @@ my $acedb = shift or die "Usage: $0 [/path/to/acedb]";
 
 my $ENV_TMP = $ENV{TMP} || $ENV{TMPDIR} || $ENV{TEMP} || -d ('/usr/tmp') ? '/usr/tmp' : -d ('/tmp') ? '/tmp' : die;
 
-my $ACE = Ace->connect($acedb) or die "Can't open ace database:",Ace->error;
+my $ACE = Ace->connect(-host=>'localhost',-port=>2005) or die "Can't open ace database:",Ace->error;
+#my $ACE = Ace->connect($acedb) or die "Can't open ace database:",Ace->error;
+
 my $tmp = $ENV_TMP;
 
 my @contigs = $ACE->fetch(-class=>'Contig',-name=>'*',-fill=>1);
