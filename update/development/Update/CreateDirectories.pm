@@ -3,7 +3,7 @@ package Update::CreateDirectories;
 use base 'Update';
 use strict;
 
-my @directories = qw/blast blat epcr ontology tiling_array interaction ontology/;
+my @directories = qw/blast blat epcr ontology tiling_array interaction orthology position_matrix/;
 
 # The symbolic name of this step
 sub step { return 'create directories'; }
