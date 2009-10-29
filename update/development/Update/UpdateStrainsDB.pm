@@ -14,7 +14,7 @@ sub run {
     my $self = shift;    
     my $release   = $self->release;
     
-    $self->strains_dir($self->root . "/html/strains/$release");
+    $self->strains_dir($self->root . "/website-classic/html/strains/$release");
     $self->_make_dir($self->strains_dir);
     
     $self->make_html_files();
@@ -35,9 +35,9 @@ sub make_html_files {
     open IN, "<$gopher_file" || die "$!\n";
     
     my $release    = $self->release;
-    my $acedb_path = $self->acedb_root . "/elegans_$release";
-    my $db = Ace->connect($acedb_path) || die "Connection failure: ", Ace->error;
-    
+    my $acedb_path = $self->acedb_root . "wormbase_$release";
+#    my $db = Ace->connect(-path=>$acedb_path) || die "Connection failure: ", Ace->error;
+    my $db = Ace->connect(-host=>'localhost',-port=>2005);
     my %status=$db->status;
     my $output = $self->strains_dir;
     
@@ -349,9 +349,9 @@ sub index_files {
     my $strains_dir = $self->strains_dir;
     
     my $release = $self->release;
-    my $acedb   = $self->acedb_root . "/elegans_$release";    
-    my $db = Ace->connect($acedb) || die "Connection failure: ", Ace->error;
-    
+    my $acedb   = $self->acedb_root . "/wormbase_$release";    
+    #my $db = Ace->connect($acedb) || die "Connection failure: ", Ace->error;
+    my $db = Ace->connect(-host=>'localhost',-port=>2005) || die "Connection failure: ", Ace->error;
     my $lookupFileName="lookup.strains";
     
     my $ix = new Search::Indexer(dir => $strains_dir, writeMode => 1);
