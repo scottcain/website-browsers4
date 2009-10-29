@@ -5,16 +5,19 @@
 use Ace;
 use strict;
 
-my $path = shift;
+#my $release = "WS207"; ##$self->release
+my $path = shift; ## "/usr/local/wormbase/acedb/wormbase_$release"
+
+
 $|++;
 
 # connect to database
 my $db;
-if ($path) {
-  $db = Ace->connect($path) || die "Couldn't open database: $path";
-} else {
+#if ($path) {
+#  $db = Ace->connect($path) || die "Couldn't open database: $path";
+#} else {
   $db = Ace->connect(-host=>'localhost',-port=>2005) || die "Couldn't open database";
-}
+#}
 
 
 #my $sock = $db->db;
