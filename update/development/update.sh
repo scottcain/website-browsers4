@@ -16,7 +16,8 @@ steps/create_blast_databases.pl       ${RELEASE}
 
 steps/create_blat_databases.pl        ${RELEASE}
 
-steps/create_epcr_databases.pl        ${RELEASE}
+# DEPRECATED
+#steps/create_epcr_databases.pl        ${RELEASE}
 
 steps/load_genomic_gffdb.pl           ${RELEASE}
 
