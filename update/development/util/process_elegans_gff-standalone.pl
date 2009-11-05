@@ -21,13 +21,14 @@ foreach (@ARGV) { # GFF FILES
   $_ = "gunzip -c $_ |" if /\.gz$/;
 }
 
-my (%NOTES,%LOCUS,%GENBANK,%CONFIRMED,%ORFEOME,%GENES,%GENE_EXTENTS,%WORMPEP,%TRANSCRIPT2CDS);
+#my (%NOTES,%LOCUS,%GENBANK,%CONFIRMED,%ORFEOME,%GENES,%GENE_EXTENTS,%WORMPEP,%TRANSCRIPT2CDS);
+my (%NOTES,%GENBANK,%CONFIRMED,%ORFEOME,%GENES,%GENE_EXTENTS,%WORMPEP,%TRANSCRIPT2CDS);
 my %genes_seen;
 get_confirmed($db,\%CONFIRMED);
 get_genbank($db,\%GENBANK);
 get_cds($db,\%TRANSCRIPT2CDS);
 get_wormpep($db,\%WORMPEP);
-get_loci($db,\%LOCUS);
+#get_loci($db,\%LOCUS);
 get_genes($db,\%GENES);
 get_notes($db,\%NOTES);
 get_orfeome($db,\%ORFEOME);
@@ -53,23 +54,24 @@ while (<>) {
     remember_gene_extents($1,$ref,$start,$stop,$strand);
     my @notes;
 
+    # DEPRECATED 11/2009
+#    # This probably needs to be more restrictive
+#    my $loci = $LOCUS{$lookup} || $LOCUS{$match};
+#
+#    # WS133: Still required
+#    # ADD IN A SEPERATE ENTRY FOR EACH LOCUS
+#    if ($loci) { # These are really genes...
+#      foreach (@$loci) {
+#	my $bestname = bestname($_);
+#	# Span for curated loci - only once per WBGene
+#	#  print join("\t",$ref,$source,'gene',$start,$stop,$score,$strand,$phase,"Locus $bestname"),"\n"
+#	print join("\t",$ref,'curated','gene',$start,$stop,$score,$strand,$phase,"Locus $bestname"),"\n"
+#	  if (!$loci_seen{$bestname}++);
+#      }
+#    }
+
     # Many of the hash lookups are keyed by CDS *only*
     my $lookup = ($group =~ /Transcript/) ? $TRANSCRIPT2CDS{$match} : $match;
-
-    # This probably needs to be more restrictive
-    my $loci = $LOCUS{$lookup} || $LOCUS{$match};
-
-    # WS133: Still required
-    # ADD IN A SEPERATE ENTRY FOR EACH LOCUS
-    if ($loci) { # These are really genes...
-      foreach (@$loci) {
-	my $bestname = bestname($_);
-	# Span for curated loci - only once per WBGene
-	#  print join("\t",$ref,$source,'gene',$start,$stop,$score,$strand,$phase,"Locus $bestname"),"\n"
-	print join("\t",$ref,'curated','gene',$start,$stop,$score,$strand,$phase,"Locus $bestname"),"\n"
-	  if (!$loci_seen{$bestname}++);
-      }
-    }
 
     # WS133 - NOTES ARE PART OF CDS FEATURES, BUT NOT TRANSCRIPTS
     # Append some notes to top-level feature entries.
@@ -133,10 +135,12 @@ while (<>) {
     }
   }
 
-  next if ($method eq 'intron' && $source =~ /^tRNAscan/); # messing up tRNA scanning
+  # Skip some introns that break up tRNAs display
+  next if ($method eq 'intron' && $source =~ /^tRNAscan/);
 
+  # Add Orfeome IDs to PCR_products
   if ($method eq 'PCR_product' && $source eq 'Orfeome' && $group =~ /PCR_product "([^\"]+)"/) {
-    my $amp = $ORFEOME{$1};
+      my $amp = $ORFEOME{$1};
     $group .= qq( ; Amplified $amp) if defined $amp;
   }
 
@@ -153,17 +157,20 @@ while (<>) {
   print join("\t",$ref,$source,$method,$start,$stop,$score,$strand,$phase,$group),"\n";
 }
 
+
+# DEPRECATED (I think!) 11/2009
+# THIS MIGHT NOT BE DEPRECATED! TEST GBROWSE AGGREGATION OF PROCESSED_TRANSCRIPT ENTRIES!
 # write out the extents of the genes
-my %seenit;
-for my $cds (keys %GENES) {
-  (my $base = $cds) =~ s/[a-z]$//;
-  next if $seenit{$base}++;
-  next unless $GENE_EXTENTS{$base};
-  my ($seqid,$start,$stop,$strand) = @{$GENE_EXTENTS{$base}}{qw(seqid start stop strand)};
-  for my $gene (@{$GENES{$cds}}) { # there *should* be only one gene per cds
-    print join("\t",$seqid,'gene','processed_transcript',$start,$stop,'.',$strand,'.',qq(Gene "$gene")),"\n";
-  }
-}
+#my %seenit;
+#for my $cds (keys %GENES) {
+#  (my $base = $cds) =~ s/[a-z]$//;
+#  next if $seenit{$base}++;
+#  next unless $GENE_EXTENTS{$base};
+#  my ($seqid,$start,$stop,$strand) = @{$GENE_EXTENTS{$base}}{qw(seqid start stop strand)};
+#  for my $gene (@{$GENES{$cds}}) { # there *should* be only one gene per cds
+#    print join("\t",$seqid,'gene','processed_transcript',$start,$stop,'.',$strand,'.',qq(Gene "$gene")),"\n";
+#  }
+#}
 
 exit 0;
 
@@ -206,23 +213,24 @@ sub get_cds {
   }
 }
 
-# New gene model ( > WS123 approach)
-# Fetch all genes that are also loci
-sub get_loci {
-  # hash keys are predicted gene names, values are one or more gene objects
-  # (These gene objects will be translated into three-letter locus names prior to dumping)
-  my ($db,$hash) = @_;
-  # Fetch out all the cloned loci
-  # This approach means that some genes will have duplicate entries (arising form the Other_names)
-  my @loci = $db->fetch(-query=>'find Gene Molecular_info AND (CGC_name OR Other_name)');
-  foreach my $obj (@loci) {
-    my @genomic = ($obj->Corresponding_CDS,$obj->Corresponding_Transcript);
-    @genomic >= 1 or next;
-    foreach (@genomic) {
-      push @{$hash->{$_}},$obj;
-    }
-  }
-}
+# DEPRECATED 11/2009
+## New gene model ( > WS123 approach)
+## Fetch all genes that are also loci
+#sub get_loci {
+#  # hash keys are predicted gene names, values are one or more gene objects
+#  # (These gene objects will be translated into three-letter locus names prior to dumping)
+#  my ($db,$hash) = @_;
+#  # Fetch out all the cloned loci
+#  # This approach means that some genes will have duplicate entries (arising form the Other_names)
+#  my @loci = $db->fetch(-query=>'find Gene Molecular_info AND (CGC_name OR Other_name)');
+#  foreach my $obj (@loci) {
+#    my @genomic = ($obj->Corresponding_CDS,$obj->Corresponding_Transcript);
+#    @genomic >= 1 or next;
+#    foreach (@genomic) {
+#      push @{$hash->{$_}},$obj;
+#    }
+#  }
+#}
 
 # allow lookup by wormpep id
 sub get_wormpep {
