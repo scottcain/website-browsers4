@@ -75,15 +75,12 @@ END
 
 # Connect to ace and fetch the database version
 #print STDERR "\n\nConnecting to acedb: " . ($acedb) ? "$acedb\n" : "$host:$port\n";
-#my $db = ($acedb)
-#  ? Ace->connect(-path=>$acedb)
-#  : Ace->connect(-host=>$host,-port=>$port);
-
-my $db = Ace->connect(-host=>'localhost', -port=>2005);
+my $db = ($acedb)
+  ? Ace->connect(-path=>$acedb)
+  : Ace->connect(-host=>$host,-port=>$port);
 
 $version ||= $db->status->{database}{version};
 
-my $passwd = '3l3g\@nz';
 my $gff = Bio::DB::GFF->new(-adaptor     => 'dbi::mysqlace',
 			    -dsn         => 'dbi:mysql:database=c_elegans_'.$version.';host=localhost',
 			    -user        => 'root',

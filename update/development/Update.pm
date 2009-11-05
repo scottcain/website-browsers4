@@ -130,7 +130,7 @@ my %config =  (
 	       fatonib => '/usr/local/blat/bin/faToNib',
 	       
 	       mysql_user => 'root',
-	       mysql_pass => 'kentwashere',
+	       mysql_pass => '3l3g@nz',
 
 	      );
 

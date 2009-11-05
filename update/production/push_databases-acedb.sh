@@ -36,7 +36,12 @@ function success() {
 
 # Package up acedb before mirroring
 cd ${ACEDB_ROOT}
-tar czf wormbase_${VERSION}.tgz wormbase_${VERSION}
+#tar czf wormbase_${VERSION}.tgz wormbase_${VERSION}
+
+#TEST=1
+
+if [ $TEST ]
+then
 
 alert "Pushing Acedb onto staging node..."
 #if rsync -Cav ${ACEDB_DIR} ${STAGING_NODE}:${ACEDB_ROOT}
@@ -71,7 +76,7 @@ then
 else
     failure "Pushing acedb onto ${STAGING_NODE} failed"
 fi
-
+fi
 
 
 alert "Pushing Acedb onto production nodes..."

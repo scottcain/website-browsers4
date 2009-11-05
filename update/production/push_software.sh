@@ -35,8 +35,7 @@ function success() {
 # Original: not necessary to pass through brie3
 alert "Pushing software onto ${STAGING_NODE}"
 if rsync -Cav --exclude extlib \
-              --exclude gbrowse \
-              --exclude gbrowse* \
+              --exclude seq/gbrowse* \
               --exclude gbrowse/ \
               --exclude localdefs.pm \
               --exclude httpd.conf \

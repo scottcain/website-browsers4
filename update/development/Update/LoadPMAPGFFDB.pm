@@ -58,7 +58,7 @@ sub load_gffdb {
     system($cmd);
     
     my $db = $self->target_db;
-    my $pass = '3l3g@nz';
+    my $pass = $self->mysql_pass;
     my $load_cmd = "bp_bulk_load_gff.pl --create --database $db --user root --password  $pass $gff_archive.gz 2> /dev/null";
     $self->logit->debug("loading database: $load_cmd");
     system($load_cmd);
@@ -71,12 +71,9 @@ sub create_database {
   $self->logit->debug("creating a new mysql GFF database");
   
   my $database = $self->target_db;
-  my $user = 'root';
-  my $pass = '3l3\g@nz';
-  #  system "mysql -u root -p $pass -e 'drop database $database'"  or $self->logit->warn("couldn't drop database: $!");
-  
-  my $pass = '3l3g\@nz';
-  
+  my $user = $self->mysql_user;
+  my $pass = $self->mysql_pass;
+  #  system "mysql -u root -p $pass -e 'drop database $database'"  or $self->logit->warn("couldn't drop database: $!");    
   system "mysql -u root -p$pass -e 'create database $database'" or $self->logit->warn("couldn't create database: $!");
   system "mysql -u root -p$pass -e 'grant all privileges on $database.* to $user\@localhost'";
 }
@@ -85,10 +82,10 @@ sub create_database {
 sub check_database {
     my ($self,$species) = @_;
     $self->logit->debug("checking status of new database");
-    
-    my $user = 'root';
-    my $pass = '3l3g@nz';
-    
+
+  my $user = $self->mysql_user;
+  my $pass = $self->mysql_pass;
+        
     my $target_db = $self->target_db;
     my $db     = DBI->connect('dbi:mysql:'.$target_db,$user,$pass) or $self->logit->logdie("can't DBI connect to database");
     my $table_list = $db->selectall_arrayref("show tables")

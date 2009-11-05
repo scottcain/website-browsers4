@@ -10,9 +10,7 @@ use constant GFF   => '/usr/local/ftp/pub/wormbase/elegans-current_release/GENE_
 
 my $release = shift;
 my $acedb = "/usr/local/acedb/wormbase_$release";
-#my $db = Ace->connect($acedb) or die "Can't open ace database:",Ace->error;
-
-my $db = Ace->connect(-host=>'localhost', -port=>2005) or die "Can't open ace database:",Ace->error;
+my $db = Ace->connect($acedb) or die "Can't open ace database:",Ace->error;
 my %loci_seen      = ();
 
 @ARGV = glob(GFF) unless @ARGV;

@@ -46,22 +46,22 @@ echo ${MYSQL}
 cd ${STAGING_MYSQL_DATA_DIR}
 #tar -czf mysql_${VERSION}.tgz *${VERSION}
 
-TEST=1
-
-
-#if rsync -Cav mysql_${VERSION}.tgz ${STAGING_NODE}:${TARGET_MYSQL_DATA_DIR}
+#TEST=1
 
 if [ $TEST ]
 then
+
+if rsync -Cav mysql_${VERSION}.tgz ${STAGING_NODE}:${TARGET_MYSQL_DATA_DIR}
+then
       success "Successfully pushed mysql tarball onto ${STAGING_NODE}"
       
-#        # Unpack it
-#      if ssh ${STAGING_NODE} "cd ${TARGET_MYSQL_DATA_DIR}; tar xzf mysql_${VERSION}.tgz"
-#      then
-#	  success "Successfully unpacked the mysql databases..."
-#      else
-#	  failure "Coulddn't unpack the mysql tarball on ${STAGING_NODE}..."
-#      fi
+        # Unpack it
+      if ssh ${STAGING_NODE} "cd ${TARGET_MYSQL_DATA_DIR}; tar xzf mysql_${VERSION}.tgz"
+      then
+	  success "Successfully unpacked the mysql databases..."
+      else
+	  failure "Coulddn't unpack the mysql tarball on ${STAGING_NODE}..."
+      fi
 
 
       for DB in ${MYSQL_DATABASES} 
@@ -85,7 +85,7 @@ then
 	  fi
       done
 fi
-      
+fi      
 
 
 # Now push from the original production nodes out to the others
