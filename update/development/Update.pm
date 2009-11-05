@@ -11,7 +11,7 @@ our $AUTOLOAD;
 ## test
 
 my %config =  (
-	       root => '/usr/local/wormbase',
+	       root => '/usr/local/wormbase', ## /website-classic
 	       
 	       directories => {
 			       support_dbs => "databases",
@@ -21,8 +21,10 @@ my %config =  (
 	       # Where we will mirror files from Sanger
 	       mirror_dir => '/tmp/temporary_update_dir',
 	       
-	       # acedb and mysql
+	       # acedb and mysql	       	
 	       acedb_root     => '/usr/local/wormbase/acedb/',
+
+
 	       mysql_data_dir => '/usr/local/mysql/data',
 	       
 	       # FTP server access

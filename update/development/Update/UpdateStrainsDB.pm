@@ -13,8 +13,16 @@ sub step { return 'update strains database'; }
 sub run {
     my $self = shift;    
     my $release   = $self->release;
+<<<<<<< /home/norie/wormbase-admin/update/development/Update/UpdateStrainsDB.pm
     
     $self->strains_dir($self->root . "/website-classic/html/strains/$release");
+=======
+       
+#    $self->strains_dir($self->root . "/html/strains/$release");
+    # Hard-coded for now since root is app root and 
+    # databases are ../
+    $self->strains_dir("/usr/local/wormbase/databases/$release/strains");
+>>>>>>> /tmp/UpdateStrainsDB.pm~other.l8BA_c
     $self->_make_dir($self->strains_dir);
     
     $self->make_html_files();
@@ -35,9 +43,15 @@ sub make_html_files {
     open IN, "<$gopher_file" || die "$!\n";
     
     my $release    = $self->release;
+<<<<<<< /home/norie/wormbase-admin/update/development/Update/UpdateStrainsDB.pm
     my $acedb_path = $self->acedb_root . "wormbase_$release";
 #    my $db = Ace->connect(-path=>$acedb_path) || die "Connection failure: ", Ace->error;
     my $db = Ace->connect(-host=>'localhost',-port=>2005);
+=======
+    my $acedb_path = $self->acedb_root . "/wormbase_$release";
+    my $db = Ace->connect($acedb_path) || die "Connection failure: ", Ace->error;
+    
+>>>>>>> /tmp/UpdateStrainsDB.pm~other.l8BA_c
     my %status=$db->status;
     my $output = $self->strains_dir;
     
@@ -349,9 +363,15 @@ sub index_files {
     my $strains_dir = $self->strains_dir;
     
     my $release = $self->release;
+<<<<<<< /home/norie/wormbase-admin/update/development/Update/UpdateStrainsDB.pm
     my $acedb   = $self->acedb_root . "/wormbase_$release";    
     #my $db = Ace->connect($acedb) || die "Connection failure: ", Ace->error;
     my $db = Ace->connect(-host=>'localhost',-port=>2005) || die "Connection failure: ", Ace->error;
+=======
+    my $acedb   = $self->acedb_root . "/wormbase_$release";    
+    my $db = Ace->connect($acedb) || die "Connection failure: ", Ace->error;
+    
+>>>>>>> /tmp/UpdateStrainsDB.pm~other.l8BA_c
     my $lookupFileName="lookup.strains";
     
     my $ix = new Search::Indexer(dir => $strains_dir, writeMode => 1);
@@ -437,8 +457,13 @@ sub index_files {
 	$content=~s/\t/ /g;
 	$content=~s/\s{2,}/ /g;
 	if (! $content) {
+#	    $i++;
 	    next;
 	}
+#	$i++;
+#	print STDERR "$i $genotype\n";
+
+
 	$ix->add($i, $content);
 	$strain_hash{$i}{strain}=$title;
 	$strain_hash{$i}{CGC}=$inCGC;

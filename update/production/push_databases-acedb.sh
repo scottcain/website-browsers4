@@ -10,15 +10,9 @@ then
   exit
 fi
 
-# These nodes host the Acedb database
-#ACEDB_NODES=`cat conf/nodes_acedb.conf`
-ACEDB_NODES=("be1.wormbase.org brie6.cshl.edu aceserver.cshl.org")
-#ACEDB_NODES=("brie6 aceserver")
-#ACEDB_NODES=("aceserver")
-ACEDB_ROOT=/usr/local/wormbase/acedb
-ACEDB_DIR=/usr/local/wormbase/acedb/wormbase_${VERSION}
 
-SEPERATOR="==========================================="
+# Pull in my configuration variables shared across scripts
+source update.conf
 
 function alert() {
   msg=$1
@@ -39,8 +33,112 @@ function success() {
   echo "  ${msg}."
 }
 
-alert "Pushing Acedb onto acedb nodes..."
 
+# Package up acedb before mirroring
+cd ${ACEDB_ROOT}
+tar czf wormbase_${VERSION}.tgz wormbase_${VERSION}
+
+alert "Pushing Acedb onto staging node..."
+#if rsync -Cav ${ACEDB_DIR} ${STAGING_NODE}:${ACEDB_ROOT}
+if rsync -Cav wormbase_${VERSION}.tgz ${STAGING_NODE}:${ACEDB_ROOT}
+then
+  success "Successfully pushed acedb onto ${STAGING_NODE}"
+
+  # Unpack it
+  if ssh ${STAGING_NODE} "cd ${ACEDB_ROOT}; tar xzf wormbase_${VERSION}.tgz"
+  then
+      success "Successfully unpacked the acedb database..."
+  else
+      failure "Coulddn't unpack the acedb on ${STAGING_NODE}..."
+  fi
+  
+   # Set up the symlink
+  if ssh ${STAGING_NODE} "cd ${ACEDB_ROOT}; rm wormbase;  ln -s ${ACEDB_DIR} wormbase"
+  then
+      success "Successfully symlinked elegans -> ${ACEDB_DIR}"
+  else
+      failure "Symlinking failed"
+  fi
+  
+   # Fix permissions
+  if ssh ${STAGING_NODE} "cd ${ACEDB_DIR}; chgrp -R acedb * ; cd database ; chmod 666 block* log.wrm serverlog.wrm ; rm -rf readlocks"
+  then
+      success "Successfully fixed permissions on ${ACEDB_DIR}"
+  else
+      failure "Fixing permissions on ${ACEDB_DIR} failed"
+  fi
+  
+else
+    failure "Pushing acedb onto ${STAGING_NODE} failed"
+fi
+
+
+
+alert "Pushing Acedb onto production nodes..."
+for NODE in ${ACEDB_NODES}
+do
+
+  # Skip the staging node - already copied AceDB to it above.
+  if [ ${NODE} = ${STAGING_NODE} ]; then
+      next
+  fi
+
+  alert " ${NODE}:"
+  if ssh ${STAGING_NODE} "rsync -Cav ${ACEDB_ROOT}/wormbase_${VERSION}.tgz ${NODE}:${ACEDB_ROOT}"
+  then
+      success "Successfully pushed acedb onto ${NODE}"
+      
+  # Unpack it
+      if ssh ${STAGING_NODE} "ssh ${NODE} 'cd ${ACEDB_ROOT}; tar xzf wormbase_${VERSION}.tgz'"
+      then
+	  success "Successfully unpacked the acedb database..."
+      else
+	  failure "Coulddn't unpack the acedb on ${NODE}..."
+      fi
+      
+    # Set up the symlink
+    if ssh ${STAGING_NODE} "ssh ${NODE} 'cd ${ACEDB_ROOT}; rm wormbase;  ln -s ${ACEDB_DIR} wormbase'"
+    then
+	  success "Successfully symlinked elegans -> ${ACEDB_DIR}"
+    else
+	  failure "Symlinking failed"
+    fi
+
+    # Fix permissions
+    if ssh ${STAGING_NODE} "ssh ${NODE} 'cd ${ACEDB_DIR}; chgrp -R acedb * ; cd database ; chmod 666 block* log.wrm serverlog.wrm ; rm -rf readlocks'"
+    then
+	  success "Successfully fixed permissions on ${ACEDB_DIR}"
+    else
+	  failure "Fixing permissions on ${ACEDB_DIR} failed"
+    fi
+
+    # Finally, remove the tarball
+    if ssh ${STAGING_NODE} "ssh ${NODE} 'cd ${ACEDB_ROOT} ; rm -rf wormbase_${VERSION}.tgz'"
+    then
+	success "removed the acedb tarball..."
+    else
+	failure "could not remove the acedb tarball..."
+    fi
+
+  else
+    failure "Pushing acedb onto ${NODE} failed"
+  fi
+done
+
+
+# Finally, remove the local acedb tarball
+rm -rf ${ACEDB_ROOT}/wormbase_${VERSION}.tgz
+
+# And remove it from the staging node, too
+ssh ${STAGING_NODE} "rm -rf ${ACEDB_ROOT}/wormbase_${VERSION}.tgz"
+
+exit
+
+
+
+
+
+# Original: when not necessary to pass through intermediate staging server
 for NODE in ${ACEDB_NODES}
 do
   alert " ${NODE}:"

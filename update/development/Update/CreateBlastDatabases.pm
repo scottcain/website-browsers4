@@ -30,13 +30,13 @@ sub run {
   foreach my $species (@$species) {
 #  next unless ($species =~ /incognita/);
 #   next unless ($species =~ /bacteriophora/);
-	next unless ($species =~ /elegans/); ## unless
+#	next unless ($species =~ /elegans/); ## unless
 #	next if ($species =~ /brenneri/);
 #	next if ($species =~ /malayi/);
 #	next if ($species =~ /japonica/);
 #	next if ($species =~ /briggsae/);
 #	next if ($species =~ /remanei/);
-
+	next if ($species =~ /elegans/);
       #$self->_make_dir($self->mirror_dir);
       $self->logit->info("  begin: $msg $species");
       

@@ -32,6 +32,11 @@ sub run {
     
     foreach my $species (@$species) {
       #next unless ($species =~ /incognita/);
+      next unless ($species =~ /elegans/ || $species =~ /briggsae/ ||$species =~ /remanei/);
+      #next unless ();
+      #next unless ();
+      
+      
 	$self->logit->info("  begin: $msg $species");
 	$self->_make_dir($self->mirror_dir);
 	$self->species_root($self->target_root . "/$species");

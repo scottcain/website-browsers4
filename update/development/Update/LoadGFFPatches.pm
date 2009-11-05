@@ -28,7 +28,7 @@ sub run {
 	    intervals => {
 		filename => 'genetic_intervals_gff2_archive',
 		dump_cmd => 'interpolate_gmap2pmap.pl',
-	    },		    
+	    },
 	};
 	foreach my $feature (keys %$features) {
 	    my $filename = $features->{$feature}->{filename};

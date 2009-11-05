@@ -16,32 +16,17 @@ sub run {
     my $msg     = 'building genomic GFF database for';
     foreach my $species (@$species) {
     
-    # next if ($species =~ /elegans/);  ## unless
-			
-	## GFF3 set   	
-	# 	next if ($species =~ /malayi/);
-	# 	next if ($species =~ /hapla/);
-	# 	next if ($species =~ /incognita/);
 	
 	# ce
-	#	next if ($species =~ /elegans/);
+	
+    next if ($species =~ /elegans/);  ## unless
+	#next unless ($species =~ /elegans/);
 	
 	## GFF3 set   	
-	#	next unless ($species =~ /malayi/);
-	#	next unless ($species =~ /hapla/);
-	#	next unless ($species =~ /incognita/);
-	
-	## ce
-	next unless ($species =~ /elegans/);
 
-	#	next unless $species =~ /elegans/ || $species =~ /remanei/ || $species =~ /briggsae/;
-	#	next unless $species =~ /briggsae/; # WS200: success
-	#	next unless $species =~ /elegans/;  # WS200: success
-	#	next unless $species =~ /remanei/;  # WS200: success
-	#	next unless $species =~ /japonica/;  # WS200: success
-	#	next unless $species =~ /brenneri/;  # WS200: success
-	#	next unless $species =~ /pacificus/;  # WS200: success
-	#	next unless $species =~ /malayi/;  # WS200: success
+	next if ($species =~ /malayi/ || $species =~ /hapla/ || $species =~ /incognita/);
+	#next unless ($species =~ /malayi/ || $species =~ /hapla/ || $species =~ /incognita/);
+
 
 	$self->logit->info("  begin: $msg $species");
 	$self->target_db($species . '_' . $release);   

@@ -13,10 +13,10 @@ BINDIR=/home/todd/projects/wormbase/admin/log_analysis
 #LOGDIR=/usr/local/acedb/wormbase_log_archive
 LOGDIR=/home/todd/projects/wormbase/log_archive
 SITE=www.wormbase.org
-HTMLSTATS=/usr/local/wormbase/html/stats
+HTMLSTATS=/usr/local/wormbase/website-classic/html/stats
 ANALOG=${BINDIR}/analog
 RMAGIC=${BINDIR}/rmagic
-TARGET=/usr/local/wormbase/html/stats
+TARGET=/usr/local/wormbase/website-classic/html/stats
 
 if [ ! ${LATEST_RELEASE} ]; then
   echo "Usage: analyze_logs.sh YYYY.MM"
@@ -185,6 +185,7 @@ ${ANALOG}/analog -G +g${BINDIR}/analog.conf \
     ${LOGDIR}/with_hosts/access_log.2005.gz \
     ${LOGDIR}/with_hosts/access_log.2006.gz \
     ${LOGDIR}/with_hosts/access_log.2007.gz \
+    ${LOGDIR}/with_hosts/access_log.2008.gz \
     ${LOGDIR}/with_hosts/access_log.${YEAR}.gz \
     +C"OUTFILE ${HTMLSTATS}/total/access_log-parsed" \
     +C"HOSTNAME ${SITE}" \
@@ -216,6 +217,7 @@ ${ANALOG}/analog -G +g${BINDIR}/analog.conf \
     ${LOGDIR}/with_hosts/access_log.2005.gz \
     ${LOGDIR}/with_hosts/access_log.2006.gz \
     ${LOGDIR}/with_hosts/access_log.2007.gz \
+    ${LOGDIR}/with_hosts/access_log.2008.gz \
     ${LOGDIR}/with_hosts/access_log.${YEAR}.gz \
     +C"OUTFILE ${HTMLSTATS}/total-nogoogle/access_log-parsed" \
     +C"HOSTNAME ${SITE}" \
