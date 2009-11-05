@@ -14,7 +14,8 @@ sub run {
     my $self = shift;    
     my $release   = $self->release;
     
-    $self->strains_dir($self->root . "/website-classic/html/strains/$release");      
+#    $self->strains_dir($self->root . "/website-classic/html/strains/$release");      
+    $self->strains_dir($self->root . "/databases/$release/strains"); 
     $self->_make_dir($self->strains_dir);
     
     $self->make_html_files();
@@ -353,7 +354,7 @@ sub index_files {
 
     my $lookupFileName="lookup.strains";
     
-    my $ix = new Search::Indexer(dir => $strains_dir, writeMode => 1);
+    my $ix = new Search::Indexer({dir => $strains_dir, writeMode => 1});
     my $pref = $self->strains_dir;
     my @allfilestmp = `ls -R $pref`;
     my @dirs;
@@ -466,7 +467,7 @@ sub print_top {
     my ($self,$title,$fh,$body) = @_;
     if ($fh) {
 	if (!fileno($fh)) {
-	    print "filehandle $fh is not opened\n";
+	    print "filehandle $fh is not opened: print_top\n";
 	    exit;
 	}
 	select($fh);
