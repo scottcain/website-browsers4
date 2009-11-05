@@ -21,12 +21,16 @@ use strict;
 
 my $database = shift;
 my $species = shift;
+my $release = "WS207"; ## $self->release
+my $path = "/usr/local/wormbase/acedb/wormbase_$release"; 
+
+$database = $path;
 
 # connect to database
 #if ($database) {
-#    $db = Ace->connect($database) || die "Couldn't open database";
+my $db = Ace->connect($database) || die "Couldn't open database";
 #} else {
-my $db = Ace->connect(-host=>'localhost',-port=>2005) || die "Couldn't open database";
+#my $db = Ace->connect(-host=>'localhost',-port=>2005) || die "Couldn't open database";
 #}
 
 # find all genomic sequences that contain DNA

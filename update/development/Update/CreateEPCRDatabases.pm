@@ -21,6 +21,9 @@ sub run {
     $self->target_root($self->get_epcr_dir);
     
     foreach my $species (@$species) {
+    
+    next unless ($species =~ /elegans/);
+    
 	$self->logit->info("  begin: creating $msg $species");    
 	$self->_make_dir($self->mirror_dir);    
 	$self->species_root($self->target_root . "/$species");

@@ -1,4 +1,0 @@
-ExpiresActive on
-ExpiresbyType image/gif "access plus 5 minutes"
-ExpiresbyType image/png "access plus 5 minutes"
-ExpiresbyType text/html "access plus 5 minutes"

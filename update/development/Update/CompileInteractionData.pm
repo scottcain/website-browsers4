@@ -1,58 +1,126 @@
 package Update::CompileInteractionData; #
 
-
 use base 'Update';
 use strict;
 use Ace;
 
+our $support_db_dir;
+our $datadir;
+our $interaction_data_file;
+
+
 sub step {return 'compile interaction data';}
 
 sub run{
-    my $self = @_;
+
+    my $self = shift @_;
     my $release = $self->release;
     
     ### interaction dir should have been created
     
-    my $support_db_dir = $self->support_dbs;
-    my $datadir = $support_db_dir."/$release/interaction";
-	
-    my $class = 'Interaction';
+    $support_db_dir = $self->support_dbs;
+    $datadir = $support_db_dir."/$release/interaction";
+	$interaction_data_file = $datadir . "\/compiled_interaction_data.txt";
+	print "Compiling interaction data\n";
+	$self->compile_interaction_data();
 
-    # TH: This should NOT be directed to a production node
-    my $DB = Ace->connect(-host=>'aceserver.cshl.org',-port=>2005);
-    my $target = "compiled_interaction_data_test.txt"; ## 
-    open OUT, ">$datadir/$target" or $self->logit->logdie("Cannot open the output file $target");
-    # print "Ace connected\n";"Cannot open the output file $target"
-    
-    # my $aql_query = "select all class $class limit 10";
-    # my @objects_full_list = $DB->aql($aql_query);
-    my @objects_full_list = $DB->fetch(-class=>$class,-count=>100, -offset=> 250);
-    my @objects = @objects_full_list;
-    
-    
-    # my $objects = @objects_full_list[0 .. 10];
-    # foreach my $interaction (@$objects){
-    
-    foreach my $interaction(@objects){   ## $object 
-	eval{
-	    # my $interaction = shift (@{$object}); #
-	    my $it = $interaction->Interaction_type;
-	    my $type = $it;
-	    my $rnai = $it->RNAi;
-	    my $effr = $it->Effector->right;
-	    my $effr_name = $effr->CGC_name;
-	    if (!($effr_name)){
-		$effr_name = $effr->Sequence_name
-		}
-	    my $effd = $it->Effected->right;
-	    my $effd_name = $effd->CGC_name;
-	    if (!($effd_name)){
-		$effd_name = $effd->Sequence_name
-		}
-	    my $phenotype = $it->Interaction_phenotype;
-	    print OUT "$interaction\|$type\|$rnai\|$effr\&$effr_name\|$effd\&$effd_name\|$phenotype\n";
-	}	
+}
+
+sub compile_interaction_data {
+
+my $class = 'Interaction';
+my $DB = Ace->connect(-host=>'localhost',-port=>2005);  # 'aceserver.cshl.org'
+
+my @interactions = $DB->fetch(-class=>$class);
+
+my @objects;
+
+open OUTFILE, ">$interaction_data_file" or die "Cannot open interaction data output file\n";
+
+foreach my $interaction (@interactions) {
+    #print "$interaction\n";
+    my $int_type = $interaction->Interaction_type;
+    if ($int_type =~ /predicted/i) {
+	
+	my $log_likelihood_score = $interaction->Log_likelihood_score;
+
+	if ($log_likelihood_score >= 1.5) {
+
+	    push @objects, $interaction;
+
+	} else {
+
+	    next;
+	}
+
+    } else {
+
+	push @objects, $interaction;
     }
+
+
+} ## end foreach
+
+
+
+foreach my $interaction (@objects){  
+
+	eval {
+	# my $interaction = shift (@{$interaction_ref});
+	my $it = $interaction->Interaction_type;
+	my $type = $it;
+	my $rnai = $it->RNAi;
+	
+	my @non_directional_interactors;
+	my $effr;
+	my $effr_name;
+	my $effd;
+	my $effd_name;
+	my $interaction_vector;
+	
+	eval {
+		@non_directional_interactors = $it->Non_directional->col;
+	};
+	
+	if (@non_directional_interactors) {
+		$effr = shift @non_directional_interactors;
+	 	$effr_name = $effr->CGC_name;
+	if (!($effr_name)){
+		$effr_name = $effr->Sequence_name
+	}
+		$effd = shift @non_directional_interactors;
+		$effd_name = $effd->CGC_name;
+	if (!($effd_name)){
+		$effd_name = $effd->Sequence_name
+	}
+	
+	$interaction_vector = 'non_directional';
+	
+	}
+	else {
+		$effr = $it->Effector->right;
+	 	$effr_name = $effr->CGC_name;
+	if (!($effr_name)){
+		$effr_name = $effr->Sequence_name
+	}
+		$effd = $it->Effected->right;
+		$effd_name = $effd->CGC_name;
+	if (!($effd_name)){
+		$effd_name = $effd->Sequence_name
+	}
+	
+	
+	$interaction_vector = 'eftr\-\>eftd';
+	
+	}
+	
+	my $phenotype = $it->Interaction_phenotype;
+
+
+    print OUTFILE "$interaction\|$type\|$rnai\|$effr\|$effr_name\|$effd\|$effd_name\|$phenotype\|$interaction_vector\n";
+    }
+}
+
 }
 
 1;

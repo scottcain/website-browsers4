@@ -1,42 +1,37 @@
-package CompileOrthologyResources; #Update::
+package Update::CompileOrthologyResources; #
 
-# use base 'Update';
+use base 'Update';
 use strict;
 use Ace;
 
-#### temp path variables for local mac development;
+our $support_db_dir; # ".";
+our $datadir;
+our $disease_page_data_txt_file;
+our $disease_search_data_txt_file;
+our $full_disease_data_txt_file;
+our $gene_association_file;
+our $gene_id2go_bp_txt_file;
+our $gene_id2go_mf_txt_file;
+our $gene_id2omim_ids_txt_file;
+our $gene_id2phenotype_txt_file;
+our $go_id2omim_ids_txt_file;
+our $hs_ensembl_id2omim_txt_file;
+our $morbidmap_file;
+our $omim_id2all_ortholog_data_txt_file;
+our $omim_id2disease_desc_txt_file;
+our $omim_id2disease_notes_txt_file;
+our $omim_id2disease_name_txt_file;
+our $omim_id2disease_synonyms_txt_file;
+our $omim_id2disease_txt_file;
+our $omim_id2go_ids_txt_file;
+our $omim_id2phenotypes_txt_file;
+our $omim_reconfigured_txt_file;
+our $omim_txt_file;
+our $ortholog_other_data_txt_file;
+our $ortholog_other_data_hs_only_txt_file;
+our $all_proteins_txt_file;
+our $hs_proteins_txt_file;
 
-# our $dev_datadir = "./orthology_data/integration_test";  ## 
-# 
-# our $disease_page_data_txt_file = "$dev_datadir/disease_page_data.txt";
-# our $disease_search_data_txt_file = "$dev_datadir/disease_search_data.txt";
-# our $full_disease_data_txt_file = "$dev_datadir/full_disease_data.txt";
-# our $gene_association_file = "$dev_datadir/gene_association.WS198.wb.ce";
-# our $gene_id2go_bp_txt_file = "$dev_datadir/gene_id2go_bp.txt";
-# our $gene_id2go_mf_txt_file = "$dev_datadir/gene_id2go_mf.txt";
-# our $gene_id2omim_ids_txt_file =  "$dev_datadir/gene_id2omim_ids.txt";
-# our $gene_id2phenotype_txt_file = "$dev_datadir/gene_id2phenotype.txt";
-# our $go_id2omim_ids_txt_file =  "$dev_datadir/go_id2omim_ids.txt";
-# our $hs_ensembl_id2omim_txt_file = "$dev_datadir/hs_ensembl_id2omim.txt";
-# our $morbidmap_file = "$dev_datadir/morbidmap";
-# our $omim_id2all_ortholog_data_txt_file = "$dev_datadir/omim_id2all_ortholog_data.txt";
-# our $omim_id2disease_desc_txt_file = "$dev_datadir/omim_id2disease_desc.txt";
-# our $omim_id2disease_notes_txt_file = "$dev_datadir/omim_id2disease_notes.txt";
-# our $omim_id2disease_name_txt_file  =  "$dev_datadir/omim_id2disease_name.txt";
-# our $omim_id2disease_synonyms_txt_file = "$dev_datadir/omim_id2disease_synonyms.txt";
-# our $omim_id2disease_txt_file = "$dev_datadir/omim_id2disease.txt";
-# our $omim_id2go_ids_txt_file =  "$dev_datadir/omim_id2go_ids.txt";
-# our $omim_id2phenotypes_txt_file =  "$dev_datadir/omim_id2phenotypes.txt";
-# our $omim_reconfigured_txt_file = "$dev_datadir/omim_reconfigured.txt";
-# our $omim_txt_file = "$dev_datadir/omim.txt";
-# our $ortholog_other_data_txt_file = "$dev_datadir/ortholog_other_data.txt";
-# our $ortholog_other_data_hs_only_txt_file = "$dev_datadir/ortholog_other_data_hs_only.txt";
-# 
-# our $all_proteins_txt_file = "$dev_datadir/all_proteins.txt";
-# our $hs_proteins_txt_file = "$dev_datadir/hs_proteins.txt";
-
-
-#### end local stuff #####
 
 sub step {return 'compile interaction data';}
 
@@ -44,80 +39,94 @@ sub run{
 	
 	my $self = shift @_;
 	
-	## brie_specific_: abstract
-	my $release = "WS198"; #$self->release;
+	my $release =  $self->release; #"WS207";
 	
 	### orthology dir should have been created
-	
-	## brie_specific_: 
-	my $support_db_dir = "."; # $self->support_dbs;
-	my $datadir = $support_db_dir."/orthology_data/$release"; # "/$release/orthology"
-	
-	## brie_specific_: -host=>'localhost'
-	my $DB = Ace->connect(-host=>'localhost',-port=>2005); #'aceserver.cshl.org'
+	my $DB = Ace->connect(-host=>'localhost',-port=>2005) or die "Cannot connect to Acedb"; 
 	
 	## datapaths and files
-	$self->disease_page_data_txt_file = ("$datadir/disease_page_data.txt");
-	$self->disease_search_data_txt_file = ("$datadir/disease_search_data.txt");
-	$self->full_disease_data_txt_file = ("$datadir/full_disease_data.txt)";
-	$self->gene_association_file = ("$datadir/gene_association\.".$release."\.wb.ce");
-	$self->gene_id2go_bp_txt_file = ("$datadir/gene_id2go_bp.txt");
-	$self->gene_id2go_mf_txt_file = ("$datadir/gene_id2go_mf.txt");
-	$self->gene_id2omim_ids_txt_file =  ("$datadir/gene_id2omim_ids.txt");
-	$self->go_id2omim_ids_txt_file =  ("$datadir/go_id2omim_ids.txt");
-	$self->hs_ensembl_id2omim_txt_file = ("$datadir/hs_ensembl_id2omim.txt");
-	$self->morbidmap_file = ("$datadir/$morbidmap");
-	$self->omim_id2all_ortholog_data_txt_file = ("$datadir/omim_id2all_ortholog_data.txt");
-	$self->omim_id2disease_desc_txt_file("$datadir/$omim_id2disease_desc.txt");
-	$self->omim_id2disease_notes_txt_file = ("$datadir/omim_id2disease_notes.txt");
-	$self->omim_id2disease_name_txt_file  =  ("$datadir/omim_id2disease_name.txt");
-	$self->omim_id2disease_synonyms_txt_file = ("$datadir/omim_id2disease_synonyms.txt");
-	$self->omim_id2go_ids_txt_file =  ("$datadir/omim_id2go_ids.txt");
-	$self->omim_id2phenotypes_txt_file =  ("$datadir/omim_id2phenotypes.txt");
-	$self->omim_reconfigured_txt_file("$datadir/omim_reconfigured.txt");
-	$self->omim_txt_file("$datadir/omim.txt");
-	$self->ortholog_other_data_txt_file = ("$datadir/ortholog_other_data.txt");
-	$self->ortholog_other_data_hs_only_txt_file = "($datadir/ortholog_other_data_hs_only.txt)";
-	$self->gene_id2phenotype_txt_file("$datadir/gene_id2phenotype.txt");
-	$self->omim_id2disease_txt_file = ("$datadir/omim_id2disease.txt");
-	$self->$all_proteins_txt_file = ("$dev_datadir/all_proteins.txt");
-	$self->$hs_proteins_txt_file = ("$dev_datadir/hs_proteins.txt");
- 	
+
+	$support_db_dir = $self->support_dbs; # ".";
+	$datadir = $support_db_dir."\/$release\/orthology"; # "/""/orthology_data/$release"
+	$disease_page_data_txt_file = "$datadir/disease_page_data.txt";
+	$disease_search_data_txt_file = "$datadir/disease_search_data.txt";
+	$full_disease_data_txt_file = "$datadir/full_disease_data.txt";
+	$gene_association_file = "$datadir/gene_association." . $release . ".wb.ce";
+	$gene_id2go_bp_txt_file = "$datadir/gene_id2go_bp.txt";
+	$gene_id2go_mf_txt_file = "$datadir/gene_id2go_mf.txt";
+	$gene_id2omim_ids_txt_file =  "$datadir/gene_id2omim_ids.txt";
+	$gene_id2phenotype_txt_file = "$datadir/gene_id2phenotype.txt";
+	$go_id2omim_ids_txt_file =  "$datadir/go_id2omim_ids.txt";
+	$hs_ensembl_id2omim_txt_file = "$datadir/hs_ensembl_id2omim.txt";
+	$morbidmap_file = "$datadir/morbidmap";
+	$omim_id2all_ortholog_data_txt_file = "$datadir/omim_id2all_ortholog_data.txt";
+	$omim_id2disease_desc_txt_file = "$datadir/omim_id2disease_desc.txt";
+	$omim_id2disease_notes_txt_file = "$datadir/omim_id2disease_notes.txt";
+	$omim_id2disease_name_txt_file  =  "$datadir/omim_id2disease_name.txt";
+	$omim_id2disease_synonyms_txt_file = "$datadir/omim_id2disease_synonyms.txt";
+	$omim_id2disease_txt_file = "$datadir/omim_id2disease.txt";
+	$omim_id2go_ids_txt_file =  "$datadir/omim_id2go_ids.txt";
+	$omim_id2phenotypes_txt_file =  "$datadir/omim_id2phenotypes.txt";
+	$omim_reconfigured_txt_file = "$datadir/omim_reconfigured.txt";
+	$omim_txt_file = "$datadir/omim.txt";
+	$ortholog_other_data_txt_file = "$datadir/ortholog_other_data.txt";
+	$ortholog_other_data_hs_only_txt_file = "$datadir/ortholog_other_data_hs_only.txt";
+	$all_proteins_txt_file = "$datadir/all_proteins.txt";
+	$hs_proteins_txt_file = "$datadir/hs_proteins.txt";
+
+
+
 	## run ##
 
+
 	#$self->compile_external_files();
-	#$self->reconfigure_omim_file();  ## OK
-	#$self->get_all_associated_phenotypes($DB); ## OK
-	# $self->pull_omim_desc(); ## OK
-	# $self->get_all_ortholog_other_data($DB); ## works but needs another plan to pull ortholog_other data -- probably from the ace files...
-	# $self->get_all_associated_go_terms("F",$gene_id2go_mf_txt_file); # OK
-	# $self->get_all_associated_go_terms("P",$gene_id2go_bp_txt_file); # OK
-	# $self->pull_omim_txt_notes(); # OK
-	# $self->process_omim_2_disease_data(); ## OK
-	# $self->print_hs_ortholog_other_data(); ## OK
-	
-	# $self->update_hs_protein_list(); ## OK
-	
-	# $self->process_ensembl_2_omim_data($DB); ## needs work, pull data from Sanger Ace files if at all possible
-	
-	
-	
-	# $self->assemble_disease_data(); ## OK
-	# $self->print_disease_page_data(); ## OK
-	#$self->process_pipe_delineated_file($disease_page_data_txt_file,1,"0-1-2-3-4-5-6-7-8-9-10-11-12",0,$omim_id2all_ortholog_data_txt_file); ## OK
-	
-	# $self->pull_disease_synonyms(); ## OK
-	 #$self->process_pipe_delineated_file($disease_page_data_txt_file,1,'8',1,$omim_id2phenotypes_txt_file); ## OK
-	# $self->process_pipe_delineated_file($disease_page_data_txt_file,1,'0',0,$omim_id2disease_name_txt_file ); ## OK
-	#$self->process_pipe_delineated_file($disease_page_data_txt_file,2,'1',1,$gene_id2omim_ids_txt_file); ## OK
-	#$self->process_pipe_delineated_file($disease_page_data_txt_file,1,'9-10',1,$omim_id2go_ids_txt_file); ## OK
-	# $self->compile_omim_go_data(); ## OK
-	 $self->assemble_search_data(); ## OK
+	#print "External files compiled\n";
+	$self->reconfigure_omim_file();  ## OK
+	print "Omim reconfigured\n"; 
+	$self->get_all_associated_phenotypes(); ## OK
+	print "associated phenes obtained\n";
+ 	$self->pull_omim_desc(); ## OK
+	print "omim descriptions pulled\n";
+ 	$self->get_all_ortholog_other_data(); ## works but needs another plan to pull ortholog_other data -- probably from the ace files...
+	print "orthology other data obtained\n";
+	$self->get_all_associated_go_terms("F",$gene_id2go_mf_txt_file); # OK
+	print "associated function go terms obtained\n";
+  	$self->get_all_associated_go_terms("P",$gene_id2go_bp_txt_file); # OK
+ 	print "associated process go terms obtained\n";
+  	$self->pull_omim_txt_notes(); # OK
+ 	print "omim text notes obtained\n";
+  	$self->process_omim_2_disease_data(); ## OK
+ 	print "omim 2 disease data processed\n";
+  	$self->print_hs_ortholog_other_data(); ## OK
+ 	print "hs orthology other data printed\n";
+ 	$self->update_hs_protein_list(); ## OK
+ 	print "hs protein list updated\n";
+ 	$self->process_ensembl_2_omim_data(); ## needs work, pull data from Sanger Ace files if at all possible
+ 	print "ensembl 2 omim data processed\n";
+ 	$self->assemble_disease_data(); ## OK
+ 	print "disease data assembled\n";
+  	$self->print_disease_page_data(); ## OK
+ 	print "disease page data printed\n";
+ 	$self->process_pipe_delineated_file($disease_page_data_txt_file,1,"0-1-2-3-4-5-6-7-8-9-10-11-12",0,$omim_id2all_ortholog_data_txt_file); ## OK
+ 	print "omim 2 all ortholog data processed\n";
+  	$self->pull_disease_synonyms(); ## OK
+ 	print "disease synonyms obtained\n";
+ 	$self->process_pipe_delineated_file($disease_page_data_txt_file,1,'8',1,$omim_id2phenotypes_txt_file); ## OK
+ 	print "omim 2 phenotype processed\n";
+  	$self->process_pipe_delineated_file($disease_page_data_txt_file,1,'0',0,$omim_id2disease_name_txt_file ); ## OK
+ 	print "omim 2 disease name processed\n";
+ 	$self->process_pipe_delineated_file($disease_page_data_txt_file,2,'1',1,$gene_id2omim_ids_txt_file); ## OK
+ 	print "gene 2 omim ids file processed\n";
+ 	$self->process_pipe_delineated_file($disease_page_data_txt_file,1,'9-10',1,$omim_id2go_ids_txt_file); ## OK
+ 	print "omim 2 go id file processed\n";
+  	$self->compile_omim_go_data(); ## OK
+ 	print "omim go data compiled\n";
+ 	$self->assemble_search_data(); ## OK
+ 	print "search data assembled\n";
 }
 	# $self->process_pipe_delineated_file(); template
 ############################
 ## subroutines ##
-
 
 sub compile_external_files {
 
@@ -136,7 +145,7 @@ sub update_hs_protein_list {
 
 open ALL_PROTEIN_LIST, "$all_protein_list" or die "Cannot open all protein list\n";
 
-my $DB = Ace->connect(-host=>'aceserver.cshl.org',-port=>2005);
+my $DB = Ace->connect(-host=>'localhost',-port=>2005);
 
 
 ## build protein hash
@@ -157,7 +166,6 @@ open ALL_PROTEIN_LIST, ">>$all_protein_list" or die "Cannot open all protein lis
 open HS_PROTEIN_LIST, ">>$hs_protein_list" or die "Cannot open hs protein list\n";
 
 ### get and check protein data 
-
 
 my @acedb_proteins = $DB->fetch(-class=>'Protein');
 
@@ -182,14 +190,8 @@ foreach my $ace_protein (@acedb_proteins) {
                	print ALL_PROTEIN_LIST "$ace_protein\n";
                 
            	}
-
-
+		}
 	}
-}
-
-
-
-
 }
 
 sub assemble_search_data{
@@ -235,7 +237,6 @@ sub compile_omim_go_data{
 				$go_id2omim_id{$go_id}{$omim_id} = 1;
 			}
 		}
-
 	}
 
 	# my %go_id2omim_ids;
@@ -251,9 +252,7 @@ sub compile_omim_go_data{
 		else{
 			next;
 		}
-
 	}
-
 }
 
 
@@ -486,17 +485,16 @@ sub process_omim_2_disease_data{
 	                $line_elements[0] =~ s/\]*//g;
 	                print OUT "$line_elements[2]\=\>$line_elements[0]\n";
 	        }
-
-
 	}
-	
 }
 
 
 sub process_ensembl_2_omim_data{
 	
-	my ($self,$DB) = @_;
+	my ($self) = @_;
 	
+	my $DB = Ace->connect(-host=>'localhost', -port=>2005) or die "Cannot open Acedb for process_ensembl_2_omim_data";
+
 	my $infile = $hs_proteins_txt_file;
 	my $outfile = $hs_ensembl_id2omim_txt_file;
 	
@@ -620,7 +618,8 @@ sub get_all_associated_go_terms{
 
 sub get_all_ortholog_other_data {
 	
-		my ($self,$DB) = @_;
+		my ($self) = @_;
+		my $DB = Ace->connect(-host=>'localhost', -port=>2005) or die "Cannot connect to DB for get_all_ortholog_other_data"; 
 		my $class = 'Gene';
 		my $tag = 'Ortholog_other';
 		my $host = 'aceserver.cshl.org';
@@ -630,15 +629,33 @@ sub get_all_ortholog_other_data {
 	
 		my $out_file = $ortholog_other_data_txt_file;
 		open OUT, "> $out_file" or die "Cannot open $out_file\n";
+		#my $aql_query = "select all class $class where exists_tag ->$tag";
+		#my @objects_full_list = $DB->aql($aql_query);
+		my @objects_full_list;
 
-		my $aql_query = "select all class $class where exists_tag ->$tag";
-		my @objects_full_list = $DB->aql($aql_query);
+		my @genes = $DB->fetch(-class=>$class);
+		foreach my $gene (@genes){
+
+		    my @oo = $gene->Ortholog_other;
+		    if (@oo) {
+			
+			push @objects_full_list, $gene;
+
+		    } else {
+
+			next;
+
+		    }
+		}
+		
+
 		# my @objects_test_list = $objects_full_list[10 .. 100];
 		my %ortholog_db_counter;
 		my $error_count = 0;
 		foreach my $object (@objects_full_list) { #@objects_test_list 
 		    eval{
-		                my $gene = shift @{$object};
+		                #my $gene = shift @{$object};
+				my $gene = $object;
 		                my @ortholog_others = $gene->Ortholog_other;
 		                foreach my $ortholog_other (@ortholog_others){
 		                        my $method = $ortholog_other->right(2);
@@ -752,8 +769,9 @@ sub reconfigure_omim_file {
 
 sub get_all_associated_phenotypes {
 	
-	my ($self,$DB) = @_;
+	my ($self) = @_;
 	
+	my $DB = Ace->connect(-host=>'localhost', -port => 2005) or die "Cannot connect to DB for get_all_associated_phenotypes";
 	my $class = 'Gene';
 	my $tag = 'Phenotype';
 	my $aql_query = "select all class $class where exists_tag ->$tag";

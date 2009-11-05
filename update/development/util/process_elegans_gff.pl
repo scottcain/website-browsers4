@@ -1,14 +1,18 @@
 #!/usr/bin/perl
 
 use strict;
+use local::lib '/usr/local/wormbase/extlib/classic';
 use Ace;
-
-use constant ACEDB => '/usr/local/acedb/elegans';
+use constant ACEDB => '/usr/local/wormbase/acedb/wormbase';
 use constant GFF   => '/usr/local/ftp/pub/wormbase/elegans-current_release/GENE_DUMPS/CHROMOSOME*.gff.gz';
 
-my $acedb = shift || ACEDB;
+#my $acedb = shift || ACEDB;
 
-my $db = Ace->connect($acedb) or die "Can't open ace database:",Ace->error;
+my $release = shift;
+my $acedb = "/usr/local/acedb/wormbase_$release";
+#my $db = Ace->connect($acedb) or die "Can't open ace database:",Ace->error;
+
+my $db = Ace->connect(-host=>'localhost', -port=>2005) or die "Can't open ace database:",Ace->error;
 my %loci_seen      = ();
 
 @ARGV = glob(GFF) unless @ARGV;

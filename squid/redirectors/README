@@ -1,6 +1,0 @@
-This directory contains simple redirector
-scripts that serve to rewrite URIs passed from squid.
-In general, this is used as a simple-minded load-balancing system.
-
-T. Harris, July 2005
-

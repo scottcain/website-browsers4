@@ -74,7 +74,7 @@ open CONFIRM,">/usr/local/wormbase/temporary_patches/${version}_patches/$version
 my $GFF = Bio::DB::GFF->new(-adaptor     => 'dbi::mysqlace',
 			    -dsn         => "dbi:mysql:database=c_elegans;host=localhost",
 			    -user        => 'root',
-			    -pass        => 'kentwashere',
+			    -pass        => '3l3g@nz',
 #			    -pass        => 'root',
 			    -aggregators => [qw(processed_transcript{coding_exon/CDS})],
 			   ) or die "$!";

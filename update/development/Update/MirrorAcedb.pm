@@ -8,15 +8,15 @@ sub step { return 'mirror new acedb release'; }
 
 sub run {
     my $self = shift;
-    $self->install_path($self->acedb_root .'/elegans_' . $self->release);
+    $self->install_path($self->acedb_root .'/wormbase_' . $self->release);
     $self->local_mirror_directory($self->acedb_root . '/tmp');
     
-    $self->mirror_acedb;
-    $self->untar_acedb;
+    #$self->mirror_acedb;
+    #$self->untar_acedb;
     $self->customize_acedb;
     $self->update_symlink({path    => $self->acedb_root,
-			 target  => 'elegans_' . $self->release,
-			   symlink => 'elegans',
+			 target  => 'wormbase_' . $self->release,
+			   symlink => 'wormbase',
 		       });
     my $fh = $self->master_log;
     print $fh $self->step . " Mirroring AceDB complete...\n";
@@ -67,7 +67,7 @@ sub customize_acedb {
     my $release      = $self->release;
     my $release_id   = $self->release_id;
     my $source_wspec = $self->root       . "/wspec";
-    my $target_wspec = $self->acedb_root . "/elegans_$release/wspec";
+    my $target_wspec = $self->acedb_root . "/wormbase_$release/wspec";
     
     system("chmod ug+rw $target_wspec/*.wrm") && $self->logit->warn("Problems encountered customizing acedb: $!");
     foreach (<${source_wspec}/*.wrm>) {
