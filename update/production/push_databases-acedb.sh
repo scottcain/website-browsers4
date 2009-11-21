@@ -34,100 +34,103 @@ function success() {
 }
 
 
+
+SYNC_TO_STAGING_NODE=1
+
+if [ $SYNC_TO_STAGING_NODE ]
+then
+    
 # Package up acedb before mirroring
-cd ${ACEDB_ROOT}
-#tar czf wormbase_${VERSION}.tgz wormbase_${VERSION}
-
-#TEST=1
-
-if [ $TEST ]
-then
-
-alert "Pushing Acedb onto staging node..."
+    cd ${ACEDB_ROOT}
+    
+    alert "packaging acedb..."
+    tar czf wormbase_${VERSION}.tgz wormbase_${VERSION}
+    
+    alert "Pushing Acedb onto staging node..."
 #if rsync -Cav ${ACEDB_DIR} ${STAGING_NODE}:${ACEDB_ROOT}
-if rsync -Cav wormbase_${VERSION}.tgz ${STAGING_NODE}:${ACEDB_ROOT}
-then
-  success "Successfully pushed acedb onto ${STAGING_NODE}"
-
+    if rsync -Cav wormbase_${VERSION}.tgz ${STAGING_NODE}:${ACEDB_ROOT}
+    then
+	success "Successfully pushed acedb onto ${STAGING_NODE}"
+	
   # Unpack it
-  if ssh ${STAGING_NODE} "cd ${ACEDB_ROOT}; tar xzf wormbase_${VERSION}.tgz"
-  then
-      success "Successfully unpacked the acedb database..."
-  else
-      failure "Coulddn't unpack the acedb on ${STAGING_NODE}..."
-  fi
-  
+	if ssh ${STAGING_NODE} "cd ${ACEDB_ROOT}; tar xzf wormbase_${VERSION}.tgz"
+	then
+	    success "Successfully unpacked the acedb database..."
+	else
+	    failure "Coulddn't unpack the acedb on ${STAGING_NODE}..."
+	fi
+	
    # Set up the symlink
-  if ssh ${STAGING_NODE} "cd ${ACEDB_ROOT}; rm wormbase;  ln -s ${ACEDB_DIR} wormbase"
-  then
-      success "Successfully symlinked elegans -> ${ACEDB_DIR}"
-  else
-      failure "Symlinking failed"
-  fi
-  
+	if ssh ${STAGING_NODE} "cd ${ACEDB_ROOT}; rm wormbase;  ln -s ${ACEDB_DIR} wormbase"
+	then
+	    success "Successfully symlinked elegans -> ${ACEDB_DIR}"
+	else
+	    failure "Symlinking failed"
+	fi
+	
    # Fix permissions
-  if ssh ${STAGING_NODE} "cd ${ACEDB_DIR}; chgrp -R acedb * ; cd database ; chmod 666 block* log.wrm serverlog.wrm ; rm -rf readlocks"
-  then
-      success "Successfully fixed permissions on ${ACEDB_DIR}"
-  else
-      failure "Fixing permissions on ${ACEDB_DIR} failed"
-  fi
-  
-else
-    failure "Pushing acedb onto ${STAGING_NODE} failed"
-fi
+	if ssh ${STAGING_NODE} "cd ${ACEDB_DIR}; chgrp -R acedb * ; cd database ; chmod 666 block* log.wrm serverlog.wrm ; rm -rf readlocks"
+	then
+	    success "Successfully fixed permissions on ${ACEDB_DIR}"
+	else
+	    failure "Fixing permissions on ${ACEDB_DIR} failed"
+	fi
+	
+    else
+	failure "Pushing acedb onto ${STAGING_NODE} failed"
+    fi
 fi
 
 
 alert "Pushing Acedb onto production nodes..."
 for NODE in ${ACEDB_NODES}
 do
-
+    
   # Skip the staging node - already copied AceDB to it above.
-  if [ ${NODE} = ${STAGING_NODE} ]; then
-      next
-  fi
-
-  alert " ${NODE}:"
-  if ssh ${STAGING_NODE} "rsync -Cav ${ACEDB_ROOT}/wormbase_${VERSION}.tgz ${NODE}:${ACEDB_ROOT}"
-  then
-      success "Successfully pushed acedb onto ${NODE}"
-      
+    if [ ${NODE} = ${STAGING_NODE} ]; then
+	next
+    fi
+    
+    alert " ${NODE}:"
+    if ssh ${STAGING_NODE} "rsync -Cav ${ACEDB_ROOT}/wormbase_${VERSION}.tgz ${NODE}:${ACEDB_ROOT}"
+    then
+	success "Successfully pushed acedb onto ${NODE}"
+	
   # Unpack it
-      if ssh ${STAGING_NODE} "ssh ${NODE} 'cd ${ACEDB_ROOT}; tar xzf wormbase_${VERSION}.tgz'"
-      then
-	  success "Successfully unpacked the acedb database..."
-      else
-	  failure "Coulddn't unpack the acedb on ${NODE}..."
-      fi
-      
+	if ssh ${STAGING_NODE} "ssh ${NODE} 'cd ${ACEDB_ROOT}; tar xzf wormbase_${VERSION}.tgz'"
+	then
+	    success "Successfully unpacked the acedb database..."
+	else
+	    failure "Coulddn't unpack the acedb on ${NODE}..."
+	fi
+	
     # Set up the symlink
-    if ssh ${STAGING_NODE} "ssh ${NODE} 'cd ${ACEDB_ROOT}; rm wormbase;  ln -s ${ACEDB_DIR} wormbase'"
-    then
-	  success "Successfully symlinked elegans -> ${ACEDB_DIR}"
-    else
-	  failure "Symlinking failed"
-    fi
-
+	if ssh ${STAGING_NODE} "ssh ${NODE} 'cd ${ACEDB_ROOT}; rm wormbase;  ln -s ${ACEDB_DIR} wormbase'"
+	then
+	    success "Successfully symlinked elegans -> ${ACEDB_DIR}"
+	else
+	    failure "Symlinking failed"
+	fi
+	
     # Fix permissions
-    if ssh ${STAGING_NODE} "ssh ${NODE} 'cd ${ACEDB_DIR}; chgrp -R acedb * ; cd database ; chmod 666 block* log.wrm serverlog.wrm ; rm -rf readlocks'"
-    then
-	  success "Successfully fixed permissions on ${ACEDB_DIR}"
-    else
-	  failure "Fixing permissions on ${ACEDB_DIR} failed"
-    fi
-
+	if ssh ${STAGING_NODE} "ssh ${NODE} 'cd ${ACEDB_DIR}; chgrp -R acedb * ; cd database ; chmod 666 block* log.wrm serverlog.wrm ; rm -rf readlocks'"
+	then
+	    success "Successfully fixed permissions on ${ACEDB_DIR}"
+	else
+	    failure "Fixing permissions on ${ACEDB_DIR} failed"
+	fi
+	
     # Finally, remove the tarball
-    if ssh ${STAGING_NODE} "ssh ${NODE} 'cd ${ACEDB_ROOT} ; rm -rf wormbase_${VERSION}.tgz'"
-    then
-	success "removed the acedb tarball..."
+	if ssh ${STAGING_NODE} "ssh ${NODE} 'cd ${ACEDB_ROOT} ; rm -rf wormbase_${VERSION}.tgz'"
+	then
+	    success "removed the acedb tarball..."
+	else
+	    failure "could not remove the acedb tarball..."
+	fi
+	
     else
-	failure "could not remove the acedb tarball..."
+	failure "Pushing acedb onto ${NODE} failed"
     fi
-
-  else
-    failure "Pushing acedb onto ${NODE} failed"
-  fi
 done
 
 

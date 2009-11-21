@@ -21,14 +21,14 @@ foreach (@ARGV) { # GFF FILES
   $_ = "gunzip -c $_ |" if /\.gz$/;
 }
 
-#my (%NOTES,%LOCUS,%GENBANK,%CONFIRMED,%ORFEOME,%GENES,%GENE_EXTENTS,%WORMPEP,%TRANSCRIPT2CDS);
-my (%NOTES,%GENBANK,%CONFIRMED,%ORFEOME,%GENES,%GENE_EXTENTS,%WORMPEP,%TRANSCRIPT2CDS);
+my (%NOTES,%LOCUS,%GENBANK,%CONFIRMED,%ORFEOME,%GENES,%GENE_EXTENTS,%WORMPEP,%TRANSCRIPT2CDS);
+#my (%NOTES,%GENBANK,%CONFIRMED,%ORFEOME,%GENES,%GENE_EXTENTS,%WORMPEP,%TRANSCRIPT2CDS);
 my %genes_seen;
 get_confirmed($db,\%CONFIRMED);
 get_genbank($db,\%GENBANK);
 get_cds($db,\%TRANSCRIPT2CDS);
 get_wormpep($db,\%WORMPEP);
-#get_loci($db,\%LOCUS);
+get_loci($db,\%LOCUS);
 get_genes($db,\%GENES);
 get_notes($db,\%NOTES);
 get_orfeome($db,\%ORFEOME);
@@ -51,7 +51,7 @@ while (<>) {
     ### Need to pick up transcript IDs, too
 
     my $match = $1;
-    remember_gene_extents($1,$ref,$start,$stop,$strand);
+#    remember_gene_extents($1,$ref,$start,$stop,$strand);
     my @notes;
 
     # DEPRECATED 11/2009
@@ -174,20 +174,20 @@ while (<>) {
 
 exit 0;
 
-
+# DEPRECATED (I think!) 11/2009
 # remember the extreme left and right of transcripts
 # for translating into gene extents.  This is called with
 # CDS and UTR groups.
-sub remember_gene_extents {
-  my ($group,$seqid,$start,$stop,$strand) = @_;
-  $group =~ s/[a-z]$//;  # get the base name of the CDS/UTR group
-  $GENE_EXTENTS{$group}{start}  = $start
-    if !defined $GENE_EXTENTS{$group}{start} || $GENE_EXTENTS{$group}{start} > $start;
-  $GENE_EXTENTS{$group}{stop}    = $stop
-    if !defined $GENE_EXTENTS{$group}{stop}  || $GENE_EXTENTS{$group}{stop} <  $stop;
-  $GENE_EXTENTS{$group}{strand}  ||= $strand;
-  $GENE_EXTENTS{$group}{seqid}   ||= $seqid;
-}
+#sub remember_gene_extents {
+#  my ($group,$seqid,$start,$stop,$strand) = @_;
+#  $group =~ s/[a-z]$//;  # get the base name of the CDS/UTR group
+#  $GENE_EXTENTS{$group}{start}  = $start
+#    if !defined $GENE_EXTENTS{$group}{start} || $GENE_EXTENTS{$group}{start} > $start;
+#  $GENE_EXTENTS{$group}{stop}    = $stop
+#    if !defined $GENE_EXTENTS{$group}{stop}  || $GENE_EXTENTS{$group}{stop} <  $stop;
+#  $GENE_EXTENTS{$group}{strand}  ||= $strand;
+#  $GENE_EXTENTS{$group}{seqid}   ||= $seqid;
+#}
 
 
 # Fudge factor to enable searching of the GFF by WBGene IDs
@@ -213,24 +213,24 @@ sub get_cds {
   }
 }
 
-# DEPRECATED 11/2009
+
 ## New gene model ( > WS123 approach)
 ## Fetch all genes that are also loci
-#sub get_loci {
-#  # hash keys are predicted gene names, values are one or more gene objects
-#  # (These gene objects will be translated into three-letter locus names prior to dumping)
-#  my ($db,$hash) = @_;
-#  # Fetch out all the cloned loci
-#  # This approach means that some genes will have duplicate entries (arising form the Other_names)
-#  my @loci = $db->fetch(-query=>'find Gene Molecular_info AND (CGC_name OR Other_name)');
-#  foreach my $obj (@loci) {
-#    my @genomic = ($obj->Corresponding_CDS,$obj->Corresponding_Transcript);
-#    @genomic >= 1 or next;
-#    foreach (@genomic) {
-#      push @{$hash->{$_}},$obj;
-#    }
-#  }
-#}
+sub get_loci {
+  # hash keys are predicted gene names, values are one or more gene objects
+  # (These gene objects will be translated into three-letter locus names prior to dumping)
+  my ($db,$hash) = @_;
+  # Fetch out all the cloned loci
+  # This approach means that some genes will have duplicate entries (arising form the Other_names)
+  my @loci = $db->fetch(-query=>'find Gene Molecular_info AND (CGC_name OR Other_name)');
+  foreach my $obj (@loci) {
+    my @genomic = ($obj->Corresponding_CDS,$obj->Corresponding_Transcript);
+    @genomic >= 1 or next;
+    foreach (@genomic) {
+      push @{$hash->{$_}},$obj;
+   }
+  }
+}
 
 # allow lookup by wormpep id
 sub get_wormpep {

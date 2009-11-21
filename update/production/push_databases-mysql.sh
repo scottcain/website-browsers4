@@ -42,49 +42,50 @@ echo ${MYSQL}
 ################################
 # Copying databases as a tarball
 
+# Sync to the staging node
+SYNC_TO_STAGING_NODE=1
+if [ $SYNC_TO_STAGING_NODE ]
+then
+    
 # Tar up all of our databases
-cd ${STAGING_MYSQL_DATA_DIR}
-#tar -czf mysql_${VERSION}.tgz *${VERSION}
-
-#TEST=1
-
-if [ $TEST ]
-then
-
-if rsync -Cav mysql_${VERSION}.tgz ${STAGING_NODE}:${TARGET_MYSQL_DATA_DIR}
-then
-      success "Successfully pushed mysql tarball onto ${STAGING_NODE}"
-      
+    cd ${STAGING_MYSQL_DATA_DIR}
+    tar -czf mysql_${VERSION}.tgz *${VERSION}
+    
+    
+    if rsync -Cav mysql_${VERSION}.tgz ${STAGING_NODE}:${TARGET_MYSQL_DATA_DIR}
+    then
+	success "Successfully pushed mysql tarball onto ${STAGING_NODE}"
+	
         # Unpack it
-      if ssh ${STAGING_NODE} "cd ${TARGET_MYSQL_DATA_DIR}; tar xzf mysql_${VERSION}.tgz"
-      then
-	  success "Successfully unpacked the mysql databases..."
-      else
-	  failure "Coulddn't unpack the mysql tarball on ${STAGING_NODE}..."
-      fi
-
-
-      for DB in ${MYSQL_DATABASES} 
-      do
-	  TARGET=${DB}_${VERSION}
-	  
+	if ssh ${STAGING_NODE} "cd ${TARGET_MYSQL_DATA_DIR}; tar xzf mysql_${VERSION}.tgz"
+	then
+	    success "Successfully unpacked the mysql databases..."
+	else
+	    failure "Coulddn't unpack the mysql tarball on ${STAGING_NODE}..."
+	fi
+	
+	
+	for DB in ${MYSQL_DATABASES} 
+	do
+	    TARGET=${DB}_${VERSION}
+	    
       # Fix permissions
-	  if ssh ${STAGING_NODE} "cd ${TARGET_MYSQL_DATA_DIR}; chgrp -R mysql ${TARGET}"
-	  then
-	      success "Successfully fixed permissions on ${TARGET}"
-	  else
-             failure "Fixing permissions on ${TARGET} failed"
-	  fi
-	  
+	    if ssh ${STAGING_NODE} "cd ${TARGET_MYSQL_DATA_DIR}; chgrp -R mysql ${TARGET}"
+	    then
+		success "Successfully fixed permissions on ${TARGET}"
+	    else
+		failure "Fixing permissions on ${TARGET} failed"
+	    fi
+	    
       # Set up appropriate symlinks and permissions for each database
-	  if ssh ${STAGING_NODE} "cd ${TARGET_MYSQL_DATA_DIR}; rm ${DB};  ln -s ${TARGET} ${DB}"
-	  then
-	      success "Successfully symlinked ${DB} -> ${TARGET}"
-	  else
-	      failure "Symlinking failed"
-	  fi
-      done
-fi
+	    if ssh ${STAGING_NODE} "cd ${TARGET_MYSQL_DATA_DIR}; rm ${DB};  ln -s ${TARGET} ${DB}"
+	    then
+		success "Successfully symlinked ${DB} -> ${TARGET}"
+	    else
+		failure "Symlinking failed"
+	    fi
+	done
+    fi
 fi      
 
 
@@ -92,9 +93,9 @@ fi
 alert "Pushing mysql databases onto mysql nodes..."
 for NODE in ${MYSQL_NODES}
 do
-  alert " ${NODE}:"
-
-  if ssh ${STAGING_NODE} "rsync -Cav ${TARGET_MYSQL_DATA_DIR}/mysql_${VERSION}.tgz ${NODE}:${TARGET_MYSQL_DATA_DIR}"
+    alert " ${NODE}:"
+    
+    if ssh ${STAGING_NODE} "rsync -Cav ${TARGET_MYSQL_DATA_DIR}/mysql_${VERSION}.tgz ${NODE}:${TARGET_MYSQL_DATA_DIR}"
   then
       success "Successfully pushed mysql tarball onto ${NODE}"
       
@@ -105,7 +106,7 @@ do
       else
 	  failure "Coulddn't unpack the mysql tarball on ${NODE}..."
       fi
-
+      
       # Now fix the permissions and symlink to each database
       for DB in ${MYSQL_DATABASES} 
       do
@@ -127,7 +128,7 @@ do
 	      failure "Fixing permissions on ${TARGET} failed"
 	  fi
       done  
-
+      
       # Now remove the tarball
       if ssh ${STAGING_NODE} "ssh ${NODE} 'cd ${TARGET_MYSQL_DATA_DIR}; rm -rf mysql_${VERSION}.tgz'"
       then
@@ -135,9 +136,9 @@ do
       else
 	  failure "Could not remove the mysql tarball from ${NODE}"
       fi
-  else
-      failure "Pushing mysql onto ${NODE} failed"
-  fi
+    else
+	failure "Pushing mysql onto ${NODE} failed"
+    fi
 done
 
 

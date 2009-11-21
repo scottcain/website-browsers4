@@ -47,6 +47,7 @@ alert "Pushing the support databases directory to the nfs node ${NFS_NODE}"
 # Package up the full database diretory for the current version
 cd ${SUPPORT_DB_DIRECTORY}
 tar czf ${VERSION}.tgz ${VERSION}
+
 if rsync --progress -Cav ${VERSION}.tgz ${NFS_NODE}:${NFS_ROOT}/databases
 then
     success "Successfully pushed support databases onto nfs node ${NFS_NODE}"
@@ -58,13 +59,13 @@ fi
 if ssh ${NFS_NODE} "cd ${NFS_ROOT}/databases; tar xzf ${VERSION}.tgz"
 then 
     success "Succesfully unpacked the support databases dir on ${NFS_NODE}"
-
-
+    
+    
     # Hack. Need to push out to canopus
     if ssh ${NFS_NODE} "rsync -Cav ${NFS_ROOT}/databases/${VERSION}.tgz tharris@canopus.caltech.edu:/usr/local/wormbase/databases"
     then
-
-# Unpack on the staging node
+	
+        # Unpack on canopus	
 	if ssh ${NFS_NODE} "ssh tharris@canopus.caltech.edu 'cd /usr/local/wormbase/databases; tar xzf ${VERSION}.tgz'"
 	then 
 	    success "Succesfully unpacked the support databases dir on canopus"
