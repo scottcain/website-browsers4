@@ -6,6 +6,8 @@
 # Pull in my configuration variables shared across scripts
 source update.conf
 
+UPDATED_MYSQL_DBS=();
+
 
 export RSYNC_RSH=ssh
 VERSION=$1
@@ -37,7 +39,34 @@ function success() {
 
 echo ${MYSQL}
 
+function extract_version() {
+    this_db=$1
+    this_link=`readlink ${this_db}`
+    this_version=`expr match "${this_link}" '.*_\(WS...\)'`
+    echo "${this_db} ${this_version}"
 
+    # Save this if we have been updated
+    if [ ${this_version} = ${VERSION} ]
+    then
+	echo ${#UPDATED_MYSQL_DBS[*]}
+	UPDATED_MYSQL_DBS[${#UPDATED_MYSQL_DBS[*]}]=${this_db}
+    fi
+}
+
+
+################################### 
+# Get a list of all databases
+# ignoring (for now) those that haven't been updated
+cd ${STAGING_MYSQL_DATA_DIR}
+for DB in ${MYSQL_DATABASES} 
+do
+    extract_version ${DB}    
+done
+
+echo ${#UPDATED_MYSQL_DBS[*]}
+
+    
+    
 
 ################################
 # Copying databases as a tarball
@@ -47,10 +76,16 @@ SYNC_TO_STAGING_NODE=1
 if [ $SYNC_TO_STAGING_NODE ]
 then
     
-# Tar up all of our databases
-    cd ${STAGING_MYSQL_DATA_DIR}
-    tar -czf mysql_${VERSION}.tgz *${VERSION}
+# Tar up modified databases
+# First, concatenate my array of modified databases
+    SAVE_IFS=$IFS
+    IFS=" "
+    MODIFIED_DBS="${UPDATED_MYSQL_DBS[*]}"
+    IFS=$SAVE_IFS
     
+    echo "Tarring up $MODIFIED_DBS"
+    cd ${STAGING_MYSQL_DATA_DIR}    
+    tar -czf mysql_${VERSION}.tgz *${MODIFIED_DBS}    
     
     if rsync -Cav mysql_${VERSION}.tgz ${STAGING_NODE}:${TARGET_MYSQL_DATA_DIR}
     then
@@ -65,7 +100,7 @@ then
 	fi
 	
 	
-	for DB in ${MYSQL_DATABASES} 
+	for DB in ${UPDATED_MYSQL_DBS} 
 	do
 	    TARGET=${DB}_${VERSION}
 	    
@@ -108,7 +143,7 @@ do
       fi
       
       # Now fix the permissions and symlink to each database
-      for DB in ${MYSQL_DATABASES} 
+      for DB in ${UPDATED_MYSQL_DBS} 
       do
 	  TARGET=${DB}_${VERSION}
 	  
