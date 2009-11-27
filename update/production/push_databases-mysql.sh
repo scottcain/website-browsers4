@@ -6,8 +6,8 @@
 # Pull in my configuration variables shared across scripts
 source update.conf
 
-UPDATED_MYSQL_DBS=();
-
+UPDATED_SPECIES=();
+UPDATED_DBS=();
 
 export RSYNC_RSH=ssh
 VERSION=$1
@@ -40,18 +40,20 @@ function success() {
 echo ${MYSQL}
 
 function extract_version() {
-    this_db=$1
-    this_link=`readlink ${this_db}`
+    this_species=$1
+    this_link=`readlink ${this_species}`
     this_version=`expr match "${this_link}" '.*_\(WS...\)'`
-    echo "${this_db} ${this_version}"
+    echo "CHECKING FOR NEW DATABASES: ${this_species} ${this_version}"
 
     # Save this if we have been updated
     if [ ${this_version} = ${VERSION} ]
     then
-	echo ${#UPDATED_MYSQL_DBS[*]}
-	UPDATED_MYSQL_DBS[${#UPDATED_MYSQL_DBS[*]}]=${this_db}
+#	echo ${#UPDATED_SPECIES[*]}
+	UPDATED_SPECIES[${#UPDATED_SPECIES[*]}]=${this_species}
+	UPDATED_DBS[${#UPDATED_DBS[*]}]=${this_link}
     fi
 }
+
 
 
 ################################### 
@@ -63,7 +65,8 @@ do
     extract_version ${DB}    
 done
 
-echo ${#UPDATED_MYSQL_DBS[*]}
+#echo ${#UPDATED_SPECIES[*]}
+#echo ${#UPDATED_DBS[*]}
 
     
     
@@ -78,15 +81,18 @@ then
     
 # Tar up modified databases
 # First, concatenate my array of modified databases
+
     SAVE_IFS=$IFS
     IFS=" "
-    MODIFIED_DBS="${UPDATED_MYSQL_DBS[*]}"
+    MODIFIED_DBS="${UPDATED_DBS[*]}"
     IFS=$SAVE_IFS
     
     echo "Tarring up $MODIFIED_DBS"
-    cd ${STAGING_MYSQL_DATA_DIR}    
+
+    cd ${STAGING_MYSQL_DATA_DIR}
     tar -czf mysql_${VERSION}.tgz *${MODIFIED_DBS}    
-    
+
+#if [ $TEST ]
     if rsync -Cav mysql_${VERSION}.tgz ${STAGING_NODE}:${TARGET_MYSQL_DATA_DIR}
     then
 	success "Successfully pushed mysql tarball onto ${STAGING_NODE}"
@@ -100,9 +106,9 @@ then
 	fi
 	
 	
-	for DB in ${UPDATED_MYSQL_DBS} 
+	for SPECIES in ${UPDATED_SPECIES[*]}
 	do
-	    TARGET=${DB}_${VERSION}
+	    TARGET=${SPECIES}_${VERSION}
 	    
       # Fix permissions
 	    if ssh ${STAGING_NODE} "cd ${TARGET_MYSQL_DATA_DIR}; chgrp -R mysql ${TARGET}"
@@ -113,9 +119,9 @@ then
 	    fi
 	    
       # Set up appropriate symlinks and permissions for each database
-	    if ssh ${STAGING_NODE} "cd ${TARGET_MYSQL_DATA_DIR}; rm ${DB};  ln -s ${TARGET} ${DB}"
+	    if ssh ${STAGING_NODE} "cd ${TARGET_MYSQL_DATA_DIR}; rm ${SPECIES};  ln -s ${TARGET} ${SPECIES}"
 	    then
-		success "Successfully symlinked ${DB} -> ${TARGET}"
+		success "Successfully symlinked ${SPECIES} -> ${TARGET}"
 	    else
 		failure "Symlinking failed"
 	    fi
@@ -143,14 +149,14 @@ do
       fi
       
       # Now fix the permissions and symlink to each database
-      for DB in ${UPDATED_MYSQL_DBS} 
+      for SPECIES in ${UPDATED_SPECIES[*]} 
       do
-	  TARGET=${DB}_${VERSION}
+	  TARGET=${SPECIES}_${VERSION}
 	  
       # Set up appropriate symlinks and permissions
-	  if ssh ${STAGING_NODE} "ssh ${NODE} 'cd ${TARGET_MYSQL_DATA_DIR}; rm ${DB};  ln -s ${TARGET} ${DB}'"
+	  if ssh ${STAGING_NODE} "ssh ${NODE} 'cd ${TARGET_MYSQL_DATA_DIR}; rm ${SPECIES};  ln -s ${TARGET} ${SPECIES}'"
 	  then
-	      success "Successfully symlinked ${DB} -> ${TARGET}"
+	      success "Successfully symlinked ${SPECIES} -> ${TARGET}"
 	  else
 	      failure "Symlinking failed"
 	  fi
