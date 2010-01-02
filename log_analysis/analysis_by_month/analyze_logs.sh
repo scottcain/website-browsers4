@@ -1,4 +1,6 @@
 #!/bin/sh
+#export PERL5LIB="/usr/local/wormbase/website-classic/extlib/lib/perl5:/usr/local/wormbase/website-classic/extlib/lib/perl5/x86_64-linux"
+
 
 # Analyze logs on a per-release, yearly, and overall basis
 # Analog and rmagic need to be run on a system with lots of memory
@@ -66,6 +68,7 @@ ${RMAGIC}/rmagic.pl ${BINDIR}/rmagic.conf \
     -website_Title="WormBase Access Statistics For ${LATEST_RELEASE}" \
     -website_Webmaster="webmaster@wormbase.org" \
     -website_Base_URL="http://${SITE}/" 
+
 
 # Run analog with a non-standard configuration file
 # Per-year access stats can be created using the analog.conf file
@@ -186,6 +189,7 @@ ${ANALOG}/analog -G +g${BINDIR}/analog.conf \
     ${LOGDIR}/with_hosts/access_log.2006.gz \
     ${LOGDIR}/with_hosts/access_log.2007.gz \
     ${LOGDIR}/with_hosts/access_log.2008.gz \
+    ${LOGDIR}/with_hosts/access_log.2009.gz \
     ${LOGDIR}/with_hosts/access_log.${YEAR}.gz \
     +C"OUTFILE ${HTMLSTATS}/total/access_log-parsed" \
     +C"HOSTNAME ${SITE}" \
@@ -218,6 +222,7 @@ ${ANALOG}/analog -G +g${BINDIR}/analog.conf \
     ${LOGDIR}/with_hosts/access_log.2006.gz \
     ${LOGDIR}/with_hosts/access_log.2007.gz \
     ${LOGDIR}/with_hosts/access_log.2008.gz \
+    ${LOGDIR}/with_hosts/access_log.2009.gz \
     ${LOGDIR}/with_hosts/access_log.${YEAR}.gz \
     +C"OUTFILE ${HTMLSTATS}/total-nogoogle/access_log-parsed" \
     +C"HOSTNAME ${SITE}" \
