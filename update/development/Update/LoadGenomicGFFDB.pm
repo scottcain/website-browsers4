@@ -15,23 +15,27 @@ sub run {
     my $release = $self->release;
     my $msg     = 'building genomic GFF database for';
     foreach my $species (@$species) {
-    
+	
 	
 	# ce
 	
-    next if ($species =~ /elegans/);  ## unless
+	next if ($species =~ /elegans/);  ## unless
 	#next unless ($species =~ /elegans/);
 	
 	## GFF3 set   	
-
+	
 	next if ($species =~ /malayi/ || $species =~ /hapla/ || $species =~ /incognita/);
 	#next unless ($species =~ /malayi/ || $species =~ /hapla/ || $species =~ /incognita/);
-
-
+	
+	
 	$self->logit->info("  begin: $msg $species");
 	$self->target_db($species . '_' . $release);   
 	$self->load_gffdb($species);
 	$self->check_db($species);
+	
+	# Pack database
+	$self->pack_database();
+	
 	my $target_db = $self->target_db;
 	
 	# $self->update_symlink({path => $self->mysql_data_dir,
@@ -124,7 +128,7 @@ sub load_gffdb_new {
     
     }
 
-	# elsif ($species =~ /remanei/) {	    
+	# elsif ($species =~ /remanei/) {
 	#	# Hack!  C. remanei files are not named consistently.
 	#	my $cmd = "cp " . $self->mirror_dir . "/remanei.gff.gz  $gff_archive.gz";
 	#	system($cmd);	
@@ -246,6 +250,19 @@ sub load_gffdb {
     }
 }
 
+
+# Compress databases using myisampack
+sub pack_database {
+    my $self = shift;
+    my $data_dir = $self->mysql_data_dir;    
+    my $target_db = $self->target_db;
+    
+    # Pack the database
+    system("myisampack $data_dir/$target_db/*.MYI");
+
+    # Check the database
+    system("myisamchk -rq --sort-index --analyze $data_dir/$target_db/*.MYI");
+}
 
 sub create_database {
     my ($self,$species) = @_;
