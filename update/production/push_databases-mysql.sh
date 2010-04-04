@@ -75,7 +75,7 @@ done
 # Copying databases as a tarball
 
 # Sync to the staging node
-SYNC_TO_STAGING_NODE=1
+SYNC_TO_STAGING_NODE=
 if [ $SYNC_TO_STAGING_NODE ]
 then
     
@@ -92,7 +92,6 @@ then
     cd ${STAGING_MYSQL_DATA_DIR}
     tar -czf mysql_${VERSION}.tgz *${MODIFIED_DBS}    
 
-#if [ $TEST ]
     if rsync -Cav mysql_${VERSION}.tgz ${STAGING_NODE}:${TARGET_MYSQL_DATA_DIR}
     then
 	success "Successfully pushed mysql tarball onto ${STAGING_NODE}"
