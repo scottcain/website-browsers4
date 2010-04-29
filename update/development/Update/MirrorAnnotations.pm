@@ -37,9 +37,11 @@ sub run {
     
     
     # Get the release letter
-    my $target_dir = $self->web_root . "/html/release_notes";
+    my $target_dir  = $self->web_root . "/html/release_notes";
+    my $staging_dir = $self->root . "/website-classic-staging/html/release_notes";
     my $ftp_remote_path = "$remote_ftp_path/$release";
     $self->mirror_file($ftp_remote_path,"letter.$release",$target_dir);
+    $self->mirror_file($ftp_remote_path,"letter.$release",$staging_dir);
     
     my $fh = $self->master_log;
     print $fh $self->step . " complete...\n";
