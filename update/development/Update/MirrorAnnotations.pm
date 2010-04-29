@@ -37,7 +37,7 @@ sub run {
     
     
     # Get the release letter
-    my $target_dir = $self->root . "/html/release_notes";
+    my $target_dir = $self->web_root . "/html/release_notes";
     my $ftp_remote_path = "$remote_ftp_path/$release";
     $self->mirror_file($ftp_remote_path,"letter.$release",$target_dir);
     

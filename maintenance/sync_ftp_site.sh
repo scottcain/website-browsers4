@@ -3,7 +3,7 @@
 # Sync the 3rd party build directory to production nodes
 
 # Pull in shared variables
-source /home/tharris/projects/wormbase/admin/update/production/update.conf
+source /home/tharris/projects/wormbase/wormbase-admin/update/production/update.conf
 
 USER=todd
 export RSYNC_RSH=ssh
@@ -26,6 +26,20 @@ function success() {
   msg=$1
   echo "  ${msg}."
 }
+
+
+
+alert "Syncing the FTP site to the FTP server: ${FTP_SERVER}...";
+if "rsync -Cav /usr/local/ftp/pub/wormbase ${USER}@${FTP_SERVER}:/var/ftp/pub"
+then
+    success "Successfully rsynced staging FTP site onto ${FTP_SERVER}"
+else
+    failure "Rsyncing ftp staging site onto ${FTP_SERVER} failed"
+fi
+done
+
+
+exit
 
 
 
