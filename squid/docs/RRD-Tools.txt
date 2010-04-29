@@ -1,0 +1,60 @@
+These tools were built following docs at
+http://www.squid-cache.org/~wessels/squid-rrd
+
+
+ Compile apache with the expires module:
+
+ % cd apache_1.3.3.
+ % ./configure --add-module=src/modules/standard/mod_expires.c
+
+ Download RRDtool and unpack it.
+
+ Put poll.pl, create.sh, 1day-cgi, and htaccess somewhere under your
+ htdocs directory (TH: /usr/local/apache/htdocs/monitor)
+
+ Rename htaccess to .htaccess and make sure it is readable by all.
+
+ Rename 1day-cgi to 1day.cgi
+
+ Run the create.sh script to create the RRD databases.
+
+ Try the poll.pl script by hand:
+
+   % perl poll.pl localhost
+ Add it to your cron jobs:
+
+ */5 * * * * /usr/local/apache/share/htdocs/squid-rrd/poll.pl localhost
+
+ Tell apache to interpret .cgi as a CGI script by editing srm.conf and uncommenting this line:
+
+ AddHandler cgi-script .cgi
+
+ Tell apache its okay to execute CGI scripts, and to set Expires headers by adding this to access.conf:
+
+ <Directory "/usr/local/apache/share/htdocs/squid-rrd">
+   AllowOverride Indexes
+   Options ExecCGI
+ <Directory>
+
+ Apache needs write access to the directory where RRD creates the PNG
+ files. For now, this is the same directory.
+
+ % cd /usr/local/apache/share/htdocs/squid-rrd
+ % su
+ # chgrp nobody .
+ # chmod 775 .
+ Alternatively, you can create empty PNG files and make just those files writable by nobody:
+
+ % cd /usr/local/apache/share/htdocs/squid-rrd
+ % su
+ # cp /dev/null connections.day.png ...
+ # chgrp nobody *.png
+ # chmod 775 *.png
+
+ To use: Request 1day.cgi in your browser. You should see a number of
+ graphs and your browser should refresh the display every 2.5 minutes.
+
+ You may want to copy 1day.cgi to another filename, such as
+``1week.cgi'' and change all occurances of ``day'' to ``week'' in the
+new file.
+
