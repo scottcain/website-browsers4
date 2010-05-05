@@ -49,6 +49,10 @@ Although squid 2.x has an option to emulate httpd style logging, these entries d
    $ wget "http://devel.squid-cache.org/cgi-bin/diff2/customlog-2_5.patch?s2_5" -O customlog-2.5.patch
    $ patch -p1 < customlog-2.5.patch
 
+Increase the size of MAX_URL to 16384 bytes:
+  emacs src/defines.h
+  #define MAX_URL 16384
+
 *./configure options and compilation
 
 Squid supports a large number of options during configuration.  The squid server at WormBase is configured with the following options:
@@ -115,7 +119,7 @@ HTCP is an alternative to ICP inter-cache communications.
 
 Cache digests are another alternative to ICP with a slightly different structure. The current configure command looks like this:
 
-  % ./configure --prefix=/usr/local/squid \
+  % ./configure --prefix=/usr/local/squid-VERSION \
                 --enable-removal-policies=heap,lru \
                 --enable-icmp \
                 --enable-delay-pools \
@@ -129,11 +133,14 @@ Cache digests are another alternative to ICP with a slightly different structure
 To run config at a later date with the same parameters:
 
   % ./config.status --recheck
-
-And finally, do a:
-
   % make
   % sudo make install
+
+Set up an appropirate symlink:
+ 
+  % cd /usr/local
+  % sudo rm squid; ln -s squid-VERSION squid
+
 
 == Preparing the system to run a squid server ==
 
@@ -373,3 +380,56 @@ Author: --[[User:Tharris|Tharris]] 13:03, 10 February 2006 (EST) (harris@cshl.or
 
 Copyright @ 2004-2006 Cold Spring Harbor Laboratory
 
+
+
+
+
+
+Squid 3.0
+
+cd ~/src
+wget http://www.squid-cache.org/Versions/v3/3.1/squid-3.1.1.tar.gz
+tar xzf squid-3.1.1.tar.gz
+cd squid-3.1.1
+./configure --prefix=/usr/local/squid-3.1.1 \
+            --enable-removal-policies=heap,lru \
+            --enable-icmp \
+            --enable-delay-pools \
+            --enable-useragent-log \
+            --enable-referer-log \
+            --enable-ssl \
+            --disable-wccp \
+            --enable-snmp \
+            --enable-cachemgr-hostname=www.wormbase.org
+
+sudo make install
+
+This will install squid into
+
+  /usr/local/squid-3.1.1
+
+
+Fix permissions
+----------------
+cd /usr/local/squid-3.0.STABLE1
+sudo chown -R squid:squid var logs
+cd /usr/local
+sudo rm squid // if symlink
+sudo ln -s squid-3.0.STABLE1 squid
+
+Initialize the cache
+---------------------
+
+sudo /usr/local/squid-3.0.STABLE1/sbin/squid -N -d 9 -z -f \
+/home/todd/projects/wormbase/admin/conf/squid/squid-3.0.STABLE1/squid.conf
+
+
+Start squid
+------------
+sudo /usr/local/squid-3.0.STABLE1/sbin/squid -N -d 9 -f
+/home/todd/projects/wormbase/admin/conf/squid/squid-3.0.STABLE1/squid.conf
+
+Add the -X flag to enable full debugging.
+
+Debugging ACLs:
+debug_options ALL,1 33,2
