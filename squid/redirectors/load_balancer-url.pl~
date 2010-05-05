@@ -40,8 +40,10 @@ my %servers = (
 #	       be1     => 'brie3.cshl.org:8080',
 
 	       synteny   => 'mckay.cshl.edu',
-	       "oicr-gbrowse" => '206.108.125.173'
-#	       "oicr-gbrowse" => 'brie3.cshl.org:8080'
+	       "oicr-gbrowse" => '206.108.125.173',
+
+	       # oicr-community: wiki, forums, blog
+	       "oicr-community" => '206.108.125.176',
 	       );
 
 =pod
@@ -223,21 +225,7 @@ while (<>) {
 	$uri = "http://$destination/$params";
 	next;
     }
-    
-
-    ##########################################################
-    #
-    #  MovableType
-    if ( $uri =~ m{movable}
-	 || $params =~ m{^mt}
-	 ) {
-	$destination = $servers{crestone};
-	
-	print ERR "Routing MT ($uri) to $destination\n" if DEBUG;
-	$uri = "http://$destination/$params";
-	next;
-    }
-    
+        
 
     ##########################################################
     #
@@ -276,16 +264,27 @@ while (<>) {
     }
 
 
-#    ##########################################################
-#    #
-#    #  The Blog
-#    if ($uri =~ m{blog}) {
-##	$destination = $servers{brie3};
-#	$destination = 'dev.wormbase.org/blog/';
-#    	print ERR "Routing blog ($uri) to $destination\n" if DEBUG;
-#	$uri = "http://$destination/$params";	    
-#	next;
-#    }
+    ##########################################################
+    #
+    #  The Blog
+    if ($params =~ m{blog}) {
+	$destination = $servers{"oicr-community"};
+
+	# Whoops!  This might be a request for the inline_feed script
+	# which contains the blog rss feed as a parameter. Doh!
+	if ($uri =~ /inline_feed/) {
+	    $destination = $servers{gene};
+	    $uri = "http://$destination/$params";	    
+	    next;
+	}
+	
+	# Catch problems with some URLs. Need to append the back slash.
+	$params = 'blog/' if $params eq 'blog';
+
+    	print ERR "Routing blog ($uri) to $destination\n" if DEBUG;
+        $uri = "http://$destination/$params";	    
+	next;
+    }
 
 
 
@@ -333,14 +332,10 @@ while (<>) {
 	 $uri =~ m{db/gene/expression}
 	 ) {
 
-
-
-	# Send to freeze1 while I turn this into a gbrowse slave node
 	$destination = $servers{freeze2};
-#	$destination = $servers{freeze1};
 
 	# Logic hack. 2010.04.13.
-	$destination = $servers{gene} if $uri =~ /inline_feed/;
+        # $destination = $servers{gene} if $uri =~ /inline_feed/;
 
 	print ERR "Routing CGIs Tier V ($uri) to $destination\n" if DEBUG;
 	$uri = "http://$destination/$params";	    
@@ -420,8 +415,6 @@ while (<>) {
 	
 	# Catch problems with forum URLs too. Need to append the back slash.
 	$params = 'forums/' if $params eq 'forums';
-	
-	$destination = $servers{gene} if $uri =~ /inline_feed/;
 	
 	print ERR "Routing wiki/forum ($uri) to $destination\n" if DEBUG;
 	$uri = "http://$destination/$params";
