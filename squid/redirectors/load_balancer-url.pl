@@ -273,7 +273,7 @@ while (<>) {
 	# Whoops!  This might be a request for the inline_feed script
 	# which contains the blog rss feed as a parameter. Doh!
 	if ($uri =~ /inline_feed/) {
-	    $destination = $servers{gene};
+	    $destination = $servers{brie3};
 	    $uri = "http://$destination/$params";	    
 	    next;
 	}

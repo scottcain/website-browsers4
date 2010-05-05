@@ -272,12 +272,12 @@ while (<>) {
 
 	# Whoops!  This might be a request for the inline_feed script
 	# which contains the blog rss feed as a parameter. Doh!
-	if $uri =~ (/inline_feed/) {
+	if ($uri =~ /inline_feed/) {
 	    $destination = $servers{gene};
 	    $uri = "http://$destination/$params";	    
 	    next;
 	}
-
+	
 	# Catch problems with some URLs. Need to append the back slash.
 	$params = 'blog/' if $params eq 'blog';
 
