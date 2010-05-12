@@ -5,7 +5,6 @@
 # Pull in shared variables
 source /home/tharris/projects/wormbase/wormbase-admin/update/production/update.conf
 
-USER=todd
 export RSYNC_RSH=ssh
 
 function alert() {
@@ -30,10 +29,9 @@ function success() {
 
 
 alert "Syncing the FTP site to the FTP server: ${FTP_SERVER}...";
-if "rsync -Cav /usr/local/ftp/pub/wormbase ${USER}@${FTP_SERVER}:/var/ftp/pub"
+if rsync -Cav --rsh=ssh /usr/local/ftp/pub/wormbase ${FTP_SITE_USER}@${FTP_SERVER}:/var/ftp/pub
 then
     success "Successfully rsynced staging FTP site onto ${FTP_SERVER}"
 else
     failure "Rsyncing ftp staging site onto ${FTP_SERVER} failed"
 fi
-done
