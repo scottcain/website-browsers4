@@ -51,7 +51,6 @@ if rsync -Cav --exclude extlib \
               ${SITE_STAGING_DIRECTORY}/ ${STAGING_NODE}:${SITE_TARGET_DIRECTORY}
   then
     success "Successfully pushed software onto ${STAGING_NODE}..."
-#              --exclude html/index.html \
   else
     failure "Pushing software onto ${STAGING_NODE} failed..."
     exit
@@ -70,6 +69,36 @@ do
     exit
   fi
 done
+
+
+
+alert "Pushing software onto OICR nodes..."
+for NODE in ${OICR_SITE_NODES}
+do
+  alert " Updating ${NODE}..."
+  if rsync -Cav --exclude extlib \
+                --exclude seq/gbrowse* \
+                --exclude gbrowse/ \
+                --exclude localdefs.pm \
+                --exclude httpd.conf \
+                --exclude perl.startup \
+                --exclude cache/ \
+                --exclude session/ \
+                --exclude databases/ \
+                --exclude tmp/ \
+                --exclude ace_images/ \
+                --exclude mt/ \
+                --exclude html/rss/ \
+                --exclude gb2/ \
+              ${SITE_STAGING_DIRECTORY}/ ${NODE}:${SITE_TARGET_DIRECTORY}
+  then
+    success "Successfully pushed software onto ${NODE}..."
+  else
+    failure "Pushing software onto ${NODE} failed..."
+  fi
+done
+
+
 
 # Is a restart necessary?
 if [ "${DO_RESTART}" ]

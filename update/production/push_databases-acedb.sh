@@ -140,14 +140,13 @@ rm -rf ${ACEDB_ROOT}/wormbase_${VERSION}.tgz
 # And remove it from the staging node, too
 ssh ${STAGING_NODE} "rm -rf ${ACEDB_ROOT}/wormbase_${VERSION}.tgz"
 
-exit
 
 
 
 
-
-# Original: when not necessary to pass through intermediate staging server
-for NODE in ${ACEDB_NODES}
+# Push onto the OICR_NODES.
+# Used when its not necessary to pass through a preliminary staging server
+for NODE in ${OICR_ACEDB_NODES}
 do
   alert " ${NODE}:"
   if rsync -Ca ${ACEDB_DIR} ${NODE}:${ACEDB_ROOT}

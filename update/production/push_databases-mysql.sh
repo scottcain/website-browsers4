@@ -268,132 +268,71 @@ do
 done
 
 
-exit
 
 
 
-# Original structure not passing through brie3
-alert "Pushing mysql databases onto mysql nodes..."
-for NODE in ${MYSQL_NODES}
-do
-  alert " ${NODE}:"
-
-  for DB in ${MYSQL_DATABASES} 
-  do
-    TARGET=${DB}_${VERSION}
-    if rsync -Ca --exclude *bak* ${STAGING_MYSQL_DATA_DIR}/${TARGET} ${NODE}:${TARGET_MYSQL_DATA_DIR}
+##############################
+# OICR DIRECT RSYNC
+function do_rsync() {
+    this_species=$1
+    cd ${GBROWSE_PRODUCTION_MYSQL_DATA_DIR}
+    this_link=`readlink ${this_species}`
+    this_version=`expr match "${this_link}" '.*_\(WS...\)'`
+    echo "Checking if ${this_species} was updated during the release cycle of ${VERSION}..."
+    
+    # Was this species updated during this release?
+    if [ ${this_version} = ${VERSION} ]
     then
-      success "Successfully pushed ${DB} onto ${NODE}"
-      
-      # Set up appropriate symlinks and permissions
-      if ssh ${NODE} "cd ${TARGET_MYSQL_DATA_DIR}; rm ${DB};  ln -s ${TARGET} ${DB}"
-      then
-	  success "Successfully symlinked ${DB} -> ${TARGET}"
-      else
-	  failure "Symlinking failed"
-      fi
 
-      # Fix permissions
-      if ssh ${NODE} "cd ${TARGET_MYSQL_DATA_DIR}; chown -R todd:mysql ${TARGET}"
-      then
-	  success "Successfully fixed permissions on ${TARGET}"
-      else
-	  failure "Fixing permissions on ${TARGET} failed"
-      fi
+	TARGET=${this_species}_${VERSION}
+	
+	# Rsync it to every node
+	for NODE in ${OICR_MYSQL_NODES}
+	do
 
+	    echo "${this_species} was updated. Rsyncing to ${NODE}..."
+            if rsync -Cav ${TARGET} ${NODE}:${TARGET_MYSQL_DATA_DIR}
+            then
+     		success "Successfully pushed ${this_species}_${VERSION} onto ${NODE}"
+		
+                # Fix permissions
+		if ssh ${NODE} "cd ${GBROWSE_PRODUCTION_MYSQL_DATA_DIR}; chgrp -R mysql ${TARGET}"
+		then
+		    success "Successfully fixed permissions on ${TARGET}"
+		else
+		    failure "Fixing permissions on ${TARGET} failed"
+		fi
+	    
+                # Set up appropriate symlinks and permissions for each database
+		if ssh ${NODE} "cd ${GBROWSE_PRODUCTION_MYSQL_DATA_DIR}; rm ${this_species};  ln -s ${TARGET} ${this_species}"
+		then
+		    success "Successfully symlinked ${this_species} -> ${TARGET}"
+		else
+		    failure "Symlinking failed"
+		fi
+	    fi
+	done
     else
-	failure "Pushing ${DB} onto ${NODE} failed"
+	echo "${this_species} was not updated. Skipping..."
     fi
-  done
-#for DB in ${MYSQL_OLD_DATABASES} 
-#    TARGET=${DB}_${VERSION}
-#      # Old style symlinks. Deprecated with WS192
-#      if ssh ${NODE} "cd ${MYSQL_DATA_DIR}; rm ${DB};  ln -s ${TARGET} ${DB}"
-#      then
-#	  success "Successfully symlinked ${DB} -> ${TARGET}"
-#      else
-#	  failure "Symlinking failed"
-#      fi
-#done
+}
 
 
-# Other static databases. Not necessary - just a convenience to ensure they are in place
-#if rsync -Ca --exclude *bak* ${MYSQL_DATA_DIR}/c_japonica_3 ${NODE}:${MYSQL_DATA_DIR}
-#    then
-#      success "Successfully pushed c_japonica onto ${NODE}"
-#      
-#      # Set up appropriate symlinks and permissions
-#      if ssh ${NODE} "cd ${MYSQL_DATA_DIR}; rm c_japonica;  ln -s c_japonica_3 c_japonica"
-#      then
-#	  success "Successfully symlinked c_japonica -> c_japonica_3"
-#      else
-#	  failure "Symlinking failed"
-#      fi
-#
-#      # Fix permissions
-#      if ssh ${NODE} "cd ${MYSQL_DATA_DIR}; chown -R todd:mysql c_japonica_3"
-#      then
-#	  success "Successfully fixed permissions on c_japonica_3"
-#      else
-#	  failure "Fixing permissions on c_japonica_3 failed"
-#      fi
-#fi
-
+################################### 
+# Get a list of all databases
+# ignoring (for now) those that haven't been updated
+for DB in ${MYSQL_DATABASES} 
+do
+    do_rsync ${DB}    
 done
 
-exit
 
 
-
-# None of this is necessary any longer
-#if rsync -Ca --exclude *bak* ${MYSQL_DATA_DIR}/c_brenneri_4 ${NODE}:${MYSQL_DATA_DIR}
-#    then
-#      success "Successfully pushed c_brenneri onto ${NODE}"
-#      
-#      # Set up appropriate symlinks and permissions
-#      if ssh ${NODE} "cd ${MYSQL_DATA_DIR}; rm c_brenneri;  ln -s c_brenneri_4 c_brenneri"
-#      then
-#	  success "Successfully symlinked c_brenneri -> c_brenneri_4"
-#      else
-#	  failure "Symlinking failed"
-#      fi
-#
-#      # Fix permissions
-#      if ssh ${NODE} "cd ${MYSQL_DATA_DIR}; chown -R todd:mysql c_brenneri_4"
-#      then
-#	  success "Successfully fixed permissions on c_brenneri_4"
-#      else
-#	  failure "Fixing permissions on c_brenneri_4 failed"
-#      fi
-#fi
-#
-#
-#if rsync -Ca --exclude *bak* ${MYSQL_DATA_DIR}/b_malayi_bma1 ${NODE}:${MYSQL_DATA_DIR}
-#    then
-#      success "Successfully pushed b_malayi onto ${NODE}"
-#      
-#      # Set up appropriate symlinks and permissions
-#      if ssh ${NODE} "cd ${MYSQL_DATA_DIR}; rm b_malayi;  ln -s b_malayi_bma1 b_malayi"
-#      then
-#	  success "Successfully symlinked b_malayi -> b_malayi_bma1"
-#      else
-#	  failure "Symlinking failed"
-#      fi
-#
-#      # Fix permissions
-#      if ssh ${NODE} "cd ${MYSQL_DATA_DIR}; chown -R todd:mysql b_malayi_bma1"
-#      then
-#	  success "Successfully fixed permissions on b_malayi_bma1"
-#      else
-#	  failure "Fixing permissions on b_malayi_bma1 failed"
-#      fi
-#fi
-#
-#
-#done
+# Expression pattern images:
+#rsync -Cav /usr/local/wormbase/website-classic-staging/html/images/expression/ \
+#    gb1:/usr/local/wormbase/gbrowse-support-files/images
 
 
-
-
+# Configuration files:
 
 
