@@ -10,20 +10,17 @@ open ERR,">>/usr/local/squid/var/logs/redirector.debug" if DEBUG || DEBUG_FULL;
 # Eeks! Something has gone wrong. Send all traffic to (basically) one machine)
 #my @servers = qw/aceserver blast unc gene vab local/;
 #my %servers = map { $_ => aceserver.cshl.org } @servers;
-#$servers{crestone} = 'crestone.cshl.edu:8080;
 #$servers{biomart}  = 'biomart.wormbase.org';
-
-
 
 my %servers = (
 	       aceserver => 'aceserver.cshl.org:8080',
 	       blast     => 'blast.wormbase.org:8080',
 	       unc       => 'unc.wormbase.org:8080',
-	       crestone  => 'crestone.cshl.edu:8080',
 	       gene      => 'gene.wormbase.org:8080',
-#	       gene      => 'brie3.cshl.org:8080',
 
-	       vab       => 'vab.wormbase.org:8080',
+	       # vab is now retired, although there are still
+	       # some dynamic images being served from there.
+	       # vab       => 'vab.wormbase.org:8080',
 	       biomart   => 'biomart.wormbase.org',
 	       nbrowse   => 'gene.wormbase.org:9002',
 	       nbrowsejsp => 'gene.wormbase.org:9022',
@@ -40,64 +37,15 @@ my %servers = (
 #	       be1     => 'brie3.cshl.org:8080',
 
 	       synteny   => 'mckay.cshl.edu',
-	       "oicr-gbrowse" => '206.108.125.173',
+	       "oicr-gbrowse2" => '206.108.125.173',
+	       "oicr-gbrowse1" => '206.108.125.173:8080',
 
 	       # oicr-community: wiki, forums, blog
-	       "oicr-community" => '206.108.125.176',
+	       "oicr-community-blog"   => '206.108.125.176',
+	       "oicr-community-forums" => '206.108.125.176:8081',
+	       "oicr-community-wiki"   => '206.108.125.176:8080',
 	       );
 
-=pod
-
-# 2009.09 - Server migration step 1: be1 and brie3 offline; brie6 up
-my %servers = (
-	       aceserver => 'aceserver.cshl.org:8080',
-	       blast     => 'vab.wormbase.org:8080',
-	       unc       => 'unc.wormbase.org:8080',
-	       crestone  => 'crestone.cshl.edu:8080',
-	       gene      => 'vab.wormbase.org:8080',
-
-	       vab       => 'vab.wormbase.org:8080',
-	       biomart   => 'biomart.wormbase.org',
-	       nbrowse   => 'gene.wormbase.org:9002',
-	       nbrowsejsp => 'gene.wormbase.org:9022',
-	       
-	       # Where we are serving static content from (not currently in use)
-	       static    => 'vab.wormbase.org:8080',
-
-	       freeze1   => 'freeze1.wormbase.org:8080',
-	       freeze2   => 'freeze2.wormbase.org:8080',
-	       
-	       brie3     => 'vab.wormbase.org:8080',       
-	       be1       => 'unc.wormbase.org:8080',	       
-	       );
-
-
-
-# 2009.09 - Server migration step 1: be1 and brie3 offline; brie6 up
-my %servers = (
-	       aceserver => 'aceserver.cshl.org:8080',
-	       blast     => 'blast.wormbase.org:8080',
-	       unc       => 'be1.wormbase.org:8080',
-	       crestone  => 'crestone.cshl.edu:8080',
-	       gene      => 'gene.wormbase.org:8080',
-
-	       vab       => 'vab.wormbase.org:8080',
-	       biomart   => 'biomart.wormbase.org',
-	       nbrowse   => 'gene.wormbase.org:9002',
-	       nbrowsejsp => 'gene.wormbase.org:9022',
-	       
-	       # Where we are serving static content from (not currently in use)
-	       static    => 'vab.wormbase.org:8080',
-
-	       freeze1   => 'freeze1.wormbase.org:8080',
-	       freeze2   => 'freeze2.wormbase.org:8080',
-	       
-	       brie3     => 'be1.wormbase.org:8080',       
-	       be1       => 'be1.wormbase.org:8080',	       
-	       );
-
-
-=cut
 
 # Conditionally set destinations depending on which server we are running.
 # This is simply for emergency purposes if we happen to be running squid on vab or gene.
@@ -129,9 +77,6 @@ while (<>) {
     # This still requires soe careful ordering of request evaluation
     # but it is easier to follow and cleaner code.
 
-
-
-
     
     ##########################################################
     #
@@ -140,10 +85,14 @@ while (<>) {
     if ( $uri =~ m{gb2} 
 	 ||
 	 $uri =~ m{gbrowse2}
+	 ||
+	 $uri =~ m{gb2-support}
+	 ||
+	 $uri =~ m{gbrowse_img}
 	 ) {
 #	$params =~ s|db/gb2|db/seq|g;
 
-	$destination = $servers{"oicr-gbrowse"};
+	$destination = $servers{"oicr-gbrowse2"};
 	$uri = "http://$destination/$params";
 	next;
     }
@@ -175,57 +124,97 @@ while (<>) {
 	next;
     }
 
+    # 2010.05.08
+    # GBrowse1 and GBrowse2 now being served from OICR.
+    # I *believe* that most of this is deprecated.
 
-    ##########################################################
-    #
-    #  Dynamic images, specific to generating back-end server
-    #  Server keywords are embedded in the URL and less than 
-    #  6 letters in length forum images are handled elsewhere.
-    #  Currently this INCLUDES GBrowse images.
-    if (($uri =~ m{img/(.*?)/} && $1 < 10 && $uri !~ m{gbrowse_img} && $uri !~ m{forums}
-	 && $uri !~ m{mckay})
-	||
-	($uri =~ m{images/gbrowse/(.*?)/} && $1 < 10 && $uri !~ m{gbrowse_img} && $uri !~ m{forums}
-	 && $uri !~ m{mckay})
-	|| 
-	($uri =~ m{dynamic_images/(.*?)/} && $1 < 10)
-	
-	# Uncomment to INCLUDE gbrowse generated images
-	||
-	($uri =~ m{tmp/gbrowse/(.*?)/} && $1 < 10)
-	) {
-	
-	# mckay is tempo hack for images for the blast_blat page. Ugh.
+#    ##########################################################
+#    #
+#    #  Dynamic images, specific to generating back-end server
+#    #  Server keywords are embedded in the URL and less than 
+#    #  6 letters in length forum images are handled elsewhere.
+#    #  Currently this INCLUDES GBrowse images.
+#
+#    # Is any of this necessary if running GBrowse 1.x at OICR?
+#    if (($uri =~ m{img/(.*?)/} && $1 < 10 && $uri !~ m{gbrowse_img} && $uri !~ m{forums}
+#	 && $uri !~ m{mckay})
+#	||
+#	($uri =~ m{images/gbrowse/(.*?)/} && $1 < 10 && $uri !~ m{gbrowse_img} && $uri !~ m{forums}
+#	 && $uri !~ m{mckay})
+#	|| 
+# Still need dynamic images for things like (only?) the protein page
+    if ($uri =~ m{dynamic_images/(.*?)/} && $1 < 10) {
+#	
+#	# Uncomment to INCLUDE gbrowse generated images
+#	||
+#	($uri =~ m{tmp/gbrowse/(.*?)/} && $1 < 10)
+#	) {
+#	
+#	# mckay is tempo hack for images for the blast_blat page. Ugh.
 	my $server = $1;
 	$destination = $servers{$server};
+	
+	# Retiring vab.wormbase.org on 2010.05.11
+	# There are still some requests being directed there,
+	# mostly from the GoogleImage bot
+	$server = 'brie3' if ($server eq 'vab');
 	
 	print ERR "Routing dynamic images ($uri) to $destination\n" if DEBUG;
 	$uri = "http://$destination/$params";
 	next;
-    }	
+    }
     
+    # RELOCATED GBrowse 1.x to OICR on 2010.05.08.
+    # I *believe* this is now deprecated.
+    # All paths are set up at in the main GBrowse configuration.
     
-    ##########################################################
-    #
-    #  The Genome Browser and components,
-    #  another often used page
-    
-    if (  $uri =~ m{seq/gbrowse} 
-	  || $uri =~ m{gbgff}
-#	  || $uri =~ m{tmp/gbrowse}    # temporary images; should possibly be included in dynamic images above
-	  || $uri =~ m{gbrowse/tmp}    # temporary images (old structure)
-	  || $uri =~ m{gbrowse_img}   
-	  || $params =~ m{^gbrowse}     # Gbrowse js must be served from same node?
-	  || $uri =~ m{aligner}  
-	  ) {
-	
+#    ##########################################################
+#    #
+#    #  The Genome Browser and components,
+#    #  another often used page
+#    #  For running GBrowse1.x at CSHL....
+#    if (  $uri =~ m{seq/gbrowse} 
+#	  || $uri =~ m{gbgff}
+##	  || $uri =~ m{tmp/gbrowse}    # temporary images; should possibly be included in dynamic images above
+#	  || $uri =~ m{gbrowse/tmp}    # temporary images (old structure)
+#	  || $uri =~ m{gbrowse_img}   
+#	  || $params =~ m{^gbrowse}     # Gbrowse js must be served from same node?
+#	  || $uri =~ m{aligner}  
+#	  ) {
+#	
+#	$destination = $servers{brie3};
+#	
+#	print ERR "Routing Genome Browser ($uri) to $destination\n" if DEBUG;
+#	$uri = "http://$destination/$params";
+#	next;
+#    }
+
+    # GBrowse 1.x relocation: Still need to send the aligner to brie3
+    # Make sure the aligner still goes to brie3
+    if ($uri =~ m{aligner}) {
 	$destination = $servers{brie3};
 	
 	print ERR "Routing Genome Browser ($uri) to $destination\n" if DEBUG;
 	$uri = "http://$destination/$params";
 	next;
     }
-        
+    
+    # Send GBrowse1 requests to OICR.
+    if (  $uri =~ m{seq/gbrowse} 
+	  || $uri =~ m{gbgff}
+	  || $uri =~ m{gbrowse/tmp}    # temporary images (old structure)
+	  || $uri =~ m{gbrowse_img}   
+	  || $params =~ m{^gbrowse}     # Gbrowse js must be served from same node?	  
+	  || $uri =~ m{gb1-support}
+	  ) {
+	
+	$destination = $servers{"oicr-gbrowse1"};
+	
+	print ERR "Routing Genome Browser ($uri) to $destination\n" if DEBUG;
+	$uri = "http://$destination/$params";
+	next;
+    }
+    
 
     ##########################################################
     #
@@ -268,7 +257,7 @@ while (<>) {
     #
     #  The Blog
     if ($params =~ m{blog}) {
-	$destination = $servers{"oicr-community"};
+	$destination = $servers{"oicr-community-blog"};
 
 	# Whoops!  This might be a request for the inline_feed script
 	# which contains the blog rss feed as a parameter. Doh!
@@ -286,6 +275,51 @@ while (<>) {
 	next;
     }
 
+    ##########################################################
+    #
+    #  The Forums
+    #  The fora are now a subdomain: forums.wormbase.org:8081
+    #  Port 8081 on the community server will handle 301 redirect.
+    #  Redirect added: 2010.05.10
+    if ($uri =~ m{forums}) {
+	$destination = $servers{"oicr-community-forums"};
+
+	# Whoops!  This might be a request for the inline_feed script
+	# which contains the blog rss feed as a parameter. Doh!
+	if ($uri =~ /inline_feed/) {
+	    $destination = $servers{brie3};
+	    $uri = "http://$destination/$params";	    
+	    next;
+	}
+	
+	# Catch problems with forum URLs too. Need to append the back slash.
+	$params = 'forums/' if $params eq 'forums';
+
+    	print ERR "Routing forums ($uri) to $destination/$params\n" if DEBUG;
+        $uri = "http://$destination/$params";	    
+	next;
+    }
+
+
+    ##########################################################
+    #
+    #  The Wiki
+    #  The wiki is now a subdomain: wiki.wormbase.org
+    #  Port 8080 on the community server will handle 301 redirect.
+    #  Redirect added: 2010.05.10
+    if ($uri =~ m{wiki}) {
+	$destination = $servers{"oicr-community-wiki"};
+	
+	# Hack to get around MediaWiki's weird redirect
+	$params = 'wiki/index.php/Main_Page' if $params eq 'wiki';       
+	
+	# Hack. Require a trailing slash.
+	$params = 'wiki/' if $params eq 'wiki';
+
+	print ERR "Routing wiki/forum ($uri) to $destination\n" if DEBUG;
+	$uri = "http://$destination/$params";
+	next;
+    }
 
 
     ##########################################################
@@ -404,22 +438,34 @@ while (<>) {
     }
 
  
+    # Deprecated 2010.05.05: Safe to delete
     ##########################################################
     #
     #  crestone: wiki and forums
-    if ($uri =~ m{wiki} || $uri =~ m{forums}) {
-	$destination = $servers{crestone};
-	
-	# Hack to get around MediaWiki's weird redirect
-	$params = 'wiki/index.php/Main_Page' if $params eq 'wiki';
-	
-	# Catch problems with forum URLs too. Need to append the back slash.
-	$params = 'forums/' if $params eq 'forums';
-	
-	print ERR "Routing wiki/forum ($uri) to $destination\n" if DEBUG;
-	$uri = "http://$destination/$params";
-	next;
-    }
+#    if ($uri =~ m{wiki} || $uri =~ m{forums}) {
+#	$destination = $servers{crestone};
+#	
+#	# Hack to get around MediaWiki's weird redirect
+#	$params = 'wiki/index.php/Main_Page' if $params eq 'wiki';
+#	
+#	# Catch problems with forum URLs too. Need to append the back slash.
+#	$params = 'forums/' if $params eq 'forums';
+#	
+#	print ERR "Routing wiki/forum ($uri) to $destination\n" if DEBUG;
+#	$uri = "http://$destination/$params";
+#	next;
+#    }
+#
+#    if ($uri =~ m{wiki}) {
+#	$destination = $servers{crestone};
+#	
+#	# Hack to get around MediaWiki's weird redirect
+#	$params = 'wiki/index.php/Main_Page' if $params eq 'wiki';       
+#	
+#	print ERR "Routing wiki/forum ($uri) to $destination\n" if DEBUG;
+#	$uri = "http://$destination/$params";
+#	next;
+#    }
 
 
     ##########################################################
@@ -429,7 +475,6 @@ while (<>) {
     #  This is mostly static content (gbrowse static handled above)
     if (  $params !~ m{^db}) {
 	
-	# TODO: EVERYTHING EXCEPT FOR THE BLOG COULD BE RANDOM
 	$destination = $servers{unc};
 	
 	print ERR "Routing static content ($uri) to $destination\n" if DEBUG;
