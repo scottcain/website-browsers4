@@ -13,12 +13,17 @@ open ERR,">>/usr/local/squid/var/logs/redirector.debug" if DEBUG || DEBUG_FULL;
 #$servers{biomart}  = 'biomart.wormbase.org';
 
 my %servers = (
-	       aceserver => 'aceserver.cshl.org:8080',
+	       # 2010.05.12: Aceserver is now retired.
+	       # The datamining server has no DNS entry yet.
+	       # aceserver => 'aceserver.cshl.org:8080',
+	       datamining  => '206.108.125.178',
+
 	       blast     => 'blast.wormbase.org:8080',
 	       unc       => 'unc.wormbase.org:8080',
 	       gene      => 'gene.wormbase.org:8080',
 
-	       # vab is now retired, although there are still
+	       
+	       # 2010.05.10: vab is now retired, although there are still
 	       # some dynamic images being served from there.
 	       # vab       => 'vab.wormbase.org:8080',
 	       biomart   => 'biomart.wormbase.org',
@@ -32,15 +37,23 @@ my %servers = (
 	       freeze2   => 'freeze2.wormbase.org:8080',
 	       
 	       brie3     => 'brie3.cshl.org:8080',       
-#	       brie3     => 'be1.wormbase.org:8080',       
 	       be1       => 'be1.wormbase.org:8080',
-#	       be1     => 'brie3.cshl.org:8080',
 
 	       synteny   => 'mckay.cshl.edu',
+
+	       # GBrowse running at OICR. Can run on
+	       # non-standard ports since these services
+	       # will not be accessed directly.
 	       "oicr-gbrowse2" => '206.108.125.173',
 	       "oicr-gbrowse1" => '206.108.125.173:8080',
 
-	       # oicr-community: wiki, forums, blog
+	       # 2010.05.05
+	       # Blog, wiki, forums are all at OICR.
+	       # Here, we send all requests like "wormbase.org/blog"
+	       # to oicr, which then issues a 301 redirect to the subdomain.
+	       # Monitor the logs/redirect on this server to gauge
+	       # how heavily this is used.
+	       # This can probably be retired in the near future.
 	       "oicr-community-blog"   => '206.108.125.176',
 	       "oicr-community-forums" => '206.108.125.176:8081',
 	       "oicr-community-wiki"   => '206.108.125.176:8080',
@@ -380,14 +393,15 @@ while (<>) {
     ##########################################################
     #
     #  aceserver: miscellaneous programmatic queries
-    if (   $uri =~ m{wb_query} 
+    if (   $uri    =~ m{wb_query} 
 	   || $uri =~ m{aql_query}
 	   || $uri =~ m{class_query} 
 	   || $uri =~ m{cisortho}
 	   || $uri =~ m{searches/batch_genes}
 	   || $uri =~ m{searches/advanced/dumper}
 	   ) {
-	$destination = $servers{aceserver};
+#	$destination = $servers{aceserver};
+	$destination = $servers{datamining};
 	
 	print ERR "Routing query request ($uri) to $destination\n" if DEBUG;
 	$uri = "http://$destination/$params";
@@ -436,36 +450,6 @@ while (<>) {
 	print "\n";
 	return;
     }
-
- 
-    # Deprecated 2010.05.05: Safe to delete
-    ##########################################################
-    #
-    #  crestone: wiki and forums
-#    if ($uri =~ m{wiki} || $uri =~ m{forums}) {
-#	$destination = $servers{crestone};
-#	
-#	# Hack to get around MediaWiki's weird redirect
-#	$params = 'wiki/index.php/Main_Page' if $params eq 'wiki';
-#	
-#	# Catch problems with forum URLs too. Need to append the back slash.
-#	$params = 'forums/' if $params eq 'forums';
-#	
-#	print ERR "Routing wiki/forum ($uri) to $destination\n" if DEBUG;
-#	$uri = "http://$destination/$params";
-#	next;
-#    }
-#
-#    if ($uri =~ m{wiki}) {
-#	$destination = $servers{crestone};
-#	
-#	# Hack to get around MediaWiki's weird redirect
-#	$params = 'wiki/index.php/Main_Page' if $params eq 'wiki';       
-#	
-#	print ERR "Routing wiki/forum ($uri) to $destination\n" if DEBUG;
-#	$uri = "http://$destination/$params";
-#	next;
-#    }
 
 
     ##########################################################

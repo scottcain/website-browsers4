@@ -17,9 +17,10 @@ my %servers = (
 	       blast     => 'blast.wormbase.org:8080',
 	       unc       => 'unc.wormbase.org:8080',
 	       gene      => 'gene.wormbase.org:8080',
-#	       gene      => 'brie3.cshl.org:8080',
 
-	       vab       => 'vab.wormbase.org:8080',
+	       # vab is now retired, although there are still
+	       # some dynamic images being served from there.
+	       # vab       => 'vab.wormbase.org:8080',
 	       biomart   => 'biomart.wormbase.org',
 	       nbrowse   => 'gene.wormbase.org:9002',
 	       nbrowsejsp => 'gene.wormbase.org:9022',
@@ -76,9 +77,6 @@ while (<>) {
     # This still requires soe careful ordering of request evaluation
     # but it is easier to follow and cleaner code.
 
-
-
-
     
     ##########################################################
     #
@@ -126,10 +124,9 @@ while (<>) {
 	next;
     }
 
-
-
-    # I *believe* this is deprecated as of 2010.05.08
-    # Save for now.
+    # 2010.05.08
+    # GBrowse1 and GBrowse2 now being served from OICR.
+    # I *believe* that most of this is deprecated.
 
 #    ##########################################################
 #    #
@@ -157,6 +154,11 @@ while (<>) {
 	my $server = $1;
 	$destination = $servers{$server};
 	
+	# Retiring vab.wormbase.org on 2010.05.11
+	# There are still some requests being directed there,
+	# mostly from the GoogleImage bot
+	$server = 'brie3' if ($server eq 'vab');
+	
 	print ERR "Routing dynamic images ($uri) to $destination\n" if DEBUG;
 	$uri = "http://$destination/$params";
 	next;
@@ -164,6 +166,7 @@ while (<>) {
     
     # RELOCATED GBrowse 1.x to OICR on 2010.05.08.
     # I *believe* this is now deprecated.
+    # All paths are set up at in the main GBrowse configuration.
     
 #    ##########################################################
 #    #
@@ -186,9 +189,6 @@ while (<>) {
 #	next;
 #    }
 
-
-
-
     # GBrowse 1.x relocation: Still need to send the aligner to brie3
     # Make sure the aligner still goes to brie3
     if ($uri =~ m{aligner}) {
@@ -199,11 +199,9 @@ while (<>) {
 	next;
     }
     
-
     # Send GBrowse1 requests to OICR.
     if (  $uri =~ m{seq/gbrowse} 
 	  || $uri =~ m{gbgff}
-#	  || $uri =~ m{tmp/gbrowse}    # temporary images; should possibly be included in dynamic images above
 	  || $uri =~ m{gbrowse/tmp}    # temporary images (old structure)
 	  || $uri =~ m{gbrowse_img}   
 	  || $params =~ m{^gbrowse}     # Gbrowse js must be served from same node?	  
