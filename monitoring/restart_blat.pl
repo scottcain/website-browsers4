@@ -14,12 +14,12 @@ our $BLAT_CLIENT_EXECUTABLE = '/usr/local/blat/bin/gfClient';
 
 our $BLAT_ROOT_DIR         = '/usr/local/wormbase/databases/[RELEASE]/blat';
 
-our %BLAT_DBS = ('c_elegans'              => { port => 2007, file_glob => "$BLAT_ROOT_DIR/c_elegans/*.nib" },
-                 'c_briggsae'             => { port => 2008, file_glob => "$BLAT_ROOT_DIR/c_briggsae/*.nib" },
-                 'c_brenneri'             => { port => 2009, file_glob => "$BLAT_ROOT_DIR/c_brenneri/*.nib" },
-                 'c_japonica'             => { port => 2010, file_glob => "$BLAT_ROOT_DIR/c_japonica/*.nib" },
-                 'c_remanei'              => { port => 2011, file_glob => "$BLAT_ROOT_DIR/c_remanei/*.nib" },
-                 'b_malayi'               => { port => 2012, file_glob => "$BLAT_ROOT_DIR/b_malayi/*.nib" },
+our %BLAT_DBS = ('c_elegans'              => { port => 2008, file_glob => "$BLAT_ROOT_DIR/c_elegans/*.nib" },
+                 'c_briggsae'             => { port => 2009, file_glob => "$BLAT_ROOT_DIR/c_briggsae/*.nib" },
+#                 'c_brenneri'             => { port => 2010, file_glob => "$BLAT_ROOT_DIR/c_brenneri/*.nib" },
+#                 'c_japonica'             => { port => 2011, file_glob => "$BLAT_ROOT_DIR/c_japonica/*.nib" },
+#                 'c_remanei'              => { port => 2012, file_glob => "$BLAT_ROOT_DIR/c_remanei/*.nib" },
+#                 'b_malayi'               => { port => 2013, file_glob => "$BLAT_ROOT_DIR/b_malayi/*.nib" },
                  );
 
 require '/usr/local/wormbase/website-classic/conf/elegans.pm';

@@ -41,7 +41,7 @@ alert "Pushing the support databases dir on database nodes..."
 for NODE in ${OICR_SUPPORT_DB_NODES}
 do
   alert " ${NODE}:"
-  if [ "${NODE}" == "blast.wormbase.org" ]
+  if [ "${NODE}" == "wb-mining.oicr.on.ca" ]
   then
   	if rsync -Cav --exclude *bak* --exclude web_data \
 	 	--delete ${SUPPORT_DB_DIRECTORY}/ ${NODE}:${SUPPORT_DB_DIRECTORY}
@@ -51,7 +51,7 @@ do
    else
 	if rsync -Cav --exclude *bak* \
                 --exclude web_data \
-		--exclude blast \
+	        --exclude blast \
 		--exclude blat \
 		--delete ${SUPPORT_DB_DIRECTORY}/ ${NODE}:${SUPPORT_DB_DIRECTORY}
   	then
