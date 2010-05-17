@@ -96,7 +96,7 @@ done
 
 # Now sync the admin module
 alert "Pushing software onto OICR nodes..."
-for NODE in ${OICR_SITE_NODES}
+for NODE in ${OICR_ALL_NODES}
 do
   alert " Updating ${NODE}..."
   if rsync -Cav /home/tharris/projects/wormbase/wormbase-admin/ ${NODE}:/usr/local/wormbase/admin
