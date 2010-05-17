@@ -35,8 +35,6 @@ function success() {
 # Original: not necessary to pass through brie3
 alert "Pushing software onto ${STAGING_NODE}"
 if rsync -Cav --exclude extlib \
-              --exclude seq/gbrowse* \
-              --exclude gbrowse/ \
               --exclude localdefs.pm \
               --exclude httpd.conf \
               --exclude perl.startup \
@@ -45,9 +43,7 @@ if rsync -Cav --exclude extlib \
               --exclude databases/ \
               --exclude tmp/ \
               --exclude ace_images/ \
-              --exclude mt/ \
               --exclude html/rss/ \
-              --exclude gb2/ \
               ${SITE_STAGING_DIRECTORY}/ ${STAGING_NODE}:${SITE_TARGET_DIRECTORY}
   then
     success "Successfully pushed software onto ${STAGING_NODE}..."
@@ -61,7 +57,7 @@ alert "Pushing software onto nodes..."
 for NODE in ${SITE_NODES}
 do
   alert " Updating ${NODE}..."
-  if ssh ${STAGING_NODE} "rsync -Cav --exclude gbrowse --exclude gbrowse* --exclude gbrowse/ --exclude extlib/ --exclude perl.startup --exclude localdefs.pm --exclude httpd.conf --exclude cache/ --exclude session/ --exclude databases/ --exclude mt/ --exclude tmp/ --exclude ace_images/ --exclude html/rss/ ${SITE_TARGET_DIRECTORY}/ ${NODE}:${SITE_TARGET_DIRECTORY}"
+  if ssh ${STAGING_NODE} "rsync -Cav --exclude extlib/ --exclude perl.startup --exclude localdefs.pm --exclude httpd.conf --exclude cache/ --exclude session/ --exclude databases/ --exclude tmp/ --exclude ace_images/ --exclude html/rss/ ${SITE_TARGET_DIRECTORY}/ ${NODE}:${SITE_TARGET_DIRECTORY}"
   then
     success "Successfully pushed software onto ${NODE}..."
   else
@@ -71,14 +67,16 @@ do
 done
 
 
-
+######################################################
+#
+#    OICR 
+#
+######################################################
 alert "Pushing software onto OICR nodes..."
 for NODE in ${OICR_SITE_NODES}
 do
   alert " Updating ${NODE}..."
   if rsync -Cav --exclude extlib \
-                --exclude seq/gbrowse* \
-                --exclude gbrowse/ \
                 --exclude localdefs.pm \
                 --exclude httpd.conf \
                 --exclude perl.startup \
@@ -87,10 +85,21 @@ do
                 --exclude databases/ \
                 --exclude tmp/ \
                 --exclude ace_images/ \
-                --exclude mt/ \
                 --exclude html/rss/ \
-                --exclude gb2/ \
               ${SITE_STAGING_DIRECTORY}/ ${NODE}:${SITE_TARGET_DIRECTORY}
+  then
+    success "Successfully pushed software onto ${NODE}..."
+  else
+    failure "Pushing software onto ${NODE} failed..."
+  fi
+done
+
+# Now sync the admin module
+alert "Pushing software onto OICR nodes..."
+for NODE in ${OICR_SITE_NODES}
+do
+  alert " Updating ${NODE}..."
+  if rsync -Cav /home/tharris/projects/wormbase/wormbase-admin/ ${NODE}:/usr/local/wormbase/admin
   then
     success "Successfully pushed software onto ${NODE}..."
   else
