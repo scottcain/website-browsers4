@@ -57,7 +57,7 @@
       encoding   - encoding of the file if not US-ASCII
   -->
 
-  <urllist  path="/usr/local/wormbase/util/google_indexing/current_urls.txt" />
+  <urllist  path="/usr/local/wormbase/admin/util/google_indexing/current_urls.txt" />
 
 
   <!-- ** MODIFY or DELETE **
@@ -70,15 +70,8 @@
 
     Optional attributes:
       default_file - name of the index or default file for directory URLs
-  -->
   <directory path="/usr/local/wormbase/website-classic/html/about"         url="http://www.wormbase.org/about/"   default_file="index.html" />
-  <directory path="/usr/local/wormbase/website-classic/html/archive"       url="http://www.wormbase.org/archive/" default_file="index.html" />
-  <directory path="/usr/local/wormbase/website-classic/html/data_mining"   url="http://www.wormbase.org/data_mining/" default_file="index.html" />
-  <directory path="/usr/local/wormbase/website-classic/html/docs"          url="http://www.wormbase.org/docs/" default_file="index.html" />
-  <directory path="/usr/local/wormbase/website-classic/html/gbrowse"       url="http://www.wormbase.org/gbrowse/" default_file="index.html" />
-  <directory path="/usr/local/wormbase/website-classic/html/mailarch"      url="http://www.wormbase.org/mailarch/" default_file="index.html" />
-  <directory path="/usr/local/wormbase/website-classic/html/papers"        url="http://www.wormbase.org/papers/" default_file="index.html" />
-  <directory path="/usr/local/wormbase/website-classic/html/presentations" url="http://www.wormbase.org/presentations/" default_file="index.html" />
+  -->
 
   <!-- ********************************************************
           FILTERS
