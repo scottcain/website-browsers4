@@ -33,7 +33,7 @@
 -->
 <site
   base_url="http://www.wormbase.org/"
-  store_into="/usr/local/wormbase/html/sitemap.xml.gz"
+  store_into="/usr/local/wormbase/website-classic/html/sitemap.xml.gz"
   verbose="1"
   >
 
@@ -71,14 +71,14 @@
     Optional attributes:
       default_file - name of the index or default file for directory URLs
   -->
-  <directory path="/usr/local/wormbase/html/about"         url="http://www.wormbase.org/about/"   default_file="index.html" />
-  <directory path="/usr/local/wormbase/html/archive"       url="http://www.wormbase.org/archive/" default_file="index.html" />
-  <directory path="/usr/local/wormbase/html/data_mining"   url="http://www.wormbase.org/data_mining/" default_file="index.html" />
-  <directory path="/usr/local/wormbase/html/docs"          url="http://www.wormbase.org/docs/" default_file="index.html" />
-  <directory path="/usr/local/wormbase/html/gbrowse"       url="http://www.wormbase.org/gbrowse/" default_file="index.html" />
-  <directory path="/usr/local/wormbase/html/mailarch"      url="http://www.wormbase.org/mailarch/" default_file="index.html" />
-  <directory path="/usr/local/wormbase/html/papers"        url="http://www.wormbase.org/papers/" default_file="index.html" />
-  <directory path="/usr/local/wormbase/html/presentations" url="http://www.wormbase.org/presentations/" default_file="index.html" />
+  <directory path="/usr/local/wormbase/website-classic/html/about"         url="http://www.wormbase.org/about/"   default_file="index.html" />
+  <directory path="/usr/local/wormbase/website-classic/html/archive"       url="http://www.wormbase.org/archive/" default_file="index.html" />
+  <directory path="/usr/local/wormbase/website-classic/html/data_mining"   url="http://www.wormbase.org/data_mining/" default_file="index.html" />
+  <directory path="/usr/local/wormbase/website-classic/html/docs"          url="http://www.wormbase.org/docs/" default_file="index.html" />
+  <directory path="/usr/local/wormbase/website-classic/html/gbrowse"       url="http://www.wormbase.org/gbrowse/" default_file="index.html" />
+  <directory path="/usr/local/wormbase/website-classic/html/mailarch"      url="http://www.wormbase.org/mailarch/" default_file="index.html" />
+  <directory path="/usr/local/wormbase/website-classic/html/papers"        url="http://www.wormbase.org/papers/" default_file="index.html" />
+  <directory path="/usr/local/wormbase/website-classic/html/presentations" url="http://www.wormbase.org/presentations/" default_file="index.html" />
 
   <!-- ********************************************************
           FILTERS
