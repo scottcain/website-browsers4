@@ -44,7 +44,7 @@ do
   if [ "${NODE}" == "wb-mining.oicr.on.ca" ]
   then
   	if rsync -Cav --exclude *bak* --exclude web_data \
-	 	--delete ${SUPPORT_DB_DIRECTORY}/ ${NODE}:${SUPPORT_DB_DIRECTORY}
+	 	${SUPPORT_DB_DIRECTORY}/ ${NODE}:${SUPPORT_DB_DIRECTORY}
  	then
       		success "Successfully pushed support databases onto ${NODE}"
   	fi
