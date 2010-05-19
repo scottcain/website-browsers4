@@ -135,10 +135,10 @@ my %classes = (
 		  url      => ROOT_URL . '/seq/protein?name=%s;class=%s',
 		  priority => '0.7',
 	      },	     	      
-	       Wormpep     => {
-		   url      => ROOT_URL . '/seq/protein?name=%s;class=%s',
-		   priority => '0.7',
-	       },	     	      
+#	       Wormpep     => {
+#		   url      => ROOT_URL . '/seq/protein?name=%s;class=%s',
+#		   priority => '0.7',
+#	       },	     	      
 #	      Pseudogene
 	      Rearrangement => {
 		  url => ROOT_URL . '/gene/rearrange?name=%s;class=%s',
@@ -187,11 +187,11 @@ foreach (sort keys %classes) {
 sub fetch_features {
     my $class = shift;
     my @features;
-#  if ($class eq 'Protein') {
-#      @features = $db->fetch(-query=>qq/find Protein where Species="C*elegans"/);
-#  } else {
+  if ($class eq 'Protein') {
+      @features = $db->fetch(-query=>qq/find Protein where Species="C*elegans"/);
+  } else {
     @features = $db->fetch($class => '*');
-#  }
+  }
     foreach my $feat (@features) {
 #      next if ($class eq 'Protein' && $feat->Species ne 'Caenorhabditis elegans');
 	if ($class eq 'Protein') {
