@@ -95,7 +95,7 @@ do
 done
 
 # Now sync the admin module
-alert "Pushing software onto OICR nodes..."
+alert "Pushing the admin module onto OICR nodes..."
 for NODE in ${OICR_ALL_NODES}
 do
   alert " Updating ${NODE}..."

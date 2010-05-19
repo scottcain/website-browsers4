@@ -57,7 +57,7 @@
       encoding   - encoding of the file if not US-ASCII
   -->
 
-  <urllist  path="/usr/local/wormbase/admin/util/google_indexing/current_urls.txt" />
+  <urllist  path="/usr/local/wormbase/admin/util/google_sitemap/current_urls.txt" />
 
 
   <!-- ** MODIFY or DELETE **
