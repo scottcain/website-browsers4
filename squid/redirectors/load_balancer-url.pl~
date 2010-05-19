@@ -18,33 +18,36 @@ my %servers = (
 	       # The datamining server has no DNS entry yet.
 	       # Will become mining.wormbase.org
 	       # aceserver   => 'aceserver.cshl.org:8080',
-	       datamining  => '206.108.125.178',
-	       
-	       # Blast migration underway
-	       blast     => 'blast.wormbase.org:8080',
+	       # Blast retired 2010.05.17
+	       # blast     => 'blast.wormbase.org:8080',
+	       # aka wb-mining.oicr.on.ca 
+	       "oicr-mining"  => '206.108.125.178',
 
-	       
+	       # Migrating to 
+	       # 206.108.125.189:8080 (and/or update DNS entry)
 	       biomart   => 'biomart.wormbase.org',
+
 	       nbrowse   => 'gene.wormbase.org:9002',
 	       nbrowsejsp => 'gene.wormbase.org:9022',
 	       
 	       # Where we are serving static content from (not currently in use)
 	       #static    => '',
 
+	       # 2010.05.18
+	       # Retiring gene, brie3, and brie6
+	       # gene      => 'gene.wormbase.org:8080',
+	       brie3     => 'brie3.cshl.org:8080',       
+	       # unc: aka brie6 - this basically just serves static content
+	       # unc       => 'unc.wormbase.org:8080',
+	       'oicr-web1' => '206.108.125.175',
+
 	       # 2010.05.16
-               # Retiring freeze1 & freeze2
+               # Retiring freeze1, freeze2
 	       # freeze1   => 'freeze1.wormbase.org:8080',
 	       # freeze2   => 'freeze2.wormbase.org:8080',
-	       # be1       => 'be1.wormbase.org:8080',
-	       # Now handled by oicr-web1 (aka wb-acedb2.oicr.on.ca)
-	       'oicr-web1' => '206.108.125.177',	       
-
-
-	       # These machines will be directed to www3-warm
-	       brie3     => 'brie3.cshl.org:8080',       
-	       # unc: aka brie6
-	       unc       => 'unc.wormbase.org:8080',
-	       gene      => 'gene.wormbase.org:8080',
+	       be1       => 'be1.wormbase.org:8080',
+	       # Now handled by oicr-web2 (aka wb-acedb2.oicr.on.ca)
+	       'oicr-web2' => '206.108.125.177',
 
 
 	       synteny   => 'mckay.cshl.edu',
@@ -82,7 +85,7 @@ while (<>) {
     if (DEBUG_FULL) {
 	print ERR "REQUEST: $request\n";
 	print ERR "URI    : $uri\n";
-	print ERR "CLIENT : $client\n\n";
+	print ERR "CLIENT : $client\n";
     }
     
     # next unless ($uri =~ m|^http://roundrobin.wormbase.org/(\S*)|);
@@ -94,9 +97,8 @@ while (<>) {
     my $destination = $servers{brie3};
     
     ##########################################################
-    #
-    #  GBrowse2 (at OICR)
-    # 
+    #  OICR
+    #  GBrowse2
     if ( $uri =~ m{gb2} 
 	 ||
 	 $uri =~ m{gbrowse2}
@@ -115,7 +117,7 @@ while (<>) {
     
     
     ##########################################################
-    #
+    #  OICR
     #  The computationally intensive gene page
     #  Check for it first since this is the most prominent request
     if ($uri =~ m{gene/gene}
@@ -123,15 +125,17 @@ while (<>) {
 	|| $uri =~ m{searches/basic}
 	) {
 	
-#	$destination = $servers{be1};
-	$destination = $servers{"oicr-web1"};
+	$destination = $servers{be1};
+#	$destination = $servers{"oicr-web2"};
 	print ERR "Routing Gene Page query ($uri) to $destination\n" if DEBUG;
 	$uri = "http://$destination/$params";
 	next;
     }
     
     
-    # The synteny browser (for now)
+    ##########################################################
+    #  CSHL: Mckays server
+    #  The synteny browser
     if ($uri =~ m{cgi-bin/gbrowse_syn}
 	|| $uri =~ m{gbrowse/tmp/.*synteny}
 	|| $uri =~ m{gbrowse/tmp/compara}
@@ -142,13 +146,16 @@ while (<>) {
     }
     
 
-    # 2010.05.16
+    ##########################################################
+    #  CSHL & OICR
+    #  Dynamic images
     # Update: I believe that only the protein page generates a dynamic image.
     # I will assume this and send the request to the server responsible
-    # for that page (currently oicr-web1)
+    # for that page (currently oicr-web2)
     # dynamic_images:
-    #      protein page: oicr-web1
+    #      protein page: oicr-web2
     #      interaction page pie chart:    brie3
+    #      gene/gmap : brie3
 
     # 2010.05.08
     # GBrowse1 and GBrowse2 now being served from OICR.    
@@ -177,11 +184,13 @@ while (<>) {
 	# mckay is tempo hack for images for the blast_blat page. Ugh.
 	my $server = $1;
 #	$destination = $servers{$server};
-	$destination = $servers{"oicr-web1"};
-	if ($uri =~ /pie_chart/) {
+	$destination = $servers{"oicr-web2"};
+	if ($uri =~ /pie_chart/
+	    ||
+	    $uri =~ m{dynamic_images/brie3}) {
 	    $destination = $servers{brie3};
 	}
-
+	
 	print ERR "Routing dynamic images ($uri) to $destination\n" if DEBUG;
 	$uri = "http://$destination/$params";
 	next;
@@ -212,6 +221,10 @@ while (<>) {
 #	next;
 #    }
 
+    ##########################################################
+    #  CSHL
+    #  The EST aligner
+
     # GBrowse 1.x relocation: Still need to send the aligner to brie3
     # Make sure the aligner still goes to brie3
     if ($uri =~ m{aligner}) {
@@ -222,7 +235,10 @@ while (<>) {
 	next;
     }
     
-    # Send GBrowse1 requests to OICR.
+    
+    ##########################################################
+    #  OICR
+    #  Send GBrowse1 requests to OICR.
     if (  $uri =~ m{seq/gbrowse} 
 	  || $uri =~ m{gbgff}
 	  || $uri =~ m{gbrowse/tmp}    # temporary images (old structure)
@@ -240,12 +256,12 @@ while (<>) {
     
     
     ##########################################################
-    #
+    #  CSHL
     #  The Home Page
     if ( $params eq ''
 	 || $uri eq 'http://www.wormbase.org/'
 	 || $uri eq 'http://wormbase.org/'
-	 || $uri =~ m{gene/strain} ) {
+	 ) {
 	$destination = $servers{brie3};
 	
 	print ERR "Routing MT ($uri) to $destination\n" if DEBUG;
@@ -253,12 +269,20 @@ while (<>) {
 	next;
     }
     
-    
+        
     ##########################################################
-    #
-    #  Manually redistribute some CGIs (Tier I)
-    if (  $uri =~ m{seq/sequence} ) {
-	$destination = $servers{gene};
+    #  OICR
+    #  Manually redistribute some CGIs (Tier II)
+    if (  $uri =~ m{seq/sequence}
+	  || $uri =~ m{gene/variation}
+	  || $uri =~ m{ontology}
+	  || $uri =~ m{db/misc/session}  # session management
+	  || $uri =~ m{api/citeulike}
+	  || $uri =~ m{gene/expression}
+	  ) {
+	
+	$destination = $servers{"oicr-web1"};
+#	$destination = $servers{gene};
 	print ERR "Routing CGIs Tier II ($uri) to $destination\n" if DEBUG;
 	$uri = "http://$destination/$params";	    
 	next;	
@@ -266,6 +290,72 @@ while (<>) {
     
     
     
+    
+    ##########################################################
+    #  OICR
+    #  Manually redistribute some CGIs (Tier III)
+    if (   $uri =~ m{/db/gene/antibody}
+	   || $uri =~ m{/db/gene/gene_class}
+	   || $uri =~ m{/db/gene/motif}
+	   || $uri =~ m{/db/gene/regulation}
+	   || $uri =~ m{/db/gene/strain}
+	   || $uri =~ m{/db/seq/protein}
+	   
+#	   || $uri =~ m{db/misc/}
+	   ) {
+
+	$destination = $servers{"oicr-web2"};
+	print ERR "Routing CGIs Tier III ($uri) to $destination\n" if DEBUG;
+	$uri = "http://$destination/$params";	    
+	next;	
+    }
+    
+     
+    # 2010.05.16
+    # Freeze2 now retired
+    ##########################################################
+    #
+    #  Manually distribute some CGIs (Tier V)
+    #  Everything that remains in /db/misc
+#    if ( $uri =~ m{db/misc}
+#	 ||
+#	 $uri =~ m{db/gene/expression}
+#	 ) {
+#	
+#	$destination = $servers{freeze2};
+#	
+#	# Logic hack. 2010.04.13.
+#        # $destination = $servers{gene} if $uri =~ /inline_feed/;
+#	
+#	print ERR "Routing CGIs Tier V ($uri) to $destination\n" if DEBUG;
+#	$uri = "http://$destination/$params";	    
+#	next;	
+#    }
+       
+
+    # 2010.05.12: Aceserver nearly retired.
+    ##########################################################
+    #  OICR
+    #  mining.wormbase.org: miscellaneous programmatic queries
+    #
+    # Is searches/blat deprecated?
+    if (   $uri    =~ m{wb_query} 
+	   || $uri =~ m{aql_query}
+	   || $uri =~ m{class_query} 
+	   || $uri =~ m{searches/batch_genes}
+	   || $uri =~ m{searches/advanced/dumper}
+	   || ($uri =~ m{cisortho})
+	   || $uri =~ m{searches/epcr}
+	   || $uri =~ m{searches/strains}
+	   || $uri =~ m{blast_blat}
+	   || $uri =~ m{searches/blat}
+	   ) {
+	$destination = $servers{"oicr-mining"};
+	
+	print ERR "Routing query request ($uri) to $destination\n" if DEBUG;
+	$uri = "http://$destination/$params";
+	next;
+    }
     
     # 2010.05.05
     # Blog, wiki, forums are all at OICR.
@@ -309,8 +399,9 @@ while (<>) {
     if ($uri =~ m{forums}) {
 	$destination = $servers{"oicr-community-forums"};
 	
-	# Whoops!  This might be a request for the inline_feed script
-	# which contains the blog rss feed as a parameter. Doh!
+	# NOT NECESSARY (as long as /misc/ URI handler comes first)
+#	# Whoops!  This might be a request for the inline_feed script
+#	# which contains the blog rss feed as a parameter. Doh!
 	if ($uri =~ /inline_feed/) {
 	    $destination = $servers{brie3};
 	    $uri = "http://$destination/$params";	    
@@ -345,112 +436,8 @@ while (<>) {
 	$uri = "http://$destination/$params";
 	next;
     }
-    
-    
-    ##########################################################
-    #
-    #  Manually redistribute some CGIs (Tier II)
-    if (   $uri =~ m{gene/variation}
-	   || $uri =~ m{ontology}
-	   || $uri =~ m{db/misc/session}  # session management
-	   || $uri =~ m{api/citeulike}
-	   || $uri =~ m{gene/expression}
-	   ) {
-	
-	$destination = $servers{gene};
-	print ERR "Routing CGIs Tier II ($uri) to $destination\n" if DEBUG;
-	$uri = "http://$destination/$params";	    
-	next;	
-    }
-    
-#    # STILL AT CSHL
-#    if ( $uri =~ m{/db/misc/inline_feed} ) {
-#	$destination = $servers{gene};
-#	
-#	print ERR "Routing query request ($uri) to $destination\n" if DEBUG;
-#	$uri = "http://$destination/$params";
-#	next;
-#    }
 
-    
-    ##########################################################
-    #
-    #  Manually redistribute some CGIs (Tier III)    
-    if (   $uri =~ m{/db/gene/antibody}
-	   || $uri =~ m{/db/gene/gene_class}
-	   || $uri =~ m{/db/gene/motif}
-	   || $uri =~ m{/db/gene/regulation}
-	   || $uri =~ m{/db/gene/strain}
-	   || $uri =~ m{/db/seq/protein}
-	   
-	   # Freeze2 workload
-	   || $uri =~ m{db/misc}
-	   || $uri =~ m{db/gene/expression}
-	   ) {
 
-	$destination = $servers{"oicr-web1"};
-	print ERR "Routing CGIs Tier III ($uri) to $destination\n" if DEBUG;
-	$uri = "http://$destination/$params";	    
-	next;	
-    }
-    
-     
-    # 2010.05.16
-    # Freeze2 now retired
-    ##########################################################
-    #
-    #  Manually distribute some CGIs (Tier V)
-    #  Everything that remains in /db/misc
-#    if ( $uri =~ m{db/misc}
-#	 ||
-#	 $uri =~ m{db/gene/expression}
-#	 ) {
-#	
-#	$destination = $servers{freeze2};
-#	
-#	# Logic hack. 2010.04.13.
-#        # $destination = $servers{gene} if $uri =~ /inline_feed/;
-#	
-#	print ERR "Routing CGIs Tier V ($uri) to $destination\n" if DEBUG;
-#	$uri = "http://$destination/$params";	    
-#	next;	
-#    }
-       
-
-    # 2010.05.12: Aceserver nearly retired.
-    ##########################################################
-    #
-    #  mining.wormbase.org: miscellaneous programmatic queries
-    #
-    if (   $uri    =~ m{wb_query} 
-	   || $uri =~ m{aql_query}
-	   || $uri =~ m{class_query} 
-	   || $uri =~ m{searches/batch_genes}
-	   || $uri =~ m{searches/advanced/dumper}
-	   || ($uri =~ m{cisortho})
-	   ) {
-	$destination = $servers{datamining};
-	
-	print ERR "Routing query request ($uri) to $destination\n" if DEBUG;
-	$uri = "http://$destination/$params";
-	next;
-    }
-    
-
-    ##########################################################
-    #
-    # Searches: blast, blat, epcr, and "strains"
-    if (  $uri =~ m{searches/blat}
-	  || $uri =~ m{blast_blat}
-	  || $uri =~ m{searches/epcr}
-	  || $uri =~ m{searches/strains}
-	  ) {
-	$destination = $servers{blast};
-	
-	print ERR "Routing blast/blat/epcr ($uri) to $destination\n" if DEBUG;
-	$uri = "http://$destination/$params";
-	next;
-    }
      
     
     ##########################################################
@@ -481,13 +468,18 @@ while (<>) {
 
 
     ##########################################################
-    #
+    #  OICR: Static content.
+    #  For now, just randomize between web1/web2/mining
     #  Various static content; must come BELOW forum/wiki
     #  Serve basically anything outside of /db from a single box.
     #  This is mostly static content (gbrowse static handled above)
     if (  $params !~ m{^db}) {
 	
-	$destination = $servers{unc};
+	my @array = ($servers{"oicr-web1"},$servers{"oicr-web2"},$servers{"oicr-mining"});
+	my $range = scalar @array;
+	my $index = int(rand($range));
+	
+	$destination = $array[$index];
 	
 	print ERR "Routing static content ($uri) to $destination\n" if DEBUG;
 	$uri = "http://$destination/$params";
