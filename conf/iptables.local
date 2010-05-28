@@ -1,0 +1,97 @@
+#!/bin/sh
+# Set up iptables
+
+# exit 0
+
+BIN=/sbin/iptables
+EXTINT=eth0
+EXTIP=`/sbin/ifconfig $EXTINT | grep 'inet addr' | awk -F: '{print $2}' | awk '{print $1}'`
+EXTBROAD=`/sbin/ifconfig $EXTINT | grep 'inet addr' | awk -F: '{print $3}' | awk '{print $1}'`
+
+# mining.wormbase.org
+#LOCALNET=206.108.125.178/27
+
+# web1
+#LOCALNET=206.108.125.175/27
+
+# web2
+LOCALNET=206.108.125.177/27
+
+INTNET=10.0.0.0/8
+
+test -x $BIN || exit 1
+
+case $1 in
+start|restart|force-reload)
+	echo -n "Initializing IP Tables..."
+
+	$BIN -F
+	$BIN -F -t nat
+	$BIN -X SSHSCAN
+
+	# Policies
+	$BIN -P INPUT DROP
+	# We can send anything anywhere
+	$BIN -P OUTPUT ACCEPT
+
+	# Full communcation with loopback
+	$BIN -A OUTPUT -o lo -j ACCEPT
+	$BIN -A INPUT -i lo -j ACCEPT
+
+	# Let already established traffic thru
+	$BIN -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+	# Accept everything from internal network
+	$BIN -A INPUT -i $EXTINT --source $INTNET  -j ACCEPT
+	$BIN -A INPUT -i $EXTINT --source $LOCALNET  -j ACCEPT
+	$BIN -A OUTPUT -o $EXTINT -j ACCEPT
+
+	# Allow us to accept ICMP requests on any interface
+	$BIN -A INPUT --protocol icmp -j ACCEPT
+	$BIN -A OUTPUT --protocol icmp -j ACCEPT
+
+	# We listen to broadcasts
+	$BIN -A INPUT -m state --state NEW -i $EXTINT --destination $EXTBROAD -j ACCEPT
+
+	# Prevent spoofing attacks from reserved IPs
+#	$BIN -A INPUT -i $EXTINT --source 192.168.0.0/16 -j DROP
+#	$BIN -A INPUT -i $EXTINT --source 10.0.0.0/8 -j DROP
+#	$BIN -A INPUT -i $EXTINT --source 172.16.0.0/12 -j DROP
+
+        # $BIN -A INPUT -p tcp --dport 3128 -m state --state NEW -j ACCEPT
+
+	# always allow Rob's house to get in
+	# $BIN -A INPUT -p tcp -s naccy.org --dport 22 -m state --state NEW -j ACCEPT
+
+	$BIN -N SSHSCAN
+#        $BIN -A INPUT -p tcp --dport 22 -m state --state NEW -j ACCEPT
+        $BIN -A INPUT -p tcp --dport 22 -m state --state NEW -j SSHSCAN
+	$BIN -A SSHSCAN -m recent --set --name SSH
+	$BIN -A SSHSCAN -m recent --update --seconds 60 --hitcount 4 --name SSH -j LOG --log-prefix "SSH_brute_force "
+	$BIN -A SSHSCAN -m recent --update --seconds 60 --hitcount 4 --name SSH -j DROP
+	$BIN -A SSHSCAN -j ACCEPT
+
+	# requested by developers
+#	$BIN -A INPUT -p tcp --dport 80 -m state --state NEW -j ACCEPT
+	$BIN -A INPUT -p tcp -s 143.48.220.124 --dport 80 -m state --state NEW -j ACCEPT
+
+	$BIN -A INPUT -p tcp --dport 3306 -m state --state NEW -j ACCEPT
+	$BIN -A INPUT -p tcp --dport 2005 -m state --state NEW -j ACCEPT
+	$BIN -A INPUT -p tcp --dport 2007 -m state --state NEW -j ACCEPT
+
+	# Display 'whaddamidoing?' prompt
+	echo "done."
+	;;
+stop)
+	# Display 'whaddamidoing?' prompt
+	echo -n "Disabling IP Tables..."
+		
+	$BIN -F
+	$BIN -P INPUT ACCEPT
+	$BIN -F -t nat
+
+	# Display 'whaddamidoing?' prompt
+	echo "done."
+	;;
+esac
+

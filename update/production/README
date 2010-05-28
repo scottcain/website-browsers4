@@ -1,3 +1,16 @@
+Production Server Update Scripts
+Todd Harris, 28 May 2010
+
+Support Databases
+------------------
+cron-rsync_support_dbs.sh
+Intended to be run as a cron job, eg:
+0 1 * * * /home/tharris/projects/wormbase/wormbase-admin/update/production/cron-rsync_support_dbs.sh
+
+
+
+--
+
 The files in this directory automate updates to the production cluster.
 
 Todd Harris, 27 Aug 2007

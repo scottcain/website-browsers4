@@ -6,7 +6,8 @@
 # is intended to be run as a cron job.
 
 # Pull in my configuration variables shared across scripts
-source update.conf
+
+source /home/tharris/projects/wormbase/wormbase-admin/update/production/update.conf
 
 export RSYNC_RSH=ssh
 #VERSION=$1
