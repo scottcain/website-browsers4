@@ -13,19 +13,15 @@ open ERR,">>/usr/local/squid/var/logs/redirector.debug" if DEBUG || DEBUG_FULL;
 #$servers{biomart}  = 'biomart.wormbase.org';
 
 my %servers = (
-	       # 2010.05.12
-	       # Aceserver is now retired.
-	       # The datamining server has no DNS entry yet.
-	       # Will become mining.wormbase.org
-	       # aceserver   => 'aceserver.cshl.org:8080',
-	       # Blast retired 2010.05.17
-	       # blast     => 'blast.wormbase.org:8080',
-	       # aka wb-mining.oicr.on.ca 
+	       # Data mining services: blast, blat, queries.
+	       # aka wb-mining.oicr.on.ca, and officially mining.wormbase.org
+	       # replaces blast.wormbase.org and aceserver.cshl.edu
 	       "oicr-mining"  => '206.108.125.178',
 
 	       # Migrating to 
-	       # 206.108.125.189:8080 (and/or update DNS entry)
-	       biomart   => 'biomart.wormbase.org',
+	       # 206.108.125.189 (and/or update DNS entry)
+#	       biomart   => 'biomart.wormbase.org',
+	       biomart   => '206.108.125.189',
 
 	       nbrowse   => 'gene.wormbase.org:9002',
 	       nbrowsejsp => 'gene.wormbase.org:9022',
@@ -37,8 +33,6 @@ my %servers = (
 	       # Retiring gene, brie3, and brie6
 	       # gene      => 'gene.wormbase.org:8080',
 	       brie3     => 'brie3.cshl.org:8080',       
-	       # unc: aka brie6 - this basically just serves static content
-	       # unc       => 'unc.wormbase.org:8080',
 	       'oicr-web1' => '206.108.125.175',
 
 	       # 2010.05.16
@@ -94,7 +88,8 @@ while (<>) {
     my ($params) = $uri =~ m{^http://.*\.org/(\S*)};
     
     # Set up the default destiation
-    my $destination = $servers{brie3};
+#    my $destination = $servers{brie3};
+    my $destination = $servers{"oicr-web1"};
     
     ##########################################################
     #  OICR
@@ -120,10 +115,7 @@ while (<>) {
     #  OICR
     #  The computationally intensive gene page
     #  Check for it first since this is the most prominent request
-    if ($uri =~ m{gene/gene}
-	|| $uri =~ m{/db/gene/operon}
-	|| $uri =~ m{searches/basic}
-	) {
+    if ($uri =~ m{gene/gene}) {
 	
 	$destination = $servers{be1};
 #	$destination = $servers{"oicr-web2"};
@@ -164,11 +156,11 @@ while (<>) {
     if ($uri =~ m{dynamic_images/(.*?)/} && $1 < 10) {
 	my $server = $1;
 	# Convert hostname keywords to server hash key names. Dumb.
-	$destination = 'oicr-web1'   if $server eq 'wb-web1';
-	$destination = 'oicr-web2'   if $server eq 'wb-web2';
-	$destination = 'oicr-mining' if $server eq 'wb-mining';
+	$server = 'oicr-web1'   if $server eq 'wb-web1';
+	$server = 'oicr-web2'   if $server eq 'wb-web2';
+	$server = 'oicr-mining' if $server eq 'wb-mining';
 
-#	$destination = $servers{$server};
+	$destination = $servers{$server};
 	# Finally, handle some 
 	if ($uri =~ /pie_chart/
 	    ||
@@ -284,8 +276,8 @@ while (<>) {
 	   || $uri =~ m{/db/gene/motif}
 	   || $uri =~ m{/db/gene/regulation}
 	   || $uri =~ m{/db/gene/strain}
-	   || $uri =~ m{/db/seq/protein}
-	   
+	   || $uri =~ m{/db/gene/operon}
+	   || $uri =~ m{/db/seq/protein}	   
 #	   || $uri =~ m{db/misc/}
 	   ) {
 
@@ -296,28 +288,6 @@ while (<>) {
     }
     
      
-    # 2010.05.16
-    # Freeze2 now retired
-    ##########################################################
-    #
-    #  Manually distribute some CGIs (Tier V)
-    #  Everything that remains in /db/misc
-#    if ( $uri =~ m{db/misc}
-#	 ||
-#	 $uri =~ m{db/gene/expression}
-#	 ) {
-#	
-#	$destination = $servers{freeze2};
-#	
-#	# Logic hack. 2010.04.13.
-#        # $destination = $servers{gene} if $uri =~ /inline_feed/;
-#	
-#	print ERR "Routing CGIs Tier V ($uri) to $destination\n" if DEBUG;
-#	$uri = "http://$destination/$params";	    
-#	next;	
-#    }
-       
-
     # 2010.05.12: Aceserver nearly retired.
     ##########################################################
     #  OICR
@@ -327,13 +297,14 @@ while (<>) {
     if (   $uri    =~ m{wb_query} 
 	   || $uri =~ m{aql_query}
 	   || $uri =~ m{class_query} 
-	   || $uri =~ m{searches/batch_genes}
+	   || $uri =~ m{batch_genes}
 	   || $uri =~ m{searches/advanced/dumper}
-	   || ($uri =~ m{cisortho})
 	   || $uri =~ m{searches/epcr}
 	   || $uri =~ m{searches/strains}
+	   || $uri =~ m{cisortho}
 	   || $uri =~ m{blast_blat}
 	   || $uri =~ m{searches/blat}
+	   || $uri =~ m{searches/basic}
 	   ) {
 	$destination = $servers{"oicr-mining"};
 	
@@ -477,20 +448,16 @@ while (<>) {
     if (0) {
 	if (1) {
 	    
-	    # This needs to be migrated
-	    # Standard URLs - NOT HANDLED
+	# This needs to be migrated
+        # Standard URLs - NOT HANDLED
 	} elsif ($uri =~ /genome/) {
-	    $destination = $servers{unc};
+
 	    
 	    
 	    # This is probably unnecessary
 	    # The autocomplete database
 	    # This should be available on all backend machines
-	} elsif ($uri =~ /autocomplete/) {
-	    $destination = $servers{be1};
-	    
-	    ####### MISC
-	    
+
 	    # THis should probably be migrated
 	} elsif ($uri =~ /nbrowse/i) {
 	    $destination = 
