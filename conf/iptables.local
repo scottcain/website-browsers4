@@ -15,7 +15,13 @@ EXTBROAD=`/sbin/ifconfig $EXTINT | grep 'inet addr' | awk -F: '{print $3}' | awk
 #LOCALNET=206.108.125.175/27
 
 # web2
-LOCALNET=206.108.125.177/27
+#LOCALNET=206.108.125.177/27
+
+# gb1
+LOCALNET=206.108.125.173/27
+
+# gb2
+#LOCALNET=206.108.125.174/27
 
 INTNET=10.0.0.0/8
 
