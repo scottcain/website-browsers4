@@ -12,7 +12,13 @@ PURGE_SCRIPT=${BINDIR}/purge_squid_logs.pl
 
 JDRESOLVE=${BINDIR}/jdresolve
 TARGET=/usr/local/wormbase/html/stats
-STATS_HOST=brie6.cshl.org
+#STATS_HOST=brie6.cshl.org
+#USER=todd
+STATS_HOST=wb-dev.oicr.on.ca
+STATS_USER=tharris
+
+# Who should we execute non-privileged commands as on the server
+# where the logs reside?
 USER=todd
 YEAR=`date +%Y`
 DATE=`date +%Y.%m`
@@ -112,23 +118,23 @@ if [ $tomorrowMonth != $todayMonth ]; then
     chown ${USER} access_log.${YEAR}.gz
   fi
 
-  #####################################
-  # Rsync the stats directory to brie6
-  #####################################
+  ################################################
+  # Rsync the stats directory to the stats host
+  ################################################
 
   if [ ! ${DEBUG} ]; then
 #    sudo -u ${USER} rsync -avz ${LOGDIR}/with_hosts/ ${USER}@${STATS_HOST}:/usr/local/acedb/wormbase_log_archive/with_hosts
-    sudo -u ${USER} rsync -avz --exclude=*before_concatenation* --exclude=*.bak ${LOGDIR}/with_hosts/ ${USER}@${STATS_HOST}:/home/todd/projects/wormbase/log_archive/with_hosts
+    sudo -u ${USER} rsync -avz --exclude=*before_concatenation* --exclude=*.bak ${LOGDIR}/ ${USER}@${STATS_HOST}:projects/wormbase/log_archive/
 #    sudo -u ${USER} rsync -avz ${LOGDIR}/raw/ ${USER}@${STATS_HOST}:/home/todd/projects/wormbase/log_archive/raw
 
   # Rsync to dreamhost for safe-keeping
   sudo -u todd rsync -avz --exclude=*before* --exclude=*.bak ${LOGDIR}/ tharris@kings.dreamhost.com:projects/wormbase/log_archive/
 
-  # Rsync to wb-dev for safe-keeping
-  sudo -u todd rsync -avz --exclude=*before* --exclude=*.bak ${LOGDIR}/ tharris@web-dev.oicr.on.ca:projects/wormbase/log_archive/
+#  # Rsync to wb-dev for safe-keeping
+#  sudo -u tharris rsync -avz --exclude=*before* --exclude=*.bak ${LOGDIR}/ tharris@web-dev.oicr.on.ca:projects/wormbase/log_archive/
 
     # Fire off the analyze_logs_by_month.sh script on a suitable macine
-    sudo -u ${USER} ssh -t ${STATS_HOST} /home/todd/projects/wormbase/admin/log_analysis/analysis_by_month/analyze_logs.sh ${DATE}
+    sudo -u ${USER} ssh -t ${STATS_HOST} /home/${STATS_USER}/projects/wormbase/wormbase-admin/log_analysis/analysis_by_month/analyze_logs.sh ${DATE}
 
   # Send myself an announcement
   sudo -u todd echo "WormBase Log Analysis for ${DATE} complete. See: http://www.wormbase.org/stats/${DATE}/" | mail -s "WormBase Log Analysis: ${DATE}" toddwharris@gmail.com

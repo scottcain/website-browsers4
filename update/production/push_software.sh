@@ -9,7 +9,7 @@ export RSYNC_RSH=ssh
 DO_RESTART=$1
 
 # Pull in my configuration variables shared across scripts
-source update.conf
+source /home/tharris/projects/wormbase/wormbase-admin/update/production/update.conf
 
 
 function alert() {

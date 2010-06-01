@@ -31,9 +31,11 @@
                - names a character encoding to use for URLs and
                  file paths.  (Example: "UTF-8")
 -->
+<!-- Dump our site map to the staging directory
+      where we can sync it with the production nodes -->
 <site
   base_url="http://www.wormbase.org/"
-  store_into="/usr/local/wormbase/website-classic/html/sitemap.xml.gz"
+  store_into="/usr/local/wormbase/website-classic-staging/html/sitemap.xml.gz"
   verbose="1"
   >
 
@@ -57,7 +59,7 @@
       encoding   - encoding of the file if not US-ASCII
   -->
 
-  <urllist  path="/usr/local/wormbase/admin/util/google_sitemap/current_urls.txt" />
+  <urllist  path="/home/tharris/projects/wormbase/wormbase-admin/util/google_sitemap/current_urls.txt" />
 
 
   <!-- ** MODIFY or DELETE **

@@ -11,9 +11,9 @@
 
 # LATEST_RELEASE should by YYYY.MM
 LATEST_RELEASE=$1
-BINDIR=/home/todd/projects/wormbase/admin/log_analysis
+BINDIR=/home/tharris/projects/wormbase/wormbase-admin/log_analysis
 #LOGDIR=/usr/local/acedb/wormbase_log_archive
-LOGDIR=/home/todd/projects/wormbase/log_archive
+LOGDIR=/home/tharris/projects/wormbase/log_archive
 SITE=www.wormbase.org
 HTMLSTATS=/usr/local/wormbase/website-classic/html/stats
 ANALOG=${BINDIR}/analog
