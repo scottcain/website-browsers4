@@ -18,6 +18,16 @@ my %servers = (
 	       # replaces blast.wormbase.org and aceserver.cshl.edu
 	       "oicr-mining"  => '206.108.125.178',
 
+	       # Web nodes
+	       'oicr-web1' => '206.108.125.175',
+#	       'oicr-web1' => '206.108.125.177',
+	       be1       => 'be1.wormbase.org:8080',
+	       'oicr-web2' => '206.108.125.177',
+	       
+	       # Gbrowse nodes
+	       "oicr-gbrowse1" => '206.108.125.173:8080',
+	       "oicr-gbrowse2" => '206.108.125.173',
+
 	       # Migrating to 
 	       # 206.108.125.189 (and/or update DNS entry)
 #	       biomart   => 'biomart.wormbase.org',
@@ -29,29 +39,7 @@ my %servers = (
 	       # Where we are serving static content from (not currently in use)
 	       #static    => '',
 
-	       # 2010.05.18
-	       # Retiring gene, brie3, and brie6
-	       # gene      => 'gene.wormbase.org:8080',
-	       brie3     => 'brie3.cshl.org:8080',       
-	       'oicr-web1' => '206.108.125.175',
-#	       'oicr-web1' => '206.108.125.177',
-
-	       # 2010.05.16
-               # Retiring freeze1, freeze2
-	       # freeze1   => 'freeze1.wormbase.org:8080',
-	       # freeze2   => 'freeze2.wormbase.org:8080',
-	       be1       => 'be1.wormbase.org:8080',
-	       # Now handled by oicr-web2 (aka wb-acedb2.oicr.on.ca)
-	       'oicr-web2' => '206.108.125.177',
-
-
 	       synteny   => 'mckay.cshl.edu',
-
-	       # GBrowse running at OICR. Can run on
-	       # non-standard ports since these services
-	       # will not be accessed directly.
-	       "oicr-gbrowse2" => '206.108.125.173',
-	       "oicr-gbrowse1" => '206.108.125.173:8080',
 
 	       # 2010.05.05
 	       # Blog, wiki, forums are all at OICR.
@@ -67,6 +55,10 @@ my %servers = (
 	       "oicr-community-wiki"   => '206.108.125.176:8080',
 	       );
 
+
+# Random pools
+my @all_nodes = ($servers{"oicr-mining"},$servers{"oicr-web1"},$servers{"oicr-web2"});
+my @web_nodes = ($servers{"oicr-web1"},$servers{"oicr-web2"});
 
 my $server_name = `hostname`;
 chomp $server_name;
@@ -88,9 +80,11 @@ while (<>) {
     # Parse out params from the URI
     my ($params) = $uri =~ m{^http://.*\.org/(\S*)};
     
-    # Set up the default destiation
-#    my $destination = $servers{brie3};
-    my $destination = $servers{"oicr-web1"};
+    # Set a default destination to one of the web nodes
+    # Will actually do this at the end to save some cycles.
+    my $destination;
+    # my $destination = $servers{"oicr-web1"};
+    
     
     ##########################################################
     #  OICR
@@ -116,6 +110,7 @@ while (<>) {
     #  OICR
     #  The computationally intensive gene page
     #  Check for it first since this is the most prominent request
+    #  STILL being served from CSHL
     if ($uri =~ m{gene/gene}) {
 	
 	$destination = $servers{be1};
@@ -147,8 +142,8 @@ while (<>) {
     #     
     #  I think this is now limited to:
     #      protein page: oicr-web2
-    #      interaction page pie chart:    brie3
-    #      gene/gmap : brie3
+    #      interaction page pie chart: oicr
+    #      gene/gmap : oicr
 
     #  Server keywords are embedded in the URL and less than 
     #  10 letters in length forum images are handled elsewhere.
@@ -156,18 +151,13 @@ while (<>) {
     #  handled elsewhere.
     if ($uri =~ m{dynamic_images/(.*?)/} && $1 < 10) {
 	my $server = $1;
+
 	# Convert hostname keywords to server hash key names. Dumb.
 	$server = 'oicr-web1'   if $server eq 'wb-web1';
 	$server = 'oicr-web2'   if $server eq 'wb-web2';
 	$server = 'oicr-mining' if $server eq 'wb-mining';
 
 	$destination = $servers{$server};
-	# Finally, handle some 
-	if ($uri =~ /pie_chart/
-	    ||
-	    $uri =~ m{dynamic_images/brie3}) {
-	    $destination = $servers{brie3};
-	}
 	
 	print ERR "Routing dynamic images ($uri) to $destination\n" if DEBUG;
 	$uri = "http://$destination/$params";
@@ -202,16 +192,13 @@ while (<>) {
     ##########################################################
     #  CSHL
     #  The EST aligner
-
-    # GBrowse 1.x relocation: Still need to send the aligner to brie3
-    # Make sure the aligner still goes to brie3
-    if ($uri =~ m{aligner}) {
-	$destination = $servers{brie3};
-	
-	print ERR "Routing Genome Browser ($uri) to $destination\n" if DEBUG;
-	$uri = "http://$destination/$params";
-	next;
-    }
+#    if ($uri =~ m{aligner}) {
+#	$destination = get_random_node();
+#
+#	print ERR "Routing Genome Browser ($uri) to $destination\n" if DEBUG;
+#	$uri = "http://$destination/$params";
+#	next;
+#    }
     
     
     ##########################################################
@@ -226,27 +213,11 @@ while (<>) {
 	  ) {
 	
 	$destination = $servers{"oicr-gbrowse1"};
-	
+
 	print ERR "Routing Genome Browser ($uri) to $destination\n" if DEBUG;
 	$uri = "http://$destination/$params";
 	next;
     }
-    
-
-    # No longer necessary.
-#    ##########################################################
-#    #  CSHL
-#    #  The Home Page
-#    if ( $params eq ''
-#	 || $uri eq 'http://www.wormbase.org/'
-#	 || $uri eq 'http://wormbase.org/'
-#	 ) {
-#	$d#estination = $servers{brie3};
-#	
-#	print ERR "Routing MT ($uri) to $destination\n" if DEBUG;
-#	$uri = "http://$destination/$params";
-#	next;
-#    }
     
         
     ##########################################################
@@ -260,8 +231,8 @@ while (<>) {
 	  || $uri =~ m{gene/expression}
 	  ) {
 	
-	$destination = $servers{"oicr-web1"};
-#	$destination = $servers{gene};
+#	$destination = $servers{"oicr-web1"};
+	$destination = get_random_web_node();
 	print ERR "Routing CGIs Tier II ($uri) to $destination\n" if DEBUG;
 	$uri = "http://$destination/$params";	    
 	next;	
@@ -283,7 +254,8 @@ while (<>) {
 #	   || $uri =~ m{db/misc/}
 	   ) {
 
-	$destination = $servers{"oicr-web2"};
+#	$destination = $servers{"oicr-web2"};
+	$destination = get_random_web_node();
 	print ERR "Routing CGIs Tier III ($uri) to $destination\n" if DEBUG;
 	$uri = "http://$destination/$params";	    
 	next;	
@@ -330,12 +302,12 @@ while (<>) {
     #  The Blog
     if ($params =~ m{blog}) {
 	$destination = $servers{"oicr-community-blog"};
-
+       
 	# Whoops!  This might be a request for the inline_feed script
 	# which contains the blog rss feed URI as a parameter. Except
 	# that the inline_feed script doesn't run from there.
 	if ($uri =~ /inline_feed/) {
-	    $destination = $servers{brie3};
+	    $destination = get_random_node();
 	    $uri = "http://$destination/$params";	    
 	    next;
 	}
@@ -361,7 +333,7 @@ while (<>) {
 #	# Whoops!  This might be a request for the inline_feed script
 #	# which contains the blog rss feed as a parameter. Doh!
 	if ($uri =~ /inline_feed/) {
-	    $destination = $servers{brie3};
+	    $destination = get_random_node();
 	    $uri = "http://$destination/$params";	    
 	    next;
 	}
@@ -426,25 +398,16 @@ while (<>) {
 
 
     ##########################################################
-    #  OICR: Static content.
-    #  For now, just randomize between web1/web2/mining
-    #  Various static content; must come BELOW forum/wiki
-    #  Serve basically anything outside of /db from a single box.
-    #  This is mostly static content (gbrowse static handled above)
+    #  OICR: Static content (or anything outside of /db)
+    #  Can be served from any node. 
     if (  $params !~ m{^db}) {
-	
-	my @array = ($servers{"oicr-web1"},$servers{"oicr-web2"},$servers{"oicr-mining"});
-	my $range = scalar @array;
-	my $index = int(rand($range));
-	
-	$destination = $array[$index];
-	
+	$destination = get_random_node();
+		
 	print ERR "Routing static content ($uri) to $destination\n" if DEBUG;
 	$uri = "http://$destination/$params";
 	next;
-    }
+    }        
 
-        
 
     # This configuration hasn;'t been handled yet
     if (0) {
@@ -471,7 +434,8 @@ while (<>) {
 	    
 	} else {}	
     }
-    
+
+    my $destination = get_random_web_node();
     print ERR "Routing fall-through: $uri to default server $destination\n" if DEBUG;    
     $uri = "http://$destination/$params";
     
@@ -479,3 +443,24 @@ while (<>) {
     print "$uri\n";
 }
 
+
+
+
+
+
+sub get_random_node {
+    my $range = scalar @all_nodes;
+    my $index = int(rand($range));
+    
+    my $destination = $all_nodes[$index];
+    return $destination;
+}
+
+# Get a server but EXCLUDE the data mining server
+sub get_random_web_node {
+    my $range = scalar @web_nodes;
+    my $index = int(rand($range));
+    
+    my $destination = $web_nodes[$index];
+    return $destination;
+}
