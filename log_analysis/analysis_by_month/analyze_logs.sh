@@ -15,10 +15,10 @@ BINDIR=/home/tharris/projects/wormbase/wormbase-admin/log_analysis
 #LOGDIR=/usr/local/acedb/wormbase_log_archive
 LOGDIR=/home/tharris/projects/wormbase/log_archive
 SITE=www.wormbase.org
-HTMLSTATS=/usr/local/wormbase/website-classic/html/stats
+HTMLSTATS=/usr/local/wormbase/website-shared-files/html/stats
 ANALOG=${BINDIR}/analog
 RMAGIC=${BINDIR}/rmagic
-TARGET=/usr/local/wormbase/website-classic/html/stats
+#TARGET=/usr/local/wormbase/website-classic/html/stats
 
 if [ ! ${LATEST_RELEASE} ]; then
   echo "Usage: analyze_logs.sh YYYY.MM"
@@ -263,3 +263,9 @@ ${RMAGIC}/rmagic.pl ${BINDIR}/rmagic.conf \
 #    -statistics_File_In=/usr/local/wormbase/html/stats/2004/access_log-parsed.2004 \
 #    -reports_File_Out=/usr/local/wormbase/html/stats/2004/ \
 #    -website_Base_URL="http://www.wormbase.org" -website_Title="WormBase Access Statistics: 2004" 
+
+
+
+# Sync to the appropriate staging directories
+rsync -Cav /usr/local/wormbase/website-shared-files/html/stats \
+           /usr/local/wormbase/website-classic-staging/html/
