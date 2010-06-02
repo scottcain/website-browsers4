@@ -34,6 +34,7 @@ my %servers = (
 	       # gene      => 'gene.wormbase.org:8080',
 	       brie3     => 'brie3.cshl.org:8080',       
 	       'oicr-web1' => '206.108.125.175',
+#	       'oicr-web1' => '206.108.125.177',
 
 	       # 2010.05.16
                # Retiring freeze1, freeze2
@@ -100,7 +101,7 @@ while (<>) {
 	 ||
 	 $uri =~ m{gb2-support}
 	 ||
-	 $uri =~ m{gbrowse_img}
+	 ($uri =~ m{gbrowse_img} && $uri !~ m{db/seq})
 	 ) {
 #	$params =~ s|db/gb2|db/seq|g;
 	
@@ -251,8 +252,8 @@ while (<>) {
     ##########################################################
     #  OICR
     #  Manually redistribute some CGIs (Tier II)
-    if (  $uri =~ m{seq/sequence}
-	  || $uri =~ m{gene/variation}
+    if (  
+	  $uri =~ m{gene/variation}
 	  || $uri =~ m{ontology}
 	  || $uri =~ m{db/misc/session}  # session management
 	  || $uri =~ m{api/citeulike}
@@ -277,7 +278,8 @@ while (<>) {
 	   || $uri =~ m{/db/gene/regulation}
 	   || $uri =~ m{/db/gene/strain}
 	   || $uri =~ m{/db/gene/operon}
-	   || $uri =~ m{/db/seq/protein}	   
+	   || $uri =~ m{/db/seq/protein}
+	   || $uri =~ m{seq/sequence}
 #	   || $uri =~ m{db/misc/}
 	   ) {
 
