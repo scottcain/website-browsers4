@@ -18,10 +18,20 @@ my %servers = (
 	       # replaces blast.wormbase.org and aceserver.cshl.edu
 	       "oicr-mining"  => '206.108.125.178',
 
+	       # Web nodes
+	       'oicr-web1' => '206.108.125.175',
+#	       'oicr-web1' => '206.108.125.177',
+	       be1       => 'be1.wormbase.org:8080',
+	       'oicr-web2' => '206.108.125.177',
+	       
+	       # Gbrowse nodes
+	       "oicr-gbrowse1" => '206.108.125.173:8080',
+	       "oicr-gbrowse2" => '206.108.125.173',
+
 	       # Migrating to 
 	       # 206.108.125.189 (and/or update DNS entry)
-#	       biomart   => 'biomart.wormbase.org',
-	       biomart   => '206.108.125.189',
+	       biomart   => 'biomart.wormbase.org',
+#	       biomart   => '206.108.125.189',
 
 	       nbrowse   => 'gene.wormbase.org:9002',
 	       nbrowsejsp => 'gene.wormbase.org:9022',
@@ -29,29 +39,7 @@ my %servers = (
 	       # Where we are serving static content from (not currently in use)
 	       #static    => '',
 
-	       # 2010.05.18
-	       # Retiring gene, brie3, and brie6
-	       # gene      => 'gene.wormbase.org:8080',
-	       # brie3     => 'brie3.cshl.org:8080',       
-	       'oicr-web1' => '206.108.125.175',
-#	       'oicr-web1' => '206.108.125.177',
-
-	       # 2010.05.16
-               # Retiring freeze1, freeze2
-	       # freeze1   => 'freeze1.wormbase.org:8080',
-	       # freeze2   => 'freeze2.wormbase.org:8080',
-	       be1       => 'be1.wormbase.org:8080',
-	       # Now handled by oicr-web2 (aka wb-acedb2.oicr.on.ca)
-	       'oicr-web2' => '206.108.125.177',
-
-
 	       synteny   => 'mckay.cshl.edu',
-
-	       # GBrowse running at OICR. Can run on
-	       # non-standard ports since these services
-	       # will not be accessed directly.
-	       "oicr-gbrowse2" => '206.108.125.173',
-	       "oicr-gbrowse1" => '206.108.125.173:8080',
 
 	       # 2010.05.05
 	       # Blog, wiki, forums are all at OICR.
@@ -68,9 +56,9 @@ my %servers = (
 	       );
 
 
+# Random pools
 my @all_nodes = ($servers{"oicr-mining"},$servers{"oicr-web1"},$servers{"oicr-web2"});
 my @web_nodes = ($servers{"oicr-web1"},$servers{"oicr-web2"});
-
 
 my $server_name = `hostname`;
 chomp $server_name;
@@ -92,9 +80,11 @@ while (<>) {
     # Parse out params from the URI
     my ($params) = $uri =~ m{^http://.*\.org/(\S*)};
     
-    # Set up the default destination
-#    my $destination = $servers{"oicr-web1"};
+    # Set a default destination to one of the web nodes
+    # Will actually do this at the end to save some cycles.
     my $destination;
+    # my $destination = $servers{"oicr-web1"};
+    
     
     ##########################################################
     #  OICR
@@ -120,6 +110,7 @@ while (<>) {
     #  OICR
     #  The computationally intensive gene page
     #  Check for it first since this is the most prominent request
+    #  STILL being served from CSHL
     if ($uri =~ m{gene/gene}) {
 	
 	$destination = $servers{be1};
@@ -160,6 +151,7 @@ while (<>) {
     #  handled elsewhere.
     if ($uri =~ m{dynamic_images/(.*?)/} && $1 < 10) {
 	my $server = $1;
+
 	# Convert hostname keywords to server hash key names. Dumb.
 	$server = 'oicr-web1'   if $server eq 'wb-web1';
 	$server = 'oicr-web2'   if $server eq 'wb-web2';
@@ -172,31 +164,6 @@ while (<>) {
 	next;
     }
     
-    # RELOCATED GBrowse 1.x to OICR on 2010.05.08.
-    # I *believe* this is now deprecated.
-    # All paths instead are self-contained in /gbrowse and set up in the gbrowse config
-    
-#    ##########################################################
-#    #
-#    #  The Genome Browser and components,
-#    #  another often used page
-#    #  For running GBrowse1.x at CSHL....
-#    if (  $uri =~ m{seq/gbrowse} 
-#	  || $uri =~ m{gbgff}
-##	  || $uri =~ m{tmp/gbrowse}    # temporary images; should possibly be included in dynamic images above
-#	  || $uri =~ m{gbrowse/tmp}    # temporary images (old structure)
-#	  || $uri =~ m{gbrowse_img}   
-#	  || $params =~ m{^gbrowse}     # Gbrowse js must be served from same node?
-#	  || $uri =~ m{aligner}  
-#	  ) {
-#	
-#	$destination = $servers{brie3};
-#	
-#	print ERR "Routing Genome Browser ($uri) to $destination\n" if DEBUG;
-#	$uri = "http://$destination/$params";
-#	next;
-#    }
-
     ##########################################################
     #  CSHL
     #  The EST aligner
@@ -443,7 +410,7 @@ while (<>) {
 	} else {}	
     }
 
-    $destination = get_random_web_node();
+    my $destination = get_random_web_node();
     print ERR "Routing fall-through: $uri to default server $destination\n" if DEBUG;    
     $uri = "http://$destination/$params";
     

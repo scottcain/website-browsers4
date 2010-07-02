@@ -164,31 +164,6 @@ while (<>) {
 	next;
     }
     
-    # RELOCATED GBrowse 1.x to OICR on 2010.05.08.
-    # I *believe* this is now deprecated.
-    # All paths instead are self-contained in /gbrowse and set up in the gbrowse config
-    
-#    ##########################################################
-#    #
-#    #  The Genome Browser and components,
-#    #  another often used page
-#    #  For running GBrowse1.x at CSHL....
-#    if (  $uri =~ m{seq/gbrowse} 
-#	  || $uri =~ m{gbgff}
-##	  || $uri =~ m{tmp/gbrowse}    # temporary images; should possibly be included in dynamic images above
-#	  || $uri =~ m{gbrowse/tmp}    # temporary images (old structure)
-#	  || $uri =~ m{gbrowse_img}   
-#	  || $params =~ m{^gbrowse}     # Gbrowse js must be served from same node?
-#	  || $uri =~ m{aligner}  
-#	  ) {
-#	
-#	$destination = $servers{brie3};
-#	
-#	print ERR "Routing Genome Browser ($uri) to $destination\n" if DEBUG;
-#	$uri = "http://$destination/$params";
-#	next;
-#    }
-
     ##########################################################
     #  CSHL
     #  The EST aligner

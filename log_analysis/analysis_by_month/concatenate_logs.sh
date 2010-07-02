@@ -124,7 +124,7 @@ if [ $tomorrowMonth != $todayMonth ]; then
 
   if [ ! ${DEBUG} ]; then
 #    sudo -u ${USER} rsync -avz ${LOGDIR}/with_hosts/ ${USER}@${STATS_HOST}:/usr/local/acedb/wormbase_log_archive/with_hosts
-    sudo -u ${USER} rsync -avz --exclude=*before_concatenation* --exclude=*.bak ${LOGDIR}/ ${USER}@${STATS_HOST}:projects/wormbase/log_archive/
+    sudo -u ${USER} rsync -avz --exclude=*before_concatenation* --exclude=*.bak ${LOGDIR}/ ${STATS_USER}@${STATS_HOST}:projects/wormbase/log_archive/
 #    sudo -u ${USER} rsync -avz ${LOGDIR}/raw/ ${USER}@${STATS_HOST}:/home/todd/projects/wormbase/log_archive/raw
 
   # Rsync to dreamhost for safe-keeping
