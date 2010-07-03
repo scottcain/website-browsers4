@@ -53,20 +53,22 @@ function adjust_acedb_symlink() {
 
 function adjust_mysql_symlinks() {
     NODE=$1
+    alert " Adjusting mysql symlinks on ${NODE}:"
 
     for SPECIES in ${MYSQL_DATABASES} 
     do    
     # Has this species been updated during this release?
-	this_link=`readlink ${SPECIES}`
-	this_version=`expr match "${this_link}" '.*_\(WS...\)'`
-	echo "Checking if ${SPECIES} was updated during the release cycle of ${VERSION}..."
+	# This doesn't work if wb-dev has already been updated to the next release.
+#	this_link=`readlink ${SPECIES}`
+#	this_version=`expr match "${this_link}" '.*_\(WS...\)'`
+#	echo "Checking if ${SPECIES} was updated during the release cycle of ${VERSION}..."
 	
     # Was this species updated during this release?
-	if [ ${this_version} = ${VERSION} ]
-	then
+#	if [ ${this_version} = ${VERSION} ]
+#	then
 	    
 	    TARGET=${SPECIES}_${VERSION}
-	    
+	    echo "Adjusting mysql symlinks for ${SPECIES}_${VERSION} on ${NODE}..."
          # Update symlinks
 	    if ssh ${NODE} "cd ${TARGET_MYSQL_DATA_DIR}; rm ${SPECIES};  ln -s ${TARGET} ${SPECIES}"
 	    then
@@ -74,7 +76,7 @@ function adjust_mysql_symlinks() {
 	    else
 		failure "Symlinking failed"
 	    fi
-	fi
+#	fi
     done
 }
 
@@ -83,6 +85,10 @@ function adjust_mysql_symlinks() {
 for NODE in ${OICR_ACEDB_NODES}
 do
     adjust_acedb_symlink $NODE
+done
+
+for NODE in ${OICR_MYSQL_NODES}
+do
     adjust_mysql_symlinks $NODE
 done
 
@@ -91,5 +97,10 @@ done
 for NODE in ${REMOTE_ACEDB_NODES}
 do
     adjust_acedb_symlink $NODE
+done
+
+# Deal with remote nodes
+for NODE in ${REMOTE_MYSQL_NODES}
+do
     adjust_mysql_symlinks $NODE
 done

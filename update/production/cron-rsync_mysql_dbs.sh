@@ -35,6 +35,8 @@ function do_rsync() {
     
     for SPECIES in ${MYSQL_DATABASES} 
     do	
+	alert "Rsyncing ${SPECIES} onto ${NODE}..."
+
 	cd ${STAGING_MYSQL_DATA_DIR}
 	sudo chmod 2775 ${SPECIES}_WS*
 
