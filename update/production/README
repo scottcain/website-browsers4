@@ -1,11 +1,95 @@
-Production Server Update Scripts
-Todd Harris, 28 May 2010
+===========================
+WormBase production update process
 
-Support Databases
-------------------
-cron-rsync_support_dbs.sh
-Intended to be run as a cron job, eg:
-0 1 * * * /home/tharris/projects/wormbase/wormbase-admin/update/production/cron-rsync_support_dbs.sh
+T. Harris, 05/2010
+===========================
+
+
+DEPRECATED: Analyze logs:
+-----------------------------------------------------
+1. fe> concatenate_logs.sh WSXXX
+2. brie6> analyze_logs.sh WSXXX 
+
+Notes:
+	* WSXXX is the current LIVE release
+	* requires sudo privileges
+	* make sure there is sufficient disk space on fe and brie6!
+
+1. Sync support databases
+
+  cron-rsync_support_dbs.sh
+  
+  Intended to be run as a cron job, eg:
+  0 1 * * * /home/tharris/projects/wormbase/wormbase-admin/update/production/cron-rsync_support_dbs.sh
+
+2. Sync Mysql databases
+
+   # Rsync mysql and acedb data dirs to local and (select) remote nodes
+   # Start after the build deadline date
+   0 3 12-31 * * /home/tharris/projects/wormbase/wormbase-admin/update/production/cron-rsync_acedb.sh
+   0 8 12-31 * * /home/tharris/projects/wormbase/wormbase-admin/update/production/cron-rsync_mysql_dbs.sh
+
+3. Sync AceDB
+
+   # Rsync mysql and acedb data dirs to local and (select) remote nodes
+   # Start after the build deadline date
+   0 3 12-31 * * /home/tharris/projects/wormbase/wormbase-admin/update/production/cron-rsync_acedb.sh
+
+
+4. Update wormbase/website-classic/cgi-perl/lib/RSS/ObjectHistory.pm with release date
+   so feeds can be generated.
+
+5. update standard urls with release data - do manually
+
+	/usr/local/wormbase/website-classic/html/standard_urls/standard_urls.xml
+
+6. Checkout new updates in /usr/local/wormbase/website-classic-staging; reconcile conflicts
+
+  cd /usr/local/wormbase/website-classic-staging
+  cvs -n update > /usr/local/wormbase/logs/production_updates/WSXXX.log
+
+7. Tag the software
+   
+   wb-dev> cvs_tag_relase.sh WSXXX // The new version being pushed out.
+
+8. Create software release: 
+
+   wb-dev> create_software_release.sh WSXXX // The new version being pushed out.
+
+9. Push software
+
+   brie3> push_software.sh
+
+10. Update symlinks
+
+   wb-dev> go_live.sh WSXXX
+
+10. Send announcement: 
+
+   web1> send_release_notification.pl
+
+11. Update release notes on the wiki
+
+12. Update list of new papers:
+
+   brie3:wormbase/admin/update/development/build_new_paper_list.pl \
+       /usr/local/acedb/elegans_WSXXX
+
+13. Add the release announcement to the home page (via the blog)
+
+   blog.wormbase.org/wp-admin/
+
+
+
+
+0. Make sure the nodes are ready to go: 
+
+   brie3> prepare_nodes.sh
+
+3. brie3> restart_services.sh   
+
+
+
 
 
 

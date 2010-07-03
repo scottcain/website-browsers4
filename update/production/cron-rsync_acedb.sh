@@ -1,18 +1,15 @@
 #/bin/bash
 
-# Push acedb onto appropriate nodes
+# Keep /usr/local/wormbase/acedb/wormbase* in sync
+# This only needs to run once a day, starting on 
+# say, the 10th of the month.
+# Symlinks are updated when we go live.
+
+
 export RSYNC_RSH=ssh
-VERSION=$1
-
-if [ ! "$VERSION" ]
-then
-  echo "Usage: $0 WSXXX"
-  exit
-fi
-
 
 # Pull in my configuration variables shared across scripts
-source update.conf
+source /home/tharris/projects/wormbase/wormbase-admin/update/production/update.conf
 
 function alert() {
   msg=$1
@@ -33,13 +30,56 @@ function success() {
   echo "  ${msg}."
 }
 
+function do_rsync() {
+    NODE=$1
+    alert " rsyncing to ${NODE}:"
 
+    # Include only the wormbase_* directories, exclude everything else
+    if rsync --rsh=ssh -Cav --include "wormbase_*"  --exclude serverlog.wrm --exclude log.wrm --exclude readlocks --exclude "/*" ${ACEDB_ROOT}/ ${NODE}:${ACEDB_ROOT}/
+    then
+	success "Successfully rsynced acedb databases onto ${NODE}"
+
+    # Fix permissions
+	if ssh ${NODE} "cd ${ACEDB_ROOT}; pwd; chgrp -R acedb wormbase_* ; chmod 666 wormbase_*/database/block* wormbase_*/database/log.wrm wormbase_*/database/serverlog.wrm ; rm -rf wormbase_*/database/readlocks"
+	then
+	    success "Successfully fixed permissions on ${NODE}:${ACEDB_ROOT}"
+	else
+	    failure "Fixing permissions on ${NODE}:${ACEDB_ROOT} failed"
+	fi
+
+    else
+	failure "Pushing acedb onto ${NODE} failed"
+    fi
+}
+
+
+
+# Push onto the OICR_NODES.
+# Used when its not necessary to pass through a preliminary staging server
+alert "Rsyncing Acedb data directories onto local production nodes..."
+for NODE in ${OICR_ACEDB_NODES}
+do
+    do_rsync $NODE
+done
+
+
+alert "Rsyncing Acedb data directories onto remote production nodes..."
+for NODE in ${REMOTE_ACEDB_NODES}
+do
+    do_rsync $NODE
+done
+
+
+exit
+
+
+
+# Here's how to sync via a tarball
 SYNC_TO_STAGING_NODE=
 
 if [ $SYNC_TO_STAGING_NODE ]
 then
     
-
 # Package up acedb before mirroring to remote sites
     cd ${ACEDB_ROOT}
     
@@ -140,37 +180,3 @@ rm -rf ${ACEDB_ROOT}/wormbase_${VERSION}.tgz
 # And remove it from the staging node, too
 ssh ${STAGING_NODE} "rm -rf ${ACEDB_ROOT}/wormbase_${VERSION}.tgz"
 fi
-
-
-
-
-# Push onto the OICR_NODES.
-# Used when its not necessary to pass through a preliminary staging server
-for NODE in ${OICR_ACEDB_NODES}
-do
-  alert " ${NODE}:"
-  if rsync -Ca ${ACEDB_DIR} ${NODE}:${ACEDB_ROOT}
-#  if rsync -Ca --exclude serverlog.wrm --exclude log.wrm --exclude readlocks --exclude bin --exclude bin* ${ACEDB_ROOT}/ ${NODE}:${ACEDB_ROOT}/
-  then
-    success "Successfully pushed acedb onto ${NODE}"
-
-    # Set up the symlink
-    if ssh ${NODE} "cd ${ACEDB_ROOT}; rm wormbase;  ln -s ${ACEDB_DIR} wormbase"
-    then
-	  success "Successfully symlinked wormbase -> ${ACEDB_DIR}"
-    else
-	  failure "Symlinking failed"
-    fi
-
-    # Fix permissions
-    if ssh ${NODE} "cd ${ACEDB_DIR}; chgrp -R acedb * ; cd database ; chmod 666 block* log.wrm serverlog.wrm ; rm -rf readlocks"
-    then
-	  success "Successfully fixed permissions on ${ACEDB_DIR}"
-    else
-	  failure "Fixing permissions on ${ACEDB_DIR} failed"
-    fi
-
-  else
-    failure "Pushing acedb onto ${NODE} failed"
-  fi
-done

@@ -37,30 +37,40 @@ function success() {
   echo "  ${msg}."
 }
 
+function do_rsync() {
+      NODE=$1
+      alert " ${NODE}:"
+      if [ "${NODE}" == "wb-mining.oicr.on.ca" ]
+      then
+  	  if rsync -Cav --exclude *bak* --exclude web_data/ \
+	      ${SUPPORT_DB_DIRECTORY}/ ${NODE}:${SUPPORT_DB_DIRECTORY}
+ 	  then
+      		success "Successfully pushed support databases onto ${NODE}"
+  	  fi
+      else
+	  if rsync -Cav --exclude *bak* \
+              --exclude web_data/ \
+	      --exclude blast \
+	      --exclude blat \
+	      --delete ${SUPPORT_DB_DIRECTORY}/ ${NODE}:${SUPPORT_DB_DIRECTORY}
+  	  then
+      	      success "Successfully pushed support databases onto ${NODE}"
+  	  fi
+      fi
+}
 
-alert "Pushing the support databases dir on database nodes..."
+
+alert "Rsyncing support databases onto local nodes..."
 for NODE in ${OICR_SUPPORT_DB_NODES}
 do
-  alert " ${NODE}:"
-  if [ "${NODE}" == "wb-mining.oicr.on.ca" ]
-  then
-  	if rsync -Cav --exclude *bak* --exclude web_data \
-	 	${SUPPORT_DB_DIRECTORY}/ ${NODE}:${SUPPORT_DB_DIRECTORY}
- 	then
-      		success "Successfully pushed support databases onto ${NODE}"
-  	fi
-   else
-	if rsync -Cav --exclude *bak* \
-                --exclude web_data \
-	        --exclude blast \
-		--exclude blat \
-		--delete ${SUPPORT_DB_DIRECTORY}/ ${NODE}:${SUPPORT_DB_DIRECTORY}
-  	then
-      		success "Successfully pushed support databases onto ${NODE}"
-  	fi
-   fi
-
+     do_rsync $NODE;
 done
 
-exit;
+alert "Rsyncing support databases onto remote nodes..."
+for NODE in ${REMOTE_SUPPORT_DB_NODES}
+do
+     do_rsync $NODE;
+done
+
+
 
