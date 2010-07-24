@@ -68,13 +68,13 @@ my ($uri,$client,$ident,$method);
 while (<>) {
     ($uri,$client,$ident,$method) = split();
     
-    my $request = $_;
-    
-    if (DEBUG_FULL) {
-	print ERR "REQUEST: $request\n";
-	print ERR "URI    : $uri\n";
-	print ERR "CLIENT : $client\n";
-    }
+#    my $request = $_;
+#    
+#    if (DEBUG_FULL) {
+#	print ERR "REQUEST: $request\n";
+#	print ERR "URI    : $uri\n";
+#	print ERR "CLIENT : $client\n";
+#    }
     
     # next unless ($uri =~ m|^http://roundrobin.wormbase.org/(\S*)|);
     
@@ -87,23 +87,25 @@ while (<>) {
     # my $destination = $servers{"oicr-web1"};
     
     
+
     ##########################################################
     #  OICR
     #  GBrowse2
-    if ( $uri =~ m{gb2} 
-	 ||
-	 $uri =~ m{gbrowse2}
-	 ||
-	 $uri =~ m{gb2-support}
-	 ||
-	 ($uri =~ m{gbrowse_img} && $uri !~ m{db/seq})
-	 ) {
-#	$params =~ s|db/gb2|db/seq|g;
-	
-	$destination = $servers{"oicr-gbrowse2"};
-	$uri = "http://$destination/$params";
-	next;
-    }
+#  SQUID: DONE
+#    if ( $uri =~ m{gb2} 
+#	 ||
+#	 $uri =~ m{gbrowse2}
+#	 ||
+#	 $uri =~ m{gb2-support}
+#	 ||
+#	 ($uri =~ m{gbrowse_img} && $uri !~ m{db/seq})
+#	 ) {
+##	$params =~ s|db/gb2|db/seq|g;
+#	
+#	$destination = $servers{"oicr-gbrowse2"};
+#	$uri = "http://$destination/$params";
+#	next;
+#    }
     
     
     
@@ -112,6 +114,7 @@ while (<>) {
     #  The computationally intensive gene page
     #  Check for it first since this is the most prominent request
     #  STILL being served from CSHL
+# DOESN"T WORK - BE1 IS FIREWALLED FROM OICR
     if ($uri =~ m{gene/gene}) {
 	
 	$destination = $servers{be1};
@@ -136,45 +139,47 @@ while (<>) {
     
 
     ##########################################################
-    #  CSHL & OICR
-    #  Dynamic images. These contain a keyword in the URL
-    #  so I can redirect to the appropriate back-end
-    #  server that generated the image.
-    #     
-    #  I think this is now limited to:
-    #      protein page: oicr-web2
-    #      interaction page pie chart: oicr
-    #      gene/gmap : oicr
-
-    #  Server keywords are embedded in the URL and less than 
-    #  10 letters in length forum images are handled elsewhere.
-    #  GBrowse images are contained under a blanket URL and
-    #  handled elsewhere.
-    if ($uri =~ m{dynamic_images/(.*?)/} && $1 < 10) {
-	my $server = $1;
-
-	# Convert hostname keywords to server hash key names. Dumb.
-	$server = 'oicr-web1'   if $server eq 'wb-web1';
-	$server = 'oicr-web2'   if $server eq 'wb-web2';
-	$server = 'oicr-mining' if $server eq 'wb-mining';
-
-	$destination = $servers{$server};
-	
-	print ERR "Routing dynamic images ($uri) to $destination\n" if DEBUG;
-	$uri = "http://$destination/$params";
-	next;
-    }
+# SQUID: Done 7/23/2010
+#    #  CSHL & OICR
+#    #  Dynamic images. These contain a keyword in the URL
+#    #  so I can redirect to the appropriate back-end
+#    #  server that generated the image.
+#    #     
+#    #  I think this is now limited to:
+#    #      protein page: oicr-web2
+#    #      interaction page pie chart: oicr
+#    #      gene/gmap : oicr
+#
+#    #  Server keywords are embedded in the URL and less than 
+#    #  10 letters in length forum images are handled elsewhere.
+#    #  GBrowse images are contained under a blanket URL and
+#    #  handled elsewhere.
+#    if ($uri =~ m{dynamic_images/(.*?)/} && $1 < 10) {
+#	my $server = $1;
+#
+#	# Convert hostname keywords to server hash key names. Dumb.
+#	$server = 'oicr-web1'   if $server eq 'wb-web1';
+#	$server = 'oicr-web2'   if $server eq 'wb-web2';
+#	$server = 'oicr-mining' if $server eq 'wb-mining';
+#
+#	$destination = $servers{$server};
+#	
+#	print ERR "Routing dynamic images ($uri) to $destination\n" if DEBUG;
+#	$uri = "http://$destination/$params";
+#	next;
+#    }
     
     ##########################################################
     #  CSHL
     #  The EST aligner
-#    if ($uri =~ m{aligner}) {
-#	$destination = get_random_node();
-#
-#	print ERR "Routing Genome Browser ($uri) to $destination\n" if DEBUG;
-#	$uri = "http://$destination/$params";
-#	next;
-#    }
+# DEPRECATED?
+    if ($uri =~ m{aligner}) {
+	$destination = get_random_node();
+
+	print ERR "Routing Genome Browser ($uri) to $destination\n" if DEBUG;
+	$uri = "http://$destination/$params";
+	next;
+    }
     
     
     ##########################################################
@@ -199,43 +204,44 @@ while (<>) {
     ##########################################################
     #  OICR
     #  Manually redistribute some CGIs (Tier II)
-    if (  
-	  $uri =~ m{gene/variation}
-	  || $uri =~ m{ontology}
-	  || $uri =~ m{db/misc/session}  # session management
-	  || $uri =~ m{api/citeulike}
-	  || $uri =~ m{gene/expression}
-	  ) {
-	
-#	$destination = $servers{"oicr-web1"};
-	$destination = get_random_web_node();
-	print ERR "Routing CGIs Tier II ($uri) to $destination\n" if DEBUG;
-	$uri = "http://$destination/$params";	    
-	next;	
-    }
-    
-       
-    
-    ##########################################################
-    #  OICR
-    #  Manually redistribute some CGIs (Tier III)
-    if (   $uri =~ m{/db/gene/antibody}
-	   || $uri =~ m{/db/gene/gene_class}
-	   || $uri =~ m{/db/gene/motif}
-	   || $uri =~ m{/db/gene/regulation}
-	   || $uri =~ m{/db/gene/strain}
-	   || $uri =~ m{/db/gene/operon}
-	   || $uri =~ m{/db/seq/protein}
-	   || $uri =~ m{seq/sequence}
-#	   || $uri =~ m{db/misc/}
-	   ) {
-
-#	$destination = $servers{"oicr-web2"};
-	$destination = get_random_web_node();
-	print ERR "Routing CGIs Tier III ($uri) to $destination\n" if DEBUG;
-	$uri = "http://$destination/$params";	    
-	next;	
-    }
+# SQUID: Done 7/23/2010
+#    if (  
+#	  $uri =~ m{gene/variation}
+#	  || $uri =~ m{ontology}
+#	  || $uri =~ m{db/misc/session}  # session management
+#	  || $uri =~ m{api/citeulike}
+#	  || $uri =~ m{gene/expression}
+#	  ) {
+#	
+##	$destination = $servers{"oicr-web1"};
+#	$destination = get_random_web_node();
+#	print ERR "Routing CGIs Tier II ($uri) to $destination\n" if DEBUG;
+#	$uri = "http://$destination/$params";	    
+#	next;	
+#    }
+#    
+#       
+#    
+#    ##########################################################
+#    #  OICR
+#    #  Manually redistribute some CGIs (Tier III)
+#    if (   $uri =~ m{/db/gene/antibody}
+#	   || $uri =~ m{/db/gene/gene_class}
+#	   || $uri =~ m{/db/gene/motif}
+#	   || $uri =~ m{/db/gene/regulation}
+#	   || $uri =~ m{/db/gene/strain}
+#	   || $uri =~ m{/db/gene/operon}
+#	   || $uri =~ m{/db/seq/protein}
+#	   || $uri =~ m{seq/sequence}
+##	   || $uri =~ m{db/misc/}
+#	   ) {
+#
+##	$destination = $servers{"oicr-web2"};
+#	$destination = get_random_web_node();
+#	print ERR "Routing CGIs Tier III ($uri) to $destination\n" if DEBUG;
+#	$uri = "http://$destination/$params";	    
+#	next;	
+#    }
     
      
     # 2010.05.12: Aceserver nearly retired.
@@ -244,24 +250,25 @@ while (<>) {
     #  mining.wormbase.org: miscellaneous programmatic queries
     #
     # Is searches/blat deprecated?
-    if (   $uri    =~ m{wb_query} 
-	   || $uri =~ m{aql_query}
-	   || $uri =~ m{class_query} 
-	   || $uri =~ m{batch_genes}
-	   || $uri =~ m{searches/advanced/dumper}
-	   || $uri =~ m{searches/epcr}
-	   || $uri =~ m{searches/strains}
-	   || $uri =~ m{cisortho}
-	   || $uri =~ m{blast_blat}
-	   || $uri =~ m{searches/blat}
-	   || $uri =~ m{searches/basic}
-	   ) {
-	$destination = $servers{"oicr-mining"};
-	
-	print ERR "Routing query request ($uri) to $destination\n" if DEBUG;
-	$uri = "http://$destination/$params";
-	next;
-    }
+# SQUID: Done 7/23/2010
+#    if (   $uri    =~ m{wb_query} 
+#	   || $uri =~ m{aql_query}
+#	   || $uri =~ m{class_query} 
+#	   || $uri =~ m{batch_genes}
+#	   || $uri =~ m{searches/advanced/dumper}
+#	   || $uri =~ m{searches/epcr}
+#	   || $uri =~ m{searches/strains}
+#	   || $uri =~ m{cisortho}
+#	   || $uri =~ m{blast_blat}
+#	   || $uri =~ m{searches/blat}
+#	   || $uri =~ m{searches/basic}
+#	   ) {
+#	$destination = $servers{"oicr-mining"};
+#	
+#	print ERR "Routing query request ($uri) to $destination\n" if DEBUG;
+#	$uri = "http://$destination/$params";
+#	next;
+#    }
     
     # 2010.05.05
     # Blog, wiki, forums are all at OICR.
@@ -276,51 +283,54 @@ while (<>) {
     ##########################################################
     #
     #  The Blog
-    if ($params =~ m{blog}) {
-	$destination = $servers{"oicr-community-blog"};
-       
-	# Whoops!  This might be a request for the inline_feed script
-	# which contains the blog rss feed URI as a parameter. Except
-	# that the inline_feed script doesn't run from there.
-	if ($uri =~ /inline_feed/) {
-	    $destination = get_random_node();
-	    $uri = "http://$destination/$params";	    
-	    next;
-	}
-	
-	# Catch problems with some URLs. Need to append the back slash.
-	$params = 'blog/' if $params eq 'blog';
-	
-    	print ERR "Routing blog ($uri) to $destination\n" if DEBUG;
-        $uri = "http://$destination/$params";	    
-	next;
-    }
+# SQUID: Done 7/23/2010
+#    if ($params =~ m{blog}) {
+#	$destination = $servers{"oicr-community-blog"};
+#       
+#	# Whoops!  This might be a request for the inline_feed script
+#	# which contains the blog rss feed URI as a parameter. Except
+#	# that the inline_feed script doesn't run from there.
+#	if ($uri =~ /inline_feed/) {
+#	    $destination = get_random_node();
+#	    $uri = "http://$destination/$params";	    
+#	    next;
+#	}
+#	
+#	# Catch problems with some URLs. Need to append the back slash.
+#	$params = 'blog/' if $params eq 'blog';
+#	
+#    	print ERR "Routing blog ($uri) to $destination\n" if DEBUG;
+#        $uri = "http://$destination/$params";	    
+#	next;
+#    }
     
+
     ##########################################################
     #
     #  The Forums
     #  The fora are now a subdomain: forums.wormbase.org:8081
     #  Port 8081 on the community server will handle 301 redirect.
     #  Redirect added: 2010.05.10
-    if ($uri =~ m{forums}) {
-	$destination = $servers{"oicr-community-forums"};
-	
-	# NOT NECESSARY (as long as /misc/ URI handler comes first)
+# SQUID: Done 7/23/2010
+#    if ($uri =~ m{forums}) {
+#	$destination = $servers{"oicr-community-forums"};
+#	
+#	# NOT NECESSARY (as long as /misc/ URI handler comes first)
 #	# Whoops!  This might be a request for the inline_feed script
 #	# which contains the blog rss feed as a parameter. Doh!
-	if ($uri =~ /inline_feed/) {
-	    $destination = get_random_node();
-	    $uri = "http://$destination/$params";	    
-	    next;
-	}
-	
-	# Catch problems with forum URLs too. Need to append the back slash.
-	$params = 'forums/' if $params eq 'forums';
-	
-    	print ERR "Routing forums ($uri) to $destination/$params\n" if DEBUG;
-        $uri = "http://$destination/$params";	    
-	next;
-    }
+#	if ($uri =~ /inline_feed/) {
+#	    $destination = get_random_node();
+#	    $uri = "http://$destination/$params";	    
+#	    next;
+#	}
+#	
+#	# Catch problems with forum URLs too. Need to append the back slash.
+#	$params = 'forums/' if $params eq 'forums';
+#	
+#    	print ERR "Routing forums ($uri) to $destination/$params\n" if DEBUG;
+#        $uri = "http://$destination/$params";	    
+#	next;
+#    }
     
     
     ##########################################################
@@ -329,19 +339,20 @@ while (<>) {
     #  The wiki is now a subdomain: wiki.wormbase.org
     #  Port 8080 on the community server will handle 301 redirect.
     #  Redirect added: 2010.05.10
-    if ($uri =~ m{wiki}) {
-	$destination = $servers{"oicr-community-wiki"};
-	
-	# Hack to get around MediaWiki's weird redirect
-	$params = 'wiki/index.php/Main_Page' if $params eq 'wiki';       
-	
-	# Hack. Require a trailing slash.
-	$params = 'wiki/' if $params eq 'wiki';
-	
-	print ERR "Routing wiki/forum ($uri) to $destination\n" if DEBUG;
-	$uri = "http://$destination/$params";
-	next;
-    }
+# SQUID: Done 7/20/2010
+#    if ($uri =~ m{wiki}) {
+#	$destination = $servers{"oicr-community-wiki"};
+#	
+#	# Hack to get around MediaWiki's weird redirect
+#	$params = 'wiki/index.php/Main_Page' if $params eq 'wiki';       
+#	
+#	# Hack. Require a trailing slash.
+#	$params = 'wiki/' if $params eq 'wiki';
+#	
+#	print ERR "Routing wiki/forum ($uri) to $destination\n" if DEBUG;
+#	$uri = "http://$destination/$params";
+#	next;
+#    }
 
 
      
@@ -385,31 +396,31 @@ while (<>) {
     }        
 
 
-    # This configuration hasn;'t been handled yet
-    if (0) {
-	if (1) {
-	    
-	# This needs to be migrated
-        # Standard URLs - NOT HANDLED
-	} elsif ($uri =~ /genome/) {
-
-	    
-	    
-	    # This is probably unnecessary
-	    # The autocomplete database
-	    # This should be available on all backend machines
-
-	    # THis should probably be migrated
-	} elsif ($uri =~ /nbrowse/i) {
-	    $destination = 
-		($uri =~ /nbrowse_t/)
-		? $servers{nbrowsejsp}
-	    : $servers{nbrowse};
-	    # Catch problems with select URLs. Need to append the back slash.
-	    $params = 'db/nbrowse/temp_data/' if $params eq 'db/nbrowse/temp_data';
-	    
-	} else {}	
-    }
+#    # This configuration hasn;'t been handled yet
+#    if (0) {
+#	if (1) {
+#	    
+#	# This needs to be migrated
+#        # Standard URLs - NOT HANDLED
+#	} elsif ($uri =~ /genome/) {
+#
+#	    
+#	    
+#	    # This is probably unnecessary
+#	    # The autocomplete database
+#	    # This should be available on all backend machines
+#
+#	    # THis should probably be migrated
+#	} elsif ($uri =~ /nbrowse/i) {
+#	    $destination = 
+#		($uri =~ /nbrowse_t/)
+#		? $servers{nbrowsejsp}
+#	    : $servers{nbrowse};
+#	    # Catch problems with select URLs. Need to append the back slash.
+#	    $params = 'db/nbrowse/temp_data/' if $params eq 'db/nbrowse/temp_data';
+#	    
+#	} else {}	
+#    }
 
     my $destination = get_random_web_node();
     print ERR "Routing fall-through: $uri to default server $destination\n" if DEBUG;    
