@@ -34,9 +34,9 @@ my %servers = (
 #	       biomart   => 'biomart.wormbase.org',
 	       biomart   => '206.108.125.189',
 
-	       nbrowse   => 'gene.wormbase.org:9002',
-	       nbrowsejsp => 'gene.wormbase.org:9022',
-	       
+#	       nbrowse   => 'gene.wormbase.org:9002',
+#	       nbrowsejsp => 'gene.wormbase.org:9022',
+	      
 	       # Where we are serving static content from (not currently in use)
 	       #static    => '',
 
@@ -68,10 +68,11 @@ my ($uri,$client,$ident,$method);
 while (<>) {
     ($uri,$client,$ident,$method) = split();
     
-    my $request = $_;
-    
     if (DEBUG_FULL) {
-	print ERR "REQUEST: $request\n";
+	my $chomped =  $_;
+	chomp $chomped;
+	print ERR "\n";
+	print ERR "REQUEST: $chomped\n";
 	print ERR "URI    : $uri\n";
 	print ERR "CLIENT : $client\n";
     }
@@ -79,12 +80,13 @@ while (<>) {
     # next unless ($uri =~ m|^http://roundrobin.wormbase.org/(\S*)|);
     
     # Parse out params from the URI
-    my ($params) = $uri =~ m{^http://.*\.org/(\S*)};
+    # Once we are wormbase.org again...
+    # my ($params) = $uri =~ m{^http://.*\.org/(\S*)};
+    my ($params) = $uri =~ m{^http://wb-web1.oicr.on.ca/(\S*)};
     
     # Set a default destination to one of the web nodes
     # Will actually do this at the end to save some cycles.
     my $destination;
-    # my $destination = $servers{"oicr-web1"};
     
     
     ##########################################################
@@ -379,7 +381,7 @@ while (<>) {
     if (  $params !~ m{^db}) {
 	$destination = get_random_node();
 		
-	print ERR "Routing static content ($uri) to $destination\n" if DEBUG;
+	print ERR "Routing static content ($uri: $params) to $destination\n" if DEBUG;
 	$uri = "http://$destination/$params";
 	next;
     }        
@@ -416,6 +418,7 @@ while (<>) {
     $uri = "http://$destination/$params";
     
 } continue {
+    print ERR "continue $uri\n";
     print "$uri\n";
 }
 

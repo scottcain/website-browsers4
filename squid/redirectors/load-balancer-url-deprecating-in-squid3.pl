@@ -5,6 +5,14 @@ $|++;  # VERY IMPORTANT! Do not buffer output
 use constant DEBUG      => 1;
 use constant DEBUG_FULL => 1;
 
+
+# To consider:
+# biomart
+# static content
+# aligner
+# synteny browser
+# gene page
+
 open ERR,">>/usr/local/squid/var/logs/redirector.debug" if DEBUG || DEBUG_FULL;
 
 # Eeks! Something has gone wrong. Send all traffic to (basically) one machine)
@@ -114,28 +122,30 @@ while (<>) {
     #  The computationally intensive gene page
     #  Check for it first since this is the most prominent request
     #  STILL being served from CSHL
-# DOESN"T WORK - BE1 IS FIREWALLED FROM OICR
-    if ($uri =~ m{gene/gene}) {
-	
-	$destination = $servers{be1};
-#	$destination = $servers{"oicr-web2"};
-	print ERR "Routing Gene Page query ($uri) to $destination\n" if DEBUG;
-	$uri = "http://$destination/$params";
-	next;
-    }
+# SQUID: DONE
+#    # DOESN"T WORK - BE1 IS FIREWALLED FROM OICR
+#    if ($uri =~ m{gene/gene}) {
+#	
+#	$destination = $servers{be1};
+##	$destination = $servers{"oicr-web2"};
+#	print ERR "Routing Gene Page query ($uri) to $destination\n" if DEBUG;
+#	$uri = "http://$destination/$params";
+#	next;
+#    }
     
     
     ##########################################################
     #  CSHL: Mckays server
     #  The synteny browser
-    if ($uri =~ m{cgi-bin/gbrowse_syn}
-	|| $uri =~ m{gbrowse/tmp/.*synteny}
-	|| $uri =~ m{gbrowse/tmp/compara}
-	) {       
-	$destination = $servers{synteny};
-	$uri = "http://$destination/$params";
-	next;
-    }
+# SQUID: DONE (I think)
+#    if ($uri =~ m{cgi-bin/gbrowse_syn}
+#	|| $uri =~ m{gbrowse/tmp/.*synteny}
+#	|| $uri =~ m{gbrowse/tmp/compara}
+#	) {       
+#	$destination = $servers{synteny};
+#	$uri = "http://$destination/$params";
+#	next;
+#    }
     
 
     ##########################################################
@@ -172,33 +182,34 @@ while (<>) {
     ##########################################################
     #  CSHL
     #  The EST aligner
-# DEPRECATED?
-    if ($uri =~ m{aligner}) {
-	$destination = get_random_node();
-
-	print ERR "Routing Genome Browser ($uri) to $destination\n" if DEBUG;
-	$uri = "http://$destination/$params";
-	next;
-    }
+# SQUID: DONE 
+#    if ($uri =~ m{aligner}) {
+#	$destination = get_random_node();
+#
+#	print ERR "Routing Genome Browser ($uri) to $destination\n" if DEBUG;
+#	$uri = "http://$destination/$params";
+#	next;
+#    }
     
     
     ##########################################################
     #  OICR
     #  Send GBrowse1 requests to OICR.
-    if (  $uri       =~ m{seq/gbrowse} 
-	  || $uri    =~ m{gbgff}
-	  || $uri    =~ m{gbrowse/tmp}    # temporary images (old structure)
-	  || $uri    =~ m{gbrowse_img}   
-	  || $params =~ m{^gbrowse}     # Gbrowse js must be served from same node?	  
-	  || $uri    =~ m{gb1-support}
-	  ) {
-	
-	$destination = $servers{"oicr-gbrowse1"};
-
-	print ERR "Routing Genome Browser ($uri) to $destination\n" if DEBUG;
-	$uri = "http://$destination/$params";
-	next;
-    }
+# SQUID: DONE
+#    if (  $uri       =~ m{seq/gbrowse} 
+#	  || $uri    =~ m{gbgff}
+#	  || $uri    =~ m{gbrowse/tmp}    # temporary images (old structure)
+#	  || $uri    =~ m{gbrowse_img}   
+#	  || $params =~ m{^gbrowse}     # Gbrowse js must be served from same node?	  
+#	  || $uri    =~ m{gb1-support}
+#	  ) {
+#	
+#	$destination = $servers{"oicr-gbrowse1"};
+#
+#	print ERR "Routing Genome Browser ($uri) to $destination\n" if DEBUG;
+#	$uri = "http://$destination/$params";
+#	next;
+#    }
     
         
     ##########################################################
@@ -360,20 +371,21 @@ while (<>) {
     ##########################################################
     #
     #  biomart
-    if (   $uri  =~ m{biomart}i
-	   || $uri  =~ m{martview}
-	   || $uri  =~ m{gfx}
-	   || ($uri =~ m{Multi}i && $uri !~ m{tree})) {
-	
-	# Substitute old params for new
-	$params =~ s|/Multi/martview|/biomart/martview|;
-	
-	$destination = $servers{biomart};
-	
-	print ERR "Routing biomart ($uri) to $destination\n" if DEBUG;
-	$uri = "http://$destination/$params";
-	next;
-    }
+# SQUID: DONE
+#    if (   $uri  =~ m{biomart}i
+#	   || $uri  =~ m{martview}
+#	   || $uri  =~ m{gfx}
+#	   || ($uri =~ m{Multi}i && $uri !~ m{tree})) {
+#	
+#	# Substitute old params for new
+#	$params =~ s|/Multi/martview|/biomart/martview|;
+#	
+#	$destination = $servers{biomart};
+#	
+#	print ERR "Routing biomart ($uri) to $destination\n" if DEBUG;
+#	$uri = "http://$destination/$params";
+#	next;
+#    }
 
     ##########################################################
     #
@@ -387,13 +399,14 @@ while (<>) {
     ##########################################################
     #  OICR: Static content (or anything outside of /db)
     #  Can be served from any node. 
-    if (  $params !~ m{^db}) {
-	$destination = get_random_node();
-		
-	print ERR "Routing static content ($uri) to $destination\n" if DEBUG;
-	$uri = "http://$destination/$params";
-	next;
-    }        
+# SQUID: DONE
+#    if (  $params !~ m{^db}) {
+#	$destination = get_random_node();
+#		
+#	print ERR "Routing static content ($uri) to $destination\n" if DEBUG;
+#	$uri = "http://$destination/$params";
+#	next;
+#    }        
 
 
 #    # This configuration hasn;'t been handled yet
