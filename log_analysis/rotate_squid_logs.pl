@@ -4,13 +4,13 @@
 
 $LOGPATH    = '/usr/local/squid/logs';
 $MAXCYCLE   = 7;
-$GZIP       = '/usr/bin/gzip';
+$GZIP       = '/bin/gzip';
 
 @LOGNAMES=('access_log');
 %ARCHIVE=('access_log'=>1);
 
 $CONFIG = '/usr/local/wormbase/admin/squid/etc/squid3-basic.conf';
-$SQUID  = '/usr/sbin/squid';
+$SQUID  = '/usr/sbin/squid3';
 
 # Change to the squid log directory
 chdir $LOGPATH;
@@ -27,6 +27,7 @@ foreach $filename (@LOGNAMES) {
         if ($filename eq $oldname) {
             # Rotate the current log file without interrupting the logging process
             system("mv $filename $filename.1");
+
       
             # Tell squid to close the current log and open a new one
             system("$SQUID -k rotate -f ${CONFIG}");
