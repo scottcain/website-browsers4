@@ -9,6 +9,9 @@ $GZIP       = '/usr/bin/gzip';
 @LOGNAMES=('access_log');
 %ARCHIVE=('access_log'=>1);
 
+$CONFIG = '/usr/local/wormbase/admin/squid/etc/squid3-basic.conf';
+$SQUID  = '/usr/sbin/squid';
+
 # Change to the squid log directory
 chdir $LOGPATH;
 
@@ -26,7 +29,7 @@ foreach $filename (@LOGNAMES) {
             system("mv $filename $filename.1");
       
             # Tell squid to close the current log and open a new one
-            system('/usr/local/squid/sbin/squid -k rotate');
+            system("$SQUID -k rotate -f ${CONFIG}");
         } else {
           # Dealing with other log files
           $newname = join(".",$filename,$s+1);
