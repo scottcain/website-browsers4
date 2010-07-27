@@ -1,0 +1,281 @@
+#! /bin/sh
+#
+# squid3		Startup script for the SQUID HTTP proxy-cache.
+#
+# Version:	@(#)squid3.rc  1.0  07-Jul-2006  luigi@debian.org
+#
+### BEGIN INIT INFO
+# Provides:          squid
+# Required-Start:    $local_fs $network
+# Required-Stop:     $local_fs $network
+# Should-Start:      $named
+# Should-Stop:       $named
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Squid HTTP Proxy version 3.0
+### END INIT INFO
+
+NAME=squid3
+DESC="Squid HTTP Proxy 3.0"
+
+# The Squid binary
+DAEMON=/usr/sbin/squid3
+
+# The Squid PID file
+PIDFILE=/usr/local/squid/var/logs/squid.pid
+SQUID_ARGS="-D -YC"
+
+# The squid configuration file
+#CONFIG=/etc/squid3/squid.conf
+CONFIG=/usr/local/wormbase/admin/squid/etc/squid3-basic.conf
+
+# A basic start commmand
+SQUIDSTART="$SQUID -s -f $CONFIG"
+
+ERROR=0
+
+
+[ ! -f /etc/default/squid3 ] || . /etc/default/squid3
+
+. /lib/lsb/init-functions
+
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+
+[ -x $DAEMON ] || exit 0
+
+ulimit -n 65535
+
+find_cache_dir () {
+        w="     " # space tab
+        res=`sed -ne '
+                s/^'$1'['"$w"']\+[^'"$w"']\+['"$w"']\+\([^'"$w"']\+\).*$/\1/p;
+                t end;
+                d;
+                :end q' < $CONFIG`
+        [ -n "$res" ] || res=$2
+        echo "$res"
+}
+
+find_cache_type () {
+	w=" 	" # space tab
+	res=`sed -ne '
+		s/^'$1'['"$w"']\+\([^'"$w"']\+\).*$/\1/p;
+		t end;
+		d;
+		:end q' < $CONFIG`
+	[ -n "$res" ] || res=$2
+	echo "$res"
+}
+
+
+check_status() {
+    # check for pid file
+    if [ -f $PIDFILE ]; then
+	PID=`cat $PIDFILE`
+	if [ "x$PID" != "x" ] && kill -0 $PID 2>/dev/null ; then
+	    STATUS="squid (pid $PID) running"
+            RUNNING=1
+	else
+            STATUS="squid (pid $PID?) not running"
+            RUNNING=0
+	fi	
+    else 
+	STATUS="squid (no pid) not running"
+	RUNNING=0
+    fi
+}
+
+
+
+start() {
+    cache_dir=`find_cache_dir cache_dir /var/spool/squid3`
+    cache_type=`find_cache_type cache_dir ufs`
+  	#
+        # Create spool dirs if they don't exist.
+        #
+    if [ "$cache_type" = "coss" -a -d "$cache_dir" -a ! -f "$cache_dir/stripe" ] || [ "$cache_type" != "coss" -a -d "$cache_dir" -a ! -d "$cache_dir/00" ]
+    then
+	log_warning_msg "Creating $DESC cache structure"
+	$DAEMON -z -f ${CONFIG}
+    fi
+    
+    umask 027
+    ulimit -n 65535
+    cd $cache_dir
+    start-stop-daemon --quiet --start \
+	--pidfile $PIDFILE \
+	--exec $DAEMON -- $SQUID_ARGS -f ${CONFIG} < /dev/null
+    return $?
+}
+
+
+stop() {
+   
+    PID=`cat $PIDFILE 2>/dev/null`
+    start-stop-daemon --stop --quiet --pidfile $PIDFILE --exec $DAEMON
+	#
+	#	Now we have to wait until squid has _really_ stopped.
+	#
+	# Here's how I was stopping squid2. Is the conf file necessary?
+    sleep 2
+    if test -n "$PID" && kill -0 $PID 2>/dev/null
+    then
+	log_action_begin_msg " stopping"
+	cnt=0
+	while kill -0 $PID 2>/dev/null
+	do
+	    cnt=`expr $cnt + 1`
+	    if [ $cnt -gt 24 ]
+	    then
+		log_action_end_msg 1
+		return 1
+	    fi
+	    sleep 5
+	    log_action_cont_msg "...waiting..."
+	done
+	log_action_end_msg 0
+	return 0
+    else
+	return 0
+    fi
+}
+
+
+resetcache() {
+    # Stop squid, then overwrite the swap.state file
+    if stop ; then       
+	log_action_begin_msg "   overwriting the swap.state file"
+	chmod 666 /usr/local/squid/var/cache/swap.state
+	echo '' > /usr/local/squid/var/cache/swap.state
+	chmod 644 /usr/local/squid/var/cache/swap.state 
+	log_action_end_msg 0
+	return 0
+    else
+	return 1;
+    fi
+}
+
+
+deletelogs() {
+    if stop ; then
+	log_action_begin_msg "   deleting logs at /usr/local/squid/logs"
+	rm -rf /usr/local/squid/logs/*
+	log_action_end_msg 0
+	return 0
+    else
+	return 1
+    fi
+}
+
+
+
+
+
+case "$1" in
+    parse)
+	# Parse the squid configuration file and check for errors
+	$DAEMON -k parse -f ${CONFIG}
+	;;    
+    start)
+	log_daemon_msg "Starting $DESC" "$NAME"
+	if start ; then
+	    log_end_msg $?
+	else
+	    log_end_msg $?
+   	fi
+	;;
+    stop)
+	log_daemon_msg "Stopping $DESC" "$NAME"
+	if stop ; then
+	    log_end_msg $?
+	else
+	    log_end_msg $?
+	fi
+	;;
+    resetcache)
+	log_daemon_msg "Resetting the cache $DESC" "$NAME"
+	if resetcache ; then
+	    log_action_begin_msg "   attempting to restart squid"
+	    if start ; then
+		log_action_end_msg 0
+	    else
+		log_action_end_msg 1
+	    fi
+	else
+	    log_end_msg 1
+	fi
+	;;
+    deletelogs)
+	log_daemon_msg "Deleting cache logs $DESC" "$NAME"
+	if deletelogs ; then
+	    log_action_begin_msg "   attempting to restart squid"
+	    if start ; then
+		log_action_end_msg 0
+	    else
+		log_action_end_msg 1
+	    fi
+	else
+	    log_end_msg 1
+	fi
+	;;
+    fullreset)
+	log_daemon_msg "Stopping the proxy, deleting logs, and emptying the cache $DESC" "$NAME"
+
+	if stop ; then 
+	    if resetcache ; then
+		if deletelogs ;  then	    
+		    log_action_begin_msg "   attempting to restart squid"
+		    if start ; then
+			log_action_end_msg 0
+		    else
+			log_action_end_msg 1
+		    fi
+		fi
+	    fi
+	else
+	    log_end_msg 1
+	fi
+	;;
+    reload|force-reload)
+	log_action_msg "Reloading $DESC configuration files"       
+	start-stop-daemon --stop --signal 1 \
+	    --pidfile $PIDFILE --quiet --exec $DAEMON
+	log_action_end_msg 0
+	;;
+    restart)
+	log_daemon_msg "Restarting $DESC" "$NAME"
+	stop
+	if start ; then
+	    log_end_msg $?
+	else
+	    log_end_msg $?
+	fi
+	;;
+    status)
+	check_status
+        echo $STATUS
+        continue
+        ;;
+    *)
+	echo "Usage: /etc/init.d/$NAME {start|stop|resetcache|deletelogs|fullreset|reload|force-reload|restart}"
+        cat <<EOF
+	    
+start	   - start squid
+stop	   - stop squid
+reload	   - reload squid configuration
+resetcache - reset the squid cache
+deletelogs - delete the squid httpd-style logs
+fullreset  - reset cache AND delete logs
+parse	   - test squid configuration file
+status	   - is squid running?
+help	   - this help message
+
+EOF
+	ERROR=2
+	
+	;;
+esac
+
+
+exit $ERROR
+
