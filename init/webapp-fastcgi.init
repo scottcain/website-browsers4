@@ -20,7 +20,7 @@ APPDIR=/usr/local/wormbase/website-2.0
 PROCS=10
 # TCP socket
 #SOCKET=127.0.0.1:3001
-# Scoket file
+# Socket file
 SOCKET=/tmp/wormbase.sock
 # Leave these unset and we won't try to setuid/setgid.
 #USER=myapp
