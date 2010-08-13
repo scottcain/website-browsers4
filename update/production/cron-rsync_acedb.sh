@@ -70,12 +70,8 @@ do
 done
 
 
-exit
-
-
-
 # Here's how to sync via a tarball
-SYNC_TO_STAGING_NODE=
+SYNC_TO_STAGING_NODE=1
 
 if [ $SYNC_TO_STAGING_NODE ]
 then

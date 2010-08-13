@@ -40,6 +40,8 @@ function success() {
 function do_rsync() {
       NODE=$1
       alert " ${NODE}:"
+
+      # The data mining node also gets blast and blat databases
       if [ "${NODE}" == "wb-mining.oicr.on.ca" ]
       then
   	  if rsync -Cav --exclude *bak* --exclude web_data/ \
