@@ -69,6 +69,7 @@ do
     do_rsync $NODE
 done
 
+exit
 
 # Here's how to sync via a tarball
 SYNC_TO_STAGING_NODE=1

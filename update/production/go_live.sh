@@ -51,6 +51,8 @@ function adjust_acedb_symlink() {
 }
 
 
+exit
+
 function adjust_mysql_symlinks() {
     NODE=$1
     alert " Adjusting mysql symlinks on ${NODE}:"
@@ -59,13 +61,13 @@ function adjust_mysql_symlinks() {
     do    
     # Has this species been updated during this release?
 	# This doesn't work if wb-dev has already been updated to the next release.
-#	this_link=`readlink ${SPECIES}`
-#	this_version=`expr match "${this_link}" '.*_\(WS...\)'`
-#	echo "Checking if ${SPECIES} was updated during the release cycle of ${VERSION}..."
+	this_link=`readlink ${SPECIES}`
+	this_version=`expr match "${this_link}" '.*_\(WS...\)'`
+	echo "Checking if ${SPECIES} was updated during the release cycle of ${VERSION}..."
 	
     # Was this species updated during this release?
-#	if [ ${this_version} = ${VERSION} ]
-#	then
+	if [ ${this_version} = ${VERSION} ]
+	then
 	    
 	    TARGET=${SPECIES}_${VERSION}
 	    echo "Adjusting mysql symlinks for ${SPECIES}_${VERSION} on ${NODE}..."
@@ -76,7 +78,7 @@ function adjust_mysql_symlinks() {
 	    else
 		failure "Symlinking failed"
 	    fi
-#	fi
+	fi
     done
 }
 

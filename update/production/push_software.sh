@@ -95,19 +95,19 @@ do
 done
 
 # Now sync the admin module
-alert "Pushing the admin module onto OICR nodes..."
-for NODE in ${OICR_ALL_NODES}
-do
-  alert " Updating ${NODE}..."
-  if rsync -Cav /home/tharris/projects/wormbase/wormbase-admin/ ${NODE}:/usr/local/wormbase/admin
-  then
-    success "Successfully pushed software onto ${NODE}..."
-  else
-    failure "Pushing software onto ${NODE} failed..."
-  fi
-done
+#alert "Pushing the admin module onto OICR nodes..."
+#for NODE in ${OICR_ALL_NODES}
+#do
+#  alert " Updating ${NODE}..."
+#  if rsync -Cav /home/tharris/projects/wormbase/wormbase-admin/ ${NODE}:/usr/local/wormbase/admin
+#  then
+#    success "Successfully pushed software onto ${NODE}..."
+#  else
+#    failure "Pushing software onto ${NODE} failed..."
+#  fi
+#done
 
-
+exit
 
 # Is a restart necessary?
 if [ "${DO_RESTART}" ]

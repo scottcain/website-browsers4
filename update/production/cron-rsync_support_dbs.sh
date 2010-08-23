@@ -54,7 +54,8 @@ function do_rsync() {
               --exclude web_data/ \
 	      --exclude blast \
 	      --exclude blat \
-	      --delete ${SUPPORT_DB_DIRECTORY}/ ${NODE}:${SUPPORT_DB_DIRECTORY}
+	      ${SUPPORT_DB_DIRECTORY}/ ${NODE}:${SUPPORT_DB_DIRECTORY}
+#	      --delete ${SUPPORT_DB_DIRECTORY}/ ${NODE}:${SUPPORT_DB_DIRECTORY}
   	  then
       	      success "Successfully pushed support databases onto ${NODE}"
   	  fi
@@ -62,11 +63,26 @@ function do_rsync() {
 }
 
 
-alert "Rsyncing support databases onto local nodes..."
-for NODE in ${OICR_SUPPORT_DB_NODES}
-do
-     do_rsync $NODE;
-done
+function rsync_to_nfs_server() {
+    NODE=$1
+    alert " Rsyncing to ${NODE}:"
+    if rsync -Cav --exclude *bak* --exclude web_data/ \
+	 ${SUPPORT_DB_DIRECTORY}/ ${NODE}:${LOCAL_NFS_ROOT}/databases
+    then
+      	success "Successfully pushed support databases onto ${NODE}"
+    fi
+}
+
+
+# 1. The NFS server hosts all our databases
+rsync_to_nfs_server ${LOCAL_NFS_SERVER};
+
+# 2. ALL nodes maintain their own databases
+#alert "Rsyncing support databases onto local nodes..."
+#for NODE in ${OICR_SUPPORT_DB_NODES}
+#do
+#     do_rsync $NODE;
+#done
 
 alert "Rsyncing support databases onto remote nodes..."
 for NODE in ${REMOTE_SUPPORT_DB_NODES}
