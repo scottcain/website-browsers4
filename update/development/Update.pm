@@ -11,129 +11,129 @@ our $AUTOLOAD;
 ## test
 
 my %config =  (
-    root => '/usr/local/wormbase', ## /website-classic   # where all the wormbase stuff is stored
-    web_root => '/usr/local/wormbase/website-classic',   # the current document root
+	       root => '/usr/local/wormbase', ## /website-classic
+	       
+	       directories => {
+			       support_dbs => "databases",
+			       database_tarballs => 'mirror/database_tarballs',
+			      },
+
+	       # Where we will mirror files from Sanger
+	       mirror_dir => '/tmp/temporary_update_dir',
+	       
+	       # acedb and mysql
+	       	
+	       acedb_root     => '/usr/local/wormbase/acedb/',
+
+
+	       mysql_data_dir => '/usr/local/mysql/data',
+	       
+	       # FTP server access
+	       wormbase_ftp_host   => 'brie4.cshl.org',
+	       contact_email       => 'webmaster@wormbase.org',
+	       remote_ftp_server   => 'ftp.sanger.ac.uk',
+	       remote_ftp_path     => 'pub2/wormbase',
+	       
+	       # Local FTP server
+	       ftp_root            => '/usr/local/ftp',	       
+               local_ftp_path      => 'pub/wormbase',
+
+	       # Filenames on the FTP site
+	       filenames => { generic => {
+					  nucleotide_blast => 'genomic.fa',
+					  protein_blast    => 'peptide.fa',
+					  ests_blast       => 'ests.fa',
+					  genes_blast      => 'genes.fa',
+					  epcr             => 'epcr.fa',
+					  oligos           => 'oligo.db',
+					 },
+			      custom => {
+					 genomic_gff2_archive           => '%s.%s.gff',
+					 genomic_gff3_archive           => '%s.%s.gff3',
+					 genomic_fasta_archive          => '%s.%s.dna.fa',
+					 genetic_map_gff2_archive       => '%s.%s.genetic_map.gff',
+					 physical_map_gff2_archive      => '%s.%s.physical_map.gff',
+					 protein_motifs_gff2_archive    => '%s.%s.protein_motifs.gff',
+					 genetic_intervals_gff2_archive => '%s.%s.genetic_intervals.gff',
+					 est_archive                    => '%s.%s.est.fa',
+					},
+			    },
+
+	       # Miscellaneous files at Sanger
+	       clustal_file  => 'wormpep_clw.sql',
+	       
+	       # BLAST DB config
+	       blastdb_format_script => '/usr/local/blast/bin/formatdb',
+	       formatdb    => {
+			       nucleotide => qq{-p F -t '%s' -i %s},
+			       ests       => qq{-p F -t '%s' -i %s},
+			       protein    => qq{-p T -t '%s' -i %s},
+			       genes      => qq{-p F -t '%s' -i %s},
+			      },   
     
-    directories => {
-	support_dbs => "databases",
-	database_tarballs => 'mirror/database_tarballs',
-    },
-    
-    # Where we will mirror files from Sanger
-    mirror_dir => '/tmp/temporary_update_dir',
-    
-    # acedb and mysql	       	
-    acedb_root     => '/usr/local/wormbase/acedb/',
-    
-    
-    mysql_data_dir => '/usr/local/mysql/data',
-    
-    # FTP server access
-    wormbase_ftp_host   => 'brie4.cshl.org',
-    contact_email       => 'webmaster@wormbase.org',
-    remote_ftp_server   => 'ftp.sanger.ac.uk',
-    remote_ftp_path     => 'pub2/wormbase',
-    
-    # Local FTP server
-    ftp_root            => '/usr/local/ftp',	       
-    local_ftp_path      => 'pub/wormbase',
-    
-    # Filenames on the FTP site
-    filenames => { generic => {
-	nucleotide_blast => 'genomic.fa',
-	protein_blast    => 'peptide.fa',
-	ests_blast       => 'ests.fa',
-	genes_blast      => 'genes.fa',
-	epcr             => 'epcr.fa',
-	oligos           => 'oligo.db',
-		   },
-		   custom => {
-		       genomic_gff2_archive           => '%s.%s.gff',
-		       genomic_gff3_archive           => '%s.%s.gff3',
-		       genomic_fasta_archive          => '%s.%s.dna.fa',
-		       genetic_map_gff2_archive       => '%s.%s.genetic_map.gff',
-		       physical_map_gff2_archive      => '%s.%s.physical_map.gff',
-		       protein_motifs_gff2_archive    => '%s.%s.protein_motifs.gff',
-		       genetic_intervals_gff2_archive => '%s.%s.genetic_intervals.gff',
-		       est_archive                    => '%s.%s.est.fa',
-		   },
-    },
-    
-    # Miscellaneous files at Sanger
-    clustal_file  => 'wormpep_clw.sql',
-    
-    # BLAST DB config
-    blastdb_format_script => '/usr/local/blast/bin/formatdb',
-    formatdb    => {
-	nucleotide => qq{-p F -t '%s' -i %s},
-	ests       => qq{-p F -t '%s' -i %s},
-	protein    => qq{-p T -t '%s' -i %s},
-	genes      => qq{-p F -t '%s' -i %s},
-    },   
-    
-    # Some species aren't part and parcel of the build yet.
-    # These may have non-standard file names/paths remotely
-    # or locally.
-    species_info => {
-	# WS196 - 10/31
-	b_malayi   => {
+	       # Some species aren't part and parcel of the build yet.
+	       # These may have non-standard file names/paths remotely
+	       # or locally.
+	       species_info => {
+		   # WS196 - 10/31
+		   b_malayi   => {
 #		       current_release => 'Assembly Bma1',
 #		       local_dna_filename => 'sequences/dna/bma1.assembly.fa.gz',
 #		       local_protein_filename  => 'sequences/protein/bma1.pep.fa.gz',
 #		       remote_dna_filename     => 'brugia.dna',
-	    remote_protein_filename => 'brugpep.%s.fa.gz',
-	},
-	# WS196 - 10/31
-	c_brenneri => { 
+		       remote_protein_filename => 'brugpep.%s.fa.gz',
+		   },
+		   # WS196 - 10/31
+		   c_brenneri => { 
 #		       current_release => '2007.01 Draft Assembly',  # BLAST DB titles, etc.
 #		       local_dna_filename => 'assembly/2007.01-draft_assembly/output/fasta/*.fa.gz',
 #		       remote_dna_filename     => 'brenneri.dna',
-	    remote_protein_filename => 'brepep.%s.fa.gz',
-	},
-	c_briggsae => {
-	    remote_protein_filename => 'brigpep.%s.fa.gz',
-	},
-	c_elegans  => {
-	    remote_protein_filename => 'wormpep.%s.fa.gz',
-	},
-	# WS195
-	c_japonica  => {
+		       remote_protein_filename => 'brepep.%s.fa.gz',
+		   },
+		   c_briggsae => {
+		       remote_protein_filename => 'brigpep.%s.fa.gz',
+		   },
+		   c_elegans  => {
+		       remote_protein_filename => 'wormpep.%s.fa.gz',
+		   },
+		   # WS195
+		   c_japonica  => {
 #		       current_release => 'Draft Assembly 3.0.2',
 #		       local_dna_filename => 'assembly/draft_assembly_3.0.2/assembly/fasta/supercontigs.fa.gz',
 #		       remote_dna_filename => 'supercontigs.agp',
-	    remote_protein_filename => 'jappep.%s.fa.gz',
-	},						 
-	c_remanei => {
+		       remote_protein_filename => 'jappep.%s.fa.gz',
+		   },						 
+		   c_remanei => {
 #		       remote_dna_filename => 'remanei.dna.gz',	
-	    remote_protein_filename => 'remapep.%s.fa.gz',
-	},
-	h_bacteriophora => {
-	    remote_protein_filename => 'hetpep.%s.fa.gz',
-	},
-	# WS194
-	p_pacificus => {
-	    remote_gff2_filename    => 'pristionchus.gff.gz',
+		       remote_protein_filename => 'remapep.%s.fa.gz',
+		   },
+		   h_bacteriophora => {
+		       remote_protein_filename => 'hetpep.%s.fa.gz',
+		   },
+		   # WS194
+		   p_pacificus => {
+		       remote_gff2_filename    => 'pristionchus.gff.gz',
 #		       remote_dna_filename     => 'pacificus.dna.gz',
-	    remote_protein_filename => 'ppapep.%s.fa.gz',
-	},
-	# added for WS204 and up...
-	m_hapla => {
-	    #remote_gff2_filename    => '',
-	    remote_dna_filename     => 'm_hapla.%s.dna.gz'
-	},
-		m_incognita => {
-		    
-		    remote_dna_filename     => 'm_incogita.%s.dna.gz'
-	    },
-			
-			
-    },
-    fatonib => '/usr/local/blat/bin/faToNib',
-    
-    mysql_user => 'root',
-    mysql_pass => '3l3g@nz',
-    
-    );
+		       remote_protein_filename => 'ppapep.%s.fa.gz',
+		   },
+ 		   # added for WS204 and up...
+ 		   m_hapla => {
+ 		       #remote_gff2_filename    => '',
+		       remote_dna_filename     => 'm_hapla.%s.dna.gz'
+ 		    },
+			m_incognita => {
+ 		      
+ 		      remote_dna_filename     => 'm_incogita.%s.dna.gz'
+ 		    },
+
+
+	       },
+	       fatonib => '/usr/local/blat/bin/faToNib',
+	       
+	       mysql_user => 'root',
+	       mysql_pass => 'kentwashere',
+
+	      );
 
 sub new {
   my ($self,$params) = @_;
