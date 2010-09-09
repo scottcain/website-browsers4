@@ -126,75 +126,84 @@ my %config =  (
  		      remote_dna_filename     => 'm_incogita.%s.dna.gz'
  		    },
 
+			h_contortus => {
+			
+			},
+			
+			c_an => {
+			
+			}
 
 	       },
+	       
 	       fatonib => '/usr/local/blat/bin/faToNib',
 	       
 	       mysql_user => 'root',
-	       mysql_pass => 'kentwashere',
+	       mysql_pass => '3l3g@nz',
 
 	      );
 
 sub new {
-  my ($self,$params) = @_;
-  my $this = bless $params,$self;
-  $this->{config} = \%config;
+  	my ($self,$params) = @_;
+  	my $this = bless $params,$self;
+  	$this->{config} = \%config;
   
-  my $release = $this->release;
+  	my $release = $this->release;
 
-  my $step = $this->step();
+  	my $step = $this->step();
 
-  my $log_config = qq(
-log4perl.logger.rootLogger  = INFO,LOGFILE,Screen
-
-# Global spacing
-log4perl.appender.LOGFILE=Log::Log4perl::Appender::File
-log4perl.appender.LOGFILE.filename=$Bin/../logs/$release/$step.log
-log4perl.appender.LOGFILE.mode=append
-log4perl.appender.LOGFILE.layout = Log::Log4perl::Layout::PatternLayout
-#log4perl.appender.LOGFILE.layout.ConversionPattern=[%d %p]%K%l − %r %m%n
-log4perl.appender.LOGFILE.layout.ConversionPattern=[%d %p]%K%m (%M [%L])%n
-#log4perl.appender.LOGFILE.layout.ConversionPattern=[%d %p]%K %n
-
-
-log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
-log4perl.appender.Screen.stderr  = 0
-log4perl.appender.Screen.layout = Log::Log4perl::Layout::PatternLayout
-#log4perl.appender.Screen.layout.ConversionPattern=[%d %r]%K%F %L %c − %m%n
-log4perl.appender.Screen.layout.ConversionPattern=[%d %p]%K%m (%M [%L])%n
-#log4perl.appender.Screen.layout.ConversionPattern=[%d %p]%K %n
-);
+	my $log_config = qq(
+		log4perl.logger.rootLogger  = INFO,LOGFILE,Screen
+		
+		# Global spacing
+		log4perl.appender.LOGFILE=Log::Log4perl::Appender::File
+		log4perl.appender.LOGFILE.filename=$Bin/../logs/$release/$step.log
+		log4perl.appender.LOGFILE.mode=append
+		log4perl.appender.LOGFILE.layout = Log::Log4perl::Layout::PatternLayout
+		#log4perl.appender.LOGFILE.layout.ConversionPattern=[%d %p]%K%l − %r %m%n
+		log4perl.appender.LOGFILE.layout.ConversionPattern=[%d %p]%K%m (%M [%L])%n
+		#log4perl.appender.LOGFILE.layout.ConversionPattern=[%d %p]%K %n
+		
+		
+		log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
+		log4perl.appender.Screen.stderr  = 0
+		log4perl.appender.Screen.layout = Log::Log4perl::Layout::PatternLayout
+		#log4perl.appender.Screen.layout.ConversionPattern=[%d %r]%K%F %L %c − %m%n
+		log4perl.appender.Screen.layout.ConversionPattern=[%d %p]%K%m (%M [%L])%n
+		#log4perl.appender.Screen.layout.ConversionPattern=[%d %p]%K %n
+		);
   
-  Log::Log4perl::Layout::PatternLayout::add_global_cspec('K',
-							 sub {
-     my ($layout, $message, $category, $priority, $caller_level) = @_;
+  	Log::Log4perl::Layout::PatternLayout::add_global_cspec('K',
+		sub {
+		
+     		my ($layout, $message, $category, $priority, $caller_level) = @_;
+     		# FATAL, ERROR, WARN, INFO, DEBUG, TRACE
+			 return "   --> "    if $priority eq 'DEBUG';
+			 return " " if $priority eq 'INFO';
+			 return "  ! "   if $priority eq 'WARN';  # potential errors
+			 return " !! "   if $priority eq 'ERROR'; # errors
+			 return "!!! " if $priority eq 'FATAL';  # fatal errors
+			 return " ";
+	   	});
 
-     # FATAL, ERROR, WARN, INFO, DEBUG, TRACE
-     return "   --> "    if $priority eq 'DEBUG';
-     return " " if $priority eq 'INFO';
-     return "  ! "   if $priority eq 'WARN';  # potential errors
-     return " !! "   if $priority eq 'ERROR'; # errors
-     return "!!! " if $priority eq 'FATAL';  # fatal errors
-     return " ";
-   });
+  	Log::Log4perl::init(\$log_config);
 
-  Log::Log4perl::init(\$log_config);
+  	$this->_make_dir("$Bin/../logs");
+  	$this->_make_dir("$Bin/../logs/$release");
+  	
 
-  $this->_make_dir("$Bin/../logs");
-  $this->_make_dir("$Bin/../logs/$release");
+  	my $root_log = new IO::File ">> $Bin/../logs/$release/$release.log";
+  	$this->{master_log} = $root_log;
+  	print $root_log "starting $step...\n";
 
-  my $root_log = new IO::File ">> $Bin/../logs/$release/$release.log";
-  $this->{master_log} = $root_log;
-  print $root_log "starting $step...\n";
-
-  #  my $cfg = Config::Any->load_files({files =>  [ "Config.pm" ],use_ext => 1 });
-  #    print Config::Any->extensions;
-  #    print Config::Any->finder;
-  #    print Config::Any->plugins;
-  #    my $cfg = Config::Any::Perl->load("site_config.pl");
-  #  print $cfg;
+	  #  my $cfg = Config::Any->load_files({files =>  [ "Config.pm" ],use_ext => 1 });
+	  #    print Config::Any->extensions;
+	  #    print Config::Any->finder;
+	  #    print Config::Any->plugins;
+	  #    my $cfg = Config::Any::Perl->load("site_config.pl");
+	  #  print $cfg;
   
-  return $this;
+  	return $this;
 }
 
 sub execute {
@@ -433,6 +442,20 @@ sub species_alone {
   return $1;
 }
 
+sub system_call {
+
+	my ($cmd, $check_file) = @_;
+	system ("echo \'start\' > $check_file");
+	system ("$cmd; echo \'done\' > $check_file");
+	
+	my $status;
+	
+	do {
+	
+		$status = `cat $check_file`;
+		sleep (10);	
+	} while (!($status=~ m/done/));
+}
 
 # Accessors
 sub support_dbs {
