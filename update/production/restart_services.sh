@@ -1,22 +1,12 @@
 #!/bin/bash
 
 # Restart wormbase services across nodes
+export RSYNC_RSH=ssh
+DO_RESTART=$1
 
+# Pull in my configuration variables shared across scripts
+source /home/tharris/projects/wormbase/wormbase-admin/update/production/update.conf
 
-VERSION=$1
-
-if [ ! "$VERSION" ]
-then
-  echo "Usage: $0 WSXXX"
-  exit
-fi
-
-# These nodes host the Acedb database
-ACEDB_NODES=`cat conf/nodes_acedb.conf`
-# These node also need the mysql databases
-MYSQL_NODES=`cat conf/nodes_mysql.conf`
-
-SEPERATOR="==========================================="
 
 function alert() {
   msg=$1
@@ -37,45 +27,64 @@ function success() {
   echo "  ${msg}."
 }
 
+function restart_sgifaceserver() {
+    NODE=$1
+    alert "${NODE}"
+    
+#  if ssh ${NODE} "sudo kill -9 `ps -C sgifaceserver -o pid=`"
+    if ssh -t ${NODE} "sudo killall -9 sgifaceserver"
+    then
+	success "sgifaceserver restarted"
+#      if ssh -t ${NODE} "sudo /etc/rc.d/init.d/xinetd restart"
+	if ssh -t ${NODE} "sudo /etc/init.d/xinetd restart"
+	then
+	    success "xinetd restarted"
+	else
+	    failure "sgifaceserver / xinetd could not be restarted"
+	fi
+    fi
+}
+
+function restart_mysqld() {
+    NODE=$1
+    alert "${NODE}"
+#    if ssh -t ${NODE} "sudo /etc/rc.d/init.d/mysqld restart"
+    if ssh -t ${NODE} "sudo /etc/init.d/mysql restart"
+    then
+	success "mysqld successfully restarted"
+    else
+	failure "mysqld could not be restart"
+    fi
+    
+    if ssh -t ${NODE} "sudo /usr/local/apache2/bin/apachectl restart"
+    then
+	success "httpd succesfully restarted"
+    else
+	failure "httpd could not be restarted"
+    fi
+}
+
+
+
+
+
 # ACedb nodes need to have sgifaceserver killed
 # and xinetd restarted
 alert "Restarting sigfaceserver and xinetd services for acedb nodes..."
-for NODE in ${ACEDB_NODES}
+ACEDB_NODES=( ${OICR_ACEDB_NODES[@]} ${REMOTE_ACEDB_NODES[@]} )
+for NODE in ${ACEDB_NODES[@]}
 do
-  alert "${NODE}"  
-
-#  if ssh ${NODE} "sudo kill -9 `ps -C sgifaceserver -o pid=`"
-  if ssh -t ${NODE} "sudo killall -9 sgifaceserver"
-  then
-      success "sgifaceserver restarted"
-      if ssh -t ${NODE} "sudo /etc/rc.d/init.d/xinetd restart"
-	  then
-	  success "xinetd restarted"
-      else
-	  failure "sgifaceserver / xinetd could not be restarted"
-      fi
-  fi
+#    restart_sgifaceserver $NODE
+    echo $NODE
 done
-
 
 
 # Mysql nodes: restart mysql and httpd
 alert "Restarting mysql and httpd for all nodes..."
-for NODE in ${MYSQL_NODES}
+MYSQL_NODES=( ${OICR_MYSQL_NODES[@]} ${REMOTE_MYSQL_NODES[@]} )
+for NODE in ${MYSQL_NODES[@]}
 do
-  alert "${NODE}"  
-  if ssh -t ${NODE} "sudo /etc/rc.d/init.d/mysqld restart"
-      then
-      success "mysqld successfully restarted"
-  else
-      failure "mysqld could not be restart"
-  fi
-
-  if ssh -t ${NODE} "sudo /usr/local/apache/bin/apachectl restart"
-      then
-      success "httpd succesfully restarted"
-  else
-      failure "httpd could not be restarted"
-  fi
+    restart_mysqld $NODE
 done
+
 
