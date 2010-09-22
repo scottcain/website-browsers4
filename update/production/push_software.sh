@@ -33,25 +33,28 @@ function success() {
 
 
 # Original: not necessary to pass through brie3
-alert "Pushing software onto ${STAGING_NODE}"
-if rsync -Cav --exclude extlib \
-              --exclude localdefs.pm \
-              --exclude httpd.conf \
-              --exclude perl.startup \
-              --exclude cache/ \
-              --exclude session/ \
-              --exclude databases/ \
-              --exclude tmp/ \
-              --exclude ace_images/ \
-              --exclude html/rss/ \
-              ${SITE_STAGING_DIRECTORY}/ ${STAGING_NODE}:${SITE_TARGET_DIRECTORY}
-  then
-    success "Successfully pushed software onto ${STAGING_NODE}..."
-  else
-    failure "Pushing software onto ${STAGING_NODE} failed..."
-    exit
+TEST=
+if [ $TEST ]
+then
+    alert "Pushing software onto ${STAGING_NODE}"
+    if rsync -Cav --exclude extlib \
+        --exclude localdefs.pm \
+        --exclude httpd.conf \
+        --exclude perl.startup \
+        --exclude cache/ \
+        --exclude session/ \
+        --exclude databases/ \
+        --exclude tmp/ \
+        --exclude ace_images/ \
+        --exclude html/rss/ \
+        ${SITE_STAGING_DIRECTORY}/ ${STAGING_NODE}:${SITE_TARGET_DIRECTORY}
+    then
+	success "Successfully pushed software onto ${STAGING_NODE}..."
+    else
+	failure "Pushing software onto ${STAGING_NODE} failed..."
+	exit
+    fi
 fi
-
 
 alert "Pushing software onto nodes..."
 for NODE in ${SITE_NODES}

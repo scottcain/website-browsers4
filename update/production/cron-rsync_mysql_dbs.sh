@@ -96,14 +96,14 @@ function do_rsync_updated_dbs() {
 	cd ${STAGING_MYSQL_DATA_DIR}
 	sudo chmod 2775 ${TARGET}
 
-        if rsync ${STAGING_MYSQL_DATA_DIR}/${TARGET} ${NODE}:${TARGET_MYSQL_DATA_DIR}/${TARGET}
+        if rsync -Cav ${STAGING_MYSQL_DATA_DIR}/${TARGET} ${NODE}:${TARGET_MYSQL_DATA_DIR}/
         then
      	    success "Successfully rsynced ${TARGET} onto ${NODE}"
 	    
          # Fix permissions
 	    if ssh ${NODE} "cd ${TARGET_MYSQL_DATA_DIR}; chgrp -R mysql ${TARGET}"
 	    then
-		success "Successfully fixed permissions on ${NODE}:${SPECIES}"
+		success "Successfully fixed permissions on ${NODE}:${TARGET}"
 #	    else
 #		failure "Fixing permissions on ${NODE}:${SPECIES} failed"
 	    fi
@@ -125,7 +125,7 @@ do
     extract_version ${DB}    
 done
 
-exit
+#exit
 
 
 ################################### 
@@ -133,13 +133,15 @@ exit
 alert "Rsyncing mysql DBs onto local production nodes..."
 for NODE in ${OICR_MYSQL_NODES}
 do
-    do_rsync $NODE
+#    do_rsync $NODE
+    do_rsync_updated_dbs $NODE
 done
 
 alert "Rsyncing mysql DBs onto remote production nodes..."
 for NODE in ${REMOTE_MYSQL_NODES}
 do
-    do_rsync $NODE
+#    do_rsync $NODE
+    do_rsync_updated_dbs $NODE
 done
 
 exit
@@ -149,8 +151,5 @@ exit
 
 #rsync -Cav /usr/local/wormbase/website-classic-staging/html/images/expression/ \
 #    gb1:/usr/local/wormbase/gbrowse-support-files/images
-
-
-# Configuration files:
 
 

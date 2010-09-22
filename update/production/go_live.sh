@@ -51,12 +51,10 @@ function adjust_acedb_symlink() {
 }
 
 
-exit
-
 function adjust_mysql_symlinks() {
     NODE=$1
     alert " Adjusting mysql symlinks on ${NODE}:"
-
+    cd ${STAGING_MYSQL_DATA_DIR}
     for SPECIES in ${MYSQL_DATABASES} 
     do    
     # Has this species been updated during this release?
