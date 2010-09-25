@@ -119,7 +119,11 @@ if [ $tomorrowMonth != $todayMonth ]; then
   # Rsync the stats directory to the stats host
   ################################################
 
-  if [ ! ${DEBUG} ]; then
+LEAVE_LOCAL=1
+
+  # We won't sync them up.
+
+  if [ ! ${LEAVE_LOCAL} ]; then
       sudo -u ${USER} rsync -avz --exclude=*before_concatenation* --exclude=*.bak ${LOGDIR}/ ${STATS_USER}@${STATS_HOST}:projects/wormbase/log_archive/
            
     # Fire off the analyze_logs_by_month.sh script on a suitable macine

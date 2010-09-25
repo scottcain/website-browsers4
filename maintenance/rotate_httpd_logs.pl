@@ -17,8 +17,8 @@ $LOGPATH    = '/usr/local/wormbase/logs';
 $MAXCYCLE   = 7;
 $GZIP       = '/usr/bin/gzip';
 
-@LOGNAMES=("classic-access_log-$HOSTNAME","classic-error_log-$HOSTNAME");
-%ARCHIVE=("classic-access_log-$HOSTNAME"=>1,"classic-error_log-$HOSTNAME"=>1);
+@LOGNAMES=("classic-access_log","classic-error_log");
+%ARCHIVE=("classic-access_log"=>1,"classic-error_log"=>1);
 
 chdir $LOGPATH;  # Change to the log directory
 foreach $filename (@LOGNAMES) {
