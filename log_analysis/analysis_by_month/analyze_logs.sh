@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #export PERL5LIB="/usr/local/wormbase/website-classic/extlib/lib/perl5:/usr/local/wormbase/website-classic/extlib/lib/perl5/x86_64-linux"
 
 
@@ -11,9 +11,11 @@
 
 # LATEST_RELEASE should by YYYY.MM
 LATEST_RELEASE=$1
-BINDIR=/home/tharris/projects/wormbase/wormbase-admin/log_analysis
+#BINDIR=/home/tharris/projects/wormbase/wormbase-admin/log_analysis
+BINDIR=/home/todd/Dropbox/Projects/wormbase/wormbase-admin/log_analysis
 #LOGDIR=/usr/local/acedb/wormbase_log_archive
-LOGDIR=/home/tharris/projects/wormbase/log_archive
+#LOGDIR=/home/tharris/projects/wormbase/log_archive
+LOGDIR=/home/todd/projects/wormbase/log_archive
 SITE=www.wormbase.org
 HTMLSTATS=/usr/local/wormbase/website-shared-files/html/stats
 ANALOG=${BINDIR}/analog
@@ -26,7 +28,6 @@ if [ ! ${LATEST_RELEASE} ]; then
 fi
 
 YEAR=${LATEST_RELEASE:0:4}
-echo $YEAR
 
 ################################
 # MOST RECENT RELEASE ANALYSIS
@@ -268,4 +269,4 @@ ${RMAGIC}/rmagic.pl ${BINDIR}/rmagic.conf \
 
 # Sync to the appropriate staging directories
 rsync -Cav /usr/local/wormbase/website-shared-files/html/stats \
-           /usr/local/wormbase/website-classic-staging/html/
+    /usr/local/wormbase/website-classic-staging/html
