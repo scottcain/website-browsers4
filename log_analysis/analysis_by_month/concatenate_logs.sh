@@ -93,33 +93,35 @@ if [ $tomorrowMonth != $todayMonth ]; then
 
   sudo -u ${USER} gunzip -c ${LOGDIR}/raw/access_log.${DATE}.gz | ${JDRESOLVE}/jdresolve -s 16 -l 300000 -r - | gzip -c > ${LOGDIR}/with_hosts/access_log.${DATE}.gz
 
-  # Concatante
-  cd ${LOGDIR}/with_hosts/
+  # Concatante to the full year log
+# 2010.09 - ON HOLD, NEED POST-PROCESSING PRIOR TO CONCATENATION
+#  cd ${LOGDIR}/with_hosts/
+#
+#  # Create the cumulative log first if it doesn't exist
+#  if [ ! -r access_log.${YEAR}.gz ]; then
+#     sudo -u ${USER} touch access_log.${YEAR}
+#     sudo -u ${USER} gzip access_log.${YEAR}
+#  fi
+#
+#  # Create a backup and fix permissions
+#  if [ ! ${DEBUG} ]; then
+#    sudo -u ${USER} cp access_log.${YEAR}.gz access_log.${DATE}.before_concatenation.bak.gz
+#    chown ${USER} access_log.${DATE}.before_concatenation.bak.gz
+#  fi
+#
+#  # Concatenate this month to the cumulative log
+#  if [ ! ${DEBUG} ]; then
+#    sudo -u ${USER} cat access_log.${DATE}.gz >> access_log.${YEAR}.gz
+#    chown ${USER} access_log.${YEAR}.gz
+#  fi
 
-  # Create the cumulative log first if it doesn't exist
-  if [ ! -r access_log.${YEAR}.gz ]; then
-     sudo -u ${USER} touch access_log.${YEAR}
-     sudo -u ${USER} gzip access_log.${YEAR}
-  fi
-
-
-  # Create a backup and fix permissions
-  if [ ! ${DEBUG} ]; then
-    sudo -u ${USER} cp access_log.${YEAR}.gz access_log.${DATE}.before_concatenation.bak.gz
-    chown ${USER} access_log.${DATE}.before_concatenation.bak.gz
-  fi
-
-  # Concatenate this month to the cumulative log
-  if [ ! ${DEBUG} ]; then
-    sudo -u ${USER} cat access_log.${DATE}.gz >> access_log.${YEAR}.gz
-    chown ${USER} access_log.${YEAR}.gz
-  fi
+  sudo chown ${USER} access_log.${YEAR}.gz
 
   ################################################
   # Rsync the stats directory to the stats host
   ################################################
 
-LEAVE_LOCAL=1
+LEAVE_LOCAL=
 
   # We won't sync them up.
 
