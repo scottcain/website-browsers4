@@ -56,19 +56,22 @@ then
     fi
 fi
 
-alert "Pushing software onto nodes..."
-for NODE in ${SITE_NODES}
-do
-  alert " Updating ${NODE}..."
-  if ssh ${STAGING_NODE} "rsync -Cav --exclude extlib/ --exclude perl.startup --exclude localdefs.pm --exclude httpd.conf --exclude cache/ --exclude session/ --exclude databases/ --exclude tmp/ --exclude ace_images/ --exclude html/rss/ ${SITE_TARGET_DIRECTORY}/ ${NODE}:${SITE_TARGET_DIRECTORY}"
-  then
-    success "Successfully pushed software onto ${NODE}..."
-  else
-    failure "Pushing software onto ${NODE} failed..."
-    exit
-  fi
-done
 
+if [ $TEST ]
+then
+    alert "Pushing software onto nodes..."
+    for NODE in ${REMOTE_SITE_NODES}
+    do
+	alert " Updating ${NODE}..."
+	if rsync -Cav --exclude extlib/ --exclude perl.startup --exclude localdefs.pm --exclude httpd.conf --exclude cache/ --exclude session/ --exclude databases/ --exclude tmp/ --exclude ace_images/ --exclude html/rss/ ${SITE_TARGET_DIRECTORY}/ ${NODE}:${SITE_TARGET_DIRECTORY}
+	then
+	    success "Successfully pushed software onto ${NODE}..."
+	else
+	    failure "Pushing software onto ${NODE} failed..."
+#    exit
+	fi
+    done
+fi
 
 ######################################################
 #
