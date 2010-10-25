@@ -1,106 +1,135 @@
-package Update::CompileGeneResources; #
+package Update::CompileGeneResources; 
 
-use base 'Update';
 use strict;
+use base 'Update';
 use Ace;
 
-our $support_db_dir;
-our $datadir;
-our $release;
-
 our $DB = Ace->connect(-host=>'localhost', -port=>2005);
+our $gene_id = 'WBGene00000912';
 
-our $gene_rnai_pheno_file;
-our $gene_xgene_pheno_file;
-our $variation_data_file;
-our $rnai_data_file;
-our $phenotype_id2name_file;
+# The symbolic name of this step
+sub step { return 'compiling gene resources'; }
 
-sub step {return 'compile interaction data';}
+sub run {
 
-sub run { 
-
-	my $self = shift @_;
+	my $self = shift;
+	my $release = $self->release;
+	my $support_db_dir = $self->support_dbs;
 	
-	$release = $self->release;
-	$support_db_dir = $self->support_dbs; # ".";
-	$datadir = $support_db_dir . "\/$release\/gene_test"; # "/""/orthology_data/$release"
-	$gene_rnai_pheno_file = $datadir . "\/gene_rnai_pheno.txt";
-	$gene_xgene_pheno_file = $datadir . "\/gene_xgene_pheno.txt";
-	$variation_data_file = $datadir . "\/variation_data.txt";
-	$rnai_data_file = $datadir . "\/rnai_data.txt";
-	$phenotype_id2name_file = $datadir . "\/phenotype_id2name.txt";
-
-	print "Compiling gene, rnai, and pheno data.\n";
-	$self->gene_rnai_pheno_data_compile($gene_rnai_pheno_file);
-	print "Compiling gene, transgene, and pheno data\n";
-	$self->gene_xgene_pheno_data_compile($gene_xgene_pheno_file);
-	print "Compiling variation data\n";
-	$self->variation_data_compile($variation_data_file);
-	print "Compiling rnai data\n";
-	$self->rnai_data_compile ($gene_rnai_pheno_file,$rnai_data_file);
-	print "Compiling pheno id2name data\n";
-	$self->phenotype_id2name($phenotype_id2name_file);
-
-	print "Gene data resources compile done\n";	
+	my $datadir = $support_db_dir . "/$release/gene_test";
+	my $gene_rnai_pheno_file = "gene_rnai_pheno.txt";
+	my $gene_xgene_pheno_file = "gene_xgene_pheno.txt";
+	my $variation_data_file = "variation_data.txt";
+	my $rnai_data_file = "rnai_data.txt";
+	my $phenotype_id2name_file = "phenotype_id2name.txt";
+	
+	$self->gene_rnai_pheno_data_compile("$datadir/$gene_rnai_pheno_file");
+	print "gene_rnai_pheno_data_compile done\n";
+	
+	$self->gene_rnai_pheno_not_data_compile("$datadir/$gene_rnai_pheno_file");
+	print "gene_rnai_pheno_not_data_compile done\n";
+	
+	$self->gene_xgene_pheno_data_compile("$datadir/$gene_xgene_pheno_file");
+	print "gene_xgene_pheno_data_compile done\n";
+	
+	$self->variation_data_compile("$datadir/$variation_data_file");
+	print "variation_data_compile done\n";
+	
+	$self->rnai_data_compile ("$datadir/$gene_rnai_pheno_file","$datadir/$rnai_data_file");
+	print "rnai_data_compile done\n";
+	
+	$self->phenotype_id2name("$datadir/$phenotype_id2name_file");
+	print "phenotype_id2name done\n";
 
 }
 
-### subroutines
-
 sub gene_rnai_pheno_data_compile {
 
-	#my $output_file = shift @_;
+	my $self = shift @_;
+	my $outfile = shift @_;	
 	
-	open OUTFILE, ">$gene_rnai_pheno_file" or die "Cannot open gene_rnai_pheno_data_compile output file\n"; #
+	open OUTFILE, ">$outfile" or die "Cannot open gene_rnai_pheno_data_compile output file\n"; #
 	
 	my $class = 'Gene';
-					
-	my @objects = $DB->fetch(-class => $class); #[, -count => 20, -offset=>6800 ] 
+	my @objects = $DB->fetch(-class => $class); #[, ] -count => 20, -offset=>6800 , , -name=>$gene_id
 	
 	foreach my $object (@objects){
 	
 		my @rnai = $object->RNAi_result;    
+		
 		foreach my $rnai (@rnai) {
+						
 			my @phenotypes = $rnai->Phenotype;
+			my $na = '';
 		
 			foreach my $interaction ($rnai->Interaction) {
 				my @types = $interaction->Interaction_type;
 				foreach (@types) {
-		   
-				push @phenotypes,map { $_->right } grep { $_ eq 'Interaction_phenotype' } $_->col;
-					}
+				
+					push @phenotypes,map { $_->right } grep { $_ eq 'Interaction_phenotype' } $_->col;
+				}
 			}
+
+			my %print_out_lines;
 			
 			foreach my $phenotype (@phenotypes) {
-				my $not_attribute = $phenotype->right;
-				my $na;
-				if ($not_attribute =~ m/not/i){
 				
-					$na = $not_attribute;
+				my $print_out_line = "$object\|$rnai\|$phenotype\|$na";
 				
+				if ($print_out_lines{$print_out_line}) {
+				
+					next;
 				} else {
 				
-					$na = "";
-				
+					print  OUTFILE "$print_out_line\n";
+					$print_out_lines{$print_out_line} = 1;
 				}
-				
-				print OUTFILE "$object\|$rnai\|$phenotype\|$na\n";
 			
-			}	
+				  ### 
+			}
 		}
 	}
+}
 
-}  ## end gene_rnai_pheno_data_compile
+sub gene_rnai_pheno_not_data_compile {
+
+
+	my $self = shift @_;
+	my $outfile = shift @_;	
+	
+	open OUTFILE, ">>$outfile" or die "Cannot open gene_rnai_pheno_data_compile output file\n"; #
+	
+	my $class = 'Gene';
+	my @objects = $DB->fetch(-class => $class); #[, ] -count => 20, -offset=>6800 ,-name=>$gene_id
+	
+	foreach my $object (@objects){
+	
+		my @rnai = $object->RNAi_result;    
+		
+		foreach my $rnai (@rnai) {
+							
+			my @phenotypes = $rnai->Phenotype_not_observed;
+			my $na = '';
+			$na = 'Not';
+				
+			foreach my $phenotype (@phenotypes) {
+			
+				print  OUTFILE "$object\|$rnai\|$phenotype\|$na\n"; ### 
+			}
+		}
+	}
+}
+
 
 sub gene_xgene_pheno_data_compile{
 
-	# my $output_file_name = shift @_;
+	my $self = shift @_;
+	my $output_file_name = shift @_;
 	my $class = 'Gene';				
-	my @objects = $DB->fetch(-class => $class);
+	my @objects = $DB->fetch(-class => $class); #, -name=>$gene_id
 	my %lines;
 	
-	open OUTPUT, ">$gene_xgene_pheno_file" or die "Cannot open gene_xgene_pheno_data_compile output file\n";
+	open OUTPUT, ">$output_file_name" or die "Cannot open gene_xgene_pheno_data_compile output file\n";
 	
 	foreach my $object (@objects){
 	
@@ -139,26 +168,27 @@ sub gene_xgene_pheno_data_compile{
 		print OUTPUT "$line\n";
 	
 	}
+}
 
-} ## end gene_xgene_pheno_data_compile
  
 sub variation_data_compile{
 	
-	my $class = 'Gene';				
-	my @objects = $DB->fetch(-class => $class ); #,, -count => 20, -offset=>6800
+	my $self = shift @_;
+	my $output_file = shift @_;
 	
-	#my $output_file = shift @_;
-	open OUTFILE, ">$variation_data_file" or die "Cannot open variation_data_compile output file\n";
+	my $class = 'Gene';				
+	my @objects = $DB->fetch(-class => $class); #, -name=>$gene_id ,, -count => 20, -offset=>6800
+	
+	
+	open OUTFILE, ">$output_file" or die "Cannot open variation_data_compile output file\n";
 	
 	foreach my $object (@objects){
 	
-	#	print "\n\:$object\:\n";
-		
 		my @variations = $object->Allele;
 		foreach my $variation (@variations) {
 	
-			my 	$seq_status = $variation->SeqStatus;
-				
+			my $seq_status = $variation->SeqStatus;
+			my $variation_name = $variation->Public_name;
 			my @phenotypes = $variation->Phenotype;
 			
 				foreach my $phenotype (@phenotypes) {
@@ -170,31 +200,29 @@ sub variation_data_compile{
 						if ($attribute =~ m/^not$/i){
 		
 							$na = $attribute;
-				  
 						} else {
 							
-						next;
-		
+						next;		
 						}
 					}
 					
-				print  OUTFILE "$object\|$variation\|$phenotype\|$na\|$seq_status\n";
-				
-				}
+				print  OUTFILE "$object\|$variation\|$phenotype\|$na\|$seq_status\|$variation_name\n";
+
 			}
+		}
 	}
 }
+
 
 sub rnai_data_compile{
 
 
 my $class = 'RNAi';
+my ($self, $grp_datafile,$output_file)  = @_;
 
-#my ($grp_datafile,$output_file)  = @_;
 
-
-open DATAFILE, $gene_rnai_pheno_file or die "Cannot open rnai_data_compile datafile\n";
-open OUTPUT, ">$rnai_data_file" or die "Cannot open rnai_data_compile outfile\n";
+open DATAFILE, $grp_datafile or die "Cannot open rnai_data_compile datafile\n";
+open OUTPUT, ">$output_file" or die "Cannot open rnai_data_compile outfile\n";
 
 my %rnais;
 
@@ -204,28 +232,26 @@ foreach my $dataline (<DATAFILE>) {
 	chomp $dataline;
 	my ($gene,$rnai,$pheno,$not) = split /\|/,$dataline;
 	$rnais{$rnai} = 1;
-	#print "$dataline\n";
-
 }
 
 foreach my $unique_rnai (keys %rnais) {
 
-	my $rnai_object = $DB->fetch(-class => $class, -name =>$unique_rnai); #, , -count => 20, -offset=>6800
+	my $rnai_object = $DB->fetch(-class => $class, -name =>$unique_rnai); #, , -count => 20, -offset=>6800	
+	my $ref;
 	
-	my $ref = $rnai_object->Reference;
+	eval { $ref = $rnai_object->Reference;}; 
+	
 	my $genotype;
-	
-	my @experimental_details = $rnai_object->Experiment;
-	
+	my @experimental_details; # = $rnai_object->Experiment;
+
+	eval {@experimental_details = $rnai_object->Experiment;};
+
 	foreach my $experimental_detail (@experimental_details) {
-	
-		# print "$experimental_detail\n";
 			
 		if($experimental_detail =~ m/Genotype/) {
 		
 			$genotype = $experimental_detail->right;
 			print OUTPUT "$rnai_object\|$genotype\|$ref\n";
-		
 		}
 		
 		if($experimental_detail =~ m/Strain/) {
@@ -233,43 +259,35 @@ foreach my $unique_rnai (keys %rnais) {
 			my $strain = $experimental_detail->right;
 			$genotype = $strain->Genotype;
 			print OUTPUT "$rnai_object\|$genotype\|$ref\n";
-		
 		}	
-	
 	} 
 
 	if(!($genotype)) {
 		
 		print OUTPUT "$rnai_object\|$genotype\|$ref\n";
-	
 	} else {
 	
 		next;
-	
 	}
-
+}
 }
 
 
-
-}
 
 sub phenotype_id2name{
-
-	open OUTFILE, ">$phenotype_id2name_file" or die "Cannot open output file "; #$output_file
+	
+	my $self = shift @_;
+	my $output_file = shift @_;
+	open OUTFILE, ">$output_file" or die "Cannot open phenotype_id2name output file";
 
 	my $class = 'Phenotype';
-	
-	my @pheno_objects = $DB->fetch(-class => $class); #, , -count => 20, -offset=>6800
-	
+	my @pheno_objects = $DB->fetch(-class => $class); #, -name=>'WBPhenotype:0001380', , -count => 20, -offset=>6800
+
 	foreach  my $pheno  (@pheno_objects) {
-	
-		my $pheno_term = $pheno->Primary_name;
-		print  OUTFILE "$pheno\=\>$pheno_term\n"; ### 
-	
+
+    	my $pheno_term = $pheno->Primary_name;
+    	print OUTFILE "$pheno\=\>$pheno_term\n";
 	}
 }
 
 1;
-
-
