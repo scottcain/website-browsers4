@@ -153,6 +153,7 @@ sub new {
   	my $step = $this->step();
 
 	my $log_config = qq(
+	
 		log4perl.logger.rootLogger  = INFO,LOGFILE,Screen
 		
 		# Global spacing
@@ -587,6 +588,21 @@ sub AUTOLOAD {
       return $self->{$name};
     }
 }
-    
+ 
+ 
+sub system_call {
+
+	my ($cmd, $check_file) = @_;
+	system ("echo \'start\' > $check_file");
+	system ("$cmd; echo \'done\' > $check_file");
+	
+	my $status;
+	
+	do {
+	
+		$status = `cat $check_file`;
+		sleep (10);	
+	} while (!($status=~ m/done/));
+} 
 
 1;
