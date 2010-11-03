@@ -14,8 +14,9 @@ sub run {
     my $self = shift;    
     my $release   = $self->release;
     
-#    $self->strains_dir($self->root . "/website-classic/html/strains/$release");      
-    $self->strains_dir($self->root . "/databases/$release/strains"); 
+    $self->strains_dir("/usr/local/wormbase/databases/$release/strains");
+    
+    ### $self->root . "/website-classic/html/strains
     $self->_make_dir($self->strains_dir);
     
     $self->make_html_files();
@@ -36,8 +37,9 @@ sub make_html_files {
     open IN, "<$gopher_file" || die "$!\n";
     
     my $release    = $self->release;
-    my $acedb_path = $self->acedb_root . "/wormbase_$release";
-    my $db = Ace->connect($acedb_path) || die "Connection failure: ", Ace->error;
+    my $acedb_path = $self->acedb_root . "wormbase_$release";
+#    my $db = Ace->connect(-path=>$acedb_path) || die "Connection failure: ", Ace->error;
+    my $db = Ace->connect(-host=>'localhost',-port=>2005);
     my %status=$db->status;
     my $output = $self->strains_dir;
     
@@ -350,11 +352,11 @@ sub index_files {
     
     my $release = $self->release;
     my $acedb   = $self->acedb_root . "/wormbase_$release";    
-    my $db = Ace->connect($acedb) || die "Connection failure: ", Ace->error;
-
+    #my $db = Ace->connect($acedb) || die "Connection failure: ", Ace->error;
+    my $db = Ace->connect(-host=>'localhost',-port=>2005) || die "Connection failure: ", Ace->error;
     my $lookupFileName="lookup.strains";
     
-    my $ix = new Search::Indexer({dir => $strains_dir, writeMode => 1});
+    my $ix = new Search::Indexer(dir => $strains_dir, writeMode => 1);
     my $pref = $self->strains_dir;
     my @allfilestmp = `ls -R $pref`;
     my @dirs;
@@ -437,13 +439,8 @@ sub index_files {
 	$content=~s/\t/ /g;
 	$content=~s/\s{2,}/ /g;
 	if (! $content) {
-#	    $i++;
 	    next;
 	}
-#	$i++;
-#	print STDERR "$i $genotype\n";
-
-
 	$ix->add($i, $content);
 	$strain_hash{$i}{strain}=$title;
 	$strain_hash{$i}{CGC}=$inCGC;
@@ -467,7 +464,7 @@ sub print_top {
     my ($self,$title,$fh,$body) = @_;
     if ($fh) {
 	if (!fileno($fh)) {
-	    print "filehandle $fh is not opened: print_top\n";
+	    print "filehandle $fh is not opened\n";
 	    exit;
 	}
 	select($fh);
