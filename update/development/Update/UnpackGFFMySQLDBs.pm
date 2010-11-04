@@ -1,19 +1,39 @@
-package Update::UnpackGFFMySQLDBs.pm
+package Update::UnpackGFFMySQLDBs;
 
 use strict;
 use base 'Update';
 
-
-sub step {return 'unpack gff mysql dbs'}
+# The symbolic name of this step
+sub step { return 'unpacking gff mysql dbs from Sanger'; }
 
 sub run {
+
+	my $self = shift;
+	my $release = $self->release;
+	my $support_db_dir = $self->support_dbs;
 	
-	our $datadir = "/usr/local/wormbase/databases/web_data";
-	our $md5_in_dir = "md5_in";
-	our $md5_ref_dir = "md5_ref";
-	our $mysql_tgz_dir = "mysql_tgzs";
-	# our $mysql_data_dir = "/usr/local/mysql/data";
-	# our $mysql_data_dir = "/usr/local/wormbase/databases/mysql_data_test";
+	### intialize variables
+
+	my $datadir = $support_db_dir . "/web_data";
+	my $md5_in_dir = "md5_in";
+	my $md5_ref_dir = "md5_ref";
+	my $mysql_tgz_dir = "mysql_tgzs";
+	## my $mysql_data_dir = "/usr/local/mysql/data";
+	my $mysql_data_dir = $support_db_dir . "/mysql_test";
+	
+	my %species_db2sanger_db_name = (
+		b_malayi => brugia,
+		can => can,
+		c_brenneri => brenneri,
+		c_briggsae => briggsae,
+		c_elegans => elegans,
+		c_japonica => japonica,
+		c_remanei => remanei,
+		h_contortus => hcontortus,
+		m_hapla => hapla,
+		m_incognita => mincognita,
+		p_pacificus => pristionchus,
+	);
 	
 	## start
 	
@@ -26,9 +46,7 @@ sub run {
 	
 	my $md5_in_file_list = `ls $datadir/$md5_in_dir`;
 	my @md5_in_files = split /\n/, $md5_in_file_list;
-	
 	my $md5_ref_file_list = `ls $datadir/$md5_ref_dir`;
-	
 	my @get_corresponding_files;
 	
 	### foreach md5 file in md5_in directory
@@ -67,49 +85,35 @@ sub run {
 			}
 		}	### end foreach md5 file in md5_in directory
 						
-						
-	
-						
+											
 	print "@get_corresponding_files\n";					
-	 
-	### test array
 	
-	#my @mysql_files = qw/p_pacificus/;
-	#print "@mysql_files\n";
-	#@mysql_files
 	
 	foreach my $species_name (@get_corresponding_files) {
 	
 		print "processing file for $species_name\n";
-	
-	#	print "moving file for $species_name\n";
-	#	my $move_command = "mv $datadir/$mysql_tgz_dir/$species_name.tar.bz2 $mysql_data_dir";
-	#	system_call($move_command,$check_file);
 		
-		my $check_file = "$species_name\_check.txt";
+		my $check_file = "$species_name\_check.chk";
 	
 		print "unzipping file for $species_name\n";
 		my $unzip_command = "bunzip2 $datadir/$mysql_tgz_dir/$species_name.tar.bz2";
-		system_call($unzip_command,$check_file);
-	
-	#	system_call("cd $mysql_data_dir",$check_file);
+		Update::system_call($unzip_command,$check_file);
 	
 		print "untarring file for $species_name\n";
 		my $untar_command = "tar -C $mysql_data_dir -xvf $datadir/$mysql_tgz_dir/$species_name.tar";
-		system_call($untar_command,$check_file);
-		
-	#	print "moving data file\n";
-	#	system_call("mkdir $mysql_data_dir/$species_name",$check_file);
-	#	system_call("mv $datadir/$mysql_tgz_dir/$species_name/* /$species_name", $check_file);
+		Update::system_call($untar_command,$check_file);
 		
 		print "removing tar file\n";
-		system_call("rm $datadir/$mysql_tgz_dir/$species_name.tar", $check_file);
+		Update::system_call("rm $datadir/$mysql_tgz_dir/$species_name.tar", $check_file);
 		
+		print "reming db for $species_name\n";
+		my $stage_name = $species_name . "_" .$release;
+		my $sanger_db_name = $species_db2sanger_db_name{$species_name};
+		Update::system_call("mv $mysql_data_dir/$sanger_db_name  $mysql_data_dir/$stage_name", $check_file);
+		
+		print "Updating permissions for $species_name\n";
+		Update::system_call("chmod 775 $mysql_data_dir/$stage_name",$check_file);
 	}
-
 }
 
 1;
-
-
-

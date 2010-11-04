@@ -14,14 +14,15 @@ sub step { return 'create ontology resources'; }
 sub run {
     my $self = shift;
     
-    my $release        = $self->release;
+    my $release = $self->release;
     
     # The ontology directory should already exist.
     my $support_db_dir = $self->support_dbs;
     my $datadir = $support_db_dir . "/$release/ontology";
     
     # Additional paths and filenames
-    $self->search_data_file("$datadir/search_data.txt");
+    
+    $self->search_data_preprocessed_file("$datadir/search_data_preprocessed.txt");
     $self->go_obo_file("$datadir/gene_ontology.$release.obo");
     $self->go_assoc_file("$datadir/gene_association.$release.wb.ce");
     $self->ao_obo_file("$datadir/anatomy_ontology.$release.obo");
@@ -50,17 +51,45 @@ sub run {
     $self->parse_search_data(0,1,$self->id2name_file);
     $self->parse_search_data(1,0,$self->name2id_file);
     $self->parse_search_data(0,5,$self->id2association_counts_file);
+    
+    ## further compiles
+    
+    my @cmds;
+	my $util_dir = "util";
+	my $check_file = "$util_dir/ontology_check_file.txt";
+
+	@cmds = (
+		"clean_up_search_data.pl $release",
+		"get_cummulative_association_counts.pl",
+		"get_geneid2go_ids.pl",
+		"get_pheno_gene_data_not.pl",
+		"get_pheno_gene_data.pl",
+		"get_pheno_rnai_data.pl",
+		"get_pheno_variation_data.pl",
+	    "get_pheno_rnai_data.pl 1",
+		"get_pheno_variation_data.pl 1",
+		"get_pheno_xgene_data.pl"
+		);
+		
+
+	foreach my $cmd (@cmds) {
+	
+		Update::system_call($cmd, $check_file);
+		print "$cmd done\n";
+	}
+ 
     my $fh = $self->master_log;
     print $fh $self->step . " complete...\n";
 }
 
 
-#########################################################################################################
+####################################################################################################
 #
 #  takes obo and association files and creates a table of annotations for terms in a given ontology
 #  syntax make_sample_file <obo_file_name> <namespace> <association_file_name>
 #
-##########################################################################################################
+####################################################################################################
+
 sub compile_search_data {
     my ($self,$type,) = @_;
     $self->logit->debug("compiling search_data.txt for $type");
@@ -71,7 +100,7 @@ sub compile_search_data {
     my $association_file_name = $self->$assoc_tag;
     
     open HTML, "< $obo_file_name" or $self->logit->logdie("Cannot open the protein file: $obo_file_name; $!");
-    my $target = $self->search_data_file;
+    my $target = $self->search_data_preprocessed_file;
     open OUT,">>$target" or $self->logit->logdie("Cannot open the output file $target");
     
     my $id;
@@ -123,11 +152,12 @@ sub compile_search_data {
 }
 
 
-#########################################################################################################
+##############################################################################################
 # parses the obo files and gets parent-child relationships between terms in the the ontology
 # syntax: ontology_relations.pl <obo_file_name> and creates a two DB_File files using term ids as keys and  contains two listings, one of their parents, the other of the children.
 # NB: abstract to work with specificid ontologies
-##########################################################################################################
+###############################################################################################
+
 sub compile_ontology_relationships {
     my ($self,$type,$format) = @_;
     $self->logit->debug("compiling ontology relationships for $type");
@@ -147,8 +177,9 @@ sub compile_ontology_relationships {
     my %id2parent;
     my %parent2id;
     my $discard;
-# system ('rm ./id2parents.dat');
-# system ('rm ./parent2ids.dat');
+
+	# system ('rm ./id2parents.dat');
+	# system ('rm ./parent2ids.dat');
     
     foreach my $obo_file_line (<HTML>) {
 	chomp $obo_file_line;
@@ -230,7 +261,7 @@ sub parse_search_data {
     my ($self,$index_1,$index_2,$output) = @_;
     $self->logit->debug("parsing search data to $output");
 
-    my $datafile = $self->search_data_file;
+    my $datafile = $self->search_data_preprocessed_file;
     open OUT, ">$output" or $self->logit->logdie("Cannot open the output file: $output $!");
     open FILE, "< /$datafile" or $self->logit->logdie("Cannot open $datafile");
     
