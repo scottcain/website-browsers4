@@ -100,6 +100,36 @@ do
   fi
 done
 
+
+
+######################################################
+#
+#    REMOTE SITE NODES
+#
+######################################################
+alert "Pushing software onto OICR nodes..."
+for NODE in ${REMOTE_SITE_NODES}
+do
+  alert " Updating ${NODE}..."
+  if rsync -Cav --exclude extlib \
+                --exclude localdefs.pm \
+                --exclude httpd.conf \
+                --exclude perl.startup \
+                --exclude cache/ \
+                --exclude session/ \
+                --exclude databases/ \
+                --exclude tmp/ \
+                --exclude ace_images/ \
+                --exclude html/rss/ \
+              ${SITE_STAGING_DIRECTORY}/ ${NODE}:${SITE_TARGET_DIRECTORY}
+  then
+    success "Successfully pushed software onto ${NODE}..."
+  else
+    failure "Pushing software onto ${NODE} failed..."
+  fi
+done
+
+
 # Now sync the admin module
 #alert "Pushing the admin module onto OICR nodes..."
 #for NODE in ${OICR_ALL_NODES}
