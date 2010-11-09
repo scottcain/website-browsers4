@@ -31,23 +31,36 @@ our $ortholog_other_data_txt_file;
 our $ortholog_other_data_hs_only_txt_file;
 our $all_proteins_txt_file;
 our $hs_proteins_txt_file;
-
+our $DB;
+our $omim_id2_gene_name_file;
+our $precompile_data_dir;
+our $ontology_dir;
+our $onto_gene_association_file;
 
 sub step {return 'compile interaction data';}
 
 sub run{
 	
 	my $self = shift @_;
-	
 	my $release =  $self->release; #"WS207";
 	
-	### orthology dir should have been created
-	my $DB = Ace->connect(-host=>'localhost',-port=>2005) or die "Cannot connect to Acedb"; 
+	### add control hash for each step here ####
+	
+	# TODO: add a way to turn each step on or off here vs. commenting them out which makes the script error prone .....
+	
+	### control hash ####
+	
+	
+	$DB = Ace->connect(-host=>'localhost',-port=>2005) or die "Cannot connect to Acedb"; 
 	
 	## datapaths and files
 
-	$support_db_dir = $self->support_dbs; # ".";
-	$datadir = $support_db_dir."\/$release\/orthology"; # "/""/orthology_data/$release"
+	$support_db_dir = $self->support_dbs;
+	$precompile_data_dir = $support_db_dir . "/orthology_staging";
+	$datadir = $support_db_dir."\/$release\/orthology";
+	$ontology_dir = $support_db_dir."\/$release\/ontology";
+	$onto_gene_association_file = "gene_association." . $release . ".wb.ce";
+	
 	$disease_page_data_txt_file = "$datadir/disease_page_data.txt";
 	$disease_search_data_txt_file = "$datadir/disease_search_data.txt";
 	$full_disease_data_txt_file = "$datadir/full_disease_data.txt";
@@ -73,126 +86,265 @@ sub run{
 	$ortholog_other_data_hs_only_txt_file = "$datadir/ortholog_other_data_hs_only.txt";
 	$all_proteins_txt_file = "$datadir/all_proteins.txt";
 	$hs_proteins_txt_file = "$datadir/hs_proteins.txt";
+	$omim_id2_gene_name_file = "$datadir/omim_id2gene_name.txt";
+
+	
+	###################
+	##### run #########
+	###################
+
+	### 20101108_main ####
+	
+	## get precompile data ##
+	
+#	print "obtaining precompile dataset";
+#	$self->get_precompile_data();
+#	print " -- OK\n";
 
 
-
-	## run ##
-
-
-	#$self->compile_external_files();
-	#print "External files compiled\n";
+	### end 20101108_main ####
+	
+	print "reconfiguring OMIM file"; 
 	$self->reconfigure_omim_file();  ## OK
-	print "Omim reconfigured\n"; 
+	print " -- OK\n";
+	
+	print "getting associated phenes";
 	$self->get_all_associated_phenotypes(); ## OK
-	print "associated phenes obtained\n";
+	print " -- OK\n";
+ 
+ 	print "pulling omim descriptions";
  	$self->pull_omim_desc(); ## OK
-	print "omim descriptions pulled\n";
- 	$self->get_all_ortholog_other_data(); ## works but needs another plan to pull ortholog_other data -- probably from the ace files...
-	print "orthology other data obtained\n";
+	print " -- OK\n";
+	
+	print "getting associated function go terms";
 	$self->get_all_associated_go_terms("F",$gene_id2go_mf_txt_file); # OK
-	print "associated function go terms obtained\n";
+	print " -- OK\n";
+	
+	print "getting associated process go terms";
   	$self->get_all_associated_go_terms("P",$gene_id2go_bp_txt_file); # OK
- 	print "associated process go terms obtained\n";
+	print " -- OK\n";
+
+	print "getting omim text notes";
   	$self->pull_omim_txt_notes(); # OK
- 	print "omim text notes obtained\n";
+ 	print " -- OK\n";
+  	
+  	print "processing omim 2 disease data";
   	$self->process_omim_2_disease_data(); ## OK
- 	print "omim 2 disease data processed\n";
+  	print " -- OK\n";
+  	
+  	print "printing hs orthology other data";
   	$self->print_hs_ortholog_other_data(); ## OK
- 	print "hs orthology other data printed\n";
- 	$self->update_hs_protein_list(); ## OK
- 	print "hs protein list updated\n";
+	print " -- OK\n";
+	
+	print "updating hs protein list";
+	$self->update_hs_protein_list(); ## OK
+	print " -- OK\n";
+
+	print "processing ensembl 2 omim data";
  	$self->process_ensembl_2_omim_data(); ## needs work, pull data from Sanger Ace files if at all possible
- 	print "ensembl 2 omim data processed\n";
+ 	print " -- OK\n";
+ 	
+ 	print "assembling disease data";
  	$self->assemble_disease_data(); ## OK
- 	print "disease data assembled\n";
+ 	print " -- OK\n";
+
+	print "printing disease page data";
   	$self->print_disease_page_data(); ## OK
- 	print "disease page data printed\n";
- 	$self->process_pipe_delineated_file($disease_page_data_txt_file,1,"0-1-2-3-4-5-6-7-8-9-10-11-12",0,$omim_id2all_ortholog_data_txt_file); ## OK
- 	print "omim 2 all ortholog data processed\n";
+ 	print " -- OK\n";
+
+	print "processing omim 2 all ortholog data";
+	$self->process_pipe_delineated_file($disease_page_data_txt_file,1,"0-1-2-3-4-5-6-7-8-9-10-11-12",0,$omim_id2all_ortholog_data_txt_file); ## OK
+ 	print " -- OK\n";
+  	
+  	print "getting disease synonyms";
   	$self->pull_disease_synonyms(); ## OK
- 	print "disease synonyms obtained\n";
+ 	print " -- OK\n";
+ 	
+ 	print "processing omim 2 phenotype";
  	$self->process_pipe_delineated_file($disease_page_data_txt_file,1,'8',1,$omim_id2phenotypes_txt_file); ## OK
- 	print "omim 2 phenotype processed\n";
+	print " -- OK\n";
+	
+	print "processing omim 2 disease name";
   	$self->process_pipe_delineated_file($disease_page_data_txt_file,1,'0',0,$omim_id2disease_name_txt_file ); ## OK
- 	print "omim 2 disease name processed\n";
+ 	print " -- OK\n";
+
+	print "processing gene 2 omim ids file";
  	$self->process_pipe_delineated_file($disease_page_data_txt_file,2,'1',1,$gene_id2omim_ids_txt_file); ## OK
- 	print "gene 2 omim ids file processed\n";
+ 	print " -- OK\n";
+ 	
+ 	print "processing omim 2 go id file";
  	$self->process_pipe_delineated_file($disease_page_data_txt_file,1,'9-10',1,$omim_id2go_ids_txt_file); ## OK
- 	print "omim 2 go id file processed\n";
+ 	print " -- OK\n";
+  	
+  	print "compiling omim go data";
   	$self->compile_omim_go_data(); ## OK
- 	print "omim go data compiled\n";
+ 	print " -- OK\n";
+
+	print "assembling search data";
  	$self->assemble_search_data(); ## OK
- 	print "search data assembled\n";
+ 	print " -- OK\n";
+ 	
+ 	print "processing omim 2 gene name"; 
+ 	$self->process_omim_id2_gene_name(); ## OK
+	print " -- OK\n";
+ 	
+	print "pushing out files for next release";
+	$self->push_files_for_next_release();
+	print " -- OK\n";
+
+ 	print "compile_orthology_resources.pl done\n";
+
 }
-	# $self->process_pipe_delineated_file(); template
-############################
+
+### $self->process_pipe_delineated_file(); template	
+
+#################
 ## subroutines ##
+#################
 
-sub compile_external_files {
 
-system ('cp /usr/local/wormbase-devel/norie/databases/pipeline/WS199/orthology/* /usr/local/wormbase-devel/norie/orthology_compile/orthology_data/integration_test');
+#### 20101108_sub ####
 
-system ('cp /usr/local/wormbase-devel/norie/databases/pipeline/WS199/ontology/* /usr/local/wormbase-devel/norie/orthology_compile/orthology_data/integration_test');
+sub get_precompile_data {
+	
+	## get external, and data from last release	
+	my $check_file = "get_precompile.chk";
+	
+	## system_call -- set up a template
+	my $pull_extenal_data_command = "mv $precompile_data_dir/* $datadir";
+	Update::system_call($pull_extenal_data_command,$check_file);
+	
+	## copy ontology data
 
+	# id2name.txt
+	my $copy_id2name_cmd = "cp $ontology_dir\/id2name.txt $datadir";
+	Update::system_call($copy_id2name_cmd, $check_file);
+	
+	# name2id.txt
+	my $copy_name2id_cmd = "cp $ontology_dir\/name2id.txt $datadir";
+	Update::system_call($copy_name2id_cmd, $check_file);
+	
+	# gene_association file
+	my $copy_gene_association_command = "cp $ontology_dir/$onto_gene_association_file $datadir";
+	Update::system_call($copy_gene_association_command, $check_file);
+	
+	## unzip OMIM file
+	my $unzip_cmd = "gunzip $datadir/omim.txt.Z";
+	Update::system_call($unzip_cmd, $check_file);	
 }
+
+
+sub push_files_for_next_release {
+
+	my @files_2_push = (
+		$all_proteins_txt_file,
+		$hs_proteins_txt_file
+	);
+	
+	my $check_file = "file_push.chk";
+
+	foreach my $file (@files_2_push) {
+		
+		my $cmd = "cp $file $precompile_data_dir";
+		Update::system_call($cmd, $check_file);
+	}
+}
+
+#### end 20101108_development ####
 
 
 sub update_hs_protein_list {
 
 	my $all_protein_list = $all_proteins_txt_file;
 	my $hs_protein_list = $hs_proteins_txt_file;
-
-
-open ALL_PROTEIN_LIST, "$all_protein_list" or die "Cannot open all protein list\n";
-
-my $DB = Ace->connect(-host=>'localhost',-port=>2005);
-
-
-## build protein hash
-
-my %all_proteins;
-
-foreach my $protein_id (<ALL_PROTEIN_LIST>) {
 	
-	chomp $protein_id;
-	$all_proteins{$protein_id} = 1;
-#	print "$protein_id\n";
-
-}
-
-close ALL_PROTEIN_LIST;
-
-open ALL_PROTEIN_LIST, ">>$all_protein_list" or die "Cannot open all protein list\n";
-open HS_PROTEIN_LIST, ">>$hs_protein_list" or die "Cannot open hs protein list\n";
-
-### get and check protein data 
-
-my @acedb_proteins = $DB->fetch(-class=>'Protein');
-
-foreach my $ace_protein (@acedb_proteins) {
-
-	if ($all_proteins{$ace_protein}) {
+	#my $DB = Ace->connect(-host=>'localhost',-port=>2005);  ## 20101108 cleanup
 	
-		next;
+	open ALL_PROTEIN_LIST, "$all_protein_list" or die "Cannot open all protein list\n";
 	
-	} else {
+	## build protein hash
+	my %all_proteins;
+
+	foreach my $protein_id (<ALL_PROTEIN_LIST>) {
 	
-			#print "$ace_protein\n";
+		chomp $protein_id;
+		$all_proteins{$protein_id} = 1;
+	}
+	
+	close ALL_PROTEIN_LIST;
+
+	open ALL_PROTEIN_LIST, ">>$all_protein_list" or die "Cannot open all protein list\n";
+	open HS_PROTEIN_LIST, ">>$hs_protein_list" or die "Cannot open hs protein list\n";
+
+	### get and check protein data 
+
+	my @acedb_proteins = $DB->fetch(-class=>'Protein');
+
+	foreach my $ace_protein (@acedb_proteins) {
+
+		if ($all_proteins{$ace_protein}) {
+	
+			next;
+		} else {
+	
 		 	my $sp = $ace_protein->Species;
-                
-        	if($sp =~ m/sapien/){
+           	if($sp =~ m/sapien/){
              
              	print ALL_PROTEIN_LIST "$ace_protein\n";
-             	print HS_PROTEIN_LIST "$ace_protein\n";
-             
+             	print HS_PROTEIN_LIST "$ace_protein\n";      
              } else {
-               
                	print ALL_PROTEIN_LIST "$ace_protein\n";
-                
            	}
 		}
 	}
 }
+
+### 20100201 addn
+
+sub process_omim_id2_gene_name{
+
+	my %gene_id2omim_ids = build_hash($gene_id2omim_ids_txt_file);
+	my %omim_id2gene_ids;
+	
+	## set up output file
+	
+	open OUT, ">$omim_id2_gene_name_file";
+
+	foreach my $gene_id (keys %gene_id2omim_ids) {
+		
+		my $gene_obj;
+		my $gene_cgc;
+		my $gene_seq;
+		my $omim_id_line; 
+		my @omim_ids;
+
+		$gene_obj = $DB->fetch(-class=>'Gene',-name=>$gene_id);
+		
+		eval {$gene_cgc = $gene_obj->CGC_name;};
+		eval {$gene_seq = $gene_obj->Sequence_name;};
+	
+		$omim_id_line = 	$gene_id2omim_ids{$gene_id}; 
+		@omim_ids = split "%", $omim_id_line;
+			
+		foreach my $omim_id (@omim_ids) {
+		
+			$omim_id2gene_ids{$omim_id}{$gene_cgc} = 1;
+			$omim_id2gene_ids{$omim_id}{$gene_seq} = 1;
+		}
+	}
+	
+	foreach my $omim_id (keys %omim_id2gene_ids) {
+	
+		my $gene_ids = $omim_id2gene_ids{$omim_id};
+		my @gene_ids = keys %$gene_ids;
+		print OUT "$omim_id\=\>@gene_ids\n";
+	} 
+}
+
+
+### end 20100201 addn ###
+
+
 
 sub assemble_search_data{
 	
@@ -206,11 +358,10 @@ sub assemble_search_data{
 	my %omim_id2disease_synonyms = &build_hash($omim_id2disease_synonyms_txt_file);
 	my %omim_id2phenotypes = &build_hash($omim_id2phenotypes_txt_file);
 
-
 	foreach my $omim_id (keys %omim2all_ortholog_data){
+	
 		print OUT "$omim_id\|$omim2disease_name{$omim_id}\|$omim_id2disease_desc{$omim_id}\|$omim_id2disease_notes{$omim_id}\|$omim_id2disease_synonyms{$omim_id}\|$omim_id2phenotypes{$omim_id}\n";
 	}
-	
 }
 
 sub compile_omim_go_data{
@@ -220,20 +371,18 @@ sub compile_omim_go_data{
 
 	open OUT, "> $outfile" or die "Cannot open $outfile\n";
 
-	# my %omim_id2go_id;
 	my %go_id2omim_id;
 
 	foreach my $omim_id (keys %omim_id2go_ids){
+	
 		my $go_ids = $omim_id2go_ids{$omim_id};
-		# print "1\: $terms\n";
 		$go_ids =~ s/\|/&/g;
 		$go_ids =~ s/&&*/&/g;
-		# print "2\: $terms\n";
+
 		if($go_ids) {
 			my @go_ids = split "&",$go_ids;
 			foreach my $go_id (@go_ids){
-				# my $go_id = $name2id{$term};
-				# $omim_id2go_id{$omim_id}{$go_id} = 1;
+
 				$go_id2omim_id{$go_id}{$omim_id} = 1;
 			}
 		}
@@ -258,8 +407,6 @@ sub compile_omim_go_data{
 
 sub pull_disease_synonyms {
 	
-	# my $omim_file = $ARGV[0];
-
 	my ($self) = @_;
 
 	my $omim_file = $omim_txt_file;
@@ -268,22 +415,24 @@ sub pull_disease_synonyms {
 	open OMIM,"<$omim_file" or die "Cannot open $omim_file\n";
 	open OUT,"> $outfile" or die "Cannot open outfile\n";
 
-
 	my $header;
 	my @line_elements;
 	my @lines;
 
 	foreach my $line (<OMIM>){
 		chomp $line;
+		
 		if(!($line =~ m/^*./)){
 			next;
 		}
+		
 		elsif($line eq "\*RECORD\*"){
 			my $hold_line = $header."=>".(join " ",@line_elements);
 			push @lines, $hold_line;
 			push @lines, "$line";
 			@line_elements = ();
 		}	
+		
 		elsif($line =~ m/^\*FIELD\*/){
 			my $hold_line = $header."=>".(join " ",@line_elements);
 			push @lines, $hold_line;
@@ -291,19 +440,23 @@ sub pull_disease_synonyms {
 			$header = $line;
 			@line_elements = ();
 		}
+		
 		else {
 			push @line_elements, $line
 		}
 	}
 
 	foreach my $output_line (@lines){
+		
 		if($output_line =~ m/MOVED/){
 			next;
 		}
+		
 		elsif($output_line =~ m/^\*FIELD\*\ TI/){
 			if($output_line =~ m/MOVED/){
 				next;
 			}
+			
 			else{
 				$output_line =~ s/^\*FIELD\*\ TI\=\>//;
 				$output_line =~ s/[#^*%+]//;
@@ -312,6 +465,7 @@ sub pull_disease_synonyms {
 				print OUT "$output_line\n";
 			}
 		} 
+		
 		else {
 			next;
 		}
@@ -321,20 +475,9 @@ sub pull_disease_synonyms {
 sub process_pipe_delineated_file{
 	
 	### arguments
-
-	# my $datafile = $ARGV[0]; ## file containing the data in rows
-	# my $key_index = $ARGV[1]; ## index of the element (starting with zero) to be used as the key to the data hash to be created
-	# my $value_index_list = $ARGV[2];  ### comma deliniated list of integers
-	# my $multi = $ARGV[3];  ##  0 or 1
-
-
-	####
 	
 	my ($self,$datafile,$key_index,$value_index_list,$multi,$outfile) = @_;
-
 	my @value_indices = split "-",$value_index_list;
-	#my $join_delineator = $delineator;
-	#$join_delineator =~ s/\\//;
 	my %recompiled_data;
 
 	open DATAFILE, "< $datafile" or die "Cannot open $datafile";
@@ -342,28 +485,30 @@ sub process_pipe_delineated_file{
 	
 	foreach my $line (<DATAFILE>){
 		chomp $line;
-		# print "$line\n";
 		my @line_elements = split /\|/, $line;
-		# print "LE\: $line_elements[$key_index]\n";
 		my $value = $recompiled_data{$line_elements[$key_index]};
 		my @value_line;
+		
 		foreach my $value_index (@value_indices){
+		
 			push @value_line, $line_elements[$value_index];		
 		}
+		
 		my $value_line = join "|",@value_line;
 
 		if($value && $multi){
+		
 			if($value_line =~ m/$value/) {
 				next;
 			}
+			
 			else {
 				$recompiled_data{$line_elements[$key_index]} = join '%',($value,$value_line);
-				# print "ACTION:append\n";
 			}
 		}
+		
 		else {
 			$recompiled_data{$line_elements[$key_index]} = $value_line;
-			# print "ACTION:new\n";
 		}
 	}
 
@@ -374,13 +519,15 @@ sub process_pipe_delineated_file{
 }
 
 sub print_disease_page_data{
+
 	my $in_file = $full_disease_data_txt_file;
 	my $out_file = $disease_page_data_txt_file;
-	
-	open OUT, "> $out_file" or die "Cannot open $out_file";
-	
-	my $data = `grep -v  NO_DISEASE $in_file`;
-	print OUT $data;
+	my $check_file = "print_disease_page_data.chk";
+	my $grep_cmd = "grep -v NO_DISEASE $in_file > $out_file";
+	Update::system_call($grep_cmd, $check_file);
+	#open OUT, "> $out_file" or die "Cannot open $out_file";
+	#my $data = ``;
+	#print OUT $data;
 }
 
 sub assemble_disease_data{
@@ -397,7 +544,6 @@ sub assemble_disease_data{
 
 	open FILE, "< $filename" or die "Cannot open $filename\n";
 	open OUT, "> $outfile" or die "Cannot open $outfile\n";
-	# my $DB = Ace->connect(-host=>'aceserver.cshl.org', -port=>2005);
 
 	foreach my $line (<FILE>){
 		my $disease;
@@ -405,14 +551,15 @@ sub assemble_disease_data{
 
 		chomp $line;
 		my ($wb_id,$db,$ortholog_id,$sp,$analysis,$method) = split /\|/,$line;
-		# print "$ortholog_id\n";
 		my $phenotype;
 		my $functions;
 		my $biological_processes;
 		my %data;
+
 		if($hs_gene_id2omim_id{$ortholog_id}){
 			$omim_id = $hs_gene_id2omim_id{$ortholog_id};
 		}
+
 		else {
 			$omim_id = "NO_OMIM";
 		}
@@ -424,7 +571,6 @@ sub assemble_disease_data{
 			$disease = "NO_DISEASE";
 		}
 
-
 		print OUT "$disease\|$omim_id\|$line\|$gene_id2phenotype{$wb_id}\|$gene_id2go_bp{$wb_id}\|$gene_id2go_mf{$wb_id}\|$omim_id2disease_desc{$omim_id}\|$omim_id2disease_notes{$omim_id}\n";
 	}
 	
@@ -432,7 +578,7 @@ sub assemble_disease_data{
 
 sub build_hash{
 	my ($file_name) = @_;
-	open FILE, "<./$file_name" or die "Cannot open the file: $file_name\n";
+	open FILE, "<$file_name" or die "Cannot open the file: $file_name\n";
 	my %hash;
 	foreach my $line (<FILE>) {
 		chomp ($line);
@@ -462,29 +608,32 @@ sub process_omim_2_disease_data{
 	open FILE,"< $filename" or die "Cannot open $filename\n";
 	open OUT, "> $outfile" or die "Cannot open $outfile\n";
 	foreach my $line (<FILE>){
-	        chomp $line;
-	        my @line_elements = split '\|',$line;
-	        $line_elements[0] =~ s/\(.\)//g;
-	        if ($line_elements[0] =~ m/[0-9]{6}/){
-	                my @disease_data = split ",",$line_elements[0];
-	                my $omim_id = pop @disease_data;
-	                $omim_id =~ s/ //g;
-	                my @disease_names;
-	                foreach my $disease_datum (@disease_data){
-	                        $disease_datum =~ s/[{*,}*]//g;
-	                        $disease_datum =~ s/\[*//g;
-	                        $disease_datum =~ s/\]*//g;
-	                        push @disease_names, $disease_datum;
-	                }
-	                my $disease_name = join ",",@disease_names;
-	                print OUT "$omim_id\=\>$disease_name\n";
-	        }
-	        else{
-	                $line_elements[0] =~ s/[{*,}*]//g;
-	                $line_elements[0] =~ s/\[*//g;
-	                $line_elements[0] =~ s/\]*//g;
-	                print OUT "$line_elements[2]\=\>$line_elements[0]\n";
-	        }
+		chomp $line;
+		my @line_elements = split '\|',$line;
+		$line_elements[0] =~ s/\(.\)//g;
+		
+		if ($line_elements[0] =~ m/[0-9]{6}/){
+	    	my @disease_data = split ",",$line_elements[0];
+	        my $omim_id = pop @disease_data;
+	        $omim_id =~ s/ //g;
+			my @disease_names;
+			foreach my $disease_datum (@disease_data){
+					$disease_datum =~ s/[{*,}*]//g;
+					$disease_datum =~ s/\[*//g;
+					$disease_datum =~ s/\]*//g;
+					push @disease_names, $disease_datum;
+			}
+			my $disease_name = join ",",@disease_names;
+			print OUT "$omim_id\=\>$disease_name\n";
+		}
+		
+		else {
+		
+			$line_elements[0] =~ s/[{*,}*]//g;
+			$line_elements[0] =~ s/\[*//g;
+			$line_elements[0] =~ s/\]*//g;
+			print OUT "$line_elements[2]\=\>$line_elements[0]\n";
+	   }
 	}
 }
 
@@ -492,9 +641,7 @@ sub process_omim_2_disease_data{
 sub process_ensembl_2_omim_data{
 	
 	my ($self) = @_;
-	
-	my $DB = Ace->connect(-host=>'localhost', -port=>2005) or die "Cannot open Acedb for process_ensembl_2_omim_data";
-
+	## my $DB = Ace->connect(-host=>'localhost', -port=>2005) or die "Cannot open Acedb for process_ensembl_2_omim_data";  ## 20101108 clean up
 	my $infile = $hs_proteins_txt_file;
 	my $outfile = $hs_ensembl_id2omim_txt_file;
 	
@@ -503,40 +650,34 @@ sub process_ensembl_2_omim_data{
 	
 	foreach my $object_name (<INFILE>){
 	
-	chomp $object_name;
+		chomp $object_name;
+		my $db_info;
+		my @data;
 
+		my $object = $DB->fetch(-class =>'Protein', -Name=>$object_name);
+		eval {$db_info = $object->DB_info;}; ### end eval
+		eval {@data = $db_info->col;}; 
+
+		foreach my $db_data (@data){
 		
-		    eval {
-
-		    my $object = $DB->fetch(-class =>'Protein', -Name=>$object_name);
-		    my $db_info = $object->DB_info;
-		    my @data = $db_info->col;
-			# print "@data\n";
-			foreach my $db_data (@data){
-			
-				if($db_data =~ m/OMIM/){
+			if($db_data =~ m/OMIM/){
+				my @db_data;
+				eval {@db_data = $db_data->col;}; 
+					foreach my $omim_data (@db_data){
+						if($omim_data =~ m/disease/){
+							my $disease_id;
+							eval {$disease_id = $omim_data->right;};
+							my ($ensembl,$ensembl_id) = split /:/, $object_name;
+							print OUTFILE "$ensembl_id\=\>"; # 
+							print OUTFILE "$disease_id\n"; #
 				
-					my @db_data = $db_data->col;
-						foreach my $omim_data (@db_data){
-							if($omim_data =~ m/disease/){
-								my $disease_id = $omim_data->right;
-								my ($ensembl,$ensembl_id) = split /:/, $object_name;
-								print OUTFILE "$ensembl_id\=\>"; # 
-								print OUTFILE "$disease_id\n"; #
-					
-						} 
-					
-					}
-					
-				} ## end if ($db_data =~ m/OMIM/)
-			
-			    } # end foreach my $db_data (@data)
-	
-		} ### end eval
-#	} # end else
-		
-}
-
+					} 
+				
+				}
+				
+			} ## end if ($db_data =~ m/OMIM/)
+		} # end foreach my $db_data (@data)
+	} # end foreach my $db_data (@data)
 }
 	
 
@@ -619,7 +760,7 @@ sub get_all_associated_go_terms{
 sub get_all_ortholog_other_data {
 	
 		my ($self) = @_;
-		my $DB = Ace->connect(-host=>'localhost', -port=>2005) or die "Cannot connect to DB for get_all_ortholog_other_data"; 
+		#my $DB = Ace->connect(-host=>'localhost', -port=>2005) or die "Cannot connect to DB for get_all_ortholog_other_data"; 
 		my $class = 'Gene';
 		my $tag = 'Ortholog_other';
 		my $host = 'aceserver.cshl.org';
@@ -770,8 +911,8 @@ sub reconfigure_omim_file {
 sub get_all_associated_phenotypes {
 	
 	my ($self) = @_;
+	#my $DB = Ace->connect(-host=>'localhost', -port => 2005) or die "Cannot connect to DB for get_all_associated_phenotypes";
 	
-	my $DB = Ace->connect(-host=>'localhost', -port => 2005) or die "Cannot connect to DB for get_all_associated_phenotypes";
 	my $class = 'Gene';
 	my $tag = 'Phenotype';
 	my $aql_query = "select all class $class where exists_tag ->$tag";
