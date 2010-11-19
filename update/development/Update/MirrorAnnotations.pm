@@ -25,6 +25,7 @@ sub run {
 	
 	# Now move files as appropriate. Stupid.
 	chdir($local_dir);
+        system("rm -rf microarray/*");  # clean out cruft
 	system("mv affy_oligo_mapping.gz microarray/.");
 	system("mv agil_oligo_mapping.gz microarray/.");
 	system("mv cDNA2orf.$release.gz gene_ids/.");
@@ -33,11 +34,12 @@ sub run {
 	system("mv gsc_oligo_mapping.gz microarray/.");
 	system("mv knockout_consortium_alleles.$release.xml.bz2 alleles/.");
 	system("mv pcr_product2gene.$release.gz pcr_products/.");
+	system("rm -rf letter.*");
     }
     
     
     # Get the release letter
-    my $target_dir  = $self->web_root . "/html/release_notes";
+    my $target_dir  = $self->root . "/website-classic/html/release_notes";
     my $staging_dir = $self->root . "/website-classic-staging/html/release_notes";
     my $ftp_remote_path = "$remote_ftp_path/$release";
     $self->mirror_file($ftp_remote_path,"letter.$release",$target_dir);
