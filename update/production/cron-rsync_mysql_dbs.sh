@@ -41,7 +41,7 @@ function extract_version() {
     this_version=`expr match "${this_link}" '.*_\(WS...\)'`
     
     # Save this database if we have been updated
-    if [ ${this_version} = ${VERSION} ]
+    if [ "${this_version}" = "${VERSION}" ]
     then
 	echo "   ---> ${this_species} UPDATED. New version is ${this_version}"
 	UPDATED_SPECIES[${#UPDATED_SPECIES[*]}]=${this_species}

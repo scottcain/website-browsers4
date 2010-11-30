@@ -85,6 +85,7 @@ MYSQL_NODES=( ${OICR_MYSQL_NODES[@]} ${REMOTE_MYSQL_NODES[@]} )
 for NODE in ${MYSQL_NODES[@]}
 do
     restart_mysqld $NODE
+    restart_httpd $NODE
 done
 
 
