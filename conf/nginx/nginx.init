@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/sh
 
 ### BEGIN INIT INFO
 # Provides:          nginx
@@ -10,13 +10,10 @@
 # Description:       starts nginx using start-stop-daemon
 ### END INIT INFO
 
-
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/wormbase/nginx/sbin
-DAEMON=/usr/local/wormbase/nginx/sbin
+DAEMON=/usr/local/wormbase/nginx/sbin/nginx
 NAME=nginx
 DESC=nginx
-PID=/usr/local/wormbase/nginx/logs/$NAME.pid
-
 
 test -x $DAEMON || exit 0
 
@@ -30,29 +27,29 @@ set -e
 case "$1" in
   start)
         echo -n "Starting $DESC: "
-        start-stop-daemon --start --quiet --pidfile $PID \
-                --exec $DAEMON -- $DAEMON_OPTS
+        start-stop-daemon --start --quiet --pidfile /usr/local/wormbase/nginx/logs/nginx.pid \
+                --exec $DAEMON -- $DAEMON_OPTS || true
         echo "$NAME."
         ;;
   stop)
         echo -n "Stopping $DESC: "
-        start-stop-daemon --stop --quiet --pidfile $PID \
-                --exec $DAEMON
+        start-stop-daemon --stop --quiet --pidfile /usr/local/wormbase/nginx/logs/nginx.pid \
+                --exec $DAEMON || true
         echo "$NAME."
         ;;
   restart|force-reload)
         echo -n "Restarting $DESC: "
-        start-stop-daemon --stop --quiet --pidfile $PID 
-                --exec $DAEMON
+        start-stop-daemon --stop --quiet --pidfile \
+                /usr/local/wormbase/nginx/logs/nginx.pid --exec $DAEMON || true
         sleep 1
-        start-stop-daemon --start --quiet --pidfile $PID \
-                          --exec $DAEMON -- $DAEMON_OPTS
+        start-stop-daemon --start --quiet --pidfile \
+                /usr/local/wormbase/nginx/logs/nginx.pid --exec $DAEMON -- $DAEMON_OPTS || true
         echo "$NAME."
         ;;
   reload)
       echo -n "Reloading $DESC configuration: "
-      start-stop-daemon --stop --signal HUP --quiet --pidfile $PID \
-          --exec $DAEMON
+      start-stop-daemon --stop --signal HUP --quiet --pidfile /usr/local/wormbase/nginx/logs/nginx.pid \
+          --exec $DAEMON || true
       echo "$NAME."
       ;;
   *)
@@ -63,3 +60,11 @@ case "$1" in
 esac
 
 exit 0
+
+
+
+
+
+
+
+

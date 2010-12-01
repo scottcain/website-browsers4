@@ -7,10 +7,10 @@ if [ ! $APP ]; then
     exit 1
 fi
 
-export APPDIR="/home/myapp/$APP"
+export APPDIR="/usr/local/wormbase/website/$APP"
 export PIDDIR=/tmp
 export PIDFILE=$PIDDIR/${APP}.pid
-export STARMAN="/home/myapp/prod/bin/starman-myapp.sh"
+export STARMAN="/usr/local/wormbase/website/production/starman-wormbase.sh"
 
 if [ ! -d $APPDIR ]; then
     echo "$APPDIR does not exist"
