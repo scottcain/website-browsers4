@@ -39,14 +39,24 @@ for NODE in ${OICR_SITE_NODES}
 do
     alert "   checking out code on $NODE...";
     # hg pull and update
-   ssh $NODE "cd /usr/local/wormbase/website; hg pull -u "
-#    ssh $NODE "cd /usr/local/wormbase/website; hg pull -u ; /etc/init.d/wormbase-fastcgi stop ; rm -rf /tmp/wormbase/WormBase* ; /etc/init.d/wormbase-fastcgi start"
-#    ssh -vv $NODE "/etc/init.d/wormbase-fastcgi stop ; rm -rf /tmp/wormbase/WormBase* ; /etc/init.d/wormbase-fastcgi start"
+    ssh $NODE "cd /usr/local/wormbase/website/production; hg pull -u "
 
     # I should test at the same time, then restart apache and the socket server...
     # hg pull -u && prove -l t && sudo /etc/init.d/apache2 restart
+
+    # Restart starman
+    ssh $NODE "cd /usr/local/wormbase/website/production; bin/starman-generic.sh production restart"
+
+    # Installing modules
+#    ssh $NODE "cd /usr/local/wormbase/website/production; source wormbase.env; perl Makefile.PL; make installdeps"
+
+
+
+
    
 done
+
+
 
 
 exit
@@ -56,22 +66,6 @@ exit
 #rsync -Cav extlib/ $NODE:/usr/local/wormbase/website/extlib/
 
 
-
-
-
-exit
-
-
-# Installing modules
-cd /usr/local/wormbase/website-2.0
-mkdir extlib
-cd extlib
-perl -Mlocal::lib=./
-eval $(perl -Mlocal::lib=./)
-
-cd ../
-perl Makefile.PL
-make installdeps
 
 
 
