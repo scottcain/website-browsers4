@@ -34,14 +34,14 @@ echo $YEAR
 echo "Running analog for all years..."
 mkdir ${HTMLSTATS}/total
 ${ANALOG}/analog -G +g${BINDIR}/analog.conf \
-    ${LOGDIR}/with_hosts/access_log.2001.gz \
-    ${LOGDIR}/with_hosts/access_log.2002.gz \
-    ${LOGDIR}/with_hosts/access_log.2003.gz \
-    ${LOGDIR}/with_hosts/access_log.2004.gz \
-    ${LOGDIR}/with_hosts/access_log.2005.gz \
-    ${LOGDIR}/with_hosts/access_log.2006.gz \
-    ${LOGDIR}/with_hosts/access_log.2007.gz \
-    ${LOGDIR}/with_hosts/access_log.2008.gz \
+#    ${LOGDIR}/with_hosts/access_log.2001.gz \
+#    ${LOGDIR}/with_hosts/access_log.2002.gz \
+#    ${LOGDIR}/with_hosts/access_log.2003.gz \
+#    ${LOGDIR}/with_hosts/access_log.2004.gz \
+#    ${LOGDIR}/with_hosts/access_log.2005.gz \
+#    ${LOGDIR}/with_hosts/access_log.2006.gz \
+#    ${LOGDIR}/with_hosts/access_log.2007.gz \
+#    ${LOGDIR}/with_hosts/access_log.2008.gz \
     ${LOGDIR}/with_hosts/access_log.${YEAR}.gz \
     +C"OUTFILE ${HTMLSTATS}/total/access_log-parsed" \
     +C"HOSTNAME ${SITE}" \
