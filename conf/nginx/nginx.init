@@ -10,8 +10,8 @@
 # Description:       starts nginx using start-stop-daemon
 ### END INIT INFO
 
-PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/wormbase/nginx/sbin
-DAEMON=/usr/local/wormbase/nginx/sbin/nginx
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/wormbase/services/nginx/sbin
+DAEMON=/usr/local/wormbase/services/nginx/sbin/nginx
 NAME=nginx
 DESC=nginx
 
@@ -27,28 +27,28 @@ set -e
 case "$1" in
   start)
         echo -n "Starting $DESC: "
-        start-stop-daemon --start --quiet --pidfile /usr/local/wormbase/nginx/logs/nginx.pid \
+        start-stop-daemon --start --quiet --pidfile /usr/local/wormbase/logs/nginx.pid \
                 --exec $DAEMON -- $DAEMON_OPTS || true
         echo "$NAME."
         ;;
   stop)
         echo -n "Stopping $DESC: "
-        start-stop-daemon --stop --quiet --pidfile /usr/local/wormbase/nginx/logs/nginx.pid \
+        start-stop-daemon --stop --quiet --pidfile /usr/local/wormbase/logs/nginx.pid \
                 --exec $DAEMON || true
         echo "$NAME."
         ;;
   restart|force-reload)
         echo -n "Restarting $DESC: "
         start-stop-daemon --stop --quiet --pidfile \
-                /usr/local/wormbase/nginx/logs/nginx.pid --exec $DAEMON || true
+                /usr/local/wormbase/logs/nginx.pid --exec $DAEMON || true
         sleep 1
         start-stop-daemon --start --quiet --pidfile \
-                /usr/local/wormbase/nginx/logs/nginx.pid --exec $DAEMON -- $DAEMON_OPTS || true
+                /usr/local/wormbase/logs/nginx.pid --exec $DAEMON -- $DAEMON_OPTS || true
         echo "$NAME."
         ;;
   reload)
       echo -n "Reloading $DESC configuration: "
-      start-stop-daemon --stop --signal HUP --quiet --pidfile /usr/local/wormbase/nginx/logs/nginx.pid \
+      start-stop-daemon --stop --signal HUP --quiet --pidfile /usr/local/wormbase/logs/nginx.pid \
           --exec $DAEMON || true
       echo "$NAME."
       ;;
