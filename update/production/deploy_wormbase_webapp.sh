@@ -46,12 +46,35 @@ function extract_version_by_symlink() {
     echo "Pushing software version ${this_link} into production"
 }
 
-# Or maye read the HG version...
+# Or get the current version of tip from hg. EVERY push to the website will be a new version.
+function extract_version_from_hg() {
+    cd /usr/local/wormbase/website/staging
+    hg_revision=`hg tip --template '{rev}'`
+}
+
+
+# Create the appropriate env template
+function update_env_template() {
+    node=$1
+    dir=$2
+    
+    # Set up appropriate symlinks and log directories
+    if ssh ${node} "cd /usr/local/wormbase/website/${dir}; cp wormbase.env.template wormbase.env ; perl -p -i -e 's/\[% app %\]/production/g' wormbase.env"
+    then
+	success "Successfully created the environment file on $node at $dir/wormbase.env"
+    else 
+	failure "Creating wormbase.env file failed"
+    fi
+}
 
 function do_rsync() {
     node=$1
-    software_version=$2
-    alert " Updating ${node} to ${software_version}..."
+
+    date=`date +%Y.%m.%d`
+    dir=${wormbase_version}-$date-${software_version}-${hg_revision}
+
+    #software_version=$2
+    alert " Updating ${node} to ${dir}..."
 
     # Rsync this 
     cd /usr/local/wormbase/website
@@ -59,10 +82,11 @@ function do_rsync() {
     then
 	success "Successfully pushed webapp ${software_version} onto ${node}"
 	
-	# Set up appropriate symlinks ad log directories
-	if ssh ${node} "cd /usr/local/wormbase/website; mv staging ${software_version} ; mkdir ${software_version}/logs ; chmod 777 ${software_version}/logs ; rm production;  ln -s ${software_version} production"
+	# Set up appropriate symlinks and log directories
+	if ssh ${node} "cd /usr/local/wormbase/website; mv staging ${dir} ; mkdir ${dir}/logs ; chmod 777 ${dir}/logs ; rm production;  ln -s ${dir} production"
 	then
-	    success "Successfully symlinked production -> ${software_version}"
+	    success "Successfully symlinked production -> ${dir}"
+	    update_env_template $node $dir
 	else
 	    failure "Symlinking failed"
 	fi
@@ -70,48 +94,12 @@ function do_rsync() {
 }
 
 
+
 # Get the current version of the staging software
 extract_version_from_pm
-
-# Rsync for minor revisions
-function do_minor_rsync() {
-    node=$1
-    software_version=$2
-    alert " Minor revision to ${node} to ${software_version}..."
-
-    # Rsync this 
-    cd /usr/local/wormbase/website
-    if rsync -Cav --exclude logs --exclude tmp --exclude .hg staging/ ${node}:/usr/local/wormbase/website/${software_version}/
-    then
-	success "Successfully pushed webapp ${software_version} onto ${node}"       
-    fi
-}
-
-
-
-
-if [ $minor_revision ]
-then
-    alert "Deploying current version staging code (${software_version}) onto OICR nodes..."
-    for NODE in ${OICR_SITE_NODES}
-    do
-	echo "   rsyncing...";
-	do_minor_rsync $NODE $software_version
-    done
-    
-    alert "Deploying current version staging code (${software_version}) onto remote nodes..."
-    for NODE in ${REMOTE_SITE_NODES}
-    do
-	echo "   rsyncing...";
-	do_minor_rsync $NODE $software_version
-    done
-    exit
-fi
-    
-
+extract_version_from_hg
 
 # 1. Rsync the staging version to remote and local production nodes
-
 ######################################################
 #
 #    OICR 
@@ -120,8 +108,7 @@ fi
 alert "Deploying current version staging code (${software_version}) onto OICR nodes..."
 for NODE in ${OICR_SITE_NODES}
 do
-echo "   rsyncing...";
-    do_rsync $NODE $software_version
+    do_rsync $NODE
 done
 
 
@@ -133,27 +120,32 @@ done
 alert "Deploying current version staging code (${software_version}) onto remote nodes..."
 for NODE in ${REMOTE_SITE_NODES}
 do
-echo "   rsyncing...";
-    do_rsync $NODE $software_version
+    do_rsync $NODE
 done
 
 
+if [ $minor_revision ]
+then
+    # Although: we might want to for mirroring purposes...
+    echo "minor revision; not creating software release..."
+else 
+
 # 2. Copy the staging version to the releases archive and the ftp site
-cd /usr/local/wormbase/website
-mkdir releases
-date=`date +%Y-%m-%d`
-cp -r staging releases/${wormbase_version}-${software_version}-${date}
+    cd /usr/local/wormbase/website
+    mkdir releases
+    date=`date +%Y-%m-%d`
+    cp -r staging releases/${wormbase_version}-${software_version}-${date}
 #cp -r staging /usr/local/ftp/pub/wormbase/software/${wormbase_version}-${software_version}-${date}
 #cd /usr/local/ftp/pub/wormbase/software/${wormbase_version}-${software_version}-${date}.tgz ${wormbase_version}-${software_version}-${date}
-
+    
 # 3. Remove the old production version
-cd /usr/local/wormbase/website
-rm -rf production
-
+    cd /usr/local/wormbase/website
+    rm -rf production
+    
 # 4. Save a new reference version of production
-cp -r staging production
-
-
+    cp -r staging production
+fi
+    
 exit;
 
 
