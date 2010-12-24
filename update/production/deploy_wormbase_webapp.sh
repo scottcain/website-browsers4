@@ -5,6 +5,7 @@ source /home/tharris/projects/wormbase/wormbase-admin/update/production/update.c
 
 export RSYNC_RSH=ssh
 wormbase_version=$1
+minor_revision=$2
 
 if [ ! "${wormbase_version}" ]
 then
@@ -51,6 +52,7 @@ function do_rsync() {
     node=$1
     software_version=$2
     alert " Updating ${node} to ${software_version}..."
+
     # Rsync this 
     cd /usr/local/wormbase/website
     if rsync -Cav --exclude logs --exclude tmp --exclude .hg staging ${node}:/usr/local/wormbase/website
@@ -68,6 +70,44 @@ function do_rsync() {
 }
 
 
+# Get the current version of the staging software
+extract_version_from_pm
+
+# Rsync for minor revisions
+function do_minor_rsync() {
+    node=$1
+    software_version=$2
+    alert " Minor revision to ${node} to ${software_version}..."
+
+    # Rsync this 
+    cd /usr/local/wormbase/website
+    if rsync -Cav --exclude logs --exclude tmp --exclude .hg staging/ ${node}:/usr/local/wormbase/website/${software_version}/
+    then
+	success "Successfully pushed webapp ${software_version} onto ${node}"       
+    fi
+}
+
+
+
+
+if [ $minor_revision ]
+then
+    alert "Deploying current version staging code (${software_version}) onto OICR nodes..."
+    for NODE in ${OICR_SITE_NODES}
+    do
+	echo "   rsyncing...";
+	do_minor_rsync $NODE $software_version
+    done
+    
+    alert "Deploying current version staging code (${software_version}) onto remote nodes..."
+    for NODE in ${REMOTE_SITE_NODES}
+    do
+	echo "   rsyncing...";
+	do_minor_rsync $NODE $software_version
+    done
+    exit
+fi
+    
 
 
 # 1. Rsync the staging version to remote and local production nodes
@@ -77,13 +117,11 @@ function do_rsync() {
 #    OICR 
 #
 ######################################################
-
-extract_version_from_pm
 alert "Deploying current version staging code (${software_version}) onto OICR nodes..."
 for NODE in ${OICR_SITE_NODES}
 do
 echo "   rsyncing...";
-#    do_rsync $NODE $software_version
+    do_rsync $NODE $software_version
 done
 
 
