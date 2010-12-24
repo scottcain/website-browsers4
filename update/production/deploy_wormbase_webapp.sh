@@ -132,20 +132,24 @@ else
 
 # 2. Copy the staging version to the releases archive and the ftp site
     cd /usr/local/wormbase/website
-    mkdir releases
-    date=`date +%Y-%m-%d`
-    cp -r staging releases/${wormbase_version}-${software_version}-${date}
-#cp -r staging /usr/local/ftp/pub/wormbase/software/${wormbase_version}-${software_version}-${date}
-#cd /usr/local/ftp/pub/wormbase/software/${wormbase_version}-${software_version}-${date}.tgz ${wormbase_version}-${software_version}-${date}
-    
-# 3. Remove the old production version
-    cd /usr/local/wormbase/website
-    rm -rf production
-    
-# 4. Save a new reference version of production
-    cp -r staging production
+
+     # Copy into releases, too?  Naw, redundant with next step
+     #    mkdir releases
+     #    date=`date +%Y-%m-%d`
+     #    cp -r staging releases/${wormbase_version}-${software_version}-${date}
+
+     # cp -r staging /usr/local/ftp/pub/wormbase/software/${wormbase_version}-${software_version}-${date}
+     # cd /usr/local/ftp/pub/wormbase/software/${wormbase_version}-${software_version}-${date}.tgz ${wormbase_version}-${software_version}-${date}    
 fi
     
+
+# 3. Remove the old production version
+cd /usr/local/wormbase/website
+rm -rf production
+    
+# 4. Save a new reference version of production
+cp -r staging production
+
 exit;
 
 
