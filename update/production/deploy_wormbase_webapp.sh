@@ -96,7 +96,7 @@ alert "Deploying current version staging code (${software_version}) onto remote 
 for NODE in ${REMOTE_SITE_NODES}
 do
 echo "   rsyncing...";
-#    do_rsync $NODE $software_version
+    do_rsync $NODE $software_version
 done
 
 
