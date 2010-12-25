@@ -9,7 +9,7 @@ minor_revision=$2
 
 if [ ! "${wormbase_version}" ]
 then
-  echo "Usage: $0 WSXXX (WormBase version that is going live)"
+  echo "Usage: $0 WSXXX [1] // WormBase version that is going live; boolean to indicate minor revision"
   exit
 fi
 
@@ -95,8 +95,10 @@ function do_rsync() {
 
 
 
-# Get the current version of the staging software
+# Get the current (major) version of the staging software.
 extract_version_from_pm
+
+# Get the current changeset of the staging software.
 extract_version_from_hg
 
 # 1. Rsync the staging version to remote and local production nodes
@@ -121,6 +123,10 @@ alert "Deploying current version staging code (${software_version}) onto remote 
 for NODE in ${REMOTE_SITE_NODES}
 do
     do_rsync $NODE
+
+    # Restart starman.  Here or in the go live script?
+    ssh $NODE "cd /usr/local/wormbase/website/production; bin/starman-production.sh restart"
+
 done
 
 
@@ -132,14 +138,17 @@ else
 
 # 2. Copy the staging version to the releases archive and the ftp site
     cd /usr/local/wormbase/website
+    
+    # Create a release on the ftp site    
+    date=`date +%Y-%m-%d`
 
-     # Copy into releases, too?  Naw, redundant with next step
-     #    mkdir releases
-     #    date=`date +%Y-%m-%d`
-     #    cp -r staging releases/${wormbase_version}-${software_version}-${date}
-
-     # cp -r staging /usr/local/ftp/pub/wormbase/software/${wormbase_version}-${software_version}-${date}
-     # cd /usr/local/ftp/pub/wormbase/software/${wormbase_version}-${software_version}-${date}.tgz ${wormbase_version}-${software_version}-${date}    
+    cp -r staging /usr/local/ftp/pub/wormbase/software/${wormbase_version}-${software_version}-${date}
+    cd /usr/local/ftp/pub/wormbase/software
+    tar czf ${wormbase_version}-${software_version}-${date}.tgz ${wormbase_version}-${software_version}-${date} \
+        --exclude "/usr/local/wormbase/website/staging/logs" --exclude "/usr/local/wormbase/website/staging/.hg" \
+        --exclude "/usr/local/wormbase/website/staging/extlib" \
+	--exclude "/usr/local/wormbase/website/staging/wormbase_local.conf"
+    ln -s ${wormbase_version}-${software_version}-${date}.tgz current.tgz
 fi
     
 
