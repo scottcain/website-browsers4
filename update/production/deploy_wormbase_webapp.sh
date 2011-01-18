@@ -92,7 +92,7 @@ function do_rsync() {
     #   and the most current changeset.  Whew!
     target=${dir}
  
-    cd /usr/local/wormbase/website
+    cd /usr/local/wormbase/website/staging
   
     # Before syncing, dump a small file with these versions.
     touch VERSION.txt

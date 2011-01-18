@@ -66,7 +66,7 @@ function restart_mysqld() {
 
 function restart_starman() {
     NODE=$1
-    alert "${NODE}"
+    alert "Restarting starman on ${NODE}..."
     if ssh -t ${NODE} "/usr/local/wormbase/admin/monitoring/restart_starman.sh"
     then
 	success "starman successfully restarted"
@@ -86,6 +86,17 @@ function restart_httpd() {
     fi
 }
 
+
+
+# Starman on OICR site nodes
+alert "Restarting starman for all site nodes..."
+SITE_NODES=( ${OICR_SITE_NODES[@]} ${REMOTE_SITE_NODES[@]} )
+for NODE in ${SITE_NODES[@]}
+do
+    restart_starman $NODE
+done
+
+exit
 
 
 
