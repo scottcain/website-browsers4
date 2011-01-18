@@ -1,24 +1,12 @@
 #!/bin/bash
 
 # Restart wormbase services across nodes
+export RSYNC_RSH=ssh
+DO_RESTART=$1
 
 # Pull in my configuration variables shared across scripts
-source ../update/production/update.conf
+source /home/tharris/projects/wormbase/wormbase-admin/update/production/update.conf
 
-
-
-#VERSION=$1
-#
-#if [ ! "$VERSION" ]
-#then
-#  echo "Usage: $0 WSXXX"
-#  exit
-#fi
-
-# What is my gateway host?
-GATEWAY_HOST=${STAGING_NODE}
-
-SEPERATOR="==========================================="
 
 function alert() {
   msg=$1
@@ -39,90 +27,87 @@ function success() {
   echo "  ${msg}."
 }
 
+function restart_sgifaceserver() {
+    NODE=$1
+    alert "${NODE}"
+    
+#  if ssh ${NODE} "sudo kill -9 `ps -C sgifaceserver -o pid=`"
+    if ssh -t ${NODE} "sudo killall -9 sgifaceserver"
+    then
+	success "sgifaceserver restarted"
+#      if ssh -t ${NODE} "sudo /etc/rc.d/init.d/xinetd restart"
+	if ssh -t ${NODE} "sudo /etc/init.d/xinetd restart"
+	then
+	    success "xinetd restarted"
+	else
+	    failure "sgifaceserver / xinetd could not be restarted"
+	fi
+    fi
+}
 
-##############################################
-#
-#  Restart AceDB on the ACEDB_NODES
-#
-##############################################
+function restart_mysqld() {
+    NODE=$1
+    alert "${NODE}"
+#    if ssh -t ${NODE} "sudo /etc/rc.d/init.d/mysqld restart"
+    if ssh -t ${NODE} "sudo /etc/init.d/mysql restart"
+    then
+	success "mysqld successfully restarted"
+    else
+	failure "mysqld could not be restart"
+    fi
+    
+    if ssh -t ${NODE} "sudo /usr/local/apache2/bin/apachectl restart"
+    then
+	success "httpd succesfully restarted"
+    else
+	failure "httpd could not be restarted"
+    fi
+}
+
+function restart_starman() {
+    NODE=$1
+    alert "${NODE}"
+    if ssh -t ${NODE} "/usr/local/wormbase/admin/monitoring/restart_starman.sh"
+    then
+	success "starman successfully restarted"
+    else
+	failure "starman could not be restarted"
+    fi
+}
+
+
+
+function restart_httpd() {
+    if ssh -t ${NODE} "sudo /usr/local/apache2/bin/apachectl restart"
+    then
+	success "httpd succesfully restarted"
+    else
+	failure "httpd could not be restarted"
+    fi
+}
+
+
+
+
+
+# ACedb nodes need to have sgifaceserver killed
+# and xinetd restarted
 alert "Restarting sigfaceserver and xinetd services for acedb nodes..."
-for NODE in ${ACEDB_NODES}
+ACEDB_NODES=( ${OICR_ACEDB_NODES[@]} ${REMOTE_ACEDB_NODES[@]} )
+for NODE in ${ACEDB_NODES[@]}
 do
-  alert "${NODE}"  
-
-  # The GATEWAY HOST
-  if [ "${NODE}" = "brie3.cshl.org" ]; then
-      if ssh -t ${GATEWAY_HOST} "sudo killall -9 sgifaceserver"
-      then
-	  success "sgifaceserver restarted on ${NODE}"
-	  sleep 5
-	  if ssh -t ${GATEWAY_HOST} "sudo /etc/rc.d/init.d/xinetd restart"
-	  then
-	      success "xinetd restarted on ${NODE}"
-	  else
-	      failure "sgifaceserver / xinetd could not be restarted on ${NODE}"
-	  fi
-      fi
-     
-  else 
-      # Restart sgifaceserver on the other nodes by tunneling throughthe gateways
-      
-      #  if ssh ${NODE} "sudo kill -9 `ps -C sgifaceserver -o pid=`"
-      if ssh -t ${GATEWAY_HOST} "ssh -t ${NODE} sudo killall -9 sgifaceserver"
-      then
-	  success "sgifaceserver restarted on ${NODE}"
-	  sleep 5
-	  if ssh -t ${GATEWAY_HOST} "ssh -t ${NODE} sudo /etc/rc.d/init.d/xinetd restart"
-	  then
-	      success "xinetd restarted on ${NODE}"
-	  else
-	      failure "sgifaceserver / xinetd could not be restarted on ${NODE}"
-	  fi
-      fi
-  fi
-
+#    restart_sgifaceserver $NODE
+    echo $NODE
 done
 
 
-
-##############################################
-#
-#  Restarting mysqld adn httpd on nodes
-#
-##############################################
-
+# Mysql nodes: restart mysql and httpd
 alert "Restarting mysql and httpd for all nodes..."
-# First the gateway host
-if ssh -t ${GATEWAY_HOST} "sudo /etc/rc.d/init.d/mysqld restart"
-then
-    success "mysqld successfully restarted on ${GATEWAY_HOST}"
-else
-    failure "mysqld could not be restart on ${GATEWAY_HOST}"
-fi
-
-if ssh -t ${GATEWAY_HOST} "sudo /usr/local/apache2/bin/apachectl restart"
-then
-    success "httpd succesfully restarted on ${GATEWAY_HOST}"
-else
-    failure "httpd could not be restarted on ${GATEWAY_HOST}"
-fi
-
-# Now on the remaining site nodes
-for NODE in ${SITE_NODES}
+MYSQL_NODES=( ${OICR_MYSQL_NODES[@]} ${REMOTE_MYSQL_NODES[@]} )
+for NODE in ${MYSQL_NODES[@]}
 do
-  alert "${NODE}"  
-  if ssh -t ${GATEWAY_NODE} "ssh -t ${NODE} sudo /etc/rc.d/init.d/mysqld restart"
-      then
-      success "mysqld successfully restarted on ${NODE}"
-  else
-      failure "mysqld could not be restarted on ${NODE}"
-  fi
-  
-  if ssh -t ${GATEWAY_NODE} "ssh -t ${NODE} sudo /usr/local/apache2/bin/apachectl restart"
-      then
-      success "httpd succesfully restarted ${NODE}"
-  else
-      failure "httpd could not be restarted ${NODE}"
-  fi
+    restart_mysqld $NODE
+    restart_httpd $NODE
 done
+
 

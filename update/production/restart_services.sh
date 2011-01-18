@@ -64,6 +64,28 @@ function restart_mysqld() {
     fi
 }
 
+function restart_starman() {
+    NODE=$1
+    alert "${NODE}"
+    if ssh -t ${NODE} "/usr/local/wormbase/admin/update/production/restart_starman.sh"
+    then
+	success "starman successfully restarted"
+    else
+	failure "starman could not be restart"
+    fi
+}
+
+
+
+function restart_httpd() {
+    if ssh -t ${NODE} "sudo /usr/local/apache2/bin/apachectl restart"
+    then
+	success "httpd succesfully restarted"
+    else
+	failure "httpd could not be restarted"
+    fi
+}
+
 
 
 

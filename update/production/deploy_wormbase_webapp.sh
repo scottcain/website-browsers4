@@ -13,6 +13,8 @@ then
   exit
 fi
 
+date=`date +%Y%m%d`
+
 function alert() {
   msg=$1
   echo ""
@@ -33,7 +35,7 @@ function success() {
 }
 
 
-# Get the current version of the staging software.
+# Get the current version of the production software.
 # by extracting it from Web.pm
 function extract_version_from_pm() {
    this_version_string=`grep  VERSION /usr/local/wormbase/website/staging/lib/WormBase/Web.pm`
@@ -42,7 +44,7 @@ function extract_version_from_pm() {
 
 # Or extract version by reading a symlink (deprecated)
 function extract_version_by_symlink() {
-    this_link=`readlink /usr/local/wormbase/website/staging`
+    this_link=`readlink /usr/local/wormbase/website/production`
     echo "Pushing software version ${this_link} into production"
 }
 
@@ -57,8 +59,7 @@ function extract_version_from_hg() {
 function update_env_template() {
     node=$1
     dir=$2
-    
-    # Set up appropriate symlinks and log directories
+
     if ssh ${node} "cd /usr/local/wormbase/website/${dir}; cp wormbase.env.template wormbase.env ; perl -p -i -e 's/\[% app %\]/production/g' wormbase.env"
     then
 	success "Successfully created the environment file on $node at $dir/wormbase.env"
@@ -67,50 +68,105 @@ function update_env_template() {
     fi
 }
 
-function do_rsync() {
+function restart_services() {
     node=$1
 
-    date=`date +%Y.%m.%d`
-    dir=${wormbase_version}-$date-${software_version}-${hg_revision}
-
-    #software_version=$2
-    alert " Updating ${node} to ${dir}..."
-
-    # Rsync this 
-    cd /usr/local/wormbase/website
-    if rsync -Cav --exclude logs --exclude tmp --exclude .hg staging ${node}:/usr/local/wormbase/website
-    then
-	success "Successfully pushed webapp ${software_version} onto ${node}"
-	
-	# Set up appropriate symlinks and log directories
-	if ssh ${node} "cd /usr/local/wormbase/website; mv staging ${dir} ; mkdir ${dir}/logs ; chmod 777 ${dir}/logs ; rm production;  ln -s ${dir} production"
-	then
-	    success "Successfully symlinked production -> ${dir}"
-	    update_env_template $node $dir
-	else
-	    failure "Symlinking failed"
-	fi
-    fi
+    # Restart starman.  Here or in the go live script?
+    echo "Restarting starman on $node..."
+    ssh $node "cd /usr/local/wormbase/website/production; source wormbase.env ; bin/starman-production.sh restart"
 }
 
 
 
-# Get the current (major) version of the staging software.
+
+function do_rsync() {
+    node=$1
+
+#    dir=${wormbase_version}-v${software_version}.${hg_revision}-${date}
+    dir=${wormbase_version}-${date}-v${software_version}r${hg_revision}
+
+    # Name of our directory in production. By default, this is tied to
+    #   the version of the database
+    #   the date of the release
+    #   the version of the software
+    #   and the most current changeset.  Whew!
+    target=${dir}
+ 
+    cd /usr/local/wormbase/website
+  
+    # Before syncing, dump a small file with these versions.
+    touch VERSION.txt
+    cat /dev/null > VERSION.txt
+    cat > VERSION.txt <<EOF
+DATE=${date}
+DATABASE_VERSION=${wormbase_version}
+SOFTWARE_VERSION=${software_version}
+CHANGESET=${hg_revision}
+EOF
+
+    alert " Updating ${node} to ${dir}..."
+
+    # Rsync this 
+    ssh ${node} mkdir /usr/local/wormbase/website/${target}
+
+    # Rsync the diretory to the new target dir
+    if rsync -Ca --exclude logs --exclude tmp --exclude .hg --exclude extlib.tgz --exclude extlib staging/ ${node}:/usr/local/wormbase/website/${target}
+    then
+	success "Successfully pushed webapp ${software_version} onto ${node}"
+
+	
+	# Copy extlib, either as a directory or compressed
+#	scp -r staging/extlib ${node}:/usr/local/wormbase/website/${target}/.
+	cd /usr/local/wormbase/website/staging
+	scp -r extlib.tgz ${node}:/usr/local/wormbase/website/${dir}/.
+	ssh $node "cd /usr/local/wormbase/website/${dir} ; tar xzf extlib.tgz "
+	
+	# Establish log directories, remove and re-symlink
+	# I should run tests BEFORE updating the symlink, to trap cases like where we have missing modules.
+	
+        # eg: hg pull -u && prove -l t && sudo /etc/init.d/apache2 restart
+
+        # Installing modules
+        # ssh $NODE "cd /usr/local/wormbase/website/production; source wormbase.env; perl Makefile.PL; make installdeps"
+
+	if ssh ${node} "cd /usr/local/wormbase/website; mkdir ${target}/logs ; chmod 777 ${target}/logs ; rm production;  ln -s ${dir} production"
+	    
+	then
+	    success "Successfully symlinked production -> ${dir}"
+	    update_env_template $node $target
+	else
+	    failure "Symlinking failed"
+	fi
+    fi    
+}
+
+
+
+# Get the current (major) version of the production software.
 extract_version_from_pm
 
-# Get the current changeset of the staging software.
+# Get the current changeset of the production software.
 extract_version_from_hg
 
-# 1. Rsync the staging version to remote and local production nodes
+# Do some prep work
+alert "Compressing libraries for replication..."
+cd /usr/local/wormbase/website/staging
+tar czf extlib.tgz extlib
+
+
+# 1. Rsync the production version to remote and local production nodes
 ######################################################
 #
 #    OICR 
 #
 ######################################################
-alert "Deploying current version staging code (${software_version}) onto OICR nodes..."
-for NODE in ${OICR_SITE_NODES}
+alert "Deploying current version production code (${software_version}) onto OICR nodes..."
+
+for node in ${OICR_SITE_NODES}
 do
-    do_rsync $NODE
+    do_rsync $node
+    # do_tests $node
+    # restart_services $node
 done
 
 
@@ -119,16 +175,21 @@ done
 #    REMOTE SITE NODES
 #
 ######################################################
-alert "Deploying current version staging code (${software_version}) onto remote nodes..."
-for NODE in ${REMOTE_SITE_NODES}
+alert "Deploying current version production code (${software_version}) onto remote nodes..."
+
+for node in ${REMOTE_SITE_NODES}
 do
-    do_rsync $NODE
-
-    # Restart starman.  Here or in the go live script?
-    ssh $NODE "cd /usr/local/wormbase/website/production; bin/starman-production.sh restart"
-
+    do_rsync $node
+    # do_tests $node
+    # restart_services $node
 done
 
+
+######################################################
+#
+#    CREATE A SOFTWARE RELEASE
+#
+######################################################
 
 if [ $minor_revision ]
 then
@@ -136,70 +197,44 @@ then
     echo "minor revision; not creating software release..."
 else 
 
-# 2. Copy the staging version to the releases archive and the ftp site
+# 2. Copy the production version to the releases archive and the ftp site
     cd /usr/local/wormbase/website
     
     # Create a release on the ftp site    
     date=`date +%Y-%m-%d`
+    dir=${wormbase_version}-${date}-v${software_version}r${hg_revision}
 
-    cp -r staging /usr/local/ftp/pub/wormbase/software/${wormbase_version}-${software_version}-${date}
+    cp -r staging /usr/local/ftp/pub/wormbase/software/${dir}
     cd /usr/local/ftp/pub/wormbase/software
-    tar czf ${wormbase_version}-${software_version}-${date}.tgz ${wormbase_version}-${software_version}-${date} \
-        --exclude "/usr/local/wormbase/website/staging/logs" --exclude "/usr/local/wormbase/website/staging/.hg" \
-        --exclude "/usr/local/wormbase/website/staging/extlib" \
-	--exclude "/usr/local/wormbase/website/staging/wormbase_local.conf"
-    ln -s ${wormbase_version}-${software_version}-${date}.tgz current.tgz
+    tar czf ${dir}.tgz \
+	    ${dir} \
+        --exclude "logs" \
+        --exclude ".hg" \
+        --exclude "extlib" \
+	--exclude "wormbase_local.conf"
+    rm -rf ${dir}
+    rm current.tgz
+    ln -s ${dir}.tgz current.tgz
 fi
     
 
-# 3. Remove the old production version
+######################################################
+#
+#    DO SOME CLEANUP
+#
+######################################################
+
+cd /usr/local/wormbase/website/staging
+rm -rf extlib.tgz
+
+# 3. Remove the old production version on the development site
 cd /usr/local/wormbase/website
 rm -rf production
     
-# 4. Save a new reference version of production
+# 4. Save a new reference version of production on the development site
 cp -r staging production
 
 exit;
-
-
-
-
-# OLD APPROACH
-
-# Log onto each node and update code
-alert "Checking out code into production..."
-for NODE in ${OICR_SITE_NODES}
-do
-    alert "   checking out code on $NODE...";
-    # hg pull and update
-    ssh $NODE "cd /usr/local/wormbase/website/production; hg pull -u "
-
-    # I should test at the same time, then restart apache and the socket server...
-    # hg pull -u && prove -l t && sudo /etc/init.d/apache2 restart
-
-    # Restart starman
-    ssh $NODE "cd /usr/local/wormbase/website/production; bin/starman-generic.sh production restart"
-
-    # Installing modules
-#    ssh $NODE "cd /usr/local/wormbase/website/production; source wormbase.env; perl Makefile.PL; make installdeps"
-
-
-
-
-   
-done
-
-
-
-
-exit
-
-# Rsync the library directory from staging to each individual node
-#cd /usr/local/wormbase/website
-#rsync -Cav extlib/ $NODE:/usr/local/wormbase/website/extlib/
-
-
-
 
 
 
