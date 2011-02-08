@@ -63,6 +63,19 @@ function do_rsync() {
 }
 
 
+function rsync_admin_module() {
+    NODE=$1
+    alert "Rsyncing the admin module to ${NODE}..."
+    if rsync -Cav /home/tharris/projects/wormbase/wormbase-admin/ ${NODE}:/usr/local/wormbase/admin
+    then
+	success "Successfully pushed software onto ${NODE}..."
+    else
+	failure "Pushing software onto ${NODE} failed..."
+    fi
+    done
+}
+
+
 function rsync_to_nfs_server() {
     NODE=$1
     alert " Rsyncing to ${NODE}:"
@@ -75,20 +88,23 @@ function rsync_to_nfs_server() {
 
 
 # 1. The NFS server hosts all our databases
-rsync_to_nfs_server ${LOCAL_NFS_SERVER};
+#rsync_to_nfs_server ${LOCAL_NFS_SERVER};
 
 # 2. ALL nodes maintain their own databases
 #alert "Rsyncing support databases onto local nodes..."
-#for NODE in ${OICR_SUPPORT_DB_NODES}
-#do
-#     do_rsync $NODE;
-#done
+for NODE in ${OICR_SUPPORT_DB_NODES}
+do
+     do_rsync $NODE;
+     rsync_admin_module $NODE;
+done
 
 alert "Rsyncing support databases onto remote nodes..."
 for NODE in ${REMOTE_SUPPORT_DB_NODES}
 do
      do_rsync $NODE;
+     rsync_admin_module $NODE;
 done
+
 
 
 
