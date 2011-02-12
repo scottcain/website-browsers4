@@ -72,7 +72,6 @@ function rsync_admin_module() {
     else
 	failure "Pushing software onto ${NODE} failed..."
     fi
-    done
 }
 
 
@@ -95,14 +94,14 @@ function rsync_to_nfs_server() {
 for NODE in ${OICR_SUPPORT_DB_NODES}
 do
      do_rsync $NODE;
-     rsync_admin_module $NODE;
+#     rsync_admin_module $NODE;
 done
 
 alert "Rsyncing support databases onto remote nodes..."
 for NODE in ${REMOTE_SUPPORT_DB_NODES}
 do
      do_rsync $NODE;
-     rsync_admin_module $NODE;
+#     rsync_admin_module $NODE;
 done
 
 
