@@ -326,7 +326,7 @@ Now try connecting to the squid server:
 
 We want squid to launch as a daemon in the background whenever the
 system boots. A suitable init.d script exists at
-/usr/local/wormbase-admin/suiqd/util/squid.initd.  Copy this file to
+/usr/local/website-admin/suiqd/util/squid.initd.  Copy this file to
 /etc/init.d/squid. You can thus launch squid by
 
  sudo /etc/init.d/squid start

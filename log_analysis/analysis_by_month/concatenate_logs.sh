@@ -130,7 +130,7 @@ LEAVE_LOCAL=
            
     # Fire off the analyze_logs_by_month.sh script on a suitable macine
       # TODO: Test and run manually on wb-dev
-#      sudo -u ${USER} ssh -t ${STATS_HOST} /home/${STATS_USER}/projects/wormbase/wormbase-admin/log_analysis/analysis_by_month/analyze_logs.sh ${DATE}
+#      sudo -u ${USER} ssh -t ${STATS_HOST} /home/${STATS_USER}/projects/wormbase/website-admin/log_analysis/analysis_by_month/analyze_logs.sh ${DATE}
       
   # Send myself an announcement
       # TODO: Confirm that emails work

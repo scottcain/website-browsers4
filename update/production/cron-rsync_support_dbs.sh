@@ -7,7 +7,7 @@
 
 # Pull in my configuration variables shared across scripts
 
-source /home/tharris/projects/wormbase/wormbase-admin/update/production/update.conf
+source /home/tharris/projects/wormbase/website-admin/update/production/update.conf
 
 export RSYNC_RSH=ssh
 #VERSION=$1
@@ -66,7 +66,7 @@ function do_rsync() {
 function rsync_admin_module() {
     NODE=$1
     alert "Rsyncing the admin module to ${NODE}..."
-    if rsync -Cav /home/tharris/projects/wormbase/wormbase-admin/ ${NODE}:/usr/local/wormbase/admin
+    if rsync -Cav /home/tharris/projects/wormbase/website-admin/ ${NODE}:/usr/local/wormbase/admin
     then
 	success "Successfully pushed software onto ${NODE}..."
     else

@@ -59,7 +59,7 @@
       encoding   - encoding of the file if not US-ASCII
   -->
 
-  <urllist  path="/home/tharris/projects/wormbase/wormbase-admin/util/google_sitemap/current_urls.txt" />
+  <urllist  path="/home/tharris/projects/wormbase/website-admin/util/google_sitemap/current_urls.txt" />
 
 
   <!-- ** MODIFY or DELETE **

@@ -6,7 +6,7 @@
 # Symlinks are updated when we go live.
 
 # Pull in my configuration variables shared across scripts
-source /home/tharris/projects/wormbase/wormbase-admin/update/production/update.conf
+source /home/tharris/projects/wormbase/website-admin/update/production/update.conf
 
 export RSYNC_RSH=ssh
 VERSION=$1

@@ -17,7 +17,7 @@
 # minutes) and collect the data for a total of 60 days (7.5 * 120 * 5760
 # = 60 days).
 
-ROOT=/usr/local/wormbase-admin/monitoring/snmp_monitoring/rrd_databases
+ROOT=/usr/local/website-admin/monitoring/snmp_monitoring/rrd_databases
 
 for host [ brie3 brie6 vab aceserver blast crestone ] ;
 do

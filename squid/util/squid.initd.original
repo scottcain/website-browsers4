@@ -10,7 +10,7 @@
 #	local Squid cache as a proxy HTTP server, reducing access time as \
 #	well as bandwidth consumption.
 PID=/usr/local/squid/var/logs/squid.pid
-CONF=/usr/local/wormbase-admin/squid/etc/squid/squid.conf
+CONF=/usr/local/website-admin/squid/etc/squid/squid.conf
 
 PATH=/usr/bin:/sbin:/bin:/usr/sbin:/usr/local/squid/sbin
 export PATH

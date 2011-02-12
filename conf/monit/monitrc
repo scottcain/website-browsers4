@@ -30,5 +30,5 @@ set httpd port 8888
 # Make sure the Acedb logs don't grow too large.
 check file serverlog.wrm with path /usr/local/acedb/elegans/database/serverlog.wrm
    if size > 500 MB
-      then exec "/usr/local/wormbase-admin/log_maintenance/rotation/purge_acedb_logs.sh"
+      then exec "/usr/local/website-admin/log_maintenance/rotation/purge_acedb_logs.sh"
 

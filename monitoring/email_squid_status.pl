@@ -5,7 +5,7 @@
 # fe.wormbase.org.
 
 # Run this as a crontab so I can get stats mailed to me directly each AM
-# * 5 * * * * /usr/local/wormbase-admin/monitoring/email_squid_status.pl
+# * 5 * * * * /usr/local/website-admin/monitoring/email_squid_status.pl
 
 use strict;
 use LWP::UserAgent;

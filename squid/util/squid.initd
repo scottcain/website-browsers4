@@ -26,7 +26,7 @@ SQUID_PID=/usr/local/squid/var/logs/squid.pid
 SQUID=/usr/local/squid/sbin/squid
 #
 # squid configuration file.
-SQUIDCONF=/usr/local/wormbase-admin/squid/etc/squid.${MACHINE}.conf
+SQUIDCONF=/usr/local/website-admin/squid/etc/squid.${MACHINE}.conf
 
 SQUIDSTART="$SQUID -s -f $SQUIDCONF"
 #

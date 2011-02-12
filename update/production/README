@@ -20,20 +20,20 @@ Notes:
   cron-rsync_support_dbs.sh
   
   Intended to be run as a cron job, eg:
-  0 1 * * * /home/tharris/projects/wormbase/wormbase-admin/update/production/cron-rsync_support_dbs.sh
+  0 1 * * * /home/tharris/projects/wormbase/website-admin/update/production/cron-rsync_support_dbs.sh
 
 2. Sync Mysql databases
 
    # Rsync mysql and acedb data dirs to local and (select) remote nodes
    # Start after the build deadline date
-   0 3 12-31 * * /home/tharris/projects/wormbase/wormbase-admin/update/production/cron-rsync_acedb.sh
-   0 8 12-31 * * /home/tharris/projects/wormbase/wormbase-admin/update/production/cron-rsync_mysql_dbs.sh
+   0 3 12-31 * * /home/tharris/projects/wormbase/website-admin/update/production/cron-rsync_acedb.sh
+   0 8 12-31 * * /home/tharris/projects/wormbase/website-admin/update/production/cron-rsync_mysql_dbs.sh
 
 3. Sync AceDB
 
    # Rsync mysql and acedb data dirs to local and (select) remote nodes
    # Start after the build deadline date
-   0 3 12-31 * * /home/tharris/projects/wormbase/wormbase-admin/update/production/cron-rsync_acedb.sh
+   0 3 12-31 * * /home/tharris/projects/wormbase/website-admin/update/production/cron-rsync_acedb.sh
 
 
 4. Update wormbase/website-classic/cgi-perl/lib/RSS/ObjectHistory.pm with release date

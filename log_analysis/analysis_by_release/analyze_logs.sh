@@ -6,7 +6,7 @@
 
 RELEASE=$1
 SITE=$2
-BINDIR=/usr/local/wormbase-admin/log_maintenance/analysis
+BINDIR=/usr/local/website-admin/log_maintenance/analysis
 LOGDIR=/usr/local/acedb/wormbase_log_archive
 HTMLSTATS=/usr/local/wormbase/html/stats
 ANALOG=${BINDIR}/analog

@@ -234,7 +234,7 @@ END
   close OUT;
 
   # Now generate the RSS feed
-  my $result = system("/usr/local/wormbase-admin/rss/generate_feed.pl $feed $FEEDS{$feed} xml");
+  my $result = system("/usr/local/website-admin/rss/generate_feed.pl $feed $FEEDS{$feed} xml");
 
   print start_div({-id=>'narrowcontainer'});
   print div({-class=>'block'},

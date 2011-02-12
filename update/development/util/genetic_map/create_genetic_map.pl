@@ -6,7 +6,7 @@ use lib './';
 use local::lib '.';
 use Bio::DB::GFF;
 use Getopt::Long;
-<<<<<<< /home/norie/wormbase-admin/update/development/util/genetic_map/create_genetic_map.pl
+<<<<<<< /home/norie/website-admin/update/development/util/genetic_map/create_genetic_map.pl
 =======
 use FindBin qw/$Bin/;
 use lib $Bin;

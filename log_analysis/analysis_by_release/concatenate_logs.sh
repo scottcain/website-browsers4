@@ -6,7 +6,7 @@
 
 RELEASE=$1
 PURGE_SCRIPT=$2
-BINDIR=/usr/local/wormbase-admin/log_maintenance/analysis
+BINDIR=/usr/local/website-admin/log_maintenance/analysis
 LOGDIR=/usr/local/acedb/wormbase_log_archive
 JDRESOLVE=${BINDIR}/jdresolve
 TARGET=/usr/local/wormbase/html/stats

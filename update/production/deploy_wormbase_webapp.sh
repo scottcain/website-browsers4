@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Pull in my configuration variables shared across scripts
-source /home/tharris/projects/wormbase/wormbase-admin/update/production/update.conf
+source /home/tharris/projects/wormbase/website-admin/update/production/update.conf
 
 export RSYNC_RSH=ssh
 wormbase_version=$1

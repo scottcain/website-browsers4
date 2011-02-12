@@ -18,16 +18,16 @@ The primary front end server was configured as follows:
  143.48.220.28           aceserver.cshl.org 
  143.48.220.99           gene.wormbase.org
 
-2. cvs checkout the wormbase-admin module
+2. cvs checkout the website-admin module
 
 This module contains squid configuration files.
 
- fe> sudo mkdir /usr/local/wormbase-admin
- fe> sudo chgrp wormbase /usr/local/wormbase-admin
- fe> sudo chmod 2775 wormbase-admin
- fe> cd /usr/local/wormbase-admin
- fe> cvs checkout wormbase-admin
- fe> mv wormbase-admin/* . ; rm -rf wormbase-admin
+ fe> sudo mkdir /usr/local/website-admin
+ fe> sudo chgrp wormbase /usr/local/website-admin
+ fe> sudo chmod 2775 website-admin
+ fe> cd /usr/local/website-admin
+ fe> cvs checkout website-admin
+ fe> mv website-admin/* . ; rm -rf website-admin
 
 3. Build and install squid
 
@@ -167,7 +167,7 @@ Directory permissions should be secured as follows.
 Squid accepts an enormous number of configuration options many of which influence the behavior of other options.  These are housed in
 the squid config file kept under CVS control:
 
- /usr/local/wormbase-admin/squid/etc/squid.conf.
+ /usr/local/website-admin/squid/etc/squid.conf.
 
 Those that are most important for our configuration are described here.  See the squid.conf for a full description of all options in use at WormBase.
 
@@ -198,7 +198,7 @@ httpd_accel_host is where all requests are sent. Since we are accelerating multi
 
 A program that rewrites URLs, sending requests to the appropriate origin server.  Currently, WormBase uses a script which sends GBrowse requests to vab and all other requests to unc:
 
- redirect_program /usr/local/wormbase-admin/squid/redirectors/separate_gbrowse_acedb.pl
+ redirect_program /usr/local/website-admin/squid/redirectors/separate_gbrowse_acedb.pl
 
 See this script for additional details of its use.
 
@@ -315,12 +315,12 @@ After making changes to your configuration file, it is a good idea to check its 
 Before we can test squid, we need to initialize the cache hierarchy of nested directories.  The "-z" option in the following command does this.  It needs to be issued only the first time that squid is started (or anytime the cache needs to be reset).
 
  fe> sudo /usr/local/squid/sbin/squid -z \
-    -f /usr/local/wormbase-admin/squid/etc/squid.conf
+    -f /usr/local/website-admin/squid/etc/squid.conf
 
 To test the squid installation, invoke it like this:
 
  fe> sudo /usr/local/squid/sbin/squid -N -d 1 -D -z -f \
-     /usr/local/wormbase-admin/squid/etc/squid.conf
+     /usr/local/website-admin/squid/etc/squid.conf
 
 We want to be able to see that Squid is doing something useful, so we increase the debug level (using -d 1) and tell it not to go into the background (using -N.) If your machine is not connected to the Internet (you are doing a trial squid-install on your home machine, for example) you should use the -D flag too, since Squid tries to do DNS lookups for a few common domains, and dies with an error if it is not able to resolve them.
 
@@ -342,7 +342,7 @@ Check the cache.log file to confirm that squid has shut down.
 
 We want squid to launch as a daemon in the background whenever the system boots. A suitable init.d script exists at
 
-  /usr/local/wormbase-admin/suiqd/util/squid.initd
+  /usr/local/website-admin/suiqd/util/squid.initd
 
 Copy this file to /etc/init.d/squid. You can thus launch squid by:
 

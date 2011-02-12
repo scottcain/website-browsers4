@@ -9,7 +9,7 @@ export RSYNC_RSH=ssh
 DO_RESTART=$1
 
 # Pull in my configuration variables shared across scripts
-source /home/tharris/projects/wormbase/wormbase-admin/update/production/update.conf
+source /home/tharris/projects/wormbase/website-admin/update/production/update.conf
 
 
 function alert() {
@@ -32,9 +32,9 @@ function success() {
 }
 
 
-cd /home/tharris/projects/wormbase/wormbase-admin
+cd /home/tharris/projects/wormbase/website-admin
 alert "Pushing admin module onto ${STAGING_NODE}"
-if rsync -Cav /home/tharris/projects/wormbase/wormbase-admin/ ${LOCAL_NFS_SERVER}:${LOCAL_NFS_ROOT}/admin    
+if rsync -Cav /home/tharris/projects/wormbase/website-admin/ ${LOCAL_NFS_SERVER}:${LOCAL_NFS_ROOT}/admin    
 then
     success "Successfully pushed software onto ${LOCAL_NFS_SERVER}..."
 else

@@ -1,11 +1,11 @@
 The following scripts are deprecated, either having been replaced
-by scripts provided by Bio::GMOD or migrated to the new "wormbase-admin"
+by scripts provided by Bio::GMOD or migrated to the new "website-admin"
 CVS module.  Please do not work on these scripts! Edit the 
 replacements as noted below.
 
 
 Scripts prefaced with gmod_ are provided by Bio::GMOD. Others
-are found in wormbase-admin/update_scripts unless otherwise noted.
+are found in website-admin/update_scripts unless otherwise noted.
 
 script					replaced by
 -------------------------------------------------------------------------------
