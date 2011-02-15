@@ -14,7 +14,10 @@ use WWW::Mechanize;
 #use Storable;
 $|++;
 
-use constant URL => 'http://www.wormbase.org/db/gene/gene?class=Gene;name=';
+use constant URL => 'http://dev.wormbase.org/db/gene/gene?class=Gene;name=';
+use constant CACHE_ROOT => '/usr/local/wormbase/website/classic/html/cache';
+
+
 my $start = time();
 
 my $previous = shift;
@@ -24,30 +27,36 @@ my %previous = parse() if $previous;
 my $db    = Ace->connect(-host=>'localhost',-port=>2005);
 #my $i     = $db->fetch_many(-query=>qq{find Gene Species="Caenorhabditis elegans"});
 #my $i     = $db->fetch_many(-query=>qq{find Gene Species="Caenorhabditis elegans" AND CGC_name AND Molecular_name});
-my @genes      = $db->fetch(Gene => '*');
-
-my %genes = map { $_ => 1 } @genes;
 
 my $version = $db->status->{database}{version};
-open OUT,">$version-precached-pages.txt";
+my $cache = CACHE_ROOT . "/$version/gene";
+system("mkdir -p $cache");
+open OUT,">$cache/$version-precached-pages.txt";
 
 my %status;
-foreach  my $id (%genes) {
-  $db ||= Ace->connect(-host=>'localhost',-port=>2005);
-  my $gene = $db->fetch(Gene=>$id);
-#  next if $gene->Species =~ /briggsae/i;
-  next if (defined $previous{$gene});
-  my $url = URL . $gene;
-  sleep 2;
-	
-	my $cache_start = time();
-  # No need to watch state - create a new agent for each gene to keep memory usage low.
-  my $mech = WWW::Mechanize->new(-agent => 'WormBase-PreCacher/1.0');
-  $mech->get($url);
-  my $success = ($mech->success) ? 'success' : 'failed';
-	my $cache_stop = time();
-  $status{$gene} = $success;
-  print OUT join("\t",$gene,$gene->Public_name,$url,$success,$cache_stop - $cache_start),"\n";
+my $i = $db->fetch_many('Gene','*');
+while (my $gene = $i->next) {
+    
+    $db ||= Ace->connect(-host=>'localhost',-port=>2005);
+    next if (defined $previous{$gene});
+    my $url = URL . $gene;
+    sleep 2;
+    
+    my $cache_start = time();
+    # No need to watch state - create a new agent for each gene to keep memory usage low.
+    my $mech = WWW::Mechanize->new(-agent => 'WormBase-PreCacher/1.0');
+    $mech->get($url);
+    my $success = ($mech->success) ? 'success' : 'failed';
+    my $cache_stop = time();
+    $status{$gene} = $success;
+    
+    if ($mech->success) {
+	open CACHE,">$cache/$gene.html";
+	print CACHE $mech->content;
+	close CACHE;
+    }
+    
+    print OUT join("\t",$gene,$gene->Public_name,$url,$success,$cache_stop - $cache_start),"\n";
 }
 
 my $end = time();
@@ -57,12 +66,12 @@ printf OUT "%d days, %d hours, %d minutes and %d seconds\n",(gmtime $seconds)[7,
 
 
 sub parse {
-  open IN,"$previous";
-  my %previous;
-  while (<IN>) {
+    open IN,"$previous";
+    my %previous;
+    while (<IN>) {
 	chomp;
         my ($gene,@junk) = split("\t");
 	$previous{$gene}++;
-  }
-  return %previous;
+    }
+    return %previous;
 }
