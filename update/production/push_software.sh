@@ -77,14 +77,9 @@ fi
 rsync -Cav ${SITE_TARGET_DIRECTORY}/html/cache/ ${SITE_STAGING_DIRECTORY}/html/cache
 
 
-######################################################
-#
-#    OICR 
-#
-######################################################
-alert "Pushing software onto OICR nodes..."
-for NODE in ${OICR_SITE_NODES}
-do
+
+function rsync_software() {
+   NODE=$1
   alert " Updating ${NODE}..."
   if rsync -Cav --exclude extlib \
                 --exclude localdefs.pm \
@@ -102,6 +97,23 @@ do
   else
     failure "Pushing software onto ${NODE} failed..."
   fi
+}
+
+function rsync_images() {
+    NODE=$1
+     rsync -Cav /usr/local/wormbase/website-shared-files $NODE:/usr/local/wormbase/
+}
+
+######################################################
+#
+#    OICR 
+#
+######################################################
+alert "Pushing software onto OICR nodes..."
+for NODE in ${OICR_SITE_NODES}
+do
+    rsync_software $NODE
+    rsync_images $NODE
 done
 
 
@@ -114,23 +126,8 @@ done
 alert "Pushing software onto OICR nodes..."
 for NODE in ${REMOTE_SITE_NODES}
 do
-  alert " Updating ${NODE}..."
-  if rsync -Cav --exclude extlib \
-                --exclude localdefs.pm \
-                --exclude httpd.conf \
-                --exclude perl.startup \
-                --exclude cache/ \
-                --exclude session/ \
-                --exclude databases/ \
-                --exclude tmp/ \
-                --exclude ace_images/ \
-                --exclude html/rss/ \
-              ${SITE_STAGING_DIRECTORY}/ ${NODE}:${SITE_TARGET_DIRECTORY}
-  then
-    success "Successfully pushed software onto ${NODE}..."
-  else
-    failure "Pushing software onto ${NODE} failed..."
-  fi
+   rsync_software $NODE
+   rsync_images $NODE
 done
 
 

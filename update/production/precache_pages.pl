@@ -20,25 +20,36 @@ use constant CACHE_ROOT => '/usr/local/wormbase/website/classic/html/cache';
 
 my $start = time();
 
-my $previous = shift;
-my %previous = parse() if $previous;
-
-#my $db    = Ace->connect(-path=>'/usr/local/acedb/elegans');
 my $db    = Ace->connect(-host=>'localhost',-port=>2005);
-#my $i     = $db->fetch_many(-query=>qq{find Gene Species="Caenorhabditis elegans"});
-#my $i     = $db->fetch_many(-query=>qq{find Gene Species="Caenorhabditis elegans" AND CGC_name AND Molecular_name});
-
 my $version = $db->status->{database}{version};
 my $cache = CACHE_ROOT . "/$version/gene";
 system("mkdir -p $cache");
-open OUT,">$cache/$version-precached-pages.txt";
+
+my $previous = shift;
+my %previous = parse(); # if $previous;
+
+#my $db    = Ace->connect(-path=>'/usr/local/acedb/elegans');
+#my $i     = $db->fetch_many(-query=>qq{find Gene Species="Caenorhabditis elegans"});
+#my $i     = $db->fetch_many(-query=>qq{find Gene Species="Caenorhabditis elegans" AND CGC_name AND Molecular_name});
+
+
+open OUT,">>$cache/$version-precached-pages.txt";
 
 my %status;
 my $i = $db->fetch_many('Gene','*');
+
+
 while (my $gene = $i->next) {
     
     $db ||= Ace->connect(-host=>'localhost',-port=>2005);
-    next if (defined $previous{$gene});
+
+
+    if ($previous{$gene}) {
+	print STDERR "Already seen gene $gene. Skipping...\n";
+	next;
+    }
+
+    print STDERR "Fetching and caching $gene\n";
     my $url = URL . $gene;
     sleep 2;
     
@@ -56,7 +67,7 @@ while (my $gene = $i->next) {
 	close CACHE;
     }
     
-    print OUT join("\t",$gene,$gene->Public_name,$url,$success,$cache_stop - $cache_start),"\n";
+    print OUT join("\t",$gene,$gene->Public_name || '',$url,$success,$cache_stop - $cache_start),"\n";
 }
 
 my $end = time();
@@ -66,12 +77,16 @@ printf OUT "%d days, %d hours, %d minutes and %d seconds\n",(gmtime $seconds)[7,
 
 
 sub parse {
-    open IN,"$previous";
+#    open IN,"$previous";
+#    return unless (-e "$cache/$version-precached-pages.txt");
+    open IN,"$cache/$version-precached-pages.txt" or die "$!";
     my %previous;
     while (<IN>) {
 	chomp;
-        my ($gene,@junk) = split("\t");
-	$previous{$gene}++;
+        my ($gene,$name,$url,$status,$cache_stop) = split("\t");
+	$previous{$gene}++ unless $status eq 'failed';
+	print STDERR "Recording $gene as seen...\n";
     }
+    close IN;
     return %previous;
 }
