@@ -29,23 +29,25 @@ my $previous = shift;
 my %previous = parse(); # if $previous;
 
 #my $db    = Ace->connect(-path=>'/usr/local/acedb/elegans');
-#my $i     = $db->fetch_many(-query=>qq{find Gene Species="Caenorhabditis elegans"});
-#my $i     = $db->fetch_many(-query=>qq{find Gene Species="Caenorhabditis elegans" AND CGC_name AND Molecular_name});
 
 
 open OUT,">>$cache/$version-precached-pages.txt";
 
 my %status;
+#my $i     = $db->fetch_many(-query=>qq{find Gene Species="Caenorhabditis elegans"});
+#my $i     = $db->fetch_many(-query=>qq{find Gene Species="Caenorhabditis elegans" AND CGC_name AND Molecular_name});
 my $i = $db->fetch_many('Gene','*');
 
 
 while (my $gene = $i->next) {
-    
+    next unless $gene->Species eq 'Caenorhabditis elegans';
+   
     $db ||= Ace->connect(-host=>'localhost',-port=>2005);
 
 
     if ($previous{$gene}) {
-	print STDERR "Already seen gene $gene. Skipping...\n";
+	print STDERR "Already seen gene $gene. Skipping...";
+	print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
 	next;
     }
 
@@ -85,7 +87,8 @@ sub parse {
 	chomp;
         my ($gene,$name,$url,$status,$cache_stop) = split("\t");
 	$previous{$gene}++ unless $status eq 'failed';
-	print STDERR "Recording $gene as seen...\n";
+	print STDERR "Recording $gene as seen...";
+	print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
     }
     close IN;
     return %previous;
