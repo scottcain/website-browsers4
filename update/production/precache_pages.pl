@@ -52,6 +52,7 @@ while (my $gene = $i->next) {
     }
 
     print STDERR "Fetching and caching $gene\n";
+    print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
     my $url = URL . $gene;
     sleep 2;
     
