@@ -38,9 +38,6 @@ if [ $TEST ]
 then
     alert "Pushing software onto ${STAGING_NODE}"
     if rsync -Cav --exclude extlib \
-        --exclude localdefs.pm \
-        --exclude httpd.conf \
-        --exclude perl.startup \
         --exclude cache/ \
         --exclude session/ \
         --exclude databases/ \
@@ -63,7 +60,7 @@ then
     for NODE in ${REMOTE_SITE_NODES}
     do
 	alert " Updating ${NODE}..."
-	if rsync -Cav --exclude extlib/ --exclude perl.startup --exclude localdefs.pm --exclude httpd.conf --exclude cache/ --exclude session/ --exclude databases/ --exclude tmp/ --exclude ace_images/ --exclude html/rss/ ${SITE_TARGET_DIRECTORY}/ ${NODE}:${SITE_TARGET_DIRECTORY}
+	if rsync -Cav --exclude extlib/ --exclude cache/ --exclude session/ --exclude databases/ --exclude tmp/ --exclude ace_images/ --exclude html/rss/ ${SITE_TARGET_DIRECTORY}/ ${NODE}:${SITE_TARGET_DIRECTORY}
 	then
 	    success "Successfully pushed software onto ${NODE}..."
 	else
@@ -82,9 +79,6 @@ function rsync_software() {
    NODE=$1
   alert " Updating ${NODE}..."
   if rsync -Cav --exclude extlib \
-                --exclude localdefs.pm \
-                --exclude httpd.conf \
-                --exclude perl.startup \
                 --exclude cache/ \
                 --exclude session/ \
                 --exclude databases/ \
