@@ -15,14 +15,14 @@ use WWW::Mechanize;
 $|++;
 
 use constant URL => 'http://dev.wormbase.org/db/gene/gene?class=Gene;name=';
-use constant CACHE_ROOT => '/usr/local/wormbase/website/classic/html/cache';
+use constant CACHE_ROOT => '/usr/local/wormbase/databases';
 
 
 my $start = time();
 
 my $db    = Ace->connect(-host=>'localhost',-port=>2005);
 my $version = $db->status->{database}{version};
-my $cache = CACHE_ROOT . "/$version/gene";
+my $cache = CACHE_ROOT . "/$version/cache/gene";
 system("mkdir -p $cache");
 
 my $previous = shift;
