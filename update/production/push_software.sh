@@ -70,9 +70,6 @@ then
     done
 fi
 
-# Rsync precache into staging
-rsync -Cav ${SITE_TARGET_DIRECTORY}/html/cache/ ${SITE_STAGING_DIRECTORY}/html/cache
-
 
 
 function rsync_software() {

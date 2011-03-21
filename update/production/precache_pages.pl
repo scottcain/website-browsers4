@@ -15,7 +15,9 @@ use WWW::Mechanize;
 $|++;
 
 use constant URL => 'http://dev.wormbase.org/db/gene/gene?class=Gene;name=';
-use constant CACHE_ROOT => '/usr/local/wormbase/website/classic/html/cache';
+#use constant CACHE_ROOT => '/usr/local/wormbase/website/classic/html/cache';
+use constant CACHE_ROOT => '/usr/local/wormbase/databases/cache';
+
 
 
 my $start = time();
@@ -82,15 +84,17 @@ printf OUT "%d days, %d hours, %d minutes and %d seconds\n",(gmtime $seconds)[7,
 sub parse {
 #    open IN,"$previous";
 #    return unless (-e "$cache/$version-precached-pages.txt");
-    open IN,"$cache/$version-precached-pages.txt" or die "$!";
-    my %previous;
-    while (<IN>) {
-	chomp;
-        my ($gene,$name,$url,$status,$cache_stop) = split("\t");
-	$previous{$gene}++ unless $status eq 'failed';
-	print STDERR "Recording $gene as seen...";
-	print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
+    if (-e "$cache/$version-precached-pages.txt") {
+	open IN,"$cache/$version-precached-pages.txt" or die "$!";
+	my %previous;
+	while (<IN>) {
+	    chomp;
+	    my ($gene,$name,$url,$status,$cache_stop) = split("\t");
+	    $previous{$gene}++ unless $status eq 'failed';
+	    print STDERR "Recording $gene as seen...";
+	    print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
+	}
+	close IN;
+	return %previous;
     }
-    close IN;
-    return %previous;
 }
