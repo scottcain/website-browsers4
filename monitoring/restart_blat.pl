@@ -4,7 +4,7 @@
 use strict;
 use Time::Format qw(%time);
 
-use lib '/usr/local/wormbase/website-classic/extlib/lib/perl5/site_perl/5.8.8';
+use lib '/usr/local/wormbase/website/classic/extlib/lib/perl5/site_perl/5.8.8';
 
 our ($HOST, $PORT, $USERNAME, $PASSWORD);
 our $ERRORS = 0;
@@ -22,7 +22,7 @@ our %BLAT_DBS = ('c_elegans'              => { port => 2008, file_glob => "$BLAT
 #                 'b_malayi'               => { port => 2013, file_glob => "$BLAT_ROOT_DIR/b_malayi/*.nib" },
                  );
 
-require '/usr/local/wormbase/website-classic/conf/elegans.pm';
+require '/usr/local/wormbase/website/classic/conf/elegans.pm';
 
 use Ace;
 use Proc::Simple;
