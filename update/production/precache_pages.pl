@@ -15,14 +15,12 @@ use WWW::Mechanize;
 $|++;
 
 use constant URL => 'http://dev.wormbase.org/db/gene/gene?class=Gene;name=';
-
 my %class2url = ( gene => 'http://dev.wormbase.org/db/gene/gene?class=Gene;name=',
 		  variation => 'http://dev.wormbase.org/db/gene/variation?class=Variation;name=',
 		  protein   => 'http://dev.wormbase.org/db/seq/protein?class=Protein;name=',);
 
 #use constant CACHE_ROOT => '/usr/local/wormbase/website/classic/html/cache';
-use constant CACHE_ROOT => '/usr/local/wormbase/databases/cache';
-
+use constant CACHE_ROOT => '/usr/local/wormbase/database';
 
 
 my $start = time();
@@ -34,7 +32,7 @@ my @classes = qw/gene protein variation/;
 
 
 foreach my $class (@classes) {
-    my $cache = CACHE_ROOT . "/$version/$class";
+    my $cache = CACHE_ROOT . "/$version/cache/$class";
     system("mkdir -p $cache");
     
     my $previous = shift;
