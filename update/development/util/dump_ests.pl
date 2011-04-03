@@ -5,7 +5,6 @@
 use Ace;
 use strict;
 
-#my $release = "WS207"; ##$self->release
 my $path = shift; ## "/usr/local/wormbase/acedb/wormbase_$release"
 
 

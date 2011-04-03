@@ -8,31 +8,6 @@ use Moose;
 # See for documentation
 # http://wiki.wormbase.org/index.php/Updating_The_Development_Server
 
-has 'ftp_root' => (
-    is      => 'ro',
-    default => '/usr/local/ftp/pub/wormbase',
-    );
-
-has 'species_path' => (
-    is         => 'ro',
-    lazy_build => sub {
-	my $self = shift;
-	return $self->ftp_root . "/species";
-    }
-    );
-
-# A dsicoverable list of species (symbolic) names.
-# Used later to auto-construct filenames.
-has 'species_list' => (
-    is => 'ro',
-    lazy_build => sub {
-	my $self = shift;
-	my $species_path = $self->species_path;
-	opendir(DIR,"$species_path") or die "Couldn't open the species directory ($species_path) on the FTP site.";
-	my @species = grep { !/^\./ && -d "$species_path/$_" } readdir($dh);
-	return @species;
-	},    
-    );
 
 
 

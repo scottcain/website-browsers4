@@ -1,3 +1,22 @@
+Overhauling process
+
+1. GFF databases
+
+C. briggsae no longer needs processing step.
+util/process_briggsae.pl was called by LoadGenomicGFFDB.pl but it has broken paths and couldn't possibly have been run in over a year.
+
+Related:
+update_scripts/briggsae2gffdb.pl and load_briggsae.sh are PROBABLY deprecated.
+
+
+C. elegans post processing:
+
+* Remove Chromosome_
+* Add protein motifs
+* Add genetic limits
+
+
+
 CreateBLASTDatabases MUST be run before LoadGenomicGFFDB
 
 
