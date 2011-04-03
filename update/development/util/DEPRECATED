@@ -1,0 +1,5 @@
+TH: 2011.04
+
+process_briggsae.pl   -
+    I don't think this script is any longer relevant.
+    It's called from LoadGenomicGFFDB.pl but has many broken paths.

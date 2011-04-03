@@ -13,3 +13,6 @@ updte_cshl_mirror.pl                    gmod_update_installation-wormbase.pl
 update_live_and_satellite_servers.pl    gmod_update_installation-wormbase.pl
 update_wormbase.pl                      ./update_wormbase-dev.pl
 notify.pl				send_release_notification.pl
+
+briggsae2gffdb.pl
+load_briggsae.pl

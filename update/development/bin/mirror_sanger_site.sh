@@ -4,4 +4,5 @@
 # Check once at midnight every night.
 
 cd /usr/local/ftp/pub/wormbase
-wget ftp://ftp.sanger.ac.uk/pub2/wormbase/${RELEASE}
+# -N don't download newer files
+wget -r -N ftp://ftp.sanger.ac.uk/pub2/wormbase
