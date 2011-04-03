@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
-use local::lib '/usr/local/wormbase/extlib/classic';
+use local::lib '/usr/local/wormbase/website/tharris/extlib';
 use Ace;
 use constant ACEDB => '/usr/local/wormbase/acedb/wormbase';
 use constant GFF   => '/usr/local/ftp/pub/wormbase/elegans-current_release/GENE_DUMPS/CHROMOSOME*.gff.gz';
@@ -9,7 +9,7 @@ use constant GFF   => '/usr/local/ftp/pub/wormbase/elegans-current_release/GENE_
 #my $acedb = shift || ACEDB;
 
 my $release = shift;
-my $acedb = "/usr/local/acedb/wormbase_$release";
+my $acedb = "/usr/local/wormbase/acedb/wormbase_$release";
 my $db = Ace->connect($acedb) or die "Can't open ace database:",Ace->error;
 my %loci_seen      = ();
 
@@ -35,12 +35,19 @@ while (<>) {
   chomp;
   next if /^\#/;
   my ($ref,$source,$method,$start,$stop,$score,$strand,$phase,$group) = split /\t/;
+
   next if $source eq 'assembly_tag'; # don't want 'em, don't need 'em
-  next if $method eq 'HOMOL_GAP'; # don't want that neither
+  next if $method eq 'HOMOL_GAP'; # don't want that neither  
+  next if $source eq 'intron';
+  next if $method eq 'intron';
+
+  # Fix the Chromosome IDs
   $ref    =~ s/^CHROMOSOME_//;
   $group  =~ s/CHROMOSOME_//;
 
   $source ='' if $source eq '*UNKNOWN*';
+
+
 
   # Process top-level CDS and Transcript entries
   if ($method     =~ /Transcript|CDS|.*primary_transcript/
@@ -123,7 +130,7 @@ while (<>) {
   }
 
   # Skip Ant's fix for WBGenes
-  next if $source eq 'Gene' && $method eq 'processed_transcript';
+  next if $source eq 'gene' && $method eq 'processed_transcript';
 
   if ($method eq 'region' && $source eq 'Genomic_canonical' && $group =~ /Sequence "(\w+)"/) {
     if (my $accession = $GENBANK{$1}) {
