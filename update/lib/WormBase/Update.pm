@@ -118,6 +118,19 @@ has 'ftp_path' => (
     default => '/usr/local/ftp/pub/wormbase'
     );
 
+
+
+has 'ftp_species_root_path' => (
+    is         => 'ro',
+    lazy_build => 1,
+    );
+
+sub _build_ftp_species_root_path {
+    my $self = shift;
+    my $version = $self->version;
+    return $self->ftp_path . "/releases/$version/species";
+}
+
 has 'ftp_species_path' => (
     is         => 'ro',
     lazy_build => 1,
@@ -126,10 +139,11 @@ has 'ftp_species_path' => (
 sub _build_ftp_species_path {
     my $self = shift;
     my $version = $self->version;
-    return $self->ftp_path . "/releases/$version/species";
+    my $species = $self->species;
+    return $self->ftp_path . "/releases/$version/species/$species";
 }
 
-# A dsicoverable list of species (symbolic) names.
+# A discoverable list of species (symbolic) names.
 # Used later to auto-construct filenames.
 has 'species_list' => (
     is => 'ro',
@@ -137,7 +151,7 @@ has 'species_list' => (
 
 sub _build_species_list {
     my $self = shift;
-    my $species_path = $self->ftp_species_path;
+    my $species_path = $self->ftp_species_root_path;
     opendir(DIR,"$species_path") or die "Couldn't open the species directory ($species_path) on the FTP site.";
     my @species = grep { !/^\./ && -d "$species_path/$_" } readdir(DIR);
     return @species;
@@ -157,6 +171,7 @@ has 'support_databases_path' => (
 	my $self = shift;
 	return $self->root_path . "/databases";
     } );
+
 
 has 'acedb_path' => (
     is => 'ro',
@@ -198,9 +213,43 @@ has 'web_user' => (
     ); 
 
 
+
+
+# Discover the name of the fasta file for a given species.
+# More appropriate as a Role.
+has 'fasta_file' => (
+    is => 'ro',
+    lazy_build => 1);
+
+sub _build_fasta_file {
+    my $self    = shift;
+    my $species = $self->species;
+    my $version = $self->version;	
+    my $fasta   = "$species.$version.dna.fa.gz";
+    return $fasta;
+}
+
+has 'fasta_path' => (
+    is => 'ro',
+    lazy_build => 1);
+
+sub _build_fasta_path {
+    my $self = shift;
+    my $species = $self->species;
+    my $file = $self->fasta_file;
+    my $path = join("/",$self->ftp_species_path,$file);
+    if (-e $path) {
+	return $path;
+    } else {
+	$self->log->logdie("We couldn't find a fasta file for $species");
+    }
+}
+
+
+
+
 my %config =  (
 	       directories => {
-####			       support_dbs => "databases",
 			       database_tarballs => 'mirror/database_tarballs',
 			      }	,
 	       
@@ -210,23 +259,9 @@ my %config =  (
 	       remote_ftp_server   => 'ftp.sanger.ac.uk',
 	       remote_ftp_path     => 'pub2/wormbase',
 	       
-	       # Local FTP server
-	       ftp_root            => '/usr/local/ftp',	       
-               local_ftp_path      => 'pub/wormbase',
 
 	       # Filenames on the FTP site
-	       filenames => { generic => {
-					  nucleotide_blast => 'genomic.fa',
-					  protein_blast    => 'peptide.fa',
-					  ests_blast       => 'ests.fa',
-					  genes_blast      => 'genes.fa',
-					  epcr             => 'epcr.fa',
-					  oligos           => 'oligo.db',
-					 },
-			      custom => {
-					 genomic_gff2_archive           => '%s.%s.gff',
-					 genomic_gff3_archive           => '%s.%s.gff3',
-					 genomic_fasta_archive          => '%s.%s.dna.fa',
+	       filenames => { 
 					 genetic_map_gff2_archive       => '%s.%s.genetic_map.gff',
 					 physical_map_gff2_archive      => '%s.%s.physical_map.gff',
 					 protein_motifs_gff2_archive    => '%s.%s.protein_motifs.gff',
@@ -238,14 +273,6 @@ my %config =  (
 	       # Miscellaneous files at Sanger
 	       clustal_file  => 'wormpep_clw.sql',
 	       
-	       # BLAST DB config
-	       blastdb_format_script => '/usr/local/blast/bin/formatdb',
-	       formatdb    => {
-			       nucleotide => qq{-p F -t '%s' -i %s},
-			       ests       => qq{-p F -t '%s' -i %s},
-			       protein    => qq{-p T -t '%s' -i %s},
-			       genes      => qq{-p F -t '%s' -i %s},
-			      },   
     
 	       # Some species aren't part and parcel of the build yet.
 	       # These may have non-standard file names/paths remotely
@@ -478,11 +505,6 @@ sub species_alone {
 
 
 # Accessors
-sub support_dbs {
-  my $self = shift;
-  my $root = $config{root};
-  return "$root/$config{directories}{support_dbs}";
-}
 
 sub tarballs_dir {
   my $self   = shift;
@@ -500,15 +522,7 @@ sub get_blatdb_dir {
   return $blatdb_dir;
 }
 
-sub get_blastdb_dir {
-  my $self        = shift;    
-  my $release     = $self->release;
-  my $support_db  = $self->support_dbs;
-  my $blastdb_dir = "$support_db/$release/blast";
-  $self->_make_dir("$support_db/$release");
-  $self->_make_dir($blastdb_dir);
-  return $blastdb_dir;
-}
+
 
 sub get_epcr_dir {
   my $self        = shift;    
@@ -529,6 +543,16 @@ sub release_id {
   my $release = $self->release;
   $release =~ /WS(.*)/;
   return $1;
+}
+
+
+
+# Check to see if input files exist
+sub check_input_file {
+    my ($self,$file,$step) = @_;
+    return 1 if (-e $file);
+    $self->log->logdie("The input file ($file) for $step does not exist. Please fix.");
+    return 0;
 }
 
 
@@ -558,7 +582,7 @@ END
 #my @seqs = $db->fetch(-query=>qq{find cDNA_Sequence; dna; query find 
 #NDB_Sequence; dna"});
     my @seqs = $db->fetch(-query=>$query);
-    my $file = join("/",$self->ftp_species_path,$self->version,'c_elegans','c_elegans.' . $self->version . ".ests.fa.gz");
+    my $file = join("/",$self->ftp_species_root_path,'c_elegans','c_elegans.' . $self->version . ".ests.fa.gz");
     open OUT," | gzip -c > $file" or $self->log->logdie("Couldn't open $file for generating the EST file dump");
     
     foreach (@seqs) {

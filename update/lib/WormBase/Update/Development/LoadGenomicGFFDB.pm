@@ -37,11 +37,11 @@ sub _build_gff_file {
     my $self = shift;
     my $species = $self->species;
     my $version = $self->version;	
-    my $gff = join("/",$self->ftp_species_path,"/$species/$species.$version.gff.gz");
+    my $gff = join("/",$self->ftp_species_path,"$species.$version.gff.gz");
     if (-e $gff) {
 	$self->gff_version('2');
     } else {
-	$gff = join("/",$self->ftp_species_path,"/$species/$species.$version.gff3.gz");
+	$gff = join("/",$self->ftp_species_path,"$species.$version.gff3.gz");
 	if (-e $gff) {
 	    $self->gff_version('3');
 	}
@@ -54,25 +54,6 @@ has 'gff_version' => (
     is      => 'rw',
     default => '2',
     );
-
-
-
-# Discover the name of the fasta file.
-has 'fasta_file' => (
-    is => 'ro',
-    lazy_build => 1);
-
-sub _build_fasta_file {
-    my $self    = shift;
-    my $species = shift;
-    my $version = $self->version;	
-    my $fasta = join("/",$self->ftp_species_path,"/$species/$species.$version.dna.fa.gz");
-    if (-e $fasta) {
-	return $fasta;
-    } else {
-	$self->log->logdie("We couldn't find a fasta file for $species");
-    }
-}
 
 
 has 'create_database' => (
@@ -130,7 +111,7 @@ sub load_gffdb {
     $self->create_database() unless $self->dryrun;
 
     my $gff     = $self->gff_file; 
-    my $fasta   = $self->fasta_file;
+    my $fasta   = $self->fasta_path;
    
     if ($species =~ /elegans/) {
 

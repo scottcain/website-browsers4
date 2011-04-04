@@ -24,10 +24,10 @@ steps/compile_ontology_resources.pl   ${RELEASE}
 steps/compile_orthology_resources.pl  ${RELEASE}
 
 # Migrate
-steps/create_blast_databases.pl       ${RELEASE}
+steps/create_blast_databases.pl       ${RELEASE}          # DONE
 
 # Migrate
-steps/create_blat_databases.pl        ${RELEASE}
+steps/create_blat_databases.pl        ${RELEASE}          # DONE
 
 # DEPRECATED
 #steps/create_epcr_databases.pl        ${RELEASE}
