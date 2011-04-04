@@ -1,22 +1,17 @@
 package WormBase::Update::Development::CreateBlatDatabases;
 
 use Moose;
+extends qw/WormBase::Update/;
 
-use strict;
 use local::lib '/usr/local/wormbase/extlib/classic';
-use Ace;
-use base 'Update';
 use File::Slurp qw(slurp);
 use Bio::SeqIO;
-
-
-extends qw/WormBase::Update/;
 
 
 # The symbolic name of this step
 has 'step' => (
     is => 'ro',
-    default => 'creating_blat_databases'
+    default => 'building BLAT databases',
     );
 
 # Simple accessor/getter for species so I don't have to pass it around.
@@ -79,8 +74,6 @@ sub run {
 	$self->make_blatdb();
 
 	$self->log->info("  end: $msg $species");    
-	my $master = $self->master_log;
-	print $master $self->step . " $msg $species complete...\n";
     }
 }
 

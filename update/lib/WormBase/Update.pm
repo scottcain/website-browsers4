@@ -39,11 +39,12 @@ has 'log_dir' => (
     );
 
 
+# The per-step log file.
+# I should break this into STDERR and STDOUT logs.
 has 'log' => (
     is => 'ro',
     lazy_build => 1,
 );
-
 
 sub _build_log {
     my $self    = shift;
@@ -53,26 +54,53 @@ sub _build_log {
     # Make sure that our log dirs exist
     $self->_make_dir($self->log_dir);
     $self->_make_dir($self->log_dir . "/$version");
+    
+    $step =~ s/ /_/g;
+    $self->_make_dir($self->log_dir . "/$version/$step");
 
     my $log_config = qq(
 	
-		log4perl.logger.rootLogger  = INFO,LOGFILE,Screen
+		log4perl.logger.rootLogger  = UpdateLog, UpdateError, Screen
+
+                # Filters to break up logging into different files
+                # Filter to match level ERROR - Critical errors
+                log4perl.filter.MatchError = Log::Log4perl::Filter::LevelMatch
+                log4perl.filter.MatchError.LevelToMatch  = ERROR
+                log4perl.filter.MatchError.AcceptOnMatch = true
+
+                # Filter to match level INFO
+                log4perl.filter.MatchInfo  = Log::Log4perl::Filter::LevelMatch
+                log4perl.filter.MatchInfo.LevelToMatch  = INFO
+                log4perl.filter.MatchInfo.AcceptOnMatch = true
 		
-		# Global spacing
-		log4perl.appender.LOGFILE=Log::Log4perl::Appender::File
-		log4perl.appender.LOGFILE.filename=$log_dir/$version/$step.log
-		log4perl.appender.LOGFILE.mode=append
-		log4perl.appender.LOGFILE.layout = Log::Log4perl::Layout::PatternLayout
-		#log4perl.appender.LOGFILE.layout.ConversionPattern=[%d %p]%K%l − %r %m%n
-		log4perl.appender.LOGFILE.layout.ConversionPattern=[%d %p]%K%m (%M [%L])%n
-		#log4perl.appender.LOGFILE.layout.ConversionPattern=[%d %p]%K %n	       
-		
+                # step.err
+		log4perl.appender.UpdateError=Log::Log4perl::Appender::File
+		log4perl.appender.UpdateError.filename=$log_dir/$version/steps/$step/step.err
+		log4perl.appender.UpdateError.mode=append
+		log4perl.appender.UpdateError.layout = Log::Log4perl::Layout::PatternLayout
+		#log4perl.appender.UpdateError.layout.ConversionPattern=[%d %p]%K%l − %r %m%n
+		log4perl.appender.UpdateError.layout.ConversionPattern=[%d %p]%K%m (%M [%L])%n
+		#log4perl.appender.UpdateError.layout.ConversionPattern=[%d %p]%K %n	       
+                log4perl.appender.UpdateError.Filter = MatchError
+
+                # step.log
+		log4perl.appender.UpdateLog=Log::Log4perl::Appender::File
+		log4perl.appender.UpdateLog.filename=$log_dir/$version/steps/$step/step.log
+		log4perl.appender.UpdateLog.mode=append
+		log4perl.appender.UpdateLog.layout = Log::Log4perl::Layout::PatternLayout
+		#log4perl.appender.UpdateLog.layout.ConversionPattern=[%d %p]%K%l − %r %m%n
+		log4perl.appender.UpdateLog.layout.ConversionPattern=[%d %p]%K%m (%M [%L])%n
+		#log4perl.appender.UpdateLog.layout.ConversionPattern=[%d %p]%K %n	       
+                log4perl.appender.UpdateLog.Filter = MatchInfo
+	
 		log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
 		log4perl.appender.Screen.stderr  = 0
 		log4perl.appender.Screen.layout = Log::Log4perl::Layout::PatternLayout
 		#log4perl.appender.Screen.layout.ConversionPattern=[%d %r]%K%F %L %c − %m%n
 		log4perl.appender.Screen.layout.ConversionPattern=[%d %p]%K%m (%M [%L])%n
 		#log4perl.appender.Screen.layout.ConversionPattern=[%d %p]%K %n
+
+
 		);
     
     Log::Log4perl::Layout::PatternLayout::add_global_cspec('K',
@@ -102,9 +130,46 @@ has 'master_log' => (
 sub _build_master_log {
     my $self     = shift;
     my $version  = $self->version;
-    my $log      = $self->log_dir . "/$version.log";
-    my $root_log = new IO::File ">>$log";
-    return $root_log;
+    my $log      = $self->log_dir . "/master.log";
+
+    my $log_config = qq(
+	
+		log4perl.logger.masterLogger  = MasterLog, Screen
+		
+		log4perl.appender.MasterLog=Log::Log4perl::Appender::File
+		log4perl.appender.MasterLog.filename=$log_dir/$version/master.log
+		log4perl.appender.MasterLog.mode=append
+		log4perl.appender.MasterLog.layout = Log::Log4perl::Layout::PatternLayout
+		#log4perl.appender.MasterLog.layout.ConversionPattern=[%d %p]%K%l − %r %m%n
+		log4perl.appender.MasterLog.layout.ConversionPattern=[%d %p]%K%m (%M [%L])%n
+		#log4perl.appender.MasterLog.layout.ConversionPattern=[%d %p]%K %n
+	
+		log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
+		log4perl.appender.Screen.stderr  = 0
+		log4perl.appender.Screen.layout = Log::Log4perl::Layout::PatternLayout
+		#log4perl.appender.Screen.layout.ConversionPattern=[%d %r]%K%F %L %c − %m%n
+		log4perl.appender.Screen.layout.ConversionPattern=[%d %p]%K%m (%M [%L])%n
+		#log4perl.appender.Screen.layout.ConversionPattern=[%d %p]%K %n
+		);
+
+
+    Log::Log4perl::Layout::PatternLayout::add_global_cspec('K',
+							       sub {
+								   
+								   my ($layout, $message, $category, $priority, $caller_level) = @_;
+								   # FATAL, ERROR, WARN, INFO, DEBUG, TRACE
+								   return "   --> "    if $priority eq 'DEBUG';
+								   return " "     if $priority eq 'INFO';
+								   return "  ! "  if $priority eq 'WARN';  # potential errors
+								   return " !! "  if $priority eq 'ERROR'; # errors
+								   return "!!! "  if $priority eq 'FATAL';  # fatal errors
+								   return " ";
+							   });
+    
+    Log::Log4perl::init(\$log_config) or die "Couldn't create the Log::Log4Perl object";
+        
+    my $logger = Log::Log4perl->get_logger('masterLogger');
+    return $logger; 
 }
 
 
@@ -117,8 +182,6 @@ has 'ftp_path' => (
     is      => 'ro',
     default => '/usr/local/ftp/pub/wormbase'
     );
-
-
 
 has 'ftp_species_root_path' => (
     is         => 'ro',
@@ -328,20 +391,19 @@ my %config =  (
  		      
  		      remote_dna_filename     => 'm_incogita.%s.dna.gz'
  		    },
-	       },
-	       
-	       fatonib => '/usr/local/blat/bin/faToNib',
-	       
+	       }, 
 	      );
 
 
 sub execute {
   my $self = shift;
-  $self->log->info('BEGIN STEP: ' . $self->step);
+  $self->master_log->info('BEGIN STEP: ' . $self->step);
 
   # Subclasses should implement the run() method.
   $self->run();
-  $self->log->info('END STEP  : ' . $self->step);
+
+  $self->master_log->info('END STEP  : ' . $self->step);
+  $self->master_log->info("\n\n");
 }
 
 

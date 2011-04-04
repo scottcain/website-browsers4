@@ -7,7 +7,7 @@ extends qw/WormBase::Update/;
 # The symbolic name of this step
 has 'step' => (
     is => 'ro',
-    default => 'creating blast databases'
+    default => 'build BLAST databases',
     );
 
 # Simple accessor/getter for species so I don't have to pass it around.
@@ -89,8 +89,7 @@ sub run {
       $self->create_est_db();
       $self->create_gene_db();
       $self->log->info("  end: $msg $species");
-      my $master = $self->master_log;
-      print $master $self->step . " $msg $species complete...\n";
+
   }
 }
 

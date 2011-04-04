@@ -8,7 +8,7 @@ extends qw/WormBase::Update/;
 # The symbolic name of this step
 has 'step' => (
     is => 'ro',
-    default => 'loading genomic feature gff databases'
+    default => 'load genomic gff databases',
     );
 
 # Simple accessor/getter for species so I don't have to pass it around.
@@ -98,8 +98,6 @@ sub run {
 	$self->check_db();
 	$self->log->info("  end: $msg $species");
     }
-    my $master = $self->master_log;
-    print $master $self->step . ": complete...\n";
 }
 
 sub load_gffdb {

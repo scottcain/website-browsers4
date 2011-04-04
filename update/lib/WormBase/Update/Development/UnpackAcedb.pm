@@ -6,7 +6,7 @@ extends qw/WormBase::Update/;
 # The symbolic name of this step
 has 'step' => (
     is => 'ro',
-    default => 'unpack a new release of acedb' );
+    default => 'unpack and customize acedb' );
 
 sub run {
     my $self = shift;       
@@ -17,9 +17,6 @@ sub run {
 #			 target  => 'wormbase_' . $self->release,
 #			   symlink => 'wormbase',
 #		       });
-
-    my $master = $self->master_log;
-    print $master $self->step . " Mirroring AceDB complete...\n";
 }
 
 
