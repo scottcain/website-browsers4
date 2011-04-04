@@ -3,9 +3,7 @@
 use strict;
 use Update::LoadGenomicGFFDB;
 
-my $release = shift or die "Usage: $0 [WSVersion]";
+my $version = shift or die "Usage: $0 [WSVersion]";
 
-# Create directories
-my $agent = Update::LoadGenomicGFFDB->new({ release => $release });
+my $agent = Update::LoadGenomicGFFDB->new({ version => $version });
 $agent->execute();
-

@@ -20,7 +20,7 @@ my %class2url = ( gene => 'http://dev.wormbase.org/db/gene/gene?class=Gene;name=
 		  protein   => 'http://dev.wormbase.org/db/seq/protein?class=Protein;name=',);
 
 #use constant CACHE_ROOT => '/usr/local/wormbase/website/classic/html/cache';
-use constant CACHE_ROOT => '/usr/local/wormbase/database';
+use constant CACHE_ROOT => '/usr/local/wormbase/databases';
 
 
 my $start = time();

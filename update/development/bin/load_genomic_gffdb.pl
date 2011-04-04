@@ -1,7 +1,8 @@
 #!/usr/bin/perl
 
 use strict;
-use lib '../lib';
+use FindBin qw/$Bin/;
+use lib "$Bin/../../lib";
 use WormBase::Update::Development::LoadGenomicGFFDB;
 
 my $version = shift or die "Usage: $0 [WSVersion]";

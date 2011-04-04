@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# This is the original update.sh. It's been badly neglected
+# but provides a starting point. 
+
 RELEASE=$1
 
 # Site specific
@@ -9,7 +12,7 @@ steps/purge_disk_space.sh             ${RELEASE}
 steps/create_directories.pl           ${RELEASE}
 
 # For mirrors only
-steps/mirror_acedb.pl                 ${RELEASE}     # DONE
+bin/unpack_acedb.pl                   ${RELEASE}           # DONE
 
 # For mirrors only
 steps/mirror_ontology.pl              ${RELEASE}
@@ -29,8 +32,7 @@ steps/create_blat_databases.pl        ${RELEASE}
 # DEPRECATED
 #steps/create_epcr_databases.pl        ${RELEASE}
 
-# Migrate
-steps/load_genomic_gffdb.pl           ${RELEASE}    # DONE
+bin/load_genomic_gffdb.pl           ${RELEASE}            # DONE
 
 # Retain? Migrate?
 steps/load_gff_patches.pl             ${RELEASE}

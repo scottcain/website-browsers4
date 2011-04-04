@@ -34,7 +34,25 @@ function success() {
 # Rsync precache into staging
 function rsync_cache() {
     NODE=$1
-    rsync -Cav ${SITE_TARGET_DIRECTORY}/html/cache/ ${NODE}:${SITE_TARGET_DIRECTORY}/html/cache
+
+      if [ "${NODE}" == "wb-mining.oicr.on.ca" ]
+      then
+  	  if rsync -Cav --exclude *bak* --exclude web_data/ \
+	      ${SUPPORT_DB_DIRECTORY}/ ${NODE}:${SUPPORT_DB_DIRECTORY}
+ 	  then
+      		success "Successfully pushed support databases onto ${NODE}"
+  	  fi
+      else
+	  if rsync -Cav --exclude *bak* \
+              --exclude web_data/ \
+	      --exclude blast \
+	      --exclude blat \
+	      ${SUPPORT_DB_DIRECTORY}/ ${NODE}:${SUPPORT_DB_DIRECTORY}
+#	      --delete ${SUPPORT_DB_DIRECTORY}/ ${NODE}:${SUPPORT_DB_DIRECTORY}
+  	  then
+      	      success "Successfully pushed support databases onto ${NODE}"
+  	  fi
+      fi
 }
 
 
