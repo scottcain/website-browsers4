@@ -28,7 +28,8 @@ my $start = time();
 my $db    = Ace->connect(-host=>'localhost',-port=>2005);
 my $version = $db->status->{database}{version};
 
-my @classes = qw/gene protein variation/;
+#my @classes = qw/gene protein variation/;
+my @classes = qw/protein variation/;
 
 
 foreach my $class (@classes) {
@@ -46,9 +47,13 @@ foreach my $class (@classes) {
     my %status;
 #my $i     = $db->fetch_many(-query=>qq{find Gene Species="Caenorhabditis elegans"});
 #my $i     = $db->fetch_many(-query=>qq{find Gene Species="Caenorhabditis elegans" AND CGC_name AND Molecular_name});
+
+#    my $query_class = ucfirst($class);
+#my $i     = $db->fetch_many(-query=>qq{find $query_class Species="Caenorhabditis elegans"});
+
     my $i = $db->fetch_many(ucfirst($class),'*');
-    
     while (my $obj = $i->next) {
+	next if $class eq 'protein' && $obj->name != /^WP:/;
 	next unless $obj->Species eq 'Caenorhabditis elegans';
 	
 	$db ||= Ace->connect(-host=>'localhost',-port=>2005);
