@@ -37,10 +37,16 @@ do
     mv sequences/rna/*${RELEASE}.gz .
 
     # Save the fasta for the *pep, and rename it following convention.
-    mv sequences/protein/*.${RELEASE}.fa.gz ${THIS_SPECIES}.protein.fa.gz
+    mv sequences/protein/*.${RELEASE}.fa.gz ${THIS_SPECIES}.${RELEASE}.protein.fa.gz
 
-   # Save blast hits
-    mv sequence/protein/best_blast* ${THIS_SPECIES}.${RELEASE}.best_blast_hits.${RELEASE}.gz
+    # Save the spliced sequences (distributed as part of wormpep?)
+    cd sequences/protein
+    tar xzf *.tar.gz
+    cd ../../
+    mv sequences/protein/*.dna* ${THIS_SPECIES}.${RELEASE}.spliced.fa.gz
+
+    # Save blast hits
+    mv sequences/protein/best_blast* ${THIS_SPECIES}.${RELEASE}.best_blast_hits.gz
 
     # Keep source directories around to make sure we have what we want to retain.
     mkdir temp
