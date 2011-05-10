@@ -1,6 +1,6 @@
 package Update;
 
-use local::lib '/usr/local/wormbase/website-classic/extlib';
+use local::lib '/usr/local/wormbase/website/classic/extlib';
 use strict;
 use Net::FTP::Recursive;
 use Log::Log4perl;
@@ -8,25 +8,163 @@ use FindBin qw($Bin);
 use IO::File;
 our $AUTOLOAD;
 
-## test
+
+
+use Moose;
+
+has 'version' => (
+    is => 'rw');
+   
+
+
+# Logging options
+has 'log_dir' => (
+    is => 'ro',
+    default => '/usr/local/wormbase/logs',
+    );
+
+
+has 'log' => (
+    isa => 'Log::Log4perl',
+    lazy_build => sub {
+	my $self    = shift;
+  	my $release = $this->release;
+  	my $step    = $this->step();
+
+	my $log_config = qq(
+	
+		log4perl.logger.rootLogger  = INFO,LOGFILE,Screen
+		
+		# Global spacing
+		log4perl.appender.LOGFILE=Log::Log4perl::Appender::File
+		log4perl.appender.LOGFILE.filename=$Bin/../logs/$release/$step.log
+		log4perl.appender.LOGFILE.mode=append
+		log4perl.appender.LOGFILE.layout = Log::Log4perl::Layout::PatternLayout
+		#log4perl.appender.LOGFILE.layout.ConversionPattern=[%d %p]%K%l − %r %m%n
+		log4perl.appender.LOGFILE.layout.ConversionPattern=[%d %p]%K%m (%M [%L])%n
+		#log4perl.appender.LOGFILE.layout.ConversionPattern=[%d %p]%K %n
+		
+		
+		log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
+		log4perl.appender.Screen.stderr  = 0
+		log4perl.appender.Screen.layout = Log::Log4perl::Layout::PatternLayout
+		#log4perl.appender.Screen.layout.ConversionPattern=[%d %r]%K%F %L %c − %m%n
+		log4perl.appender.Screen.layout.ConversionPattern=[%d %p]%K%m (%M [%L])%n
+		#log4perl.appender.Screen.layout.ConversionPattern=[%d %p]%K %n
+		);
+	
+  	Log::Log4perl::Layout::PatternLayout::add_global_cspec('K',
+							       sub {
+								   
+								   my ($layout, $message, $category, $priority, $caller_level) = @_;
+								   # FATAL, ERROR, WARN, INFO, DEBUG, TRACE
+								   return "   --> "    if $priority eq 'DEBUG';
+								   return " "     if $priority eq 'INFO';
+								   return "  ! "  if $priority eq 'WARN';  # potential errors
+								   return " !! "  if $priority eq 'ERROR'; # errors
+								   return "!!! "  if $priority eq 'FATAL';  # fatal errors
+								   return " ";
+							       });
+	
+  	Log::Log4perl::init(\$log_config);
+	
+	# Make sure that our log dirs exist
+  	$self->_make_dir($self->log_dir);
+	$self->_make_dir($self->log_dir . "/$release");
+
+	my $logger = Log::Log4perl->get_logger('rootLogger');
+	return $logger;	
+    },
+    );
+
+
+has 'master_log' => (
+    is => 'ro',
+    lazy_build => sub {
+	my $self     = shift;
+	my $log      = $self->log_dir . "/$release/$release.log";
+  	my $root_log = new IO::File ">>$log";
+  	return $root_log;
+    },
+    );
+	
+
+# Configuration options
+has 'root_path' => (
+    is      => 'ro',
+    default => '/usr/local/wormbase' );
+
+
+
+has 'ftp_path' => (
+    is      => 'ro',
+    default => '/usr/local/ftp/pub/wormbase'
+    );
+
+has 'ftp_species_path' => (
+    is         => 'ro',
+    lazy_build => sub {
+	my $self = shift;
+	return $self->ftp_path . "/species";
+    }
+    );
+
+# A dsicoverable list of species (symbolic) names.
+# Used later to auto-construct filenames.
+has 'species_list' => (
+    is => 'ro',
+    lazy_build => sub {
+	my $self = shift;
+	my $species_path = $self->ftp_species_path;
+	opendir(DIR,"$species_path") or die "Couldn't open the species directory ($species_path) on the FTP site.";
+	my @species = grep { !/^\./ && -d "$species_path/$_" } readdir($dh);
+	return @species;
+	},    
+    );
+
+
+has 'tmp_staging_path' => (
+    is => 'ro',
+    lazy_build => sub {
+	my $self = shift;
+	return $self->root_path . "/tmp/staging";
+    } );
+
+has 'support_databases_path' => (
+    is => 'ro',
+    lazy_build => sub {
+	my $self = shift;
+	return $self->root_path . "/databases";
+    } );
+
+has 'acedb_path' => (
+    is => 'ro',
+    lazy_build => sub {
+	my $self = shift;
+	return $self->root_path . "/acedb";
+    }
+    );
+
+has 'mysql_data_path' => (
+    is => 'ro',
+    default => '/usr/local/mysq/data',
+    );
+
+has 'mysql_user' => (
+    is => 'ro',
+    default => 'root',
+    );
+    
+has 'mysql_pass' => (
+    is => 'ro',
+    default => '3l3g@nz',
+    );
 
 my %config =  (
-	       root => '/usr/local/wormbase', ## /website-classic
-	       
 	       directories => {
-			       support_dbs => "databases",
+####			       support_dbs => "databases",
 			       database_tarballs => 'mirror/database_tarballs',
-			      },
-
-	       # Where we will mirror files from Sanger
-	       mirror_dir => '/tmp/temporary_update_dir',
-	       
-	       # acedb and mysql
-	       	
-	       acedb_root     => '/usr/local/wormbase/acedb/',
-
-
-	       mysql_data_dir => '/usr/local/mysql/data',
+			      }	       
 	       
 	       # FTP server access
 	       wormbase_ftp_host   => 'brie4.cshl.org',
@@ -138,9 +276,6 @@ my %config =  (
 	       
 	       fatonib => '/usr/local/blat/bin/faToNib',
 	       
-	       mysql_user => 'root',
-	       mysql_pass => '3l3g@nz',
-
 	      );
 
 sub new {
@@ -148,79 +283,20 @@ sub new {
   	my $this = bless $params,$self;
   	$this->{config} = \%config;
   
-  	my $release = $this->release;
-
-  	my $step = $this->step();
-
-	my $log_config = qq(
-	
-		log4perl.logger.rootLogger  = INFO,LOGFILE,Screen
-		
-		# Global spacing
-		log4perl.appender.LOGFILE=Log::Log4perl::Appender::File
-		log4perl.appender.LOGFILE.filename=$Bin/../logs/$release/$step.log
-		log4perl.appender.LOGFILE.mode=append
-		log4perl.appender.LOGFILE.layout = Log::Log4perl::Layout::PatternLayout
-		#log4perl.appender.LOGFILE.layout.ConversionPattern=[%d %p]%K%l − %r %m%n
-		log4perl.appender.LOGFILE.layout.ConversionPattern=[%d %p]%K%m (%M [%L])%n
-		#log4perl.appender.LOGFILE.layout.ConversionPattern=[%d %p]%K %n
-		
-		
-		log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
-		log4perl.appender.Screen.stderr  = 0
-		log4perl.appender.Screen.layout = Log::Log4perl::Layout::PatternLayout
-		#log4perl.appender.Screen.layout.ConversionPattern=[%d %r]%K%F %L %c − %m%n
-		log4perl.appender.Screen.layout.ConversionPattern=[%d %p]%K%m (%M [%L])%n
-		#log4perl.appender.Screen.layout.ConversionPattern=[%d %p]%K %n
-		);
-  
-  	Log::Log4perl::Layout::PatternLayout::add_global_cspec('K',
-		sub {
-		
-     		my ($layout, $message, $category, $priority, $caller_level) = @_;
-     		# FATAL, ERROR, WARN, INFO, DEBUG, TRACE
-			 return "   --> "    if $priority eq 'DEBUG';
-			 return " " if $priority eq 'INFO';
-			 return "  ! "   if $priority eq 'WARN';  # potential errors
-			 return " !! "   if $priority eq 'ERROR'; # errors
-			 return "!!! " if $priority eq 'FATAL';  # fatal errors
-			 return " ";
-	   	});
-
-  	Log::Log4perl::init(\$log_config);
-
-  	$this->_make_dir("$Bin/../logs");
-  	$this->_make_dir("$Bin/../logs/$release");
-  	
-
-  	my $root_log = new IO::File ">> $Bin/../logs/$release/$release.log";
-  	$this->{master_log} = $root_log;
   	print $root_log "starting $step...\n";
-
-	  #  my $cfg = Config::Any->load_files({files =>  [ "Config.pm" ],use_ext => 1 });
-	  #    print Config::Any->extensions;
-	  #    print Config::Any->finder;
-	  #    print Config::Any->plugins;
-	  #    my $cfg = Config::Any::Perl->load("site_config.pl");
-	  #  print $cfg;
-  
   	return $this;
 }
 
 sub execute {
   my $self = shift;
-  $self->logit->info('BEGIN STEP: ' . $self->step);
+  $self->log->info('BEGIN STEP: ' . $self->step);
+
+  # Subclasses should implement the run() method.
   $self->run();
-  $self->logit->info('END STEP  : ' . $self->step);
+  $self->log->info('END STEP  : ' . $self->step);
 }
 
-sub logit {
-  my $self = shift;
-  my $logger = Log::Log4perl->get_logger('rootLogger');
-  return $logger;
-}
 
-sub master_log { return shift->{master_log}; }
 
 sub mirror_directory {
     my ($self,$path,$local_mirror_path) = @_;
