@@ -21,7 +21,7 @@ do
     mv genome_feature_tables/GFF2/*.${RELEASE}.gff.gz ${THIS_SPECIES}.${RELEASE}.gff2.gz
 
     # relocate GFF3
-    mv genome_feature_tables/GFF3/*.${RELEASE}.gff3.gz .
+    mv genome_feature_tables/GFF3/*.${RELEASE}.gff3.gz ${THIS_SPECIES}.${RELEASE}.gff3.gz
 
     # Rename dna.fa.gz to genomic.fa.gz
     mv sequences/dna/${THIS_SPECIES}.${RELEASE}.dna.fa.gz ${THIS_SPECIES}.${RELEASE}.genomic.fa.gz
@@ -44,9 +44,15 @@ do
     tar xzf *.tar.gz
     cd ../../
     mv sequences/protein/*.dna* ${THIS_SPECIES}.${RELEASE}.spliced.fa.gz
+    
+    # Save the full wormpep package
+    mv sequences/protein/*.tar.gz ${THIS_SPECIES}.${RELEASE}.wormpep_package.tar.gz
 
     # Save blast hits
     mv sequences/protein/best_blast* ${THIS_SPECIES}.${RELEASE}.best_blast_hits.gz
+
+    # The letter
+    mv letter.${RELEASE} letter.${RELEASE}.txt
 
     # Keep source directories around to make sure we have what we want to retain.
     mkdir temp

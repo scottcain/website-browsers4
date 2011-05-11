@@ -28,13 +28,15 @@ sub run {
 	$self->_make_dir($self->mirror_dir);    
 	$self->species_root($self->target_root . "/$species");
 	$self->_make_dir($self->species_root);
-	$self->create_epcr_database($species);
+#	$self->create_epcr_database($species);
 	$self->logit->info("  end: $msg $species");    
 	my $fh = $self->master_log;
 	print $fh $self->step . " $msg $species complete...\n";
     }
 }
 
+
+# DEPRECATED.  Now uses blast/SPECIES/genome.fa
 sub create_epcr_database {
     my ($self,$species) = @_;
     $self->logit->debug("generating epcr database");
