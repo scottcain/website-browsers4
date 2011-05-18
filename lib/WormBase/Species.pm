@@ -7,13 +7,27 @@ package WormBase::Species;
 
 use lib "/usr/local/wormbase/website/tharris/extlib";
 use Moose;
-use File::Slurp qw(slurp);
-extends qw/WormBase/;
 
 with 'WormBase::Roles::Config';
 
 has 'symbolic_name' => ( is => 'rw' );
 has 'release'       => ( is => 'rw' );
+
+
+# Database symbolic name. Mostly for MySQL
+has 'db_symbolic_name' => (
+    is => 'rw',
+    lazy_build => 1 );
+
+sub _build_db_symbolic_name {
+    my $self    = shift;
+    my $name    = $self->symbolic_name;
+    my $release = $self->release;
+    return $species . '_' . $release;
+}
+
+
+
 
 
 # The release directory for this species on the FTP site.
@@ -39,7 +53,7 @@ sub _build_blast_dir {
     my $self = shift;
     my $release = $self->release;
     my $name    = $self->symbolic_name;
-    my $path = join('/',$self->support_databases_dir,$release,'blat');
+    my $path = join('/',$self->support_databases_dir,$release,'blast');
     $self->_make_dir($path);
 
     $self->_make_dir("$path/$name");
@@ -63,6 +77,25 @@ sub _build_blat_dir {
 }
 
 
+
+has 'epcr_dir' => (
+    is      => 'ro',
+    lazy    => 1,
+);
+
+sub _build_epcr_dir { 
+    my $self = shift;
+    my $release = $self->release;
+    my $name    = $self->symbolic_name;
+    my $path = join('/',$self->support_databases_dir,$release,'epcr');
+    $self->_make_dir($path);
+
+    $self->_make_dir("$path/$name");
+    return "$path/$name";
+}
+
+
+
 ######################################################
 #
 #   Filenames
@@ -82,6 +115,22 @@ sub _build_fasta_file {
     my $fasta   = "$name.$release.genomic.fa.gz";
     return $fasta;
 }
+
+has 'ests_file' => (
+    is => 'ro',
+    lazy_build => 1);
+
+sub _build_ests_file {
+    my $self    = shift;
+    my $name    = $self->symbolic_name;
+    my $release = $self->release;	
+    my $fasta   = "$name.$release.ests.fa.gz";
+    return $fasta;
+}
+
+
+
+
 
 
 1;

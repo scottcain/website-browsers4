@@ -4,48 +4,17 @@ use local::lib '/usr/local/wormbase/website/classic/extlib';
 
 use Log::Log4perl;
 use FindBin qw($Bin);
-use IO::File;
 
 use Moose;
+extends qw/WormBase/;
 
 with 'WormBase::Roles::Config';
-with 'WormBase::Roles::ConfigUpdate';
-
-# Don't run any substantial commands when dryrun is true.
-has 'dryrun' => (
-    is => 'rw',
-    default => 0 );
-
-has 'release' => (
-    is        => 'rw',
-    );
-
-sub release_id {
-    my $self    = shift;
-    my $release = shift || $self->release;
-    $release =~ /WS(.*)/ if $release;
-    return $1;
-} 
-
-
-# Some convenience accessors
-# Simple accessor/getter for species so I don't have to pass it around.
-has 'species' => (
-    is => 'rw'
-    );
-
-has 'db_symbolic_name' => (
-    is => 'rw',
-    lazy_build => 1 );
-
-sub _build_db_symbolic_name {
-    my $self    = shift;
-    my $species = shift;
-    my $version = $self->version;
-    return $species . '_' . $version;
-}
-
    
+has 'blastdb_format_script' => (
+    is => 'ro',
+    default => '/usr/local/blast/bin/formatdb',
+    );
+
 has 'bin_path' => (
     is => 'ro',
     default => sub {
@@ -151,6 +120,23 @@ sub _build_log {
     my $logger = Log::Log4perl->get_logger('rootLogger');
     return $logger;	
 }
+
+
+
+# Logging options
+has 'log_dir' => (
+    is => 'ro',
+    default => '/usr/local/wormbase/logs/staging',
+    );
+
+
+####################
+#
+# Helper scripts
+#
+####################
+
+has 'create_blastdb_script' => ( is => 'ro', default => 'create_blastdb.sh' );
 
 
 
@@ -289,41 +275,6 @@ END
     $self->log->debug("end: dumping ESTs for C. elegans");
 }
 
-
-
-
-
-
-
-sub reset_dir {
-    my ($self,$target) = @_;
-        
-    $target =~ /\S+/ or return;
-    
-#    $self->_remove_dir($target) or return;
-    $self->_make_dir($target) or return;    
-    return 1;
-}
-
-sub remove_dir {
-    my ($self,$target) = @_;
-
-    $target =~ /\S+/ or return;
-    $self->logit->warn("trying to remove $target directory which doesn't exist") unless -e $target;
-    system ("rm -rf $target") or $self->logit->warn("couldn't remove the $target directory");
-    return 1;
-}
-
-sub make_dir {
-  my ($self,$target) = @_;
-  
-  $target =~ /\S+/ or return;
-  if (-e $target) {
-    return 1;
-  }
-  mkdir $target, 0775;
-  return 1;
-}
 
 
 

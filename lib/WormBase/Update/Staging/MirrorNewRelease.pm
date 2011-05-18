@@ -14,7 +14,6 @@ has 'step' => (
 has 'connect_to_ftp' => (
     is         => 'ro',
     lazy_build => 1,
-    builder    => '_connect_to_ftp',
     );
 
 sub _build_connect_to_ftp {

@@ -1,4 +1,4 @@
-package WormBase::Update::Config;
+package WormBase::Roles::Config;
 
 # Shared configuration for WormBase administration.
 
@@ -12,18 +12,33 @@ use Moose::Role;
 
 has 'wormbase_root' => ( is => 'ro', default => '/usr/local/wormbase');
 
-has 'tmp_dir'       => ( is => 'ro',
-			 default => sub {
-			     my $self = shift;
-			     return $self->wormbase_root . "/tmp/staging";
-			 } );
+has 'tmp_dir'       => ( is => 'ro', lazy_build => 1 );
+			 
+sub _build_tmp_dir {
+    my $self = shift;
+    return $self->wormbase_root . "/tmp/staging";
+}
 
 has 'support_databases_dir' => (
     is => 'ro',
-    default => sub {
-	my $self = shift;
-	return $self->wormbase_root . "/databases";
-    } );
+    lazy_build => 1);
+
+sub _build_support_databases_dir {
+    my $self = shift;
+    return $self->wormbase_root . "/databases";
+}
+
+
+has 'release' => (
+    is        => 'rw',
+    );
+
+sub release_id {
+    my $self    = shift;
+    my $release = $self->release;
+    $release =~ /WS(.*)/ if $release;
+    return $1;
+} 
 
 
 ####################################
@@ -34,11 +49,12 @@ has 'support_databases_dir' => (
 
 has 'acedb_root' => (
     is => 'ro',
-    default => sub {
+    lazy_build => 1 );
+
+sub _build_acedb_root {
 	my $self = shift;
 	return $self->wormbase_root . "/acedb";
-    }
-    );
+}
 
 has 'acedb_group' => (
     is => 'ro',
@@ -65,7 +81,7 @@ has 'mysql_host'     => ( is => 'ro',  default => 'localhost' );
 
 ####################################
 #
-# MYSQL
+# Local FTP
 #
 ####################################
 
@@ -82,7 +98,7 @@ has 'ftp_releases_dir' => (
 
 sub _build_ftp_releases_dir {
     my $self = shift;
-    return $self->ftp_root . "/releases";
+    return $self->ftp_root . "/releases.test";
 }
 
 
@@ -96,6 +112,12 @@ sub _build_ftp_species_dir {
     my $self = shift;    
     return $self->ftp_root . "/species";
 }
+
+####################################
+#
+# Remote FTP
+#
+####################################
 
 has 'remote_ftp_server' => (
     is => 'ro',
@@ -161,9 +183,6 @@ has 'wormbase_managed_species' => (
     );
 
 
-
-
-
 # A discoverable list of releases.
 # Used mostly for automatic mirroring
 # since it many installations I do not 
@@ -181,43 +200,36 @@ sub _build_existing_releases {
 }
 
 
+sub _reset_dir {
+    my ($self,$target) = @_;
+        
+    $target =~ /\S+/ or return;
+    
+#    $self->_remove_dir($target) or return;
+    $self->_make_dir($target) or return;    
+    return 1;
+}
 
+sub _remove_dir {
+    my ($self,$target) = @_;
 
-has 'blastdb_format_script' => (
-    is => 'ro',
-    default => '/usr/local/blast/bin/formatdb',
-    );
+    $target =~ /\S+/ or return;
+    $self->logit->warn("trying to remove $target directory which doesn't exist") unless -e $target;
+    system ("rm -rf $target") or $self->logit->warn("couldn't remove the $target directory");
+    return 1;
+}
 
-
-
-
-
-
-######################################################
-#
-#   Filenames
-#
-######################################################
-
-# Discover the name of the fasta file for a given species.
-# More appropriate as a Role.
-has 'fasta_file' => (
-    is => 'ro',
-    lazy_build => 1);
-
-sub _build_fasta_file {
-    my $self    = shift;
-    my $species = $self->species;
-    my $release = $self->release;	
-    my $fasta   = "$species.$release.genomic.fa.gz";
-    return $fasta;
+sub _make_dir {
+  my ($self,$target) = @_;
+  
+  $target =~ /\S+/ or return;
+  if (-e $target) {
+    return 1;
+  }
+  mkdir $target, 0775;
+  return 1;
 }
 
 
 
 1;
-
-
-
-
-
