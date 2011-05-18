@@ -1,4 +1,4 @@
-package WormBase::Update;
+package WormBase::Admin::Update;
 
 use local::lib '/usr/local/wormbase/website/classic/extlib';
 
@@ -8,7 +8,8 @@ use IO::File;
 
 use Moose;
 
-with 'WormBase::Update::Config'; # A basic Log::Log4perl screen appender
+with 'WormBase::Roles::Config';
+with 'WormBase::Roles::ConfigUpdate';
 
 # Don't run any substantial commands when dryrun is true.
 has 'dryrun' => (
