@@ -12,27 +12,9 @@ has 'step' => (
     default => 'building BLAT databases',
     );
 
-
-
-
-
 # Will these (and similar methods) be updated everytime I reset species?
 # Do I need to trigger them to be built anew?
-has 'destination_dir' => (
-    is      => 'ro',
-    lazy    => 1,
-);
 
-sub _build_destination_dir { 
-    my $self = shift;
-    my $version = $self->version;
-    my $species = $self->species;
-    my $path = join('/',$self->support_databases_path,$version,'blat');
-    $self->_make_dir($path);
-
-    $self->_make_dir("$path/$species");
-    return "$path/$species";
-}
 
 has 'fatonib' => (
     is => 'ro',
@@ -44,34 +26,31 @@ sub run {
     my $self = shift;
     
     my $msg = 'creating blat databases for';
-    my @species = $self->ws_release_species_list;  
+    my @species = $self->wormbase_managed_species;  
     
-    my $version = $self->version;
-    foreach my $species (@species) {
-	$self->log->debug("begin: $msg $species");
-	
-	# Set the current species so I don't have to schlep it.
-	$self->species($species);	
-	$self->prepare_dna();
-	$self->make_blatdb();
-	$self->log->debug("end: $msg $species");    
+    foreach my $name (@species) {
+	$self->log->debug("begin: $msg $name");
+	my $species = WormBase::Factory->create('Species',{ symbolic_name => $name, release => $self->release });
+
+	$self->prepare_dna($species);
+	$self->make_blatdb($species);
+	$self->log->debug("end: $msg $name");    
     }
 }
 
 
 sub prepare_dna {
-    my $self = shift;
+    my ($self,$species) = @_;
     $self->log->debug("unpacking dna for blat databases");
     
-    my $release     = $self->release;
-    my $path        = $self->ftp_single_species_dir;
-    my $fasta_file  = $self->fasta_file;       # Just the filename
+    my $path        = $species->release_dir;      # species home
+    my $fasta_file  = $species->fasta_file;       # Just the filename
 
     unless (-e "$path/$fasta_file") {
 	$self->log->logdie("We couldn't find a fasta file for $species");
     }
 
-    my $target_file = join("/",$self->destination_dir,$fasta_file);
+    my $target_file = join("/",$self->blat_dir,$fasta_file);
     $target_file    =~ s/\.gz//; # Strip off the trailing .gz
  
     # Unpack mirrored fasta
@@ -79,12 +58,9 @@ sub prepare_dna {
     
     $self->log->debug("unpacking dna for blat databases: complete");    
 
-    # Split the fasta
-    my ($self,$path,$file) = @_;
-    
     $self->log->debug("splitting $target_file into multiple fasta files");  
     
-    chdir($self->destination_dir);
+    chdir($species->blat_dir);
     
     my $seqIO = Bio::SeqIO->new(-file => $target_file, -format => 'fasta');
     my $counter;
@@ -99,13 +75,12 @@ sub prepare_dna {
 
 
 sub make_blatdb {
-    my $self = shift;
-    my $species = $self->species;
+    my ($self,$species) = @_;
     $self->log->debug("formatting blat database for $species");
     
     my $fatonib = $self->fatonib;
         
-    my $path = $self->destination_dir;
+    my $path = $species->blat_dir;
     foreach my $file (glob("$path/*dna")) {
 	my ($root_dir, $nib_file_name) = $self->_parse_file_name($file) or return;
 	$nib_file_name =~ s/\.dna$/\.nib/; 

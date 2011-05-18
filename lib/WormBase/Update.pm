@@ -1,4 +1,4 @@
-package WormBase::Admin::Update;
+package WormBase::Update;
 
 use local::lib '/usr/local/wormbase/website/classic/extlib';
 
@@ -244,35 +244,6 @@ sub unpack_archived_sequence {
 
 
 
-sub _reset_dir {
-    my ($self,$target) = @_;
-        
-    $target =~ /\S+/ or return;
-    
-#    $self->_remove_dir($target) or return;
-    $self->_make_dir($target) or return;    
-    return 1;
-}
-
-sub _remove_dir {
-    my ($self,$target) = @_;
-
-    $target =~ /\S+/ or return;
-    $self->logit->warn("trying to remove $target directory which doesn't exist") unless -e $target;
-    system ("rm -rf $target") or $self->logit->warn("couldn't remove the $target directory");
-    return 1;
-}
-
-sub _make_dir {
-  my ($self,$target) = @_;
-  
-  $target =~ /\S+/ or return;
-  if (-e $target) {
-    return 1;
-  }
-  mkdir $target, 0775;
-  return 1;
-}
 
 
 # Dump out C. elegans ESTs suitable for BLAST searching
@@ -321,6 +292,38 @@ END
 
 
 
+
+
+
+sub reset_dir {
+    my ($self,$target) = @_;
+        
+    $target =~ /\S+/ or return;
+    
+#    $self->_remove_dir($target) or return;
+    $self->_make_dir($target) or return;    
+    return 1;
+}
+
+sub remove_dir {
+    my ($self,$target) = @_;
+
+    $target =~ /\S+/ or return;
+    $self->logit->warn("trying to remove $target directory which doesn't exist") unless -e $target;
+    system ("rm -rf $target") or $self->logit->warn("couldn't remove the $target directory");
+    return 1;
+}
+
+sub make_dir {
+  my ($self,$target) = @_;
+  
+  $target =~ /\S+/ or return;
+  if (-e $target) {
+    return 1;
+  }
+  mkdir $target, 0775;
+  return 1;
+}
 
 
 

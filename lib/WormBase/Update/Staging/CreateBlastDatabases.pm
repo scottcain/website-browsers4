@@ -11,12 +11,6 @@ has 'step' => (
     default => 'build BLAST databases',
     );
 
-# Simple accessor/getter for species so I don't have to pass it around.
-has 'species' => (
-    is => 'rw'
-    );
-
-
 has 'formatdb_strings' => (
     is => 'ro',
     isa => 'HashRef',
@@ -58,12 +52,14 @@ sub run {
     my $msg = 'creating blast databases for';
     
     # get a list of (symbolic g_species) names
-    my @species = $self->ws_release_species_list;
+    my @species = $self->wormbase_managed_species;
     my $release = $self->release;
-    foreach my $species (@species) {
+    foreach my $name (@species) {
+	my $species = WormBase::Species->new(-name => $name);
 
 	# Set the current species so I don't have to schlep it.
 	$self->species($species);    
+	
 
 	# Creating blast databases by system calls to shell scripts.
 	$self->log->debug("  begin: creating nucleotide blastdb for $species");

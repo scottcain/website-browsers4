@@ -1,21 +1,22 @@
 package WormBase::Update::Config;
 
-# Basic configuration for WormBase administration.
+# Shared configuration for WormBase administration.
 
 use Moose::Role;
 
-# Configuration options
-has 'wormbase_root' => (
-    is      => 'ro',
-    default => '/usr/local/wormbase' );
+####################################
+#
+# WormBase root, tmp dir, support dbs
+#
+####################################
 
+has 'wormbase_root' => ( is => 'ro', default => '/usr/local/wormbase');
 
-has 'tmp_dir' => (
-    is => 'ro',
-    default => sub {
-	my $self = shift;
-	return $self->wormbase_root . "/tmp/staging";
-    } );
+has 'tmp_dir'       => ( is => 'ro',
+			 default => sub {
+			     my $self = shift;
+			     return $self->wormbase_root . "/tmp/staging";
+			 } );
 
 has 'support_databases_dir' => (
     is => 'ro',
@@ -23,6 +24,13 @@ has 'support_databases_dir' => (
 	my $self = shift;
 	return $self->wormbase_root . "/databases";
     } );
+
+
+####################################
+#
+# AceDB
+#
+####################################
 
 has 'acedb_root' => (
     is => 'ro',
@@ -43,60 +51,30 @@ has 'acedb_user' => (
 
 
 
-has 'mysql_data_dir => (
-    is => 'ro',
-    default => '/usr/local/mysq/data',
-    );
-
-has 'mysql_user' => (
-    is => 'ro',
-    default => 'root',
-    );
-    
-has 'mysql_pass' => (
-    is => 'ro',
-    default => '3l3g@nz',
-    );
-
-has 'mysql_host' => (
-    is => 'ro',
-    default => 'localhost',
-    );
-
-
-# Logging options
-has 'log_dir' => (
-    is => 'ro',
-    default => '/usr/local/wormbase/logs/staging',
-    );
-
-
-
-
-####################
+####################################
 #
-# Helper scripts
+# MYSQL
 #
-####################
+####################################
 
-has 'create_blastdb_script' => ( is => 'ro', default => 'create_blastdb.sh' );
+has 'mysql_data_dir' => ( is => 'ro',  default => '/usr/local/mysq/data' );
+has 'mysql_user'     => ( is => 'ro',  default => 'root'      );
+has 'mysql_pass'     => ( is => 'ro',  default => '3l3g@nz'   );
+has 'mysql_host'     => ( is => 'ro',  default => 'localhost' );
 
 
-
-####################
+####################################
 #
-# FTP site paths
+# MYSQL
 #
-####################
+####################################
+
 has 'ftp_root' => (
     is      => 'ro',
     default => '/usr/local/ftp/pub/wormbase'
     );
 
-
-
 # The releases/ directory
-
 has 'ftp_releases_dir' => (
     is         => 'ro',
     lazy_build => 1,
@@ -104,21 +82,8 @@ has 'ftp_releases_dir' => (
 
 sub _build_ftp_releases_dir {
     my $self = shift;
-    return $self->ftp_root . "/releases.test";
+    return $self->ftp_root . "/releases";
 }
-
-
-# Path to releases/species/SPECIES
-has 'ftp_single_species_dir' => (
-    is         => 'ro',
-    lazy_build => 1,
-    );
-
-sub _build_ftp_single_species_dir {
-    my $self = shift;    
-    return join("/",$self->ftp_releases_dir,$self->release,'species',$self->species);
-}
-
 
 
 # This is the VIRTUAL species directory at /species
@@ -160,16 +125,20 @@ sub _build_remote_ftp_releases_dir {
 
 
 
-
+####################################
+#
+# Available species
+#
+####################################
 
 # A discoverable list of species (symbolic) names.
 # We use the /species directory since it may contain
 # species that aren't part of WormBase proper.
-has 'species_list' => (
+has 'all_available_species' => (
     is => 'ro',
     lazy_build => 1 );
 
-sub _build_species_list {
+sub _build_all_available_species {
     my $self = shift;
     my $species_dir = $self->ftp_species_dir;
     opendir(DIR,"$species_dir") or $self->log->die("Couldn't open the species directory ($species_dir) on the FTP site.");
@@ -179,7 +148,7 @@ sub _build_species_list {
 
 # A dsicoverable list of species (symbolic) names.
 # distributed in the latest release.
-has 'ws_release_species_list' => (
+has 'wormbase_managed_species' => (
     is => 'ro',
     lazy_build => sub {
 	my $self = shift;
