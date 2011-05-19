@@ -1,6 +1,6 @@
 package WormBase::Update::Staging::CompileGeneResources;
 
-# Compile a nunch of flat-files that support the Gene Page. Eeeks.
+# Compile a bunch of flat-files that support the Gene Page. Eeeks.
 
 use lib "/usr/local/wormbase/website/tharris/extlib";
 use Ace;
@@ -40,33 +40,39 @@ sub _build_dbh {
 
 sub run {
     my $self = shift;
-	    
+
+    
     my $datadir = $self->datadir;
     
-    my $gene_rnai_pheno_file = "gene_rnai_pheno.txt";
-    my $gene_xgene_pheno_file = "gene_xgene_pheno.txt";
-    my $variation_data_file = "variation_data.txt";
-    my $rnai_data_file = "rnai_data.txt";
+    my $gene_rnai_pheno_file   = "gene_rnai_pheno.txt";
+    my $gene_xgene_pheno_file  = "gene_xgene_pheno.txt";
+    my $variation_data_file    = "variation_data.txt";
+    my $rnai_data_file         = "rnai_data.txt";
     my $phenotype_id2name_file = "phenotype_id2name.txt";
-	
+
+    $self->log->info("creating gene_rnai_pheno.txt");	
     $self->gene_rnai_pheno_data_compile("$datadir/$gene_rnai_pheno_file");
     $self->log->debug("gene_rnai_pheno_data_compile done");
-	
+
+    $self->log->info("creating gene_rnai_pheno-not.txt");	
     $self->gene_rnai_pheno_not_data_compile("$datadir/$gene_rnai_pheno_file");
     $self->log->debug("gene_rnai_pheno_not_data_compile done");
-    
+
+    $self->log->info("creating gene_xgene_pheno.txt");	    
     $self->gene_xgene_pheno_data_compile("$datadir/$gene_xgene_pheno_file");
     $self->log->debug("gene_xgene_pheno_data_compile done");
     
+    $self->log->info("creating variation_data.txt");
     $self->variation_data_compile("$datadir/$variation_data_file");
     $self->log->debug("variation_data_compile done");
     
+    $self->log->info("creating rnai_data.txt");
     $self->rnai_data_compile ("$datadir/$gene_rnai_pheno_file","$datadir/$rnai_data_file");
     $self->log->debug("rnai_data_compile done");
-    
+
+    $self->log->info("creating phenotype_id2name.txt");    
     $self->phenotype_id2name("$datadir/$phenotype_id2name_file");
-    $self->log->debug("phenotype_id2name done");
-    
+    $self->log->debug("phenotype_id2name done");    
 }
 
 sub gene_rnai_pheno_data_compile {
@@ -75,9 +81,9 @@ sub gene_rnai_pheno_data_compile {
     open OUTFILE, ">$outfile" or $self->log->logdie("Cannot open gene_rnai_pheno_data_compile output file");
     
     my $class = 'Gene';
-    my @objects = $DB->fetch(-class => $class); #[, ] -count => 20, -offset=>6800 , , -name=>$gene_id
-    
-    foreach my $object (@objects) {	
+
+    my $i = $self->dbh->fetch_many(-class=>$class);
+    while (my $object = $i->next) {
 	my @rnai = $object->RNAi_result;    	
 	foreach my $rnai (@rnai) {
 	    
@@ -113,9 +119,9 @@ sub gene_rnai_pheno_not_data_compile {
     open OUTFILE, ">>$outfile" or $self->log->logdie("Cannot open gene_rnai_pheno_data_compile output file");
     
     my $class = 'Gene';
-    my @objects = $DB->fetch(-class => $class); #[, ] -count => 20, -offset=>6800 ,-name=>$gene_id
-    
-    foreach my $object (@objects){	
+
+    my $i = $self->dbh->fetch_many(-class => $class);
+    while (my $object = $i->next) {
 	my @rnai = $object->RNAi_result;    
 	foreach my $rnai (@rnai) {
 	    
@@ -133,13 +139,14 @@ sub gene_rnai_pheno_not_data_compile {
 
 sub gene_xgene_pheno_data_compile{
     my ($self,$output_file_name) = @_;
-    my $class = 'Gene';				
-    my @objects = $DB->fetch(-class => $class); #, -name=>$gene_id
+
+    my $class = 'Gene';
     my %lines;
     
     open OUTPUT, ">$output_file_name" or $self->log->logdie("Cannot open gene_xgene_pheno_data_compile output file");
     
-    foreach my $object (@objects){	
+    my $i = $self->dbh->fetch_many(-class => $class);
+    while (my $object = $i->next) {
 	my @xgenes = $object->Drives_Transgene;
 	my @xgene_product = $object->Transgene_product;
 	my @xgene_rescue = $object->Rescued_by_transgene;
@@ -173,12 +180,11 @@ sub gene_xgene_pheno_data_compile{
 sub variation_data_compile{
     my ($self,$output_file) = @_;
     my $class = 'Gene';				
-    my @objects = $DB->fetch(-class => $class); #, -name=>$gene_id ,, -count => 20, -offset=>6800
     
     open OUTFILE, ">$output_file" or die "Cannot open variation_data_compile output file\n";
-    
-    foreach my $object (@objects){
-	
+
+    my $i = $self->dbh->fetch_many(-class => $class);
+    while (my $object = $i->next) {
 	my @variations = $object->Allele;
 	foreach my $variation (@variations) {
 	    
@@ -223,7 +229,7 @@ sub rnai_data_compile{
     
     foreach my $unique_rnai (keys %rnais) {
 	
-	my $rnai_object = $DB->fetch(-class => $class, -name =>$unique_rnai); #, , -count => 20, -offset=>6800	
+	my $rnai_object = $self->dbh->fetch(-class => $class, -name =>$unique_rnai); #, , -count => 20, -offset=>6800	
 	my $ref;
 	
 	eval { $ref = $rnai_object->Reference;}; 
@@ -262,9 +268,8 @@ sub phenotype_id2name{
     open OUTFILE, ">$output_file" or $self->log->logdie("Cannot open phenotype_id2name output file");
     
     my $class = 'Phenotype';
-    my @pheno_objects = $DB->fetch(-class => $class); #, -name=>'WBPhenotype:0001380', , -count => 20, -offset=>6800
-    
-    foreach  my $pheno  (@pheno_objects) {	
+    my $i = $self->dbh->fetch_many(-class => $class);
+    while (my $pheno = $i->next) {   
     	my $pheno_term = $pheno->Primary_name;
     	print OUTFILE "$pheno\=\>$pheno_term\n";
     }

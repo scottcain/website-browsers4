@@ -12,29 +12,16 @@ has 'step' => (
     );
 
 
-has 'create_database' => (
+has 'drh' => (
     isa => 'DBI',
     lazy_build => 1 );
 
-sub _build_create_database {	
-    my $self = shift;
-    my $database = $self->db_symbolic_name;
-    
-    $self->log->debug("creating a new mysql GFF database: $database");
-    
+sub _build_drh {	
+    my $self = shift;       
     my $drh = DBI->install_driver('mysql');	
-    my $user = $self->mysql_user;
-    my $pass = $self->mysql_pass;	
-    my $host = $self->mysql_host;
-    
-    # Create the database
-    $drh->func('createdb', $database, $host, $user, $pass, 'root') or $self->log->logdie("couldn't create database $database: $!");
-    
-    # Grant privileges
-    my $webuser = $self->web_user;
-    $self->system_call("mysql -u $user -p$pass -e 'grant all privileges on $database.* to $webuser\@localhost'",
-		       "command: mysql -u $user -p$pass -e 'grant all privileges on $database.* to $webuser\@localhost'");
+    return $drh;
 }
+
 
 
 #######################################
@@ -126,6 +113,29 @@ sub load_gffdb {
 			   "cmd: gzip $est");    
     }
 }
+
+
+
+sub create_database {
+    my $self = shift;
+    my $database = $self->db_symbolic_name;
+    
+    $self->log->debug("creating a new mysql GFF database: $database");
+    
+    my $drh = $self->drh;
+    my $user = $self->mysql_user;
+    my $pass = $self->mysql_pass;	
+    my $host = $self->mysql_host;
+    
+    # Create the database
+    $drh->func('createdb', $database, $host, $user, $pass, 'admin') or $self->log->logdie("couldn't create database $database: $!");
+    
+    # Grant privileges
+    my $webuser = $self->web_user;
+    $self->system_call("mysql -u $user -p$pass -e 'grant all privileges on $database.* to $webuser\@localhost'",
+		       "command: mysql -u $user -p$pass -e 'grant all privileges on $database.* to $webuser\@localhost'");
+}
+
 
 # Compress databases using myisampack
 sub pack_database {
