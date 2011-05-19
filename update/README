@@ -1,0 +1,9 @@
+This directory contains code for maintaining releases of WormBase.
+
+development/   : mirror and install a new release of WormBase.
+staging/       : prepare a release for staging and QA/QC
+production/    : push a database into production
+
+Todd Harris
+info@toddharris.net
+April 2011

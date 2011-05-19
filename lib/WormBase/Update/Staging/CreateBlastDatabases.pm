@@ -49,7 +49,7 @@ sub run {
 	$self->create_protein_db($species);
 	$self->create_est_db($species);   # elegans only
 	$self->create_gene_db($species);  # elegans only
-	$self->log->info(uc("$name: done");
+	$self->log->info("$name: done");
     }
 }
 
@@ -115,7 +115,7 @@ sub create_est_db {
     $self->system_call("gunzip -c $source_file > $blast_path/ests.fa",
 		       "cmd: gunzip -c $source_file > $blast_path/ests.fa");
     $self->make_blastdb('ests',$species);
-    $self->log->info(uc("$name: successfully built est blast db");
+    $self->log->info("$name: successfully built est blast db");
 }
 
 
@@ -139,7 +139,7 @@ sub create_gene_db {
 		       "cmd: $script $release $name > $blast_path/$filename");
     
     $self->make_blastdb('genes',$species);
-    $self->log->info(uc("$name: successfully built gene blast db");
+    $self->log->info("$name: successfully built gene blast db");
 }
 
 

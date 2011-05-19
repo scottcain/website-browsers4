@@ -95,7 +95,6 @@ sub _build_log {
                 # The STEPLOG: TRACE to get everything.
 		log4perl.appender.STEPLOG=Log::Log4perl::Appender::File
 		log4perl.appender.STEPLOG.filename=$log_dir/$release/steps/$step/step.log
-                log4perl.appender.STEPLOG.Threshold=WARN
 		log4perl.appender.STEPLOG.mode=append
 		log4perl.appender.STEPLOG.layout = Log::Log4perl::Layout::PatternLayout
 		#log4perl.appender.STEPLOG.layout.ConversionPattern=[%d %p]%K%l − %r %m%n
@@ -106,7 +105,6 @@ sub _build_log {
                 # The STEPERR: ERROR and up
 		log4perl.appender.STEPERR=Log::Log4perl::Appender::File
 		log4perl.appender.STEPERR.filename=$log_dir/$release/steps/$step/step.err
-                log4perl.appender.STEPERR.Threshold=WARN
 		log4perl.appender.STEPERR.mode=append
 		log4perl.appender.STEPERR.layout = Log::Log4perl::Layout::PatternLayout
 		#log4perl.appender.STEPERR.layout.ConversionPattern=[%d %p]%K%l − %r %m%n
