@@ -1,6 +1,7 @@
 package WormBase::Update;
 
 use local::lib '/usr/local/wormbase/website/classic/extlib';
+use Time::HiRes qw(gettimeofday tv_interval);
 
 use Log::Log4perl;
 use FindBin qw($Bin);
@@ -167,10 +168,25 @@ has 'web_user' => (
 
 sub execute {
   my $self = shift;
+  my $start = [gettimeofday]; # starting time
+
   $self->log->warn('BEGIN : ' . $self->step);
   # Subclasses should implement the run() method.
   $self->run();
-  $self->log->warn('END : ' . $self->step);
+
+  my $end = [gettimeofday];
+  my $interval = tv_interval($start,$end);
+  my $time = $self->sec2human($interval);
+
+  $self->log->warn('END : ' . $self->step . "; in $time");
+}
+
+
+sub sec2human {
+    my ($self,$secs) = @_;
+    my ($dd,$hh,$mm,$ss) = (gmtime $secs)[7,2,1,0];
+    my $time = sprintf("%d days, %d hours, %d minutes and %d seconds",$dd,$hh,$mm,$ss);
+    return $time;
 }
 
 # When running the staging code automatically, we need to 
@@ -253,13 +269,17 @@ sub unpack_archived_sequence {
 # Should be a role, but this is expedient for now.
 sub dump_elegans_ests {
     my $self = shift;
-    $self->log->debug("begin: dumping ESTs for C. elegans");
+    $self->log->info("  begin: dumping ESTs for C. elegans");
 
     use Ace;
     $|++;
     
+    my $release    = $self->release;
+    my $acedb_root = $self->acedb_root;
+
     # connect to database
-    my $db = Ace->connect(-host=>'localhost',-port=>2005) || die "Couldn't open database";
+#    my $db = Ace->connect(-host=>'localhost',-port=>2005) || die "Couldn't open database";
+    my $db = Ace->connect(-path => "$acedb_root/wormbase_$release") || $self->log->logdie("dumping ESTs failed: couldn't open database");
     
     my $debug_counter;
     
@@ -270,24 +290,28 @@ END
     
 #my @seqs = $db->fetch(-query=>qq{find cDNA_Sequence; dna; query find 
 #NDB_Sequence; dna"});
-    my @seqs = $db->fetch(-query=>$query);
-    my $file = join("/",$self->ftp_releases_dir,'species','c_elegans','c_elegans.' . $self->release . ".ests.fa.gz");
+#    my @seqs = $db->fetch(-query=>$query);
+    my $i = $db->fetch_many(-query=>$query);
+    my $file = join("/",$self->ftp_releases_dir,$release,'species','c_elegans','c_elegans.' . $self->release . ".ests.fa.gz");
+
+    return if $self->check_output_file($file);
     open OUT," | gzip -c > $file" or $self->log->logdie("Couldn't open $file for generating the EST file dump");
     
-    foreach (@seqs) {
+#    foreach (@seqs) {
+    while (my $obj = $i->next) {
 	$debug_counter++;
 	if ($debug_counter % 10000 == 0) {
 	    print STDERR "$debug_counter - [$_] ...";
 	    print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
 	}
     	
-	$_ =~ s/\0+\Z//; # get rid of nulls in data stream!
-	$_ =~ s!^//.*!!gm;
-	my $dna = $_->asDNA();
+	$obj =~ s/\0+\Z//; # get rid of nulls in data stream!
+	$obj =~ s!^//.*!!gm;
+	my $dna = $obj->asDNA();
 	print OUT $dna if $dna;
     }
     close OUT;
-    $self->log->debug("end: dumping ESTs for C. elegans");
+    $self->log->info("  end: dumping ESTs for C. elegans");
 }
 
 
@@ -299,6 +323,19 @@ sub system_call {
 	$self->log->debug("$msg: succeeded");
     } else {
 	$self->log->logdie("$msg: failed");
+    }
+}
+
+# CHeck for the presence of the output file
+# to avoid lengthy recomputes.
+# Kludgy but mostly right.
+sub check_output_file {
+    my ($self,$file) = @_;
+    if (-e $file && -s $file > 1000000) {
+	$self->log->debug("output file already exists; skipping recompilation");
+	return 1;
+    } else {
+	return 0;
     }
 }
 

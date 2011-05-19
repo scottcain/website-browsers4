@@ -1,0 +1,7 @@
+Staging a new release.
+
+See complete documentation on the WormBase wiki.
+
+1. Mirror a new release from Sanger.
+
+  bin/mirror_new_release.sh

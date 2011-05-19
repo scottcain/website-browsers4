@@ -1,0 +1,21 @@
+This directory contains control scripts that launch individual
+steps of the staging process with full logging and error reporting.
+
+Usage:
+
+stage.pl  - stage the next newest release of the database.
+            Individually launches each of the following steps.
+
+-------------------------------------------------------------------
+
+
+x  mirror_new_release.pl WSXXX     - mirror the WSXXX release
+x  mirror_new_release.pl           - mirror the next newest release from that currently installed
+
+x  create_directories.pl WSXXX     - create base directories for WSXXX
+x  unpack_acedb.pl                 - unpack and customize a new release of acedb
+
+
+
+create_blast_databases.pl WSXXX - create blast databases for WSXXX
+
