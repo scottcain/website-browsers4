@@ -26,8 +26,8 @@ sub _build_connect_to_ftp {
 				       Debug => 0,
 				       Passive => 1) or $self->log->logdie("can't instantiate Net::FTP object");
 
-    $ftp->login('anonymous', $contact_email) or $self->log->logdie("cannot login to remote FTP server");
-    $ftp->binary()                           or $self->log->warn("couldn't switch to binary mode for FTP");    
+    $ftp->login('anonymous', $contact_email) or $self->log->logdie("cannot login to remote FTP server: $!");
+    $ftp->binary()                           or $self->log->error("couldn't switch to binary mode for FTP");    
     return $ftp;
 }
     
@@ -49,12 +49,11 @@ sub run {
     }
     my $release_id = $self->release_id; 
 
-    $self->log->debug("mirroring $release from Hinxton");    
     
     my $local_releases_path  = $self->ftp_releases_dir;
     my $remote_releases_path = $self->remote_ftp_releases_dir;
     
-    $self->log->debug("mirroring directory $remote_releases_path/$release to $local_releases_path/$release");
+    $self->log->info("mirroring directory $remote_releases_path/$release to $local_releases_path/$release");
 
     # Via system(wget...)
     if (0) {
@@ -76,14 +75,14 @@ END
 	# Via Net::FTP
 	my $ftp = $self->connect_to_ftp;
 	chdir $local_releases_path       or $self->log->logdie("cannot chdir to local mirror directory: $local_releases_path");
-	$ftp->cwd($remote_releases_path) or $self->log->error("cannot chdir to remote dir ($remote_releases_path)") && return;
+	$ftp->cwd($remote_releases_path) or $self->log->logdie("cannot chdir to remote dir ($remote_releases_path)") && return;
 	
 	# Recursively download the NEXT release.  This saves having to check all the others.
 	my $r = $ftp->rget(MatchDirs => $release); 
 	$ftp->quit;
     }
     
-    $self->log->debug("end: mirroring $release from Hinxton complete");
+    $self->log->info("mirroring $release from Hinxton: done");
 }
 
 

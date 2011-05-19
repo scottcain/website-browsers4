@@ -158,29 +158,34 @@ sub _build_remote_ftp_releases_dir {
 # species that aren't part of WormBase proper.
 has 'all_available_species' => (
     is => 'ro',
+    isa => 'ArrayRef',
     lazy_build => 1 );
 
 sub _build_all_available_species {
     my $self = shift;
     my $species_dir = $self->ftp_species_dir;
-    opendir(DIR,"$species_dir") or $self->log->die("Couldn't open the species directory ($species_dir) on the FTP site.");
+    opendir(DIR,"$species_dir") or $self->log->logdie("Couldn't open the species directory ($species_dir) on the FTP site.");
     my @species = grep { !/^\./ && -d "$species_dir/$_" } readdir(DIR);
-    return @species;
+    return \@species;
 }
 
 # A dsicoverable list of species (symbolic) names.
 # distributed in the latest release.
 has 'wormbase_managed_species' => (
     is => 'ro',
-    lazy_build => sub {
-	my $self = shift;
-	my $release = $self->release;
-	my $species_path = join("/",$self->ftp_releases_dir,$release,'species');
-	opendir(DIR,"$species_path") or die "Couldn't open the species directory ($species_path) on the FTP site.";
-	my @species = grep { !/^\./ && -d "$species_path/$_" } readdir(DIR);
-	return @species;
-	},
+    isa => 'ArrayRef',
+    lazy_build => 1,
     );
+
+sub _build_wormbase_managed_species {
+    my $self = shift;
+    my $release = $self->release;
+    my $species_path = join("/",$self->ftp_releases_dir,$release,'species');
+    opendir(DIR,"$species_path") or die "Couldn't open the species directory ($species_path) on the FTP site.";
+    my @species = grep { !/^\./ && -d "$species_path/$_" } readdir(DIR);
+    return \@species;
+}
+    
 
 
 # A discoverable list of releases.
@@ -194,7 +199,7 @@ has 'existing_releases' => (
 sub _build_existing_releases {
     my $self = shift;
     my $releases = $self->ftp_releases_dir;
-    opendir(DIR,"$releases") or $self->log->die("Couldn't open the releases directory ($releases) on the FTP site.");
+    opendir(DIR,"$releases") or $self->log->logdie("Couldn't open the releases directory ($releases) on the FTP site.");
     my @releases = sort { $a cmp $b } grep { /^WS/ } grep { !/^\./ && -d "$releases/$_" } readdir(DIR);    
     return \@releases;
 }
@@ -214,8 +219,8 @@ sub _remove_dir {
     my ($self,$target) = @_;
 
     $target =~ /\S+/ or return;
-    $self->logit->warn("trying to remove $target directory which doesn't exist") unless -e $target;
-    system ("rm -rf $target") or $self->logit->warn("couldn't remove the $target directory");
+    $self->log->error("trying to remove $target directory which doesn't exist") unless -e $target;
+    system ("rm -rf $target") or $self->log->warn("couldn't remove the $target directory");
     return 1;
 }
 

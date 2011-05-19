@@ -23,18 +23,16 @@ has 'fatonib' => (
 
 
 sub run {
-    my $self = shift;
-    
-    my $msg = 'creating blat databases for';
+    my $self = shift;   
     my @species = $self->wormbase_managed_species;  
     
     foreach my $name (@species) {
-	$self->log->debug("begin: $msg $name");
-	my $species = WormBase::Factory->create('Species',{ symbolic_name => $name, release => $self->release });
+	$self->log->info(uc($name). ': start');
 
+	my $species = WormBase::Factory->create('Species',{ symbolic_name => $name, release => $self->release });
 	$self->prepare_dna($species);
 	$self->make_blatdb($species);
-	$self->log->debug("end: $msg $name");    
+	$self->log->info(uc($name). ': done');
     }
 }
 
@@ -47,7 +45,8 @@ sub prepare_dna {
     my $fasta_file  = $species->fasta_file;       # Just the filename
 
     unless (-e "$path/$fasta_file") {
-	$self->log->logdie("We couldn't find a fasta file for $species");
+	$self->log->error(uc($name) . ': no fasta file found');
+	return;
     }
 
     my $target_file = join("/",$self->blat_dir,$fasta_file);
@@ -57,7 +56,6 @@ sub prepare_dna {
     system("gunzip -c $path/fasta_file > $target_file") or $self->log->logdie("Couldn't unpack the fasta file to the blast staging directory");
     
     $self->log->debug("unpacking dna for blat databases: complete");    
-
     $self->log->debug("splitting $target_file into multiple fasta files");  
     
     chdir($species->blat_dir);
@@ -85,7 +83,8 @@ sub make_blatdb {
 	my ($root_dir, $nib_file_name) = $self->_parse_file_name($file) or return;
 	$nib_file_name =~ s/\.dna$/\.nib/; 
 	my $cmd = "$fatonib $file $path/$nib_file_name";
-	system($cmd) && $self->log->logdie("Something went wrong formatting the $species blat database: $!");
+	$self->system_call($cmd,"running fatonib: $cmd");
+
     }
     $self->log->debug("formatting blat database for $species: complete");
 }

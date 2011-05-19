@@ -23,7 +23,7 @@ sub _build_db_symbolic_name {
     my $self    = shift;
     my $name    = $self->symbolic_name;
     my $release = $self->release;
-    return $species . '_' . $release;
+    return $name . '_' . $release;
 }
 
 
@@ -31,67 +31,52 @@ sub _build_db_symbolic_name {
 
 
 # The release directory for this species on the FTP site.
-has 'release_dir' => (
-    is => 'ro',
-    lazy_build => 1);
-
+has 'release_dir' => ( is => 'ro', lazy_build => 1);
 sub _build_release_dir {
     my $self    = shift;
     my $name    = $self->symbolic_name;
     my $release = $self->release;	
-    my $dir = join("/",$self->ftp_releases_dir,$release,$name);
+    my $dir = join("/",$self->ftp_releases_dir,$release,'species',$name);
     return $dir;
 }
 
 
-has 'blast_dir' => (
-    is      => 'ro',
-    lazy    => 1,
-);
-
+has 'blast_dir' => ( is => 'ro', lazy_build => 1 );
 sub _build_blast_dir { 
     my $self = shift;
     my $release = $self->release;
     my $name    = $self->symbolic_name;
-    my $path = join('/',$self->support_databases_dir,$release,'blast');
+    my $path = join('/',$self->support_databases_dir,$release);
     $self->_make_dir($path);
-
-    $self->_make_dir("$path/$name");
-    return "$path/$name";
+    $self->_make_dir("$path/blast");
+    $self->_make_dir("$path/blast/$name");
+    return "$path/blast/$name";
 }
 
-has 'blat_dir' => (
-    is      => 'ro',
-    lazy    => 1,
-);
-
+has 'blat_dir' => ( is => 'ro', lazy_build => 1 );
 sub _build_blat_dir { 
     my $self = shift;
     my $release = $self->release;
     my $name    = $self->symbolic_name;
-    my $path = join('/',$self->support_databases_dir,$release,'blat');
+    my $path = join('/',$self->support_databases_dir,$release);
     $self->_make_dir($path);
-
-    $self->_make_dir("$path/$name");
-    return "$path/$name";
+    $self->_make_dir("$path/blat");
+    $self->_make_dir("$path/blat/$name");
+    return "$path/blat/$name";
 }
 
 
 
-has 'epcr_dir' => (
-    is      => 'ro',
-    lazy    => 1,
-);
-
+has 'epcr_dir' => ( is => 'ro', lazy_build => 1 );
 sub _build_epcr_dir { 
     my $self = shift;
     my $release = $self->release;
     my $name    = $self->symbolic_name;
-    my $path = join('/',$self->support_databases_dir,$release,'epcr');
+    my $path = join('/',$self->support_databases_dir,$release);
     $self->_make_dir($path);
-
-    $self->_make_dir("$path/$name");
-    return "$path/$name";
+    $self->_make_dir("$path/epcr");
+    $self->_make_dir("$path/epcr/$name");
+    return "$path/epcr/$name";
 }
 
 
@@ -104,15 +89,29 @@ sub _build_epcr_dir {
 
 # Discover the name of the fasta file for a given species.
 # More appropriate as a Role.
-has 'fasta_file' => (
+has 'genomic_fasta' => (
     is => 'ro',
     lazy_build => 1);
 
-sub _build_fasta_file {
+sub _build_genomic_fasta {
     my $self    = shift;
     my $name    = $self->symbolic_name;
     my $release = $self->release;	
     my $fasta   = "$name.$release.genomic.fa.gz";
+    return $fasta;
+}
+
+# Discover the name of the fasta file for a given species.
+# More appropriate as a Role.
+has 'protein_fasta' => (
+    is => 'ro',
+    lazy_build => 1);
+
+sub _build_protein_fasta {
+    my $self    = shift;
+    my $name    = $self->symbolic_name;
+    my $release = $self->release;	
+    my $fasta   = "$name.$release.protein.fa.gz";
     return $fasta;
 }
 
@@ -128,6 +127,34 @@ sub _build_ests_file {
     return $fasta;
 }
 
+
+# Discover the name of the GFF file and its version.
+has 'gff_file' => (
+    is => 'rw',
+    lazy_build => 1
+);
+
+sub _build_gff_file {
+    my $self    = shift;
+    my $name    = $self->symbolic_name;
+    my $release = $self->release;	
+    my $gff = join("/",$self->release_dir,"$name.$release.gff2.gz");
+    if (-e $gff) {
+	$self->gff_version('2');
+    } else {
+	$gff = join("/",$self->release_dir,"$name.$release.gff3.gz");
+	if (-e $gff) {
+	    $self->gff_version('3');
+	}
+    }
+    $self->log->logdie(uc($name) . ": couldn't find a suitable GFF file") unless $gff;
+    return $gff;
+}
+        
+has 'gff_version' => (
+    is      => 'rw',
+    default => '2',
+    );
 
 
 

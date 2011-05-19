@@ -5,11 +5,11 @@ RELEASE=$1
 # Site specific
 steps/purge_disk_space.sh             ${RELEASE}
 
-# Perhaps unnecessary if mirroring
-steps/create_directories.pl           ${RELEASE}
+     # DONE & TESTED
+     #steps/create_directories.pl           ${RELEASE}
 
-# For mirrors only
-steps/mirror_acedb.pl                 ${RELEASE}     # DONE
+     # DONE & TESTED
+     #steps/mirror_acedb.pl                 ${RELEASE}
 
 # For mirrors only
 steps/mirror_ontology.pl              ${RELEASE}
@@ -20,17 +20,17 @@ steps/compile_ontology_resources.pl   ${RELEASE}
 # Retain
 steps/compile_orthology_resources.pl  ${RELEASE}
 
-# Migrate
-steps/create_blast_databases.pl       ${RELEASE}
+     # DONE & TESTED
+     # steps/create_blast_databases.pl       ${RELEASE}
 
-# Migrate
-steps/create_blat_databases.pl        ${RELEASE}
+     # DONE & TESTED
+     # steps/create_blat_databases.pl        ${RELEASE}
 
 # DEPRECATED
 #steps/create_epcr_databases.pl        ${RELEASE}
 
-# Migrate
-steps/load_genomic_gffdb.pl           ${RELEASE}    # DONE
+# DONE NOT TESTED
+steps/load_genomic_gffdb.pl           ${RELEASE}
 
 # Retain? Migrate?
 steps/load_gff_patches.pl             ${RELEASE}

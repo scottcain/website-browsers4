@@ -2,7 +2,6 @@ package WormBase::Update::Staging::CreateBlastDatabases;
 
 use lib "/usr/local/wormbase/website/tharris/extlib";
 use Moose;
-use File::Slurp qw(slurp);
 extends qw/WormBase::Update/;
 
 # The symbolic name of this step
@@ -16,9 +15,9 @@ has 'formatdb_strings' => (
     isa => 'HashRef',
     default => sub {
 	my %commands = (
-	    nucleotide => qq{-p F -t '%s' -i %s},
+	    genomic    => qq{-p F -t '%s' -i %s},
 	    ests       => qq{-p F -t '%s' -i %s},
-	    protein    => qq{-p T -t '%s' -i %s},
+	    peptide    => qq{-p T -t '%s' -i %s},
 	    genes      => qq{-p F -t '%s' -i %s},
 	    );
 	return \%commands;
@@ -26,189 +25,170 @@ has 'formatdb_strings' => (
     );
 
 
-
-# Rebuilt with each new species?
-has 'destination_dir' => (
-    is      => 'rw',
-    lazy    => 1,
-);
-
-sub _build_destination_dir { 
-    my $self = shift;
-    my $release = $self->release;
-    my $species = $self->species;
-    my $path = join('/',$self->support_databases_dir,$release,'blast');
-    $self->_make_dir($path);
-
-    $self->_make_dir("$path/$species");
-    return "$path/$species";
-}
-
-
-
 sub run {
     my $self = shift;
     
-    my $msg = 'creating blast databases for';
-    
     # get a list of (symbolic g_species) names
-    my @species = $self->wormbase_managed_species;
+    my ($species) = $self->wormbase_managed_species;
     my $release = $self->release;
-    foreach my $name (@species) {
-	my $species = WormBase::Species->new(-name => $name);
+    foreach my $name (@$species) {
+	my $species = WormBase->create('Species',{ symbolic_name => $name, release => $release });
 
-	# Set the current species so I don't have to schlep it.
-	$self->species($species);    
-	
+	$self->log->info("$name: start");
 
 	# Creating blast databases by system calls to shell scripts.
-	$self->log->debug("  begin: creating nucleotide blastdb for $species");
-	my $result = system($self->create_blastdb_script . " $release nucleotide $species");
-	$result == 0
-	    ? $self->log->debug("  end: successfully created nucleotide blastdb for $species")
-	    : $self->log->warn("  end: failed to create nucleotide blastdb for $species");
-	
-	$self->log->debug("  begin: creating protein blastdb for $species");
-	my $result = system($self->create_blastdb_script . " $release protein $species");
-	$result == 0
-	    ? $self->log->debug("  end: successfully created protein blastdb for $species")
-	    : $self->log->warn("  end: failed to create protein blastdb for $species");
-	
-	
-#	$self->create_genomic_blast_db();
-#	$self->create_protein_db();
-	$self->create_est_db();   # elegans only
-	$self->create_gene_db();  # elegans only
-	$self->log->debug("end: $msg $species");
+	# Nucleotide BLAST DBs
+#	$self->system_call( $self->create_blastdb_script . " $release nucleotide $name",
+#			    "creating nucleotide blastdb for $name");
+#
+#	# Protein BLAST DBs
+#	$self->system_call( $self->create_blastdb_script . " $release protein $name",
+#			    "creating protein blastdb for $name");
+		
+	$self->create_genomic_blast_db($species);
+	$self->create_protein_db($species);
+	$self->create_est_db($species);   # elegans only
+	$self->create_gene_db($species);  # elegans only
+	$self->log->info(uc("$name: done");
     }
 }
 
-=head1
 
-# DEPRECATED. Now farming this out to a shell script.
-sub create_genomic_blastdb {
-    my $self = shift;
-    $self->log->debug("  generating $species genomic nucleotide database");
+
+sub create_genomic_blast_db {
+    my ($self,$species) = @_;
+
+    my $name = $species->symbolic_name;
 
     # Copy and unpack the genomic sequence, if it exists.
-    my $species    = $self->species;
-    my $fasta_file = $self->fasta_file;       # Just the filename
-    my $target     = join("/",$self->destination_dir,$fasta_file);
-    $target        =~ s/\.gz//;
- 
-    system("gunzip -c $fasta > $target") or die "Couldn't unpack the fasta file to the blast staging directory";
-    
-    $self->make_blastdb('nucleotide');
-    $self->log->debug("  generating $species genomic nucleotide database: complete");
-}
+    my $fasta_file = join("/",$species->release_dir,$species->genomic_fasta);
 
-# DEPRECATED. Now farming this out to a shell script.
-sub create_protein_dbs {
-    my $self = shift;
-    my $species = $self->species;
-    
-    $self->log->info("  generating $species protein blast database");
-    my $version = $self->version;
-    	
-    my $blast_path = $self->destination_dir;
-
-    # "Discover" the *pep tarball.
-    my $path = $self->ftp_species_path;
-    my $wormpep = glob("$path/*pep.fa.gz");
-    if ($wormpep) {
-       
-	my $unpack = "gunzip";
-
-	# Unpack the tarball package
-	chdir($blast_path);
-	my $cmd = <<END;
-gunzip -c $path/$wormpep > $filename
-END
-;
-	
-	system($cmd);	
-	$self->make_blastdb('protein');
-    } else {
-	$self->log->logdie("No peptide file for " . $self->species);
+    unless (-e $fasta_file) {
+	$self->log->error(uc($name) . ": has no fasta sequence; not building genomic blast");
+	return;
     }
-    $self->log->info("generating $species protein blast database: complete");
+
+    my $target     = join("/",$species->blast_dir, "genomic.fa");
+    $target        =~ s/\.gz//;
+    system("gunzip -c $fasta_file > $target") && $self->log->logdie(uc($name) . ": couldn't unpack fasta file to $target");
+    
+    $self->make_blastdb('genomic',$species);
+    $self->log->info("$name: successfully built nucleotide blast db");
 }
 
-=cut
+
+sub create_protein_db {
+    my ($self,$species) = @_;
+
+    my $name = $species->symbolic_name;
+    	
+    # Copy and unpack the genomic sequence, if it exists.
+    my $fasta_file = join("/",$species->release_dir,$species->protein_fasta);
+
+    unless (-e $fasta_file) {
+	$self->log->error(uc($name) . ": has no fasta sequence; not building protein blast");
+	return;
+    }
+
+    my $target     = join("/",$species->blast_dir, "peptide.fa");
+    $target        =~ s/\.gz//;
+    system("gunzip -c $fasta_file > $target") && $self->log->logdie(uc($name) . ": couldn't unpack fasta file to $target");
+    
+    $self->make_blastdb('peptide',$species);
+    $self->log->info("$name: successfully built protein blast db");
+}
 
 
 
 # Currently only for elegans
 sub create_est_db {
-    my $self = shift;
-    my $species = shift;
-
-    return unless $species =~ /elegans/;
-
-    $self->log->debug("  generating $species est blast database");
+    my ($self,$species) = @_;
+    my $name = $species->symbolic_name;
+    return unless $name =~ /elegans/;
+    
     $self->dump_elegans_ests;
-	
-    my $blast_path = $self->destination_dir;
-    my $source_file = join("/",$self->ftp_releases_dir,'species',$species,'c_elegans.' . $self->release . ".ests.fa.gz");  
+    
+    my $blast_path = $species->blast_dir;
+    my $source_file = join("/",$species->release_dir,$species->ests_file);
     
     # Untar the output to the blast directory
-    system("gunzip -c $source_file > $blast_path/ests.fa");
-    
-    $self->make_blastdb('ests');
-    $self->log->info("generating $species est blast database: complete");
+    $self->system_call("gunzip -c $source_file > $blast_path/ests.fa",
+		       "cmd: gunzip -c $source_file > $blast_path/ests.fa");
+    $self->make_blastdb('ests',$species);
+    $self->log->info(uc("$name: successfully built est blast db");
 }
 
 
 
 # Create a gene database
 sub create_gene_db {
-    my $self = shift;
-    return unless ($species =~ /elegans/ || $species =~ /briggsae/);
-    $self->log->debug("generating $species gene blast database");
+    my ($self,$species) = @_;
+    my $name = $species->symbolic_name;
+    return unless ($name =~ /elegans/ || $name =~ /briggsae/);
     
     my $release = $self->release;
-    my $acedb = $self->acedb_root . "/wormbase_$release";
 
     my $filename = 'genes.fa';
     
-    my $blast_path = $self->destination_dir;
+    my $blast_path = $species->blast_dir;
 
-    my $bin_root = $self->bin_root;
-    my $script = "$bin_root/../helpers/dump_nucleotide.pl";    
-    system("$script $acedb $species > $blast_path/$filename");
+    my $bin_path = $self->bin_path;
+    my $script = "$bin_path/../helpers/dump_nucleotide.pl";    
+    $self->log->info("running dump_nucleotide.pl");
+    $self->system_call("$script $release $name > $blast_path/$filename",
+		       "cmd: $script $release $name > $blast_path/$filename");
     
-    $self->make_blastdb('genes');
-    $self->log->info("  generating $species gene blast database: complete");
+    $self->make_blastdb('genes',$species);
+    $self->log->info(uc("$name: successfully built gene blast db");
 }
 
 
-
 sub make_blastdb {
-    my ($self,$type) = @_;
+    my ($self,$type,$species) = @_;
     
-    my $species = $self->species;
+    my $name    = $species->symbolic_name;
     my $release = $self->release;
-    $self->log->debug("formatting $type blast database for $species");
     
     # Build the blast title
-    my $title = sprintf("%s %s release [%s]",$species,$type,$release);
-    
-    # Not sure if this actaully gets the hash key from Moosified HashRef
+    my $title = sprintf("%s %s release [%s]",$name,$type,$release);
     my $filename = "$type.fa";
     
     # Insert the title and input file
     # Not sure if this actaully gets the hash key from Moosified HashRef
-    my $cmd      = sprintf($self->formatdb_strings($type),$title,$filename);
+    my $cmd      = sprintf($self->formatdb_strings->{$type},$title,$filename);
     my $formatdb = $self->blastdb_format_script;
     my $full_cmd = "$formatdb $cmd";
-       
-    my $blastdb_dir = $self->destination_dir;
+
+    my $blastdb_dir = $species->blast_dir;
     chdir($blastdb_dir); 
     
-#    $self->check_input_file($filename);
-
-    system("$full_cmd") && $self->log->logdie("something went wrong formatting the $type database for $species: $!");
-    $self->log->debug("formatting $type blast database for $species: complete");
+    $self->system_call($full_cmd,"cmd: $full_cmd");
+    
+    # Check the blast outputs.
+    $self->check_blast_output($type,$species);
+    $self->log->debug("formatting $type blast database for $name: complete");
 }
+
+
+sub check_blast_output {
+    my ($self,$type,$species) = @_;
+    
+    my $name = $species->symbolic_name;
+    
+    my $blast_dir = $species->blast_dir;
+    my @suffixes;
+    if ($type eq 'genomic' || $type eq 'genes' || $type eq 'ests') {
+	@suffixes = (qw/nhr nin nsq/);
+    } else {
+	@suffixes = (qw/phr pin psq/);
+    }
+
+    foreach my $suffix (@suffixes) {
+	$self->log->error("Building the $type BLAST database for $name FAILED")
+	    unless (-e "$blast_dir/$type.fa.$suffix" && -s "$blast_dir/$type.fa.$suffix");
+    }
+}
+
+
 
 1;

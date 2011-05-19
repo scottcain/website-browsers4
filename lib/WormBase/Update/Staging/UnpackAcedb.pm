@@ -36,10 +36,10 @@ sub untar_acedb {
     chdir $install;  
     foreach (<$source/database*.tar.gz>) {
 	my $cmd = "gunzip -c $_ | tar xvf -"; # perl test.pl  >> tmp 2>&1
-	system($cmd) && $self->log->logdie("couldn't untar acedb files to $install: $!");
+	$self->system_call($cmd,"untarring acedb files to $install; cmd: $cmd");
     }
 
-    system("chown -R acedb:acedb $install/*");
+#    system("chown -R acedb:acedb $install/*");
     system("chmod g+ws $install/database");    
     $self->log->debug("untarring acedb complete");
     return;
@@ -50,12 +50,12 @@ sub customize_acedb {
     $self->log->debug("customizing acedb");
     my $release      = $self->release;
     my $release_id   = $self->release_id;
-    my $source_wspec = $self->wormbase_root  . "/website/clasic/wspec";
+    my $source_wspec = $self->wormbase_root  . "/website/classic/wspec";
     my $target_wspec = $self->acedb_root . "/wormbase_$release/wspec";
     
-    system("chmod ug+rw $target_wspec/*.wrm") && $self->log->warn("Problems encountered customizing acedb: $!");
+    system("chmod ug+rw $target_wspec/*.wrm") && $self->log->error("Problems encountered customizing acedb: $!");
     foreach (<${source_wspec}/*.wrm>) {
-	system("cp $_ $target_wspec/.") && $self->log->warn("Problems encountered customizing acedb: $!");
+	system("cp $_ $target_wspec/.") && $self->log->error("Problems encountered customizing acedb: $!");
     }
 }
 

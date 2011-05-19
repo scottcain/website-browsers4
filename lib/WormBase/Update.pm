@@ -44,62 +44,75 @@ sub _build_log {
 
     my $log_config = qq(
 
-		log4perl.logger=ALL, UpdateLog, UpdateError, Screen, MasterLog
+		log4perl.rootLogger=INFO, MASTERLOG, MASTERERR, STEPLOG, STEPERR, SCREEN
 
-                # Filters to break up logging into different files
-                # Filter to match level ERROR - Critical errors
-                log4perl.filter.MatchError = Log::Log4perl::Filter::LevelMatch
-                log4perl.filter.MatchError.LevelToMatch  = ERROR
-                log4perl.filter.MatchError.AcceptOnMatch = true
+                # MatchTRACE: lowest level for the STEPLOG
+                log4perl.filter.MatchTRACE = Log::Log4perl::Filter::LevelRange
+                log4perl.filter.MatchTRACE.LevelToMatch = TRACE
+                log4perl.filter.MatchTRACE.AcceptOnMatch = true
 
-                # Filter to match level INFO
-                log4perl.filter.MatchInfo  = Log::Log4perl::Filter::LevelMatch
-                log4perl.filter.MatchInfo.LevelToMatch  = INFO
-                log4perl.filter.MatchInfo.AcceptOnMatch = true
-		
-                # step.err
-		log4perl.appender.UpdateError=Log::Log4perl::Appender::File
-		log4perl.appender.UpdateError.filename=$log_dir/$release/steps/$step/step.err
-                log4perl.appender.UpdateError.Threshold=WARN
-		log4perl.appender.UpdateError.mode=append
-		log4perl.appender.UpdateError.layout = Log::Log4perl::Layout::PatternLayout
-		#log4perl.appender.UpdateError.layout.ConversionPattern=[%d %p]%K%l − %r %m%n
-		log4perl.appender.UpdateError.layout.ConversionPattern=[%d %p]%K%m (%M [%L])%n
-		#log4perl.appender.UpdateError.layout.ConversionPattern=[%d %p]%K %n	       
-                log4perl.appender.UpdateError.Filter = MatchError
+                # MatchWARN: Exact match for warnings
+                log4perl.filter.MatchWARN = Log::Log4perl::Filter::LevelMatch
+                log4perl.filter.MatchWARN.LevelToMatch = WARN
+                log4perl.filter.MatchWARN.AcceptOnMatch = true
 
-                # $step.log
-		log4perl.appender.UpdateLog=Log::Log4perl::Appender::File
-		log4perl.appender.UpdateLog.filename=$log_dir/$release/steps/$step/step.log
-		log4perl.appender.UpdateLog.mode=append
-                log4perl.appender.UpdateError.Threshold=ALL
-		log4perl.appender.UpdateLog.layout = Log::Log4perl::Layout::PatternLayout
-		#log4perl.appender.UpdateLog.layout.ConversionPattern=[%d %p]%K%l − %r %m%n
-		log4perl.appender.UpdateLog.layout.ConversionPattern=[%d %p]%K%m (%M [%L])%n
-		#log4perl.appender.UpdateLog.layout.ConversionPattern=[%d %p]%K %n	       
-                # log4perl.appender.UpdateLog.Filter = MatchInfo
-	
-		log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
-		log4perl.appender.Screen.stderr  = 0
-                log4perl.appender.UpdateError.Threshold=INFO
-		log4perl.appender.Screen.layout = Log::Log4perl::Layout::PatternLayout
-		#log4perl.appender.Screen.layout.ConversionPattern=[%d %r]%K%F %L %c − %m%n
-		log4perl.appender.Screen.layout.ConversionPattern=[%d %p]%K%m (%M [%L])%n
-		#log4perl.appender.Screen.layout.ConversionPattern=[%d %p]%K %n
+                # MatchERROR: ERROR and UP
+                log4perl.filter.MatchERROR = Log::Log4perl::Filter::LevelRange
+                log4perl.filter.MatchERROR.LevelMin = ERROR
+                log4perl.filter.MatchERROR.AcceptOnMatch = true
+
+                # MatchINFO: INFO and UP. For SCREEN.
+                log4perl.filter.MatchINFO = Log::Log4perl::Filter::LevelRange
+                log4perl.filter.MatchINFO.LevelMin = INFO
+                log4perl.filter.MatchINFO.AcceptOnMatch = true
+
+                # The SCREEN
+                log4perl.appender.SCREEN           = Log::Log4perl::Appender::Screen
+                log4perl.appender.SCREEN.mode      = append
+                log4perl.appender.SCREEN.layout    = Log::Log4perl::Layout::PatternLayout
+		#log4perl.appender.SCREEN.layout.ConversionPattern=[%d %r]%K%F %L %c − %m%n
+		log4perl.appender.SCREEN.layout.ConversionPattern=[%d %p]%K%m %n
+#		log4perl.appender.Screen.stderr  = 0
+                log4perl.appender.SCREEN.Filter   = MatchINFO
+         
+                # The MASTERLOG: INFO, WARN, ERROR, FATAL
+		log4perl.appender.MASTERLOG=Log::Log4perl::Appender::File
+		log4perl.appender.MASTERLOG.filename=$log_dir/$release/master.log
+		log4perl.appender.MASTERLOG.mode=append
+		log4perl.appender.MASTERLOG.layout = Log::Log4perl::Layout::PatternLayout
+		log4perl.appender.MASTERLOG.layout.ConversionPattern=[%d %p]%K%m (%M [%L])%n
+                log4perl.appender.MASTERLOG.Filter   = MatchINFO
 
 
-		log4perl.appender.MasterLog=Log::Log4perl::Appender::File
-		log4perl.appender.MasterLog.filename=$log_dir/$release/master.log
-		log4perl.appender.MasterLog.mode=append
-                log4perl.appender.UpdateError.Threshold=INFO
-		log4perl.appender.MasterLog.layout = Log::Log4perl::Layout::PatternLayout
-		#log4perl.appender.MasterLog.layout.ConversionPattern=[%d %p]%K%l − %r %m%n
-		log4perl.appender.MasterLog.layout.ConversionPattern=[%d %p]%K%m (%M [%L])%n
-		#log4perl.appender.MasterLog.layout.ConversionPattern=[%d %p]%K %n
-#                # Filter for my MasterLog
-                log4perl.filter.MasterLogFilter    = sub { /LOG/ }
-                log4perl.appender.MasterLog.Filter = MasterLogFilter
+                # The MASTERERR: ERROR, FATAL
+		log4perl.appender.MASTERERR=Log::Log4perl::Appender::File
+		log4perl.appender.MASTERERR.filename=$log_dir/$release/master.err
+		log4perl.appender.MASTERERR.mode=append
+		log4perl.appender.MASTERERR.layout = Log::Log4perl::Layout::PatternLayout
+		log4perl.appender.MASTERERR.layout.ConversionPattern=[%d %p]%K%m (%M [%L])%n
+                log4perl.appender.MASTERERR.Filter   = MatchERROR
 
+                # The STEPLOG: TRACE to get everything.
+		log4perl.appender.STEPLOG=Log::Log4perl::Appender::File
+		log4perl.appender.STEPLOG.filename=$log_dir/$release/steps/$step/step.log
+                log4perl.appender.STEPLOG.Threshold=WARN
+		log4perl.appender.STEPLOG.mode=append
+		log4perl.appender.STEPLOG.layout = Log::Log4perl::Layout::PatternLayout
+		#log4perl.appender.STEPLOG.layout.ConversionPattern=[%d %p]%K%l − %r %m%n
+		log4perl.appender.STEPLOG.layout.ConversionPattern=[%d %p]%K%m (%M [%L])%n
+		#log4perl.appender.STEPLOG.layout.ConversionPattern=[%d %p]%K %n	       
+                log4perl.appender.STEPLOG.Filter   = MatchTRACE
+
+                # The STEPERR: ERROR and up
+		log4perl.appender.STEPERR=Log::Log4perl::Appender::File
+		log4perl.appender.STEPERR.filename=$log_dir/$release/steps/$step/step.err
+                log4perl.appender.STEPERR.Threshold=WARN
+		log4perl.appender.STEPERR.mode=append
+		log4perl.appender.STEPERR.layout = Log::Log4perl::Layout::PatternLayout
+		#log4perl.appender.STEPERR.layout.ConversionPattern=[%d %p]%K%l − %r %m%n
+		log4perl.appender.STEPERR.layout.ConversionPattern=[%d %p]%K%m (%M [%L])%n
+		#log4perl.appender.STEPERR.layout.ConversionPattern=[%d %p]%K %n	       
+                log4perl.appender.STEPERR.Filter   = MatchERROR
 		);
     
     Log::Log4perl::Layout::PatternLayout::add_global_cspec('K',
@@ -107,12 +120,12 @@ sub _build_log {
 								   
 								   my ($layout, $message, $category, $priority, $caller_level) = @_;
 								   # FATAL, ERROR, WARN, INFO, DEBUG, TRACE
-								   return "   --> "    if $priority eq 'DEBUG';
-								   return " "     if $priority eq 'INFO';
-								   return "  ! "  if $priority eq 'WARN';  # potential errors
-								   return " !! "  if $priority eq 'ERROR'; # errors
-								   return "!!! "  if $priority eq 'FATAL';  # fatal errors
-								   return " ";
+								   return "    "  if $priority eq 'DEBUG';
+								   return "    "  if $priority eq 'INFO';
+								   return "  "  if $priority eq 'WARN';  # potential errors
+								   return " !  "  if $priority eq 'ERROR'; # errors
+								   return " !  "  if $priority eq 'FATAL';  # fatal errors
+								   return "    ";
 							   });
     
     Log::Log4perl::init(\$log_config) or die "Couldn't create the Log::Log4Perl object";
@@ -120,7 +133,6 @@ sub _build_log {
     my $logger = Log::Log4perl->get_logger('rootLogger');
     return $logger;	
 }
-
 
 
 # Logging options
@@ -136,7 +148,13 @@ has 'log_dir' => (
 #
 ####################
 
-has 'create_blastdb_script' => ( is => 'ro', default => 'create_blastdb.sh' );
+has 'create_blastdb_script' => ( 
+    is => 'ro',     
+    default => sub {
+	my $self = shift;
+	my $bin = $self->bin_path;
+	my $script = "$bin/../helpers/create_blast_db.sh"
+    });
 
 
 
@@ -151,10 +169,10 @@ has 'web_user' => (
 
 sub execute {
   my $self = shift;
-  $self->log->info('LOG: BEGIN  : ' . $self->step);
+  $self->log->warn('BEGIN : ' . $self->step);
   # Subclasses should implement the run() method.
   $self->run();
-  $self->log->info('LOG: END    : ' . $self->step);
+  $self->log->warn('END : ' . $self->step);
 }
 
 # When running the staging code automatically, we need to 
@@ -201,19 +219,19 @@ sub update_symlink {
   my $path    = $params->{path};
   my $symlink = $params->{symlink};
   
-  $self->logit->debug("updating symlink $path: $symlink -> $target");
+  $self->log->debug("updating symlink $path: $symlink -> $target");
   
   chdir($path);
-  unlink($symlink)          or $self->logit->warn("couldn't unlink $symlink; perhaps it didn't exist to begin with");
-  symlink($target,$symlink) or $self->logit->warn("creating symlink $symlink -> $target FAILED");
-  $self->logit->debug("updating symlink $path: $symlink -> $target: complete");
+  unlink($symlink)          or $self->log->warn("couldn't unlink $symlink; perhaps it didn't exist to begin with");
+  symlink($target,$symlink) or $self->log->warn("creating symlink $symlink -> $target FAILED");
+  $self->log->debug("updating symlink $path: $symlink -> $target: complete");
 }
 
 sub unpack_archived_sequence {
   my ($self,$params) = @_;
   my $species = $params->{species};
   my $type    = $params->{type};
-  $self->logit->debug("unpacking archived sequence for $species");
+  $self->log->debug("unpacking archived sequence for $species");
 
   # Other species besides elegans, briggsae, remanei
   # Fetch the most current archived DNA
@@ -222,10 +240,10 @@ sub unpack_archived_sequence {
   my $src = join("/",$self->ftp_root,$self->local_ftp_path,"genomes/$species/$archived_dna");
   
   
-  chdir($self->species_root) or $self->logit->logdie("couldn't chdir to $self->species_root");
+  chdir($self->species_root) or $self->log->logdie("couldn't chdir to $self->species_root");
   system("gunzip $params->{target_file}.gz");
   
-  $self->logit->debug("unpacking archived sequence for $species: complete");
+  $self->log->debug("unpacking archived sequence for $species: complete");
 }    
 
 
@@ -238,7 +256,6 @@ sub unpack_archived_sequence {
 sub dump_elegans_ests {
     my $self = shift;
     $self->log->debug("begin: dumping ESTs for C. elegans");
-    return if $self->dryrun;
 
     use Ace;
     $|++;
@@ -256,7 +273,7 @@ END
 #my @seqs = $db->fetch(-query=>qq{find cDNA_Sequence; dna; query find 
 #NDB_Sequence; dna"});
     my @seqs = $db->fetch(-query=>$query);
-    my $file = join("/",$self->ftp_species_path,'c_elegans','c_elegans.' . $self->release . ".ests.fa.gz");
+    my $file = join("/",$self->ftp_releases_dir,'species','c_elegans','c_elegans.' . $self->release . ".ests.fa.gz");
     open OUT," | gzip -c > $file" or $self->log->logdie("Couldn't open $file for generating the EST file dump");
     
     foreach (@seqs) {
@@ -276,6 +293,16 @@ END
 }
 
 
+
+sub system_call {
+    my ($self,$cmd,$msg) = @_;
+    my $result = system($cmd);
+    if ($result == 0) {
+	$self->log->debug("$msg: succeeded");
+    } else {
+	$self->log->logdie("$msg: failed");
+    }
+}
 
 
 ################# CRUFT
