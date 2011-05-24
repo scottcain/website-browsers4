@@ -40,7 +40,10 @@ sub run {
     my $self = shift;
     my $datadir = $self->datadir;
     my $outfile = $datadir . "/compiled_interaction_data.txt";
+    
+    $self->log->info("creating compiled_interaction_data.txt");	
     $self->compile_interaction_data($outfile);   
+    $self->log->debug("compile_interaction_data done");
 }
 
 sub compile_interaction_data {
@@ -144,6 +147,7 @@ sub compile_interaction_data {
 			$effd_name = "";
 			$interaction_vector = 'eftr\-\>eftd';
 		}
+		
 		print OUTFILE "$interaction\|$type\|$rnai\|$effr\|$effr_name\|$effd\|$effd_name\|$phenotype\|$interaction_vector\|$phenotype_name\n";
 		# print "$interaction\|$type\|$rnai\|$effr\|$effr_name\|$effd\|$effd_name\|$phenotype\|$interaction_vector\|$phenotype_name\n";
 		}
