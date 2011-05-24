@@ -1,7 +1,10 @@
 #!/usr/bin/perl
 
+# TODO: 
+# Update mysql db symlinks on go live
+# Update acedb symlink on go live
+
 use strict;
-use Cwd;
 
 # If provided with a release, assume we also want to create symlinks.
 my $current_release = shift;
@@ -95,9 +98,7 @@ foreach my $release_path (@releases) {
 
 
 sub create_symlink {
-    my ($target,$filename,$release) = @_;
-    
-    my $dir = getcwd;
+    my ($target,$filename,$release) = @_;   
     symlink($target,$filename) or warn "$!";
     if ($current_release) {
 	$filename =~ s/$release/current/;
