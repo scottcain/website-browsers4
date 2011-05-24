@@ -27,9 +27,9 @@ sub run {
     #
     # 1. dump_species_* will be called for each species managed by WormBase
     #    and will end up in 
-    #       ${FTP_ROOT}/releases/[RELEASE]/species/[G_SPECIES]/annotations/[G_SPECIES].[RELEASE].[DESCRIPTION].txt
+    #       ${FTP_ROOT}/releases/[RELEASE]/species/[G_SPECIES]/annotation/[G_SPECIES].[RELEASE].[DESCRIPTION].txt
     #    dump_resource_* will be called once and end up in
-    #       ${FTP_ROOT}/releases/[RELEASE]/annotations/wormbase.[RELEASE].[DESCRIPTION].txt
+    #       ${FTP_ROOT}/datasets-wormbase/wormbase.[RELEASE].[DESCRIPTION].txt
     # 2. The filename will be created by stripping off dump_species_ or dump_resource_.
     #     Species specific resources will be prepended with the appropriate species.
     
@@ -46,25 +46,24 @@ sub run {
 	
 	# This is a species specific script. Try running it for each managed species.
 	if ($script =~ /dump_species/) {
-	    my @species = $self->wormbase_managed_species;  
-	    foreach my $name (@species) {
-		$self->log->info("running annotation dump script species $name $description");
-		my $output = join("/",$output_root,'species',$name,'annotations');
+	    my ($species) = $self->wormbase_managed_species;  
+	    foreach my $name (@$species) {
+		my $output = join("/",$output_root,'species',$name,'annotation');
 		$self->_make_dir($output);
 		
-		$self->log->info("running $script for $name");
+		$self->log->info("dumping $description for $name");
 		$self->system_call("$script --path $acedb_path --species $name | gzip -c > $output/$name.$release.$description.txt.gz",
-				   'running dump annotations script');
+				   "dumping $description script");
 	    }
 	} elsif ($script =~ /dump_resource_/) {
-	    $self->log->info("running annotation resource dump script $description");
 	    # It's a resource. Only need to call the script once.
-	    my $output = join("/",$output_root,'annotations');
+	    my $output = join("/",$self->ftp_root,'datasets-wormbase');
 	    $self->_make_dir($output);
+	    $self->_make_dir("$output/$description");
 	    
-	    $self->log->info("running $script");
-	    $self->system_call("$script --path $acedb_path | gzip -c > $output/wormbase.$release.$description.txt.gz",
-			       'running dump annotations script');
+	    $self->log->info("dumping $description");
+	    $self->system_call("$script --path $acedb_path | gzip -c > $output/$description/wormbase.$release.$description.txt.gz",
+			       "dumping $description script");
 	}
     }
 }

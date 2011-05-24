@@ -39,7 +39,6 @@ my $delim = $emacs ? "\n" : "\r";
 my $count;
 
 my $total = $dbh->count(Laboratory => '*');
-print STDERR "Dumping $total laboratory...\n";
 
 my $i = $dbh->fetch_many(-class=>'Laboratory',-name => '*',-filled=>1) or die $dbh->error;
 
