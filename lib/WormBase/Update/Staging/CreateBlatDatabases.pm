@@ -83,7 +83,7 @@ sub make_blatdb {
 	my ($root_dir, $nib_file_name) = $self->_parse_file_name($file) or return;
 	$nib_file_name =~ s/\.dna$/\.nib/; 
 	my $cmd = "$fatonib $file $path/$nib_file_name";
-	$self->system_call($cmd,"running fatonib: $cmd");
+	$self->system_call($cmd,'running fatonib');
 
     }
     $self->log->debug("formatting blat database for $species: complete");

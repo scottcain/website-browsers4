@@ -7,16 +7,6 @@ extends qw/WormBase::Update/;
 # The symbolic name of this step
 has 'step' => ( is => 'ro', default => 'unpack clustal database' );
 
-has 'drh' => (
-    is => 'ro',
-    lazy_build => 1 );
-
-sub _build_drh {	
-    my $self = shift;       
-    my $drh = DBI->install_driver('mysql');
-    return $drh;
-}
-
 has 'clustal_sql' => ( is => 'ro', lazy_build => 1 );
 sub _build_clustal_sql {
     my $self = shift;
@@ -40,7 +30,7 @@ sub run {
     chdir($tmp_dir);
     
     $self->system_call("bunzip2 -c $source > $tmp_dir/" . $self->clustal_sql,
-		       "bunzip2 -c $source > $tmp_dir/" . $self->clustal_sql);
+		       "bunzipping clustalw");
     
     $self->create_database;
 
@@ -67,7 +57,7 @@ sub create_database {
     # Grant privileges
     my $webuser = $self->web_user;
     $self->system_call("mysql -u $user -p$pass -e 'grant all privileges on $database.* to $webuser\@localhost'",
-		       "command: mysql -u $user -p$pass -e 'grant all privileges on $database.* to $webuser\@localhost'");
+		       "creating clustal mysql database");
 }
     
     
@@ -80,7 +70,7 @@ sub load_database {
     my $db  = 'clustal_' . $self->release;
 
     $self->system_call("mysql -u$user -p$pass $db < $sql",
-		       "mysql -u$user -p$pass $db < $sql");
+		       "loading clustal database");
 }
 
 1;

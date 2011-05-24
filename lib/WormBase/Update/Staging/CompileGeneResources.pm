@@ -83,33 +83,24 @@ sub gene_rnai_pheno_data_compile {
     my $class = 'Gene';
 
     my $i = $self->dbh->fetch_many(-class=>$class);
+    my $na = '';
     while (my $object = $i->next) {
-	my @rnai = $object->RNAi_result;    	
-	foreach my $rnai (@rnai) {
+	foreach my $rnai ($object->RNAi_result) {
 	    
 	    my @phenotypes = $rnai->Phenotype;
-	    my $na = '';
 		
 	    foreach my $interaction ($rnai->Interaction) {
 		my @types = $interaction->Interaction_type;
 		foreach (@types) {		    
-		    push @phenotypes,map { $_->right } grep { $_ eq 'Interaction_phenotype' } $_->col;
+		    push @phenotypes,map { $_->right } grep { $_ eq 'Interaction_phenotype' } $_->col;		    
 		}
 	    }
+	    next unless @phenotypes > 0;
 
-	    my %print_out_lines;
-	    
-	    foreach my $phenotype (@phenotypes) {		
-		my $print_out_line = "$object\|$rnai\|$phenotype\|$na";
-		
-		if ($print_out_lines{$print_out_line}) {
-		    next;
-		} else {
-		    print OUTFILE "$print_out_line\n";
-		    $print_out_lines{$print_out_line} = 1;
-		}
-	    }
+	    my %uniq = map { ("$object\|$rnai\|$_\|$na" => 1) } @phenotypes;
+	    print OUTFILE join("\n",keys %uniq);
 	}
+	$self->dbh->memory_cache_clear();
     }
 }
 
@@ -121,16 +112,14 @@ sub gene_rnai_pheno_not_data_compile {
     my $class = 'Gene';
 
     my $i = $self->dbh->fetch_many(-class => $class);
+    my $na = 'Not';
     while (my $object = $i->next) {
 	my @rnai = $object->RNAi_result;    
 	foreach my $rnai (@rnai) {
 	    
 	    my @phenotypes = $rnai->Phenotype_not_observed;
-	    my $na = '';
-	    $na = 'Not';
-	    
 	    foreach my $phenotype (@phenotypes) {		
-		print  OUTFILE "$object\|$rnai\|$phenotype\|$na\n"; ### 
+		print  OUTFILE "$object\|$rnai\|$phenotype\|$na\n";
 	    }
 	}
     }
@@ -144,7 +133,7 @@ sub gene_xgene_pheno_data_compile{
     my %lines;
     
     open OUTPUT, ">$output_file_name" or $self->log->logdie("Cannot open gene_xgene_pheno_data_compile output file");
-    
+
     my $i = $self->dbh->fetch_many(-class => $class);
     while (my $object = $i->next) {
 	my @xgenes = $object->Drives_Transgene;

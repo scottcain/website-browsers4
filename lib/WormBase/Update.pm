@@ -320,9 +320,9 @@ sub system_call {
     my ($self,$cmd,$msg) = @_;
     my $result = system($cmd);
     if ($result == 0) {
-	$self->log->debug("$msg: succeeded");
+	$self->log->debug("$msg: $cmd succeeded");
     } else {
-	$self->log->logdie("$msg: failed");
+	$self->log->logdie("$msg: $cmd failed");
     }
 }
 

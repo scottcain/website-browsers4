@@ -36,7 +36,7 @@ sub untar_acedb {
     chdir $install;  
     foreach (<$source/database*.tar.gz>) {
 	my $cmd = "gunzip -c $_ | tar xvf -"; # perl test.pl  >> tmp 2>&1
-	$self->system_call($cmd,"untarring acedb files to $install; cmd: $cmd");
+	$self->system_call($cmd,"untarring acedb files to $install");
     }
 
 #    system("chown -R acedb:acedb $install/*");

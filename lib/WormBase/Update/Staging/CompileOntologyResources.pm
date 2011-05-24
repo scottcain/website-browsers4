@@ -98,7 +98,7 @@ sub run {
     
     foreach my $cmd (@cmds) {	
 	$self->system_call("$bin_path/$cmd",
-			   "$bin_path/$cmd" );
+			   "dump ontology resource file");
 	# $check_file);
 	
     }
@@ -113,7 +113,7 @@ sub copy_ontology {
     my $source = join("/",$self->ftp_releases_dir,$release,'ONTOLOGY');
     my $target = join("/",$self->support_databases_dir,$release,'ontology');
     $self->system_call("cp -r $source $target",
-		       "cp -r $source $target");
+		       "copying ontology");
 
 }
 

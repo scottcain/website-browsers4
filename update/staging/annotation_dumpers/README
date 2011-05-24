@@ -1,0 +1,4 @@
+This directory contains scripts that are automatically
+called as part of the staging process.  To function
+correctly scripts here should abide by certain conventions.
+

@@ -124,7 +124,7 @@ sub create_est_db {
     # Untar the output to the blast directory unless the file already exists.
     unless ($self->check_output_file("$blast_path/ests.fa")) {
 	$self->system_call("gunzip -c $source_file > $blast_path/ests.fa",
-			   "cmd: gunzip -c $source_file > $blast_path/ests.fa");
+			   'checking blast output file');
     }
     $self->make_blastdb('ests',$species);
     $self->log->info("$name: successfully built est blast db");
@@ -184,7 +184,7 @@ sub make_blastdb {
     my $blastdb_dir = $species->blast_dir;
     chdir($blastdb_dir); 
     
-    $self->system_call($full_cmd,"cmd: $full_cmd");
+    $self->system_call($full_cmd,'making blast database');
     
     # Check the blast outputs.
     $self->check_blast_output($type,$species);
