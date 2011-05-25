@@ -53,7 +53,7 @@ $format    ||= 'record';
 my ($g,$species_alone) = split("_",$species);
 $g = uc($g);
 
-my $i = $db->fetch_many(-query=>qq{find Gene where Species=$g*$species_alone});
+my $i = $dbh->fetch_many(-query=>qq{find Gene where Species=$g*$species_alone});
 while (my $gene = $i->next) {
     next unless $gene->Species =~ /$species_alone/;
     my $name = $gene->Public_name || 'not known';

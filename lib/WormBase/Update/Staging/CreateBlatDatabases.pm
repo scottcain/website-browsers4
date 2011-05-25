@@ -24,9 +24,9 @@ has 'fatonib' => (
 
 sub run {
     my $self = shift;   
-    my @species = $self->wormbase_managed_species;  
+    my ($species) = $self->wormbase_managed_species;  
     
-    foreach my $name (@species) {
+    foreach my $name (@$species) {
 	$self->log->info(uc($name). ': start');
 
 	my $species = WormBase::Factory->create('Species',{ symbolic_name => $name, release => $self->release });
