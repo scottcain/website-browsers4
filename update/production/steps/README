@@ -1,0 +1,31 @@
+===========================
+WormBase production update process
+
+Placing everything in the admin framework.
+
+Steps.
+
+1. steps/push_acedb.pl  (via cron)
+
+This can sync via a tarball package, rsync of a single
+acedb database directory, or rsync of all directories.
+W::U::Production::PushAcedb needs to be edited to switch
+between these options.
+
+Currently, this script keeps all acedb/wormbase_* directories
+in sync and is run by cron as:
+
+0 3 12-31 * * /home/tharris/projects/wormbase/website-admin/update/production/steps/push_acedb.pl
+
+
+2. steps/push_support_databases.pl (via cron).
+
+As with push_acedb.pl, this can sync via a tarball package, 
+rsync of a single database directory, or rsync of all 
+directories. W::U::Production::PushSupportDatabases needs 
+to be edited to switch between these options. 
+
+Currently, this script keeps all support/WS* directories
+in sync and is run by cron as:
+
+0 3 12-31 * * /home/tharris/projects/wormbase/website-admin/update/production/steps/push_support_databases.pl
