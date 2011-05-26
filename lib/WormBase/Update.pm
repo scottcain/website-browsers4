@@ -3,6 +3,7 @@ package WormBase::Update;
 use local::lib '/usr/local/wormbase/website/classic/extlib';
 use Time::HiRes qw(gettimeofday tv_interval);
 
+use Digest::MD5;
 use Log::Log4perl;
 use FindBin qw($Bin);
 
@@ -206,10 +207,13 @@ before 'execute' => sub {
 
     # Maybe we didn't provide a release. This only
     # makes sense in the context of automatic mirroring.
-    unless ($self->step =~ /mirror/) {
+    unless ($self->step =~ /mirror/ 
+	    || $self->step eq 'push acedb to production'
+	    || $self->step eq 'push support databases to production'
+	) {
 	$self->log->logdie("no release provided; discovering a new release only makes sense during the mirroring step.");
     }
-
+    
     my $releases = $self->existing_releases;
     
     # Save the most current release.
@@ -226,19 +230,20 @@ before 'execute' => sub {
 
 
 
+#CRUFT
 
 sub update_symlink {
-  my ($self,$params) = @_;
-  my $target  = $params->{target};
-  my $path    = $params->{path};
-  my $symlink = $params->{symlink};
-  
-  $self->log->debug("updating symlink $path: $symlink -> $target");
-  
-  chdir($path);
-  unlink($symlink)          or $self->log->warn("couldn't unlink $symlink; perhaps it didn't exist to begin with");
-  symlink($target,$symlink) or $self->log->warn("creating symlink $symlink -> $target FAILED");
-  $self->log->debug("updating symlink $path: $symlink -> $target: complete");
+    my ($self,$params) = @_;
+    my $target  = $params->{target};
+    my $path    = $params->{path};
+    my $symlink = $params->{symlink};
+    
+    $self->log->debug("updating symlink $path: $symlink -> $target");
+    
+    chdir($path);
+    unlink($symlink)          or $self->log->warn("couldn't unlink $symlink; perhaps it didn't exist to begin with");
+    symlink($target,$symlink) or $self->log->warn("creating symlink $symlink -> $target FAILED");
+    $self->log->debug("updating symlink $path: $symlink -> $target: complete");
 }
 
 sub unpack_archived_sequence {
@@ -340,6 +345,26 @@ sub check_output_file {
 }
 
 
+
+sub create_md5 {
+  my ($self,$base,$file) = @_;
+
+  $self->log->debug("creating md5 sum of $file");
+  
+  open(FILE, "$base/$file.tgz") or die "Can't open '$base/$file.tgz': $!";
+  binmode(FILE);
+  
+  open OUT,">$base/$file.md5";
+  print OUT Digest::MD5->new->addfile(*FILE)->hexdigest, "  $file.tgz\n";
+  
+  # Verify the checksum...
+  chdir($base);
+  my $result = `md5sum -c $file.md5`;
+  die "Checksums do not match: packaging $file.tgz failed\n" if ($result =~ /failed/);
+}
+
+
+
 ################# CRUFT
 
 
@@ -350,6 +375,9 @@ sub check_input_file {
     $self->log->logdie("The input file ($file) for $step does not exist. Please fix.");
     return 0;
 }
+
+
+
 
 
 

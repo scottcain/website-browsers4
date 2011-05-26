@@ -16,7 +16,7 @@ GetOptions(
 	   "format=s"    => \$format,
 	  );
 
-$path || die <<USAGE;
+($path || ($host && $port)) || die <<USAGE;
 
 Usage: $0 [options]
    
@@ -53,7 +53,15 @@ $format    ||= 'record';
 my ($g,$species_alone) = split("_",$species);
 $g = uc($g);
 
-my $i = $dbh->fetch_many(-query=>qq{find Gene where Species=$g*$species_alone});
+
+# These really only exist for elegans at the moment.
+exit 0 unless $species =~ /elegans/;
+
+print "# $g. $species_alone functional descriptions\n";
+print "# WormBase version: " . $dbh->version . "\n";
+print "# Generated: $date\n";
+
+my $i = $dbh->fetch_many(-query=>qq{find Gene Species=$g*$species_alone});
 while (my $gene = $i->next) {
     next unless $gene->Species =~ /$species_alone/;
     my $name = $gene->Public_name || 'not known';

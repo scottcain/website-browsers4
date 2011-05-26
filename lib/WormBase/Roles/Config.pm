@@ -110,7 +110,7 @@ has 'ftp_releases_dir' => (
 
 sub _build_ftp_releases_dir {
     my $self = shift;
-    return $self->ftp_root . "/releases.test";
+    return $self->ftp_root . "/releases";
 }
 
 
@@ -157,7 +157,73 @@ sub _build_remote_ftp_releases_dir {
     return $self->remote_ftp_root;
 }
 
+####################################
+#
+# Production related configuration
+#
+####################################
 
+has 'local_acedb_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw/wb-mining.oicr.on.ca
+            wb-web1.oicr.on.ca
+            wb-web2.oicr.on.ca
+	    wb-web3.oicr.on.ca
+	    wb-web4.oicr.on.ca/]
+    },
+    );
+
+has 'remote_acedb_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw/canopus.caltech.edu/]},
+    );
+
+
+has 'local_support_database_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw/wb-mining.oicr.on.ca
+            wb-web1.oicr.on.ca
+            wb-web2.oicr.on.ca
+	    wb-web3.oicr.on.ca
+	    wb-web4.oicr.on.ca/]
+    },
+    );
+
+has 'remote_support_database_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw/canopus.caltech.edu/]
+    },
+    );
+
+has 'local_mysql_database_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw/wb-gb1.oicr.on.ca
+            wb-gb2.oicr.on.ca   
+            wb-mining.oicr.on.ca
+            wb-web1.oicr.on.ca
+            wb-web2.oicr.on.ca
+	    wb-web3.oicr.on.ca
+	    wb-web4.oicr.on.ca/]
+    },
+    );
+
+has 'remote_mysql_database_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw/canopus.caltech.edu/]
+    },
+    );
 
 ####################################
 #

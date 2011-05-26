@@ -19,3 +19,14 @@ x  unpack_acedb.pl                 - unpack and customize a new release of acedb
 
 create_blast_databases.pl WSXXX - create blast databases for WSXXX
 
+
+
+
+
+
+
+DEPRECATED:
+CompileINteractionData.pm and compile_interaction_resources.pm
+CompileGeneList.pm and compile_gene_list.pm - just dumps out a list of genes with orthologs?
+   Deprecated at least in part by dump_species_orthologs.pl.
+   Not sure if/where the gene<->ortholog file is used.
