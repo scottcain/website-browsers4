@@ -141,6 +141,10 @@ has 'log_dir' => (
     default => '/usr/local/wormbase/logs/staging',
     );
 
+has 'precompile_datadir' => (
+	is => 'ro',
+	default => '/usr/local/wormbase/tmp_staging',
+)
 
 ####################
 #
