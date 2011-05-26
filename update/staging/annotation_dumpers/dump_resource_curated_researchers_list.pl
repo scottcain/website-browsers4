@@ -46,5 +46,5 @@ foreach (@people) {
 	    @email = $entry->right;
 	}
     }
-    print join("t",$_->Standard_name,$_->Laboratory,join(", ",@email)) . "\n";
+    print join("\t",$_,$_->Standard_name,$_->Laboratory,join(", ",@email)) . "\n";
 }
