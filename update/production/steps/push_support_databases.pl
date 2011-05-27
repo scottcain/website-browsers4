@@ -4,14 +4,37 @@ use FindBin qw/$Bin/;
 use lib "$Bin/../../../lib";
 use strict;
 use WormBase::Update::Production::PushSupportDatabases;
+use Getopt::Long;
 
-# Sync a single release if provided.
-my $release = shift; # or die "Usage: $0 [WSVersion]";
+my ($release,$method);
+GetOptions('release=s' => \$release,
+	   'method=s'  => \$method);
+
+unless ($method) {
+    die <<END;
+    
+Usage: $0 --method [by_package|all_directories|by_directory] [--release]
+
+To sync the full support database directory:
+ ./push_acedb.pl --method all_directories
+
+To push out a single release using a tarball:
+ ./push_acedb.pl --method by_package --release WSXXX
+
+To push out a single release by rsyncing the directory:
+ ./push_acedb.pl --method by_directory --release WSXXX
+
+END
+;
+}
+
 
 my $agent;
 if ($release) {
-    $agent = WormBase::Update::Production::PushSupportDatabases->new({ release => $release });
+    $agent = WormBase::Update::Production::PushSupportDatabases->new({ release => $release,
+                                                                        method  => $method,
+                                                                     });
 } else {
-    $agent = WormBase::Update::Production::PushSupportDatabases->new();
+    $agent = WormBase::Update::Production::PushSupportDatabases->new({method => $method });
 }
 $agent->execute();
