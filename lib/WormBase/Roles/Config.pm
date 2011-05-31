@@ -85,7 +85,7 @@ sub _build_drh {
     return $drh;
 }
 
-has 'mysql_data_dir' => ( is => 'ro',  default => '/usr/local/mysq/data' );
+has 'mysql_data_dir' => ( is => 'ro',  default => '/usr/local/mysql/data' );
 has 'mysql_user'     => ( is => 'ro',  default => 'root'      );
 has 'mysql_pass'     => ( is => 'ro',  default => '3l3g@nz'   );
 has 'mysql_host'     => ( is => 'ro',  default => 'localhost' );
@@ -109,6 +109,17 @@ has 'ftp_releases_dir' => (
     );
 
 sub _build_ftp_releases_dir {
+    my $self = shift;
+    return $self->ftp_root . "/releases";
+}
+
+# The releases/ directory
+has 'ftp_database_tarballs_dir' => (
+    is         => 'ro',
+    lazy_build => 1,
+    );
+
+sub _build_ftp_database_tarballs_dir {
     my $self = shift;
     return $self->ftp_root . "/releases";
 }

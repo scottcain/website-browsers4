@@ -10,6 +10,10 @@ has 'step' => (
     default => 'push support databases to production',
     );
 
+has 'method' => (
+    is       => 'rw',
+    required => 1,
+    );
 
 sub run {
     my $self = shift;
@@ -17,53 +21,78 @@ sub run {
     # get a list of nodes
     my ($nodes) = $self->local_support_database_nodes;
 
-    # $self->package_database();
-
+    if ($self->method eq 'by_package') { $self->package_database(); }
+    
     foreach my $node (@$nodes) {
 	# Three approaches:
 	# 1. Rsync a tgz
-	# $self->rsync_package($node);
-
+	if ($self->method eq 'by_package') { $self->rsync_package($node); }
+	
 	# 2. Keep the whole directory in sync.
 	# (current approach; run as cron)
-	$self->rsync_database_dir($node);
+	# Preferred alternative approach to syncing tarballs.
+	if ($self->method eq 'all_directories') { $self->rsync_database_dir($node); }
 
 	# 3. Rsync a single database directory
-	# $self->rsync_single_release($node);
+	if ($self->method eq 'by_directory') { $self->rsync_single_release($node); }
     }
 }
 
 
 sub package_database {
     my $self        = shift;
-    my $tmp_dir     = $self->tmp_dir;
+
+    my $release     = $self->release;
+    my $destination_dir = join('/',$self->ftp_database_tarballs_dir,$release,'packaged_databases');
+    $self->_make_dir($destination_dir);
+
     my $source_root = $self->support_databases_dir;
     my $release     = $self->release;
-    my $database    = "support_databases.$release";
-    chdir($tmp_dir);
-    if (-e "$database.tgz") { 
+    my $filename    = "support_databases.$release";
+
+    chdir($destination_dir);
+    if (-e "$filename.tgz") { 
 	$self->log->info("support dbs have already been packaged; returning") && return;
     }
 
-    $self->log->debug("creating tgz of support databases for $database");
+    $self->log->info("creating tgz of support databases for $database");
     
     # We change directory to the source root to package wormbase_WSXXX without leading directories.
-    $self->system_call("tar -czf $database.tgz -C $source_root $database",
+    $self->system_call("tar -czf $filename.tgz -C $source_root $release",
 		       'packaging support database dir');
-    $self->log->debug("creating tgz of support databases $database: done");
+    $self->log->info("creating tgz of support databases $filename: done");
     
-    $self->create_md5($tmp_dir,"$database");
+    $self->create_md5($tmp_dir,$filename);
 }
+
 
 sub rsync_package { 
     my $self      = shift;
-    my $release  = $self->release;
-    my $database = "wormbase_$release";
-    my $acedb_package = $self->tmp_dir . "/$database.tgz";
+    my $release   = $self->release;
+    my $source_dir      = join('/',$self->ftp_database_tarballs_dir,$release,'packaged_databases');
+    my $destination_dir = $self->support_databases_dir;
+    my $database        = "support_databases.$release";
 
+    # Rsync it.
+    $self->system_call("rsync --rsh=ssh -Cav $source_dir/$database.tgz $node:$destination_dir",
+		       'rsyncing support databases package');
+
+    # Unpack it.
+    $self->system_call(qq/ssh $node "cd $destination_dir; tar xzf $database.tgz"/,
+		       'unpacking support databases package');
+
+    # Rename it.
+    $self->system_call(qq/ssh $node "cd $destination_dir; mv $database $release"/,
+		       'moving the support databases package');
+    
+    # Remove it.
+    $self->system_call(qq/ssh $node "cd $destination_dir; rm -f $database.tgz"/,
+		       'removing the support databases package');
+
+    
 }
 
-
+# Keep the entire support databases directory in sync.
 sub rsync_database_dir {
     my ($self,$node) = @_;
     my $root = $self->support_databases_dir;
@@ -77,7 +106,7 @@ sub rsync_database_dir {
 
 sub rsync_single_release {
     my ($self,$node) = @_;
-    my $root = $self->acedb_root;
+    my $root = $self->support_databases_dir;
     my $database   = "$root/" . $self->release;
     $self->log->info("rsyncing $database to $node");
 

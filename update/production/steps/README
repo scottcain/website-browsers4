@@ -5,27 +5,44 @@ Placing everything in the admin framework.
 
 Steps.
 
-1. steps/push_acedb.pl  (via cron)
+1. Push Acedb into production (push_acedb.pl)
 
-This can sync via a tarball package, rsync of a single
-acedb database directory, or rsync of all directories.
-W::U::Production::PushAcedb needs to be edited to switch
-between these options.
+Push acedb into production via a tarball, a single 
+unpacked acedb database directory, or all acedb/wormbase*
+directories.
 
-Currently, this script keeps all acedb/wormbase_* directories
-in sync and is run by cron as:
+To run it under cron syncing ALL acedb/wormbase_* directories:
+ ./push_acedb.pl --method all_directories
 
-0 3 12-31 * * /home/tharris/projects/wormbase/website-admin/update/production/steps/push_acedb.pl
+To push out a single release using a tarball:
+ ./push_acedb.pl --method by_package --release WSXXX
+
+To push out a single release by rsyncing the directory:
+ ./push_acedb.pl --method by_directory --release WSXXX
 
 
-2. steps/push_support_databases.pl (via cron).
+2. Push support databases into production (push_support_databases.pl)
 
-As with push_acedb.pl, this can sync via a tarball package, 
-rsync of a single database directory, or rsync of all 
-directories. W::U::Production::PushSupportDatabases needs 
-to be edited to switch between these options. 
+Push support databases into production via a tarball, a single
+database directory, or all current support database
+directories.
 
-Currently, this script keeps all support/WS* directories
-in sync and is run by cron as:
+To run it under cron keeping ALL database/WS* directories in sync:
+ ./push_support_databases.pl --method all_directories
 
-0 3 12-31 * * /home/tharris/projects/wormbase/website-admin/update/production/steps/push_support_databases.pl
+To push out a single release using a tarball:
+ ./push_support_databases.pl --method by_package --release WSXXX
+
+To push out a single release by rsyncing the directory:
+ ./push_support_databases.pl --method by_directory --release WSXXX
+
+3. Push mysql databases into production (push_mysql_databases.pl)
+
+Push mysql databases into production via a tarball or by syncing
+individual unpacked database directories.
+
+To push out a single release using a tarball:
+ ./push_mysql_databases.pl --method by_package --release WSXXX
+
+To push out a single release by rsyncing individual databases:
+ ./push_mysql_databases.pl --method by_directory --release WSXXX
