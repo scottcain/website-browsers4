@@ -16,17 +16,28 @@ unless ($method) {
 Usage: $0 --method [by_package|all_directories|by_directory] [--release]
 
 To sync the full support database directory:
- ./push_acedb.pl --method all_directories
+ ./push_support_databases.pl --method all_directories
 
 To push out a single release using a tarball:
- ./push_acedb.pl --method by_package --release WSXXX
+ ./push_support_databases.pl --method by_package --release WSXXX
 
 To push out a single release by rsyncing the directory:
- ./push_acedb.pl --method by_directory --release WSXXX
+ ./push_support_databases.pl --method by_directory --release WSXXX
 
 END
 ;
 }
+
+
+if (($method eq 'by_package' || $method eq 'by_directory') && !$release) {
+    die <<END; 
+Usage: $0 --method by_package|by_directory --release
+
+You *must* supply a WSRelease if pushing out support databases via tarball or as a single directory.
+END
+;
+}
+
 
 
 my $agent;

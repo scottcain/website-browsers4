@@ -1,7 +1,9 @@
-Staging a new release.
+Staging a new release; testing 2011.06.03 with WS226
 
 See complete documentation on the WormBase wiki.
 
 1. Mirror a new release from Sanger.
 
-  bin/mirror_new_release.sh
+  bin/mirror_new_release.sh  // The next newest version will be discovered automatically.
+
+
