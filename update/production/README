@@ -42,11 +42,11 @@ Staging -> Production, 05/2011
   Push mysql databases into production via a tarball or by syncing
   individual unpacked database directories.
 
+  Preferred: push out a single release by rsyncing individual databases:
+     ./push_mysql_databases.pl --method by_directory --release WSXXX
+
   To push out a single release using a tarball:
      ./push_mysql_databases.pl --method by_package --release WSXXX
-
-  To push out a single release by rsyncing individual databases:
-     ./push_mysql_databases.pl --method by_directory --release WSXXX
 
 
 4. Check out software, reconcile conflicts

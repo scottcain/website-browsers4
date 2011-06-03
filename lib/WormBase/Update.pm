@@ -141,23 +141,24 @@ has 'log_dir' => (
     default => '/usr/local/wormbase/logs/staging',
     );
 
-has 'precompile_datadir' => (
-	is => 'ro',
-	default => '/usr/local/wormbase/tmp_staging',
-)
+
+# defaul step
+has 'step' => (
+    is => 'ro',
+    default => 'generic step',
+    );
 
 ####################
 #
 # Helper scripts
 #
 ####################
-
 has 'create_blastdb_script' => ( 
     is => 'ro',     
     default => sub {
 	my $self = shift;
 	my $bin = $self->bin_path;
-	my $script = "$bin/../helpers/create_blast_db.sh"
+	my $script = "$bin/../helpers/create_blast_db.sh";
     });
 
 
@@ -172,18 +173,18 @@ has 'web_user' => (
 
 
 sub execute {
-  my $self = shift;
-  my $start = [gettimeofday]; # starting time
-
-  $self->log->warn('BEGIN : ' . $self->step);
-  # Subclasses should implement the run() method.
-  $self->run();
-
-  my $end = [gettimeofday];
-  my $interval = tv_interval($start,$end);
-  my $time = $self->sec2human($interval);
-
-  $self->log->warn('END : ' . $self->step . "; in $time");
+    my $self = shift;
+    my $start = [gettimeofday]; # starting time
+    
+    $self->log->warn('BEGIN : ' . $self->step);
+    # Subclasses should implement the run() method.
+    $self->run();
+    
+    my $end = [gettimeofday];
+    my $interval = tv_interval($start,$end);
+    my $time = $self->sec2human($interval);
+    
+    $self->log->warn('END : ' . $self->step . "; in $time");
 }
 
 
@@ -273,27 +274,28 @@ sub unpack_archived_sequence {
 
 
 
+# TH: 2011.06.04: Now provided as part of the build.
 # Dump out C. elegans ESTs suitable for BLAST searching
 # and for loading into GFF DB.
 # Should be a role, but this is expedient for now.
 sub dump_elegans_ests {
     my $self = shift;
-    $self->log->info("  begin: dumping ESTs for C. elegans");
+    my $release    = $self->release;
+    $self->log->info("  begin: dumping ESTs for C. elegans $release");
 
     use Ace;
     $|++;
     
-    my $release    = $self->release;
     my $acedb_root = $self->acedb_root;
 
     # connect to database
-#    my $db = Ace->connect(-host=>'localhost',-port=>2005) || die "Couldn't open database";
-    my $db = Ace->connect(-path => "$acedb_root/wormbase_$release") || $self->log->logdie("dumping ESTs failed: couldn't open database");
-    
+    my $db = Ace->connect(-host=>'localhost',-port=>2005) || die "Couldn't open database";
+#    my $db = Ace->connect(-path => "$acedb_root/wormbase_$release") || $self->log->logdie("dumping ESTs failed: couldn't open database");
     my $debug_counter;
-    
+
+
     my $query = <<END;
-find cDNA_Sequence ; >DNA
+find cDNA_Sequence ; >DNA    
 END
 ;
     
@@ -310,8 +312,7 @@ END
     while (my $obj = $i->next) {
 	$debug_counter++;
 	if ($debug_counter % 10000 == 0) {
-	    print STDERR "$debug_counter - [$_] ...";
-	    print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
+	    $self->log->info("$debug_counter - [$obj] ...");
 	}
     	
 	$obj =~ s/\0+\Z//; # get rid of nulls in data stream!

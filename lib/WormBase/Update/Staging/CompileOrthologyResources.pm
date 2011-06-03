@@ -171,7 +171,7 @@ sub get_precompile_data {
 	my ($self) = shift;
 	my $datadir = $self->datadir;
 	my $ontology_datadir = $self->ontology_datadir;
-	my $pc_datadir = $self->precompile_datadir;
+	my $pc_datadir = $self->tmp_dir;
 	my $precompile_datadir = "$pc_datadir/orthology_staging";
 	
 	## get external, and data from last release	

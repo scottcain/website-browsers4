@@ -41,12 +41,17 @@ sub load_gffdb {
     
     if ($species =~ /elegans/) {
 	
+
 	# Create the ESTs file
-	$self->dump_elegans_ests;
+	# Now created by hinxton.
+	# $self->dump_elegans_ests;
 	
 	# Need to do some small processing for some species.
 	$self->log->debug("processing $species GFF files");
 	
+	# WS226: Hinxton supplies us GBrowse GFF named g_species.release.GBrowse.gff2.gz
+	# We just need to drop the introns and assembly tag.
+	my $output = $species->release_dir . "/$name.$release.GBrowse-processed.gff2gz";
 	# process the GFF files	
 	# THIS STEP CAN BE SIMPLIFIED.
 	# It should only be necessary to:
@@ -54,8 +59,7 @@ sub load_gffdb {
 	#     drop introns
 	#     drop assembly_tag
 
-	my $output = $species->release_dir . "/$name.$release.gff2.GBrowse.gz";
-	my $cmd = $self->bin_path . "/helpers/process_celegans_gff.pl $release $gff | gzip -cf > $output";
+	my $cmd = $self->bin_path . "/helpers/process_gff.pl $release $gff | gzip -cf > $output";
 	$self->gff_file("$output"); # Swap out the GFF files to load.
 	$gff = $self->gff_file;
 	$self->system_call($cmd,'processing C. elegans GFF');
@@ -63,7 +67,7 @@ sub load_gffdb {
 
 	# This really only needs to change =~ s/CHROMOSOME_// 
 	my $output = $species->release_path . "/$species.$release.gff2.GBrowse.gz";
-	my $cmd = $self->bin_path . "/helpers/process_cbriggsae_gff.pl $version $gff | gzip -cf > $output";
+	my $cmd = $self->bin_path . "/helpers/process_gff.pl $version $gff | gzip -cf > $output";
 	$self->gff_file("$output"); # Swap out the GFF files to load.
 	$gff = $self->gff_file;
 	$self->system_call($cmd,'processing C. briggsae GFF');
@@ -94,14 +98,10 @@ sub load_gffdb {
     
     if ($species =~ /elegans/) {
 	my $est = join("/",$species->release_dir,$species->ests_file);
-	$self->system_call("gunzip $est.gz",
-			   'unzipping fasta sequence');
 	my $pass = $self->mysql_pass;
 	
 	$self->system_call("bp_load_gff.pl -d $db --user root -password $pass --fasta $est </dev/null",
 			   'loading EST fasta sequence');
-	$self->system_call("gzip $est",
-			   'gzipping EST fasta');    
     }
 }
 

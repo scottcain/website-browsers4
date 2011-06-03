@@ -74,11 +74,12 @@ END
 	
 	# Via Net::FTP
 	my $ftp = $self->connect_to_ftp;
-	chdir $local_releases_path       or $self->log->logdie("cannot chdir to local mirror directory: $local_releases_path");
-	$ftp->cwd($remote_releases_path) or $self->log->logdie("cannot chdir to remote dir ($remote_releases_path)") && return;
+	$self->_make_dir("$local_releases_path/$release");
+	chdir "$local_releases_path/$release"       or $self->log->logdie("cannot chdir to local mirror directory: $local_releases_path/$release");
+	$ftp->cwd("$remote_releases_path/$release") or $self->log->logdie("cannot chdir to remote dir ($remote_releases_path/$release)") && return;
 	
 	# Recursively download the NEXT release.  This saves having to check all the others.
-	my $r = $ftp->rget(MatchDirs => $release); 
+	my $r = $ftp->rget();  # MatchDirs => $release); 
 	$ftp->quit;
     }
     

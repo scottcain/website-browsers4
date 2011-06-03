@@ -54,6 +54,7 @@ sub run {
     $self->gene_rnai_pheno_data_compile("$datadir/$gene_rnai_pheno_file");
     $self->log->debug("gene_rnai_pheno_data_compile done");
 
+
     $self->log->info("creating gene_rnai_pheno-not.txt");	
     $self->gene_rnai_pheno_not_data_compile("$datadir/$gene_rnai_pheno_file");
     $self->log->debug("gene_rnai_pheno_not_data_compile done");

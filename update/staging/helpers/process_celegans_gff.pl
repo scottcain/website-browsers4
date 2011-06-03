@@ -44,8 +44,8 @@ while (<>) {
   $group  =~ s/CHROMOSOME_//;
 
   $source ='' if $source eq '*UNKNOWN*';
-
-
+  print join("\n",$ref,$source,$method,$start,$stop,$score,$strand,$phase,$group);
+  next;
 
   # Process top-level CDS and Transcript entries
   if ($method     =~ /Transcript|CDS|.*primary_transcript/

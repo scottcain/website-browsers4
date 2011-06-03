@@ -3,6 +3,7 @@
 # TODO: 
 # Update mysql db symlinks on go live
 # Update acedb symlink on go live
+# move this into a module
 
 use strict;
 

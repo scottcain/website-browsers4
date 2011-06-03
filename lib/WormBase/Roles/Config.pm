@@ -27,8 +27,21 @@ has 'support_databases_dir' => (
 
 sub _build_support_databases_dir {
     my $self = shift;
-    return $self->wormbase_root . "/databases";
+    my $dir  = $self->wormbase_root . "/databases";
+    $self->_make_dir($dir);
+
+    # Create support db dirs, too.
+    my @directories = qw/blast blat epcr ontology tiling_array interaction orthology position_matrix gene/;
+    my $release        = $self->release;    
+    $self->_make_dir("$dir/$release");
+    
+    foreach (@directories) {
+	$self->_make_dir("$dir/$release/$_");
+    }
+    
+    return $dir;
 }
+
 
 
 has 'release' => (
@@ -165,7 +178,7 @@ has 'remote_ftp_releases_dir' => (
 sub _build_remote_ftp_releases_dir {
     my $self = shift;
 #    return $self->remote_ftp_root . "/releases.test";
-    return $self->remote_ftp_root;
+    return $self->remote_ftp_root . '/releases';
 }
 
 ####################################
