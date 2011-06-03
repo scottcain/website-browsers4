@@ -17,7 +17,7 @@ my %ontology2name = (go => 'gene',
 
 # Filenames used by this module. Eeeks.
 # All will be found in databases/WSXXX/ontology.
-has 'search_data_preprocessed_file' => ( is => 'ro' , default => 'search_data_preprocessed.txt'    );
+has 'search_data_preprocessed_file' => ( is => 'ro' , default => 'search_data_preprocessed.txt');
 has 'go_obo_file'                   => ( is => 'ro' , default => 'gene_ontology.%s.obo'       );
 has 'go_assoc_file'                 => ( is => 'ro' , default => 'gene_association.%s.wb.ce'  );
 has 'ao_obo_file'                   => ( is => 'ro' , default => 'anatomy_ontology.%s.obo'    );
@@ -29,6 +29,8 @@ has 'parent2ids_file'               => ( is => 'ro' , default => 'parent2ids.txt
 has 'id2name_file'                  => ( is => 'ro' , default => 'id2name.txt'                );
 has 'name2id_file'                  => ( is => 'ro' , default => 'name2id.txt'                );
 has 'id2association_counts_file'    => ( is => 'ro' , default => 'id2association_counts.txt'  ); 
+has 'id2total_association_file'    => ( is => 'ro' , default => 'id2total_associations.txt'  ); 
+
 
 has 'datadir' => (
     is => 'ro',
@@ -42,14 +44,20 @@ sub _build_datadir {
     return $datadir;
 }
 
+has 'gene_datadir' => (
+    is => 'ro',
+    lazy_build => 1);
 
-
+sub _build_gene_datadir {
+    my $self = shift;
+    my $release = $self->release;
+    my $gene_datadir   = join("/",$self->support_databases_dir,$release,'gene');
+    return $gene_datadir;
+}
 
 sub run {
     my $self = shift;
-    
     my $release = $self->release;
-
     $self->copy_ontology();
     
     # The ontology directory should already exist. Let's make certain.    
@@ -74,6 +82,9 @@ sub run {
     $self->parse_search_data(1,0,$self->name2id_file);
     $self->parse_search_data(0,5,$self->id2association_counts_file);
     
+    $self->get_cummulative_association_counts($self->id2total_association_file);
+    
+    
     ## further compiles. These used to be separate scripts.
     # They can be found at helpers/gene_summary.
 
@@ -84,7 +95,6 @@ sub run {
 #    my $check_file = "$util_dir/ontology_check_file.txt";
     my $util_dir = "util";    
     my @cmds = (
-	"get_cummulative_association_counts.pl $release",
 	"get_geneid2go_ids.pl $release",
 	"get_pheno_gene_data_not.pl $release",
 	"get_pheno_gene_data.pl $release",
@@ -95,6 +105,7 @@ sub run {
 	"get_pheno_xgene_data.pl"
 	);
     
+    # "get_cummulative_association_counts.pl $release",
     
     foreach my $cmd (@cmds) {	
 	$self->system_call("$bin_path/$cmd",
@@ -348,6 +359,357 @@ sub clean_up_search_data {
     close OUT;
 }
 
+sub get_cummulative_association_counts{
+
+	my $self = shift;
+	my $outfile = shift;
+	my @ids = keys %id2name;
+	
+	open OUT, ">$outfile" or die "Cannot open output file\n";
+	foreach my $term_id (@ids) {
+	
+		my @path_array = ($term_id); ## 
+		my @paths = &call_list_paths(\@path_array,\%id2parents,\%id2name);
+		my %descendants; 
+	
+		foreach my $path (@paths) {
+			my @descendants = split '%', $path;
+			foreach my $descendant (@descendants) {
+				$descendants{$descendant} = 1;	
+			}
+		}
+		
+		my $total_count = 0;
+		my @descendants = keys %descendants;
+		shift  @descendants;
+		foreach my $descendant (@descendants) {
+			# print "DESC\:$descendant\:$id2association_counts{$descendant}\:$total_count\n";	
+			$total_count = $total_count + $id2association_counts{$descendant};	
+		}
+	
+		print OUT "$term_id\=\>$total_count\n";
+	
+	}
+}
+
+sub get_geneid2go_ids {  
+
+	my $self = shift;
+	my $DB = $self->dbh;
+	my @genes = $DB->fetch(-class =>'Gene'); ## ,-count=>10,-offset =>500
+	my $datadir = $self->datadir;
+	my %go_id2gene_id;
+	my %go_id2type;
+	my %gene_id2name;
+	
+	open BP, ">$datadir/go_bp_id2gene_id.txt" or die "Can't open bp";
+	open MF, ">$datadir/go_mf_id2gene_id.txt" or die "Can't open bp";
+	open CC, ">$datadir/go_cc_id2gene_id.txt" or die "Can't open bp";
+	
+	foreach my $gene (@genes) {
+		my $gene_name = public_name($gene);
+		$gene_id2name{$gene} = $gene_name; 
+		my @go_terms = $gene->GO_Term;
+		
+		foreach my $go_term (@go_terms) {	
+			if (!($go_id2type{$go_term})) {
+				$go_id2type{$go_term} = $go_term->Type;
+			}
+			$go_id2gene_id{$go_term}{$gene} = 1;	
+		}	
+	}
+
+	foreach my $go_term (keys %go_id2gene_id) {
+		my $gene_ids = $go_id2gene_id{$go_term};
+		my @gene_names = map {$_ = $gene_id2name{$_}} (keys %$gene_ids);
+		
+		if($go_id2type{$go_term}=~ m/biological/i) {		
+			print BP "$go_term\=\>@gene_names\n"; ##$gene_id2name{$gene_id}
+		}
+		
+		elsif ($go_id2type{$go_term}=~ m/function/i) {
+			print MF "$go_term\=\>@gene_names\n";	##$gene_id2name{$gene_id}
+		}
+		else {
+			print CC "$go_term\=\>@gene_names\n";	##$gene_id2name{$gene_id}
+		}
+	}
+}
 
 
+sub get_pheno_gene_data_not{ 
+
+	my $self = shift;
+	my %pheno_gene;
+	my %genes;
+	my %gene_id2name;
+	my $DB = $self->dbh;
+	my $indir = $self->gene_dir;
+	my $outdir = $self->datadir;
+	
+	open IN_XGENE, "<$indir/gene_xgene_pheno.txt" or die "Can't open in file $indir/gene_xgene_pheno.txt\n";
+	open IN_VAR,"<$indir/variation_data.txt" or die "Can't open in file $indir/variation_data.txt\n";
+	open IN_RNAi, "<$indir/gene_rnai_pheno.txt" or die "Can't open in file $indir/gene_rnai_pheno.txt\n";
+	open OUT, ">$outdir/pheno2gene_names_not.txt" or die "Can't open out file $outdir/pheno2gene_names_not.txt\n";
+	
+	system ("echo 'fetching xgene related data'");
+	
+	while (<IN_XGENE>) {
+		my ($gene,$xgene,$pheno,$not) = split /\|/,$_;
+		if(!($not)) {
+			next;
+		}
+		else {
+			$pheno_gene{$pheno}{$gene} = 1;
+			$genes{$gene} = 1;
+		}
+	}
+	
+	system ("echo 'fetching variation related data'");
+	
+	while (<IN_VAR>) {
+		my ($gene,$var,$pheno,$not,$seqd) = split /\|/,$_;
+		if(!($not)) {			
+			next;
+		}
+		else {
+			$pheno_gene{$pheno}{$gene} = 1;
+			$genes{$gene} = 1;
+		}
+	}
+	
+	system ("echo 'fetching RNAi related data'");
+	
+	while (<IN_RNAi>) {
+		my ($gene,$rnai,$pheno,$not) = split /\|/,$_;
+		if(!($not)) {
+			next;
+		}
+		else {
+			$pheno_gene{$pheno}{$gene} = 1;
+			$genes{$gene} = 1;
+		}
+	}
+
+	system ("echo 'getting gene names'");
+	
+	foreach my $gene_id (keys %genes) {
+		my $gene_obj = $DB->fetch(-class=>'Gene',-name=>$gene_id);
+		my $gene_cgc = $gene_obj->CGC_name;
+		my $gene_seq = $gene_obj->Sequence_name;
+		$gene_id2name{$gene_id} = $gene_seq;
+		$gene_id2name{$gene_id} = $gene_cgc;
+	}
+	
+	system ("echo 'printing data'");
+	
+	foreach my $phenotype (keys %pheno_gene) {
+	
+		my $genes_ar = $pheno_gene{$phenotype};
+		my @genes = keys %$genes_ar;
+		my @gene_names = map {$_ = $gene_id2name{$_}} @genes;
+		
+		print OUT "$phenotype\=\>@gene_names\n";
+	}
+	system ("echo 'OK'");
+	
+}
+
+sub get_pheno_gene_data{
+	my $self = shift;
+	my %pheno_gene;
+	my %genes;
+	my %gene_id2name;
+	my $indir = $self->gene_dir;
+	my $outdir = $self->datadir;
+	
+	open IN_XGENE, "<$indir/gene_xgene_pheno.txt" or die "Can't open xgene in file\n";
+	open IN_VAR,"<$indir/variation_data.txt" or die "Can't open variation in file\n";
+	open IN_RNAi, "<$indir/gene_rnai_pheno.txt" or die "Can't open rnai in file\n";
+	open OUT, ">$outdir/pheno2gene_names.txt" or die "Can't open out file\n";
+	
+	system ("echo 'fetching xgene related data'");
+	
+	while (<IN_XGENE>) {
+		my ($gene,$xgene,$pheno,$not) = split /\|/,$_;
+		if($not) {
+			next;
+		}
+		else {
+			$pheno_gene{$pheno}{$gene} = 1;
+			$genes{$gene} = 1;	
+		}
+	}
+	system ("echo 'fetching variation related data'");
+	
+	while (<IN_VAR>) {
+		my ($gene,$var,$pheno,$not,$seqd) = split /\|/,$_
+		if($not) {
+			next;
+		}
+		else {
+			$pheno_gene{$pheno}{$gene} = 1;
+			$genes{$gene} = 1;
+		}
+	}
+	system ("echo 'fetching RNAi related data'");
+	
+	while (<IN_RNAi>) {
+		my ($gene,$rnai,$pheno,$not) = split /\|/,$_;
+		if($not) {	
+			next;
+		}
+		else {
+			$pheno_gene{$pheno}{$gene} = 1;
+			$genes{$gene} = 1;
+		}
+	}
+	system ("echo 'getting gene names'");
+	
+	foreach my $gene_id (keys %genes) {
+			my $gene_obj = $DB->fetch(-class=>'Gene',-name=>$gene_id);
+			my $gene_cgc = $gene_obj->CGC_name;
+			my $gene_seq = $gene_obj->Sequence_name;
+			$gene_id2name{$gene_id} = $gene_seq;
+			$gene_id2name{$gene_id} = $gene_cgc;
+	}
+	system ("echo 'printing data'");
+	
+	foreach my $phenotype (keys %pheno_gene) {
+		my $genes_ar = $pheno_gene{$phenotype};
+		my @genes = keys %$genes_ar;
+		my @gene_names = map {$_ = $gene_id2name{$_}} @genes;
+		
+		print OUT "$phenotype\=\>@gene_names\n";
+	}
+	system ("echo 'OK'");
+}
+
+sub get_pheno_rnai_data{ ## NEEDS UPDATE
+
+	my $self = shift;
+	my $nay = shift;
+	my 	%pheno_rnai;
+	my $indir = $self->gene_dir;
+	my $outdir = $self->datadir;
+
+	my $outfile = "pheno2rnais.txt";
+	
+	if ($nay) {
+		$outfile = "pheno2rnais_not.txt";
+	}
+	
+	open IN, "<$indir/gene_rnai_pheno.txt" or die "Can't open infile\n";
+	open OUT, ">$outdir/$outfile" or die "Can't open outfile\n"; 
+
+	while (<IN>) {	
+		my ($gene,$rnai,$pheno,$not) = split /\|/,$_;
+		if ($nay) {
+			if($not =~ m/not/i) {
+				$pheno_rnai{$pheno}{$rnai} = 1;
+			}
+			else {
+				next;
+			}
+		}
+		else {
+			if ($not =~ m/not/i) {
+				next;
+			}
+			else {
+				$pheno_rnai{$pheno}{$rnai} = 1;
+			}
+		}
+	}
+	
+	foreach my $phenotype (keys %pheno_rnai) {
+		my $rnais_ar = $pheno_rnai{$phenotype};
+		my @rnais = keys %$rnais_ar;
+		print OUT "$phenotype\=\>@rnais\n";
+	}
+	print "OK\n";
+}
+
+
+sub get_pheno_variation_data { 
+	
+	my $self = shift;
+	my $indir = $self->gene_dir;
+	my $outdir = $self->datadir;
+	my $outfile = "pheno2vars.txt";
+	
+	if ($nay) {
+		$outfile = "pheno2vars_not.txt";
+	}
+	
+	open IN, "<$indir/variation_data.txt" or die "Can't open infile\n";
+	open OUT, ">$outdir/$outfile" or die "Can't open outfile\n"; 
+
+	while (<IN>) {	
+		my ($gene,$var,$pheno,$not,$seqd) = split /\|/,$_;
+		if ($nay) {
+			if($not =~ m/not/i) {
+				$pheno_var{$pheno}{$var} = 1;	
+			}
+			else {
+				next;
+			}
+		}
+		else {
+			if ($not =~ m/not/i) {
+				next;
+			}
+			else {
+			$pheno_var{$pheno}{$var} = 1;
+			}
+		}
+	}
+	
+	foreach my $phenotype (keys %pheno_var) {
+		my $vars_ar = $pheno_var{$phenotype};
+		my @vars = keys %$vars_ar;
+		#my $rnais = join "|",@rnais;
+		print OUT "$phenotype\=\>@vars\n";
+	
+	}
+	print "OK\n";
+}
+
+sub get_pheno_xgene_data{
+
+	my $self = shift;
+	my 	%pheno_xgene;
+	my $indir = $self->gene_dir;
+	my $outdir = $self->datadir;
+	my $outfile = "pheno2xgenes.txt";
+	
+	open IN, "<$indir/gene_xgene_pheno.txt" or die "Can't open in file\n";
+	open OUT, ">$outdir/$outfile" or die "Can't open outfile\n"; 
+	
+	while (<IN>) {
+		my ($gene,$xgene,$pheno,$not) = split /\|/,$_;	
+		$pheno_xgene{$pheno}{$xgene} = 1;
+	}
+
+	foreach my $phenotype (keys %pheno_xgene) {	
+		my $xgenes_ar = $pheno_xgene{$phenotype};
+		my @xgenes = keys %$xgenes_ar;
+		print OUT "$phenotype\=\>@xgenes\n";
+	}
+	
+	print "OK\n";
+}
+
+sub public_name { ## NEEDS UPDATE
+
+	my $object = shift @_;
+	my $common_name = 
+		$object->Public_name
+		|| $object->CGC_name
+		|| $object->Molecular_name
+		|| eval { $object->Corresponding_CDS->Corresponding_protein }
+		|| $object;
+	
+	return $common_name;
+}
 1;
