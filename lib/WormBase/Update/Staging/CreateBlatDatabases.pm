@@ -3,6 +3,7 @@ package WormBase::Update::Staging::CreateBlatDatabases;
 use lib "/usr/local/wormbase/website/tharris/extlib";
 use Moose;
 use Bio::SeqIO;
+use WormBase::Species;
 extends qw/WormBase::Update/;
 
 
@@ -29,7 +30,7 @@ sub run {
     foreach my $name (@$species) {
 	$self->log->info(uc($name). ': start');
 
-	my $species = WormBase::Factory->create('Species',{ symbolic_name => $name, release => $self->release });
+	my $species = WormBase::Species->new({ symbolic_name => $name, release => $self->release });
 	$self->prepare_dna($species);
 	$self->make_blatdb($species);
 	$self->log->info(uc($name). ': done');
@@ -42,18 +43,20 @@ sub prepare_dna {
     $self->log->debug("unpacking dna for blat databases");
     
     my $path        = $species->release_dir;      # species home
-    my $fasta_file  = $species->fasta_file;       # Just the filename
-
+    my $fasta_file  = $species->genomic_fasta;    # Just the filename
+    my $name        = $species->symbolic_name;
     unless (-e "$path/$fasta_file") {
 	$self->log->error(uc($name) . ': no fasta file found');
 	return;
     }
 
-    my $target_file = join("/",$self->blat_dir,$fasta_file);
+    my $target_file = join("/",$species->blat_dir,$fasta_file);
     $target_file    =~ s/\.gz//; # Strip off the trailing .gz
  
+
+    
     # Unpack mirrored fasta
-    system("gunzip -c $path/fasta_file > $target_file") or $self->log->logdie("Couldn't unpack the fasta file to the blast staging directory");
+    system("gunzip -c $path/$fasta_file > $target_file") && $self->log->logdie("Couldn't unpack the fasta file to the blat staging directory");
     
     $self->log->debug("unpacking dna for blat databases: complete");    
     $self->log->debug("splitting $target_file into multiple fasta files");  
