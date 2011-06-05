@@ -14,7 +14,7 @@ with 'WormBase::Roles::Config';
    
 has 'blastdb_format_script' => (
     is => 'ro',
-    default => '/usr/local/blast/bin/formatdb',
+    default => '/usr/local/wormbase/services/blast/bin/formatdb',
     );
 
 has 'bin_path' => (
