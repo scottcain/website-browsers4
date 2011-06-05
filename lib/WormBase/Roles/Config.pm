@@ -31,7 +31,7 @@ sub _build_support_databases_dir {
     $self->_make_dir($dir);
 
     # Create support db dirs, too.
-    my @directories = qw/blast blat epcr ontology tiling_array interaction orthology position_matrix gene/;
+    my @directories = qw/blast blat ontology tiling_array interaction orthology position_matrix gene/;
     my $release        = $self->release;    
     $self->_make_dir("$dir/$release");
     
