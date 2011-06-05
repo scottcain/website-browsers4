@@ -235,44 +235,73 @@ before 'execute' => sub {
 
 
 
-#CRUFT
 
 sub update_symlink {
-    my ($self,$params) = @_;
+    my ($self,$target,$symlink,$release) = @_;       
     my $target  = $params->{target};
-    my $path    = $params->{path};
+    my $release = $params->{release};
     my $symlink = $params->{symlink};
+    $self->log->debug("updating $symlink -> $target");
     
-    $self->log->debug("updating symlink $path: $symlink -> $target");
-    
-    chdir($path);
     unlink($symlink)          or $self->log->warn("couldn't unlink $symlink; perhaps it didn't exist to begin with");
-    symlink($target,$symlink) or $self->log->warn("creating symlink $symlink -> $target FAILED");
-    $self->log->debug("updating symlink $path: $symlink -> $target: complete");
+    symlink($target,$symlink) or $self->log->warn("couldn't create the $symlink");
+
+    if ($current_release) {
+	$symlink =~ s/$release/current/;
+	unlink($symlink)           or $self->log->warn("couldn't unlink $symlink; perhaps it didn't exist to begin with");
+	symlink($target,$symlink)  or $self->log->warn("couldn't create the current symlink");
+    }
 }
 
-sub unpack_archived_sequence {
-  my ($self,$params) = @_;
-  my $species = $params->{species};
-  my $type    = $params->{type};
-  $self->log->debug("unpacking archived sequence for $species");
 
-  # Other species besides elegans, briggsae, remanei
-  # Fetch the most current archived DNA
-  # Concatenate it to the blast directory.
-  my $archived_dna = $self->config->{species_info}->{$species}->{"local_$type " . "_filename"};
-  my $src = join("/",$self->ftp_root,$self->local_ftp_path,"genomes/$species/$archived_dna");
+
+
+sub system_call {
+    my ($self,$cmd,$msg) = @_;
+    my $result = system($cmd);
+    if ($result == 0) {
+	$self->log->debug("$msg: $cmd succeeded");
+    } else {
+	$self->log->logdie("$msg: $cmd failed");
+    }
+}
+
+# CHeck for the presence of the output file
+# to avoid lengthy recomputes.
+# Kludgy but mostly right.
+sub check_output_file {
+    my ($self,$file) = @_;
+    if (-e $file && -s $file > 1000000) {
+	$self->log->debug("output file already exists; skipping recompilation");
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
+
+
+sub create_md5 {
+  my ($self,$base,$file) = @_;
+
+  $self->log->debug("creating md5 sum of $file");
   
+  open(FILE, "$base/$file.tgz") or die "Can't open '$base/$file.tgz': $!";
+  binmode(FILE);
   
-  chdir($self->species_root) or $self->log->logdie("couldn't chdir to $self->species_root");
-  system("gunzip $params->{target_file}.gz");
+  open OUT,">$base/$file.md5";
+  print OUT Digest::MD5->new->addfile(*FILE)->hexdigest, "  $file.tgz\n";
   
-  $self->log->debug("unpacking archived sequence for $species: complete");
-}    
+  # Verify the checksum...
+  chdir($base);
+  my $result = `md5sum -c $file.md5`;
+  die "Checksums do not match: packaging $file.tgz failed\n" if ($result =~ /failed/);
+}
 
 
 
 
+# CRUFT
 
 # TH: 2011.06.04: Now provided as part of the build.
 # Dump out C. elegans ESTs suitable for BLAST searching
@@ -324,49 +353,6 @@ END
     $self->log->info("  end: dumping ESTs for C. elegans");
 }
 
-
-
-sub system_call {
-    my ($self,$cmd,$msg) = @_;
-    my $result = system($cmd);
-    if ($result == 0) {
-	$self->log->debug("$msg: $cmd succeeded");
-    } else {
-	$self->log->logdie("$msg: $cmd failed");
-    }
-}
-
-# CHeck for the presence of the output file
-# to avoid lengthy recomputes.
-# Kludgy but mostly right.
-sub check_output_file {
-    my ($self,$file) = @_;
-    if (-e $file && -s $file > 1000000) {
-	$self->log->debug("output file already exists; skipping recompilation");
-	return 1;
-    } else {
-	return 0;
-    }
-}
-
-
-
-sub create_md5 {
-  my ($self,$base,$file) = @_;
-
-  $self->log->debug("creating md5 sum of $file");
-  
-  open(FILE, "$base/$file.tgz") or die "Can't open '$base/$file.tgz': $!";
-  binmode(FILE);
-  
-  open OUT,">$base/$file.md5";
-  print OUT Digest::MD5->new->addfile(*FILE)->hexdigest, "  $file.tgz\n";
-  
-  # Verify the checksum...
-  chdir($base);
-  my $result = `md5sum -c $file.md5`;
-  die "Checksums do not match: packaging $file.tgz failed\n" if ($result =~ /failed/);
-}
 
 
 

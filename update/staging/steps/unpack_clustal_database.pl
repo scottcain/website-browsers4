@@ -7,6 +7,5 @@ use WormBase::Update::Staging::UnpackClustalWDatabase;
 
 my $release = shift or die "Usage: $0 [WSVersion]";
 
-# Unpack a freshly mirrored version of acedb.
 my $agent = WormBase::Update::Staging::UnpackClustalWDatabase->new({ release => $release });
 $agent->execute();
