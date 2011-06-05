@@ -16,7 +16,11 @@ See complete documentation on the WormBase wiki.
    ./steps/unpack_acedb WSXXX
 
 
-3. Create BLAST databases
-
+3. Create BLAST databases (requires ~ 2 hours for 16 species)
    ./steps/create_blast_databases.pl WSXXX
 
+4. Create BLAT databases
+   ./steps/create_blat_databases.pl WSXXX (requires ~ 5 hours for 16 species)
+
+5. Load Genomic GFF databases
+   ./steps/load_genomic_gff_databases.pl WSXXX

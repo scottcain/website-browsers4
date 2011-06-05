@@ -21,5 +21,5 @@ while (<>) {
   $ref    =~ s/^CHROMOSOME_//;
   $group  =~ s/CHROMOSOME_//;
 
-  print join("\n",$ref,$source,$method,$start,$stop,$score,$strand,$phase,$group);
+  print join("\t",$ref,$source,$method,$start,$stop,$score,$strand,$phase,$group) . "\n";
 }
