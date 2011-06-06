@@ -237,7 +237,7 @@ before 'execute' => sub {
 
 
 sub update_symlink {
-    my ($self,$target,$symlink,$release) = @_;       
+    my ($self,$params) = @_;
     my $target  = $params->{target};
     my $release = $params->{release};
     my $symlink = $params->{symlink};
@@ -245,7 +245,7 @@ sub update_symlink {
     
     unlink($symlink)          or $self->log->warn("couldn't unlink $symlink; perhaps it didn't exist to begin with");
     symlink($target,$symlink) or $self->log->warn("couldn't create the $symlink");
-
+    
     if ($current_release) {
 	$symlink =~ s/$release/current/;
 	unlink($symlink)           or $self->log->warn("couldn't unlink $symlink; perhaps it didn't exist to begin with");
