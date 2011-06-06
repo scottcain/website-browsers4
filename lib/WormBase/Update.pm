@@ -235,7 +235,9 @@ before 'execute' => sub {
 
 
 
-
+# Update a symlink to a file. If "release" is provided,
+# assume that we also want to flag that file as the
+# "current" version.
 sub update_symlink {
     my ($self,$params) = @_;
     my $target  = $params->{target};
@@ -246,7 +248,7 @@ sub update_symlink {
     unlink($symlink)          or $self->log->warn("couldn't unlink $symlink; perhaps it didn't exist to begin with");
     symlink($target,$symlink) or $self->log->warn("couldn't create the $symlink");
     
-    if ($current_release) {
+    if ($release) {
 	$symlink =~ s/$release/current/;
 	unlink($symlink)           or $self->log->warn("couldn't unlink $symlink; perhaps it didn't exist to begin with");
 	symlink($target,$symlink)  or $self->log->warn("couldn't create the current symlink");
