@@ -41,38 +41,37 @@ sub run {
 
 sub package_database {
     my $self        = shift;
-
+    
     my $release     = $self->release;
     my $destination_dir = join('/',$self->ftp_database_tarballs_dir,$release,'packaged_databases');
     $self->_make_dir($destination_dir);
-
-    my $source_root = $self->support_databases_dir;
-    my $release     = $self->release;
+    
+    my $source_root = $self->support_databases_dir;    
     my $filename    = "support_databases.$release";
-
+    
     chdir($destination_dir);
     if (-e "$filename.tgz") { 
 	$self->log->info("support dbs have already been packaged; returning") && return;
     }
-
-    $self->log->info("creating tgz of support databases for $database");
+    
+    $self->log->info("creating tgz of support databases $filename");
     
     # We change directory to the source root to package wormbase_WSXXX without leading directories.
     $self->system_call("tar -czf $filename.tgz -C $source_root $release",
 		       'packaging support database dir');
     $self->log->info("creating tgz of support databases $filename: done");
     
-    $self->create_md5($tmp_dir,$filename);
+    $self->create_md5($destination_dir,$filename);
 }
 
 
 sub rsync_package { 
-    my $self      = shift;
+    my ($self,$node) = @_;
     my $release   = $self->release;
     my $source_dir      = join('/',$self->ftp_database_tarballs_dir,$release,'packaged_databases');
     my $destination_dir = $self->support_databases_dir;
     my $database        = "support_databases.$release";
-
+    
     # Rsync it.
     $self->system_call("rsync --rsh=ssh -Cav $source_dir/$database.tgz $node:$destination_dir",
 		       'rsyncing support databases package');

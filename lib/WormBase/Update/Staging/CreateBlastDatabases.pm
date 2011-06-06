@@ -108,15 +108,14 @@ sub create_protein_db {
 
 
 
-# DROP blast against ESTs
-# (OR switch to using file provided by BUILD)
+
 sub create_est_db {
     my ($self,$species) = @_;
     my $name = $species->symbolic_name;
     return unless $name =~ /elegans/;
 
-    # This is DEPRECATED.  Now created as part of the build process.    
-    $self->dump_elegans_ests;
+    # The ESTs file is created by Hinxton
+    # $self->dump_elegans_ests;
     
     my $blast_path = $species->blast_dir;
     my $source_file = join("/",$species->release_dir,$species->ests_file);
@@ -130,7 +129,8 @@ sub create_est_db {
     $self->log->info("$name: successfully built est blast db");
 }
 
-
+# The "Genes" blast database.
+# Currently.
 # TODO: We will drop creation of this (retire dump_nucleotide.pl)
 # REPLACE with concatenation of cds_transcript and ncrna_transcripts.
 # Create a gene database. This isn't really "genes" but genomic clones.

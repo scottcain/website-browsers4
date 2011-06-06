@@ -1,0 +1,9 @@
+#!/bin/bash
+
+RELEASE=$1
+./helpers/map_translated_features_to_genome.pl --filter --host 'localhost' --port 2005 | gzip -cf 1> /usr/local/ftp/pub/wormbase/releases/$RELEASE/species/c_elegans/annotation/c_elegans.$RELEASE.protein_motifs.gff2.gz 2> /dev/null
+
+./helpers/interpolate_gmap2pmap.pl --filter --host 'localhost' --port 2005 | gzip -cf 1> /usr/local/ftp/pub/wormbase/releases/$RELEASE/species/c_elegans/annotation/c_elegans.$RELEASE.genetic_limits.gff2.gz 2> /dev/null
+
+bp_load_gff.pl --dsn c_elegans_$RELEASE --user root --password 3l3g@nz /usr/local/ftp/pub/wormbase/releases/$RELEASE/species/c_elegans/annotation/c_elegans.$RELEASE.protein_motifs.gff2.gz
+bp_load_gff.pl --dsn c_elegans_$RELEASE --user root --password 3l3g@nz /usr/local/ftp/pub/wormbase/releases/$RELEASE/species/c_elegans/annotation/c_elegans.$RELEASE.genetic_limits.gff2.gz

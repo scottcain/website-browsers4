@@ -1,7 +1,26 @@
-Staging a new release.
+Staging a new release; testing 2011.06.03 with WS226
 
 See complete documentation on the WormBase wiki.
 
-1. Mirror a new release from Sanger.
+1. Mirror a new release from Sanger. (run under cron)
 
-  bin/mirror_new_release.sh
+  steps/mirror_new_release.sh  // The next newest version will be discovered automatically.
+
+  OR
+ 
+  steps/mirror_new_release.sh  WSXXX
+
+
+2. Unpack AceDB
+
+   ./steps/unpack_acedb WSXXX
+
+
+3. Create BLAST databases (requires ~ 2 hours for 16 species)
+   ./steps/create_blast_databases.pl WSXXX
+
+4. Create BLAT databases
+   ./steps/create_blat_databases.pl WSXXX (requires ~ 5 hours for 16 species)
+
+5. Load Genomic GFF databases
+   ./steps/load_genomic_gff_databases.pl WSXXX

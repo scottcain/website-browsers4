@@ -28,6 +28,16 @@ END
 ;
 }
 
+if (($method eq 'by_package' || $method eq 'by_directory') && !$release) {
+    die <<END; 
+  Usage: $0 --method by_package|by_directory --release
+
+You *must* supply a WSRelease if pushing out acedb via tarball or as a single directory.
+END
+;
+
+}
+
 
 my $agent;
 # Sync a single release if provided, either by package or directory method.

@@ -138,11 +138,11 @@ sub _build_gff_file {
     my $self    = shift;
     my $name    = $self->symbolic_name;
     my $release = $self->release;	
-    my $gff = join("/",$self->release_dir,"$name.$release.gff2.gz");
+    my $gff = join("/",$self->release_dir,"$name.$release.annotations.gff2.gz");
     if (-e $gff) {
 	$self->gff_version('2');
     } else {
-	$gff = join("/",$self->release_dir,"$name.$release.gff3.gz");
+	$gff = join("/",$self->release_dir,"$name.$release.annotations.gff3.gz");
 	if (-e $gff) {
 	    $self->gff_version('3');
 	}
@@ -152,9 +152,10 @@ sub _build_gff_file {
 }
         
 has 'gff_version' => (
+    isa     => 'Str',
     is      => 'rw',
-    default => '2',
     );
+
 
 
 

@@ -11,8 +11,7 @@ has 'clustal_sql' => ( is => 'ro', lazy_build => 1 );
 sub _build_clustal_sql {
     my $self = shift;
     my $release = $self->release;
-    my $release_id = $self->release_id;
-    return "wormpep$release_id" . '_clw.sql';
+    return "wormpep_clw.$release.sql";
 }
 
 sub run {

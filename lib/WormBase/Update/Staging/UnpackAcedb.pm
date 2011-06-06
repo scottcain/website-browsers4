@@ -13,11 +13,6 @@ sub run {
     my $self = shift;       
     $self->untar_acedb;
     $self->customize_acedb;
-# We will do this at the end.
-#    $self->update_symlink({path    => $self->acedb_root,
-#			 target  => 'wormbase_' . $self->release,
-#			   symlink => 'wormbase',
-#		       });
 }
 
 

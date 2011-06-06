@@ -14,7 +14,7 @@ with 'WormBase::Roles::Config';
    
 has 'blastdb_format_script' => (
     is => 'ro',
-    default => '/usr/local/blast/bin/formatdb',
+    default => '/usr/local/wormbase/services/blast/bin/formatdb',
     );
 
 has 'bin_path' => (
@@ -141,23 +141,24 @@ has 'log_dir' => (
     default => '/usr/local/wormbase/logs/staging',
     );
 
-has 'precompile_datadir' => (
-	is => 'ro',
-	default => '/usr/local/wormbase/tmp_staging',
-)
+
+# defaul step
+has 'step' => (
+    is => 'ro',
+    default => 'generic step',
+    );
 
 ####################
 #
 # Helper scripts
 #
 ####################
-
 has 'create_blastdb_script' => ( 
     is => 'ro',     
     default => sub {
 	my $self = shift;
 	my $bin = $self->bin_path;
-	my $script = "$bin/../helpers/create_blast_db.sh"
+	my $script = "$bin/../helpers/create_blast_db.sh";
     });
 
 
@@ -172,18 +173,18 @@ has 'web_user' => (
 
 
 sub execute {
-  my $self = shift;
-  my $start = [gettimeofday]; # starting time
-
-  $self->log->warn('BEGIN : ' . $self->step);
-  # Subclasses should implement the run() method.
-  $self->run();
-
-  my $end = [gettimeofday];
-  my $interval = tv_interval($start,$end);
-  my $time = $self->sec2human($interval);
-
-  $self->log->warn('END : ' . $self->step . "; in $time");
+    my $self = shift;
+    my $start = [gettimeofday]; # starting time
+    
+    $self->log->warn('BEGIN : ' . $self->step);
+    # Subclasses should implement the run() method.
+    $self->run();
+    
+    my $end = [gettimeofday];
+    my $interval = tv_interval($start,$end);
+    my $time = $self->sec2human($interval);
+    
+    $self->log->warn('END : ' . $self->step . "; in $time");
 }
 
 
@@ -234,94 +235,26 @@ before 'execute' => sub {
 
 
 
-#CRUFT
-
+# Update a symlink to a file. If "release" is provided,
+# assume that we also want to flag that file as the
+# "current" version.
 sub update_symlink {
     my ($self,$params) = @_;
     my $target  = $params->{target};
-    my $path    = $params->{path};
+    my $release = $params->{release};
     my $symlink = $params->{symlink};
+    $self->log->debug("updating $symlink -> $target");
     
-    $self->log->debug("updating symlink $path: $symlink -> $target");
-    
-    chdir($path);
     unlink($symlink)          or $self->log->warn("couldn't unlink $symlink; perhaps it didn't exist to begin with");
-    symlink($target,$symlink) or $self->log->warn("creating symlink $symlink -> $target FAILED");
-    $self->log->debug("updating symlink $path: $symlink -> $target: complete");
-}
-
-sub unpack_archived_sequence {
-  my ($self,$params) = @_;
-  my $species = $params->{species};
-  my $type    = $params->{type};
-  $self->log->debug("unpacking archived sequence for $species");
-
-  # Other species besides elegans, briggsae, remanei
-  # Fetch the most current archived DNA
-  # Concatenate it to the blast directory.
-  my $archived_dna = $self->config->{species_info}->{$species}->{"local_$type " . "_filename"};
-  my $src = join("/",$self->ftp_root,$self->local_ftp_path,"genomes/$species/$archived_dna");
-  
-  
-  chdir($self->species_root) or $self->log->logdie("couldn't chdir to $self->species_root");
-  system("gunzip $params->{target_file}.gz");
-  
-  $self->log->debug("unpacking archived sequence for $species: complete");
-}    
-
-
-
-
-
-# Dump out C. elegans ESTs suitable for BLAST searching
-# and for loading into GFF DB.
-# Should be a role, but this is expedient for now.
-sub dump_elegans_ests {
-    my $self = shift;
-    $self->log->info("  begin: dumping ESTs for C. elegans");
-
-    use Ace;
-    $|++;
+    symlink($target,$symlink) or $self->log->warn("couldn't create the $symlink");
     
-    my $release    = $self->release;
-    my $acedb_root = $self->acedb_root;
-
-    # connect to database
-#    my $db = Ace->connect(-host=>'localhost',-port=>2005) || die "Couldn't open database";
-    my $db = Ace->connect(-path => "$acedb_root/wormbase_$release") || $self->log->logdie("dumping ESTs failed: couldn't open database");
-    
-    my $debug_counter;
-    
-    my $query = <<END;
-find cDNA_Sequence ; >DNA
-END
-;
-    
-#my @seqs = $db->fetch(-query=>qq{find cDNA_Sequence; dna; query find 
-#NDB_Sequence; dna"});
-#    my @seqs = $db->fetch(-query=>$query);
-    my $i = $db->fetch_many(-query=>$query);
-    my $file = join("/",$self->ftp_releases_dir,$release,'species','c_elegans','c_elegans.' . $self->release . ".ests.fa.gz");
-
-    return if $self->check_output_file($file);
-    open OUT," | gzip -c > $file" or $self->log->logdie("Couldn't open $file for generating the EST file dump");
-    
-#    foreach (@seqs) {
-    while (my $obj = $i->next) {
-	$debug_counter++;
-	if ($debug_counter % 10000 == 0) {
-	    print STDERR "$debug_counter - [$_] ...";
-	    print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
-	}
-    	
-	$obj =~ s/\0+\Z//; # get rid of nulls in data stream!
-	$obj =~ s!^//.*!!gm;
-	my $dna = $obj->asDNA();
-	print OUT $dna if $dna;
+    if ($release) {
+	$symlink =~ s/$release/current/;
+	unlink($symlink)           or $self->log->warn("couldn't unlink $symlink; perhaps it didn't exist to begin with");
+	symlink($target,$symlink)  or $self->log->warn("couldn't create the current symlink");
     }
-    close OUT;
-    $self->log->info("  end: dumping ESTs for C. elegans");
 }
+
 
 
 
@@ -366,6 +299,62 @@ sub create_md5 {
   my $result = `md5sum -c $file.md5`;
   die "Checksums do not match: packaging $file.tgz failed\n" if ($result =~ /failed/);
 }
+
+
+
+
+# CRUFT
+
+# TH: 2011.06.04: Now provided as part of the build.
+# Dump out C. elegans ESTs suitable for BLAST searching
+# and for loading into GFF DB.
+# Should be a role, but this is expedient for now.
+sub dump_elegans_ests {
+    my $self = shift;
+    my $release    = $self->release;
+    $self->log->info("  begin: dumping ESTs for C. elegans $release");
+
+    use Ace;
+    $|++;
+    
+    my $acedb_root = $self->acedb_root;
+
+    # connect to database
+    my $db = Ace->connect(-host=>'localhost',-port=>2005) || die "Couldn't open database";
+#    my $db = Ace->connect(-path => "$acedb_root/wormbase_$release") || $self->log->logdie("dumping ESTs failed: couldn't open database");
+    my $debug_counter;
+
+
+    my $query = <<END;
+find cDNA_Sequence ; >DNA    
+END
+;
+    
+#my @seqs = $db->fetch(-query=>qq{find cDNA_Sequence; dna; query find 
+#NDB_Sequence; dna"});
+#    my @seqs = $db->fetch(-query=>$query);
+    my $i = $db->fetch_many(-query=>$query);
+    my $file = join("/",$self->ftp_releases_dir,$release,'species','c_elegans','c_elegans.' . $self->release . ".ests.fa.gz");
+
+    return if $self->check_output_file($file);
+    open OUT," | gzip -c > $file" or $self->log->logdie("Couldn't open $file for generating the EST file dump");
+    
+#    foreach (@seqs) {
+    while (my $obj = $i->next) {
+	$debug_counter++;
+	if ($debug_counter % 10000 == 0) {
+	    $self->log->info("$debug_counter - [$obj] ...");
+	}
+    	
+	$obj =~ s/\0+\Z//; # get rid of nulls in data stream!
+	$obj =~ s!^//.*!!gm;
+	my $dna = $obj->asDNA();
+	print OUT $dna if $dna;
+    }
+    close OUT;
+    $self->log->info("  end: dumping ESTs for C. elegans");
+}
+
 
 
 

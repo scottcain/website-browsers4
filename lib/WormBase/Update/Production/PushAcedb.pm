@@ -68,7 +68,7 @@ sub package_acedb_database {
 
 sub rsync_package { 
     my ($self,$node) = @_;
-  
+    
     my $release         = $self->release;
     my $source_dir      = join('/',$self->ftp_database_tarballs_dir,$release,'packaged_databases');
     my $destination_dir = $self->acedb_root;

@@ -52,19 +52,19 @@ sub package_database {
 	$self->log->info("mysql dbs have already been packaged; returning") && return;
     }
 
-    $self->log->info("creating tgz of mysql databases for $database");
+    $self->log->info("creating tgz of mysql databases");
     
     # We change directory to the source root to package wormbase_WSXXX without leading directories.
     $self->system_call("tar -czf $filename.tgz -C $source_root '*$release'",
 		       'packaging mysql database dir');
-    $self->log->info("creating tgz of mysql databases $database: done");
+    $self->log->info("creating tgz of mysql databases: done");
     
-    $self->create_md5($tmp_dir,$filename);
+    $self->create_md5($destination_dir,$filename);
 }
 
 sub rsync_package { 
-    my $self      = shift;
-    my $release  = $self->release;
+    my ($self,$node) = @_;
+    my $release   = $self->release;    
     my $source_dir      = join('/',$self->ftp_database_tarballs_dir,$release,'packaged_databases');
     my $destination_dir = $self->mysql_data_dir;
     my $database = "mysql_databases.$release";
@@ -111,14 +111,15 @@ sub rsync_single_release {
 	$self->log->info("rsyncing $database to $node");
 	
 	$self->system_call("rsync --rsh=ssh -Cav -z --exclude '*bak*' --exclude '*TMD' $database $node:$root/","rsyncing $database to $node");
-	$self->log->info("rsyncing $database to $node: done");
+#	$self->log->info("rsyncing $database to $node: done");
     }
 }
 
 
 # NOT DONE
+# Create mysql dumps, rsync to nodes and load.
 sub create_mysql_dumps {
-    my $self = shift;
+    my ($self,$node) = @_;
     my $tmp_dir = $self->tmp_dir;
 
     my $release = $self->release;
