@@ -2,7 +2,7 @@
 Staging -> Production, 05/2011
 ======================================================
 
-1. AceDB (push_acedb.pl)
+1. AceDB (steps/push_acedb.pl)
 
   Push acedb into production via a tarball, a single 
   unpacked acedb database directory, or all acedb/wormbase*
@@ -18,7 +18,7 @@ Staging -> Production, 05/2011
      ./push_acedb.pl --method by_directory --release WSXXX
 
 
-2. Support Databases (push_support_databases.pl)
+2. Support Databases (steps/push_support_databases.pl)
 
   Push support databases into production via a tarball, a single
   database directory, or all current support database
@@ -37,7 +37,7 @@ Staging -> Production, 05/2011
      ./push_support_databases.pl --method by_directory --release WSXXX
 
 
-3. MySQL databases (push_mysql_databases.pl)
+3. MySQL databases (steps/push_mysql_databases.pl)
 
   Push mysql databases into production via a tarball or by syncing
   individual unpacked database directories.
@@ -47,6 +47,16 @@ Staging -> Production, 05/2011
 
   To push out a single release using a tarball:
      ./push_mysql_databases.pl --method by_package --release WSXXX
+
+
+
+
+
+
+
+
+
+
 
 
 4. Check out software, reconcile conflicts

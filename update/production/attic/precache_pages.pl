@@ -28,8 +28,8 @@ my $start = time();
 my $db    = Ace->connect(-host=>'localhost',-port=>2005);
 my $version = $db->status->{database}{version};
 
-#my @classes = qw/gene protein variation/;
-my @classes = qw/protein variation/;
+my @classes = qw/gene protein variation/;
+#my @classes = qw/protein variation/;
 
 
 foreach my $class (@classes) {
@@ -38,10 +38,7 @@ foreach my $class (@classes) {
     
     my $previous = shift;
     my %previous = parse($cache); # if $previous;
-    
-#my $db    = Ace->connect(-path=>'/usr/local/acedb/elegans');
-    
-    
+        
     open OUT,">>$cache/$version-precached-pages.txt";
     
     my %status;

@@ -24,3 +24,14 @@ See complete documentation on the WormBase wiki.
 
 5. Load Genomic GFF databases
    ./steps/load_genomic_gff_databases.pl WSXXX
+
+6. Load the clustal database
+   ./steps/local_clustal_databases.pl WSXXX
+
+
+
+
+Finally....
+
+10. Precache content
+    ./steps/precache_content.pl WSXXX
