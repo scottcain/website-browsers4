@@ -80,39 +80,17 @@ sub run {
     # compile id2name
     $self->parse_search_data(0,1,$self->id2name_file);
     $self->parse_search_data(1,0,$self->name2id_file);
-    $self->parse_search_data(0,5,$self->id2association_counts_file);
-    
-    $self->get_cummulative_association_counts($self->id2total_association_file);
-    
-    
-    ## further compiles. These used to be separate scripts.
-    # They can be found at helpers/gene_summary.
-
+    $self->parse_search_data(0,5,$self->id2association_counts_file);    
     $self->clean_up_search_data();
-
-    my $bin_path = $self->bin_path . "/../helpers/gene_summary";
-
-#    my $check_file = "$util_dir/ontology_check_file.txt";
-    my $util_dir = "util";    
-    my @cmds = (
-	"get_geneid2go_ids.pl $release",
-	"get_pheno_gene_data_not.pl $release",
-	"get_pheno_gene_data.pl $release",
-	"get_pheno_rnai_data.pl $release",
-	"get_pheno_variation_data.pl $release",
-	"get_pheno_rnai_data.pl $release 1",
-	"get_pheno_variation_data.pl 1",
-	"get_pheno_xgene_data.pl"
-	);
-    
-    # "get_cummulative_association_counts.pl $release",
-    
-    foreach my $cmd (@cmds) {	
-	$self->system_call("$bin_path/$cmd",
-			   "dump ontology resource file");
-	# $check_file);
-	
-    }
+    $self->get_cummulative_association_counts($self->id2total_association_file);
+	$self->get_geneid2go_ids();
+    $self->get_pheno_gene_data_not();
+    $self->get_pheno_gene_data();
+	$self->get_pheno_rnai_data();
+	$self->get_pheno_variation_data();
+	$self->get_pheno_rnai_data(1);
+	$self->get_pheno_variation_data(1);
+	$self->get_pheno_xgene_data();
     $self->log->debug("crazy gene page compiles complete");
 }
 
@@ -365,7 +343,7 @@ sub get_cummulative_association_counts{
 	my $outfile = shift;
 	my @ids = keys %id2name;
 	
-	open OUT, ">$outfile" or die "Cannot open output file\n";
+	open OUT, ">$outfile" or $self->log->logdie("Cannot open output file");
 	foreach my $term_id (@ids) {
 	
 		my @path_array = ($term_id); ## 
@@ -402,9 +380,9 @@ sub get_geneid2go_ids {
 	my %go_id2type;
 	my %gene_id2name;
 	
-	open BP, ">$datadir/go_bp_id2gene_id.txt" or die "Can't open bp";
-	open MF, ">$datadir/go_mf_id2gene_id.txt" or die "Can't open bp";
-	open CC, ">$datadir/go_cc_id2gene_id.txt" or die "Can't open bp";
+	open BP, ">$datadir/go_bp_id2gene_id.txt" or $self->log->logdie("Can't open bp");
+	open MF, ">$datadir/go_mf_id2gene_id.txt" or $self->log->logdie("Can't open bp");
+	open CC, ">$datadir/go_cc_id2gene_id.txt" or $self->log->logdie("Can't open bp");
 	
 	foreach my $gene (@genes) {
 		my $gene_name = public_name($gene);
@@ -447,10 +425,10 @@ sub get_pheno_gene_data_not{
 	my $indir = $self->gene_dir;
 	my $outdir = $self->datadir;
 	
-	open IN_XGENE, "<$indir/gene_xgene_pheno.txt" or die "Can't open in file $indir/gene_xgene_pheno.txt\n";
-	open IN_VAR,"<$indir/variation_data.txt" or die "Can't open in file $indir/variation_data.txt\n";
-	open IN_RNAi, "<$indir/gene_rnai_pheno.txt" or die "Can't open in file $indir/gene_rnai_pheno.txt\n";
-	open OUT, ">$outdir/pheno2gene_names_not.txt" or die "Can't open out file $outdir/pheno2gene_names_not.txt\n";
+	open IN_XGENE, "<$indir/gene_xgene_pheno.txt" or $self->log->logdie("Can't open in file $indir/gene_xgene_pheno.txt");
+	open IN_VAR,"<$indir/variation_data.txt" or $self->log->logdie("Can't open in file $indir/variation_data.txt");
+	open IN_RNAi, "<$indir/gene_rnai_pheno.txt" or $self->log->logdie("Can't open in file $indir/gene_rnai_pheno.txt");
+	open OUT, ">$outdir/pheno2gene_names_not.txt" or $self->log->logdie("Can't open out file $outdir/pheno2gene_names_not.txt");
 	
 	system ("echo 'fetching xgene related data'");
 	
@@ -523,10 +501,10 @@ sub get_pheno_gene_data{
 	my $indir = $self->gene_dir;
 	my $outdir = $self->datadir;
 	
-	open IN_XGENE, "<$indir/gene_xgene_pheno.txt" or die "Can't open xgene in file\n";
-	open IN_VAR,"<$indir/variation_data.txt" or die "Can't open variation in file\n";
-	open IN_RNAi, "<$indir/gene_rnai_pheno.txt" or die "Can't open rnai in file\n";
-	open OUT, ">$outdir/pheno2gene_names.txt" or die "Can't open out file\n";
+	open IN_XGENE, "<$indir/gene_xgene_pheno.txt" or $self->log->logdie("Can't open xgene in file");
+	open IN_VAR,"<$indir/variation_data.txt" or $self->log->logdie("Can't open variation in file");
+	open IN_RNAi, "<$indir/gene_rnai_pheno.txt" or $self->log->logdie("Can't open rnai in file");
+	open OUT, ">$outdir/pheno2gene_names.txt" or $self->log->logdie("Can't open out file");
 	
 	system ("echo 'fetching xgene related data'");
 	
@@ -585,7 +563,7 @@ sub get_pheno_gene_data{
 	system ("echo 'OK'");
 }
 
-sub get_pheno_rnai_data{ ## NEEDS UPDATE
+sub get_pheno_rnai_data{ 
 
 	my $self = shift;
 	my $nay = shift;
@@ -599,8 +577,8 @@ sub get_pheno_rnai_data{ ## NEEDS UPDATE
 		$outfile = "pheno2rnais_not.txt";
 	}
 	
-	open IN, "<$indir/gene_rnai_pheno.txt" or die "Can't open infile\n";
-	open OUT, ">$outdir/$outfile" or die "Can't open outfile\n"; 
+	open IN, "<$indir/gene_rnai_pheno.txt" or $self->log->logdie("Can't open infile");
+	open OUT, ">$outdir/$outfile" or $self->log->logdie("Can't open outfile"); 
 
 	while (<IN>) {	
 		my ($gene,$rnai,$pheno,$not) = split /\|/,$_;
@@ -634,6 +612,7 @@ sub get_pheno_rnai_data{ ## NEEDS UPDATE
 sub get_pheno_variation_data { 
 	
 	my $self = shift;
+	my $nay = shift;
 	my $indir = $self->gene_dir;
 	my $outdir = $self->datadir;
 	my $outfile = "pheno2vars.txt";
@@ -642,8 +621,8 @@ sub get_pheno_variation_data {
 		$outfile = "pheno2vars_not.txt";
 	}
 	
-	open IN, "<$indir/variation_data.txt" or die "Can't open infile\n";
-	open OUT, ">$outdir/$outfile" or die "Can't open outfile\n"; 
+	open IN, "<$indir/variation_data.txt" or $self->log->logdie("Can't open infile");
+	open OUT, ">$outdir/$outfile" or $self->log->logdie("Can't open outfile"); 
 
 	while (<IN>) {	
 		my ($gene,$var,$pheno,$not,$seqd) = split /\|/,$_;
@@ -683,8 +662,8 @@ sub get_pheno_xgene_data{
 	my $outdir = $self->datadir;
 	my $outfile = "pheno2xgenes.txt";
 	
-	open IN, "<$indir/gene_xgene_pheno.txt" or die "Can't open in file\n";
-	open OUT, ">$outdir/$outfile" or die "Can't open outfile\n"; 
+	open IN, "<$indir/gene_xgene_pheno.txt" or $self->log->logdie("Can't open in file");
+	open OUT, ">$outdir/$outfile" or $self->log->logdie("Can't open outfile"); 
 	
 	while (<IN>) {
 		my ($gene,$xgene,$pheno,$not) = split /\|/,$_;	
