@@ -1,4 +1,4 @@
-package WormBase::Update::Staging::CompileOrthologyResources.pm;
+package WormBase::Update::Staging::CompileGeneList;
 
 
 use lib "/usr/local/wormbase/website/tharris/extlib";
@@ -40,10 +40,10 @@ sub _build_dbh {
 sub run {
     my $self = shift;
     my $datadir = $self->datadir;
-    my $outfile = $datadir . "gene_list.txt";
+    my $outfile = $datadir . "/gene_list.txt";
     
     $self->log->info("creating gene_list.txt");	
-    $self->get_genes_with_orthologs>($outfile);   
+    $self->get_genes_with_orthologs($outfile);   
     $self->log->debug("get_genes_with_orthologs done");
     
 }
