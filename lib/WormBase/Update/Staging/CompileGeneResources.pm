@@ -39,9 +39,7 @@ sub _build_dbh {
 
 
 sub run {
-    my $self = shift;
-
-    
+    my $self = shift;    
     my $datadir = $self->datadir;
     
     my $gene_rnai_pheno_file   = "gene_rnai_pheno.txt";
