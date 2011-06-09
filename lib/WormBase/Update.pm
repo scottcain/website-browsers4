@@ -268,6 +268,20 @@ sub system_call {
     }
 }
 
+sub build_hash{
+	my ($self, $file_name) = @_;
+	open FILE, "<$file_name" or die "Cannot open the file: $file_name\n";
+	my %hash;
+	foreach my $line (<FILE>) {
+		chomp ($line);
+		my ($key, $value) = split '=>',$line;
+		$hash{$key} = $value;
+	}
+	return %hash;
+}
+
+
+
 # CHeck for the presence of the output file
 # to avoid lengthy recomputes.
 # Kludgy but mostly right.
