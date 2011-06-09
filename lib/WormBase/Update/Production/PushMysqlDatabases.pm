@@ -47,15 +47,15 @@ sub package_database {
     my $source_root = $self->mysql_data_dir;
     my $filename     = "mysql_databases.$release";
 
-    chdir($destination_dir);
-    if (-e "$filename.tgz") { 
+    chdir($source_root);
+    if (-e "$destination_dir/$filename.tgz") { 
 	$self->log->info("mysql dbs have already been packaged; returning") && return;
     }
 
     $self->log->info("creating tgz of mysql databases");
     
     # We change directory to the source root to package wormbase_WSXXX without leading directories.
-    $self->system_call("tar -czf $filename.tgz -C $source_root '*$release'",
+    $self->system_call("tar -czf $destination_dir/$filename.tgz  `find *$release`",
 		       'packaging mysql database dir');
     $self->log->info("creating tgz of mysql databases: done");
     
@@ -74,14 +74,13 @@ sub rsync_package {
 		       'rsyncing mysql package');
 
     # Unpack it.
-    # This SHOULD be a tarbomb which is what I want. Verify.
-    $self->system_call(qq/ssh $node "cd $destination_dir; tar xzf $database.tgz"/,
-		       'unpacking mysql package');
-
+    my $ssh = $self->ssh($node);
+    $ssh->system("cd $destination_dir ; tar xzf $database.tgz") or
+	$self->log->logdie("unpacking the mysql package failed: " . $ssh->error);
+    
     # Remove it.
-    $self->system_call(qq/ssh $node "cd $destination_dir; rm -f $database.tgz"/,
-		       'removing mysql package');
-
+    $ssh->system("cd $destination_dir ; rm -f $database.tgz") or
+	$self->log->logdie("removing the database package failed: " . $ssh->error);
 }
 
 

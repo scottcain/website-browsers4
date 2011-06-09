@@ -79,17 +79,16 @@ sub rsync_package {
     $self->system_call("rsync --rsh=ssh -Cav $source_dir/$filename.tgz $node:$destination_dir",
 		       'rsyncing acedb package');
 
+    my $ssh = $self->ssh($node);
+    
     # Unpack
-    $self->system_call(qq/ssh $node "cd $destination_dir; tar xzf $filename.tgz"/,
-		       'unpacking acedb package');
+    $ssh->system("cd $destination_dir; tar xzf $filename.tgz") or $self->log->logdie("Couldn't unpack acedb on $node: " . $ssh->error);
 
     # Rename
-    $self->system_call(qq/ssh $node "cd $destination_dir; mv $filename $database"/,
-		       'renaming acedb untarred package');
+    $ssh->system("cd $destination_dir; mv $filename $database") or $self->log->logdie("renaming acedb untarred package on $node: " . $ssh->error);
 
     # Remove
-    $self->system_call(qq/ssh $node "cd $destination_dir; rm -f $filename.tgz"/,
-		       'removing acedb package');
+    $ssh->system("cd $destination_dir; rm -f $filename.tgz") or $self->log->logdie("removing acedb package failed: $node" . $ssh->error);
 
 }
 

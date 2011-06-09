@@ -1,7 +1,6 @@
 package WormBase::Update::Production::GoLive;
 
 use Moose;
-use Net::OpenSSH;
 extends qw/WormBase::Update/;
 
 # The symbolic name of this step
@@ -29,12 +28,10 @@ sub update_acedb_symlinks {
     my $acedb_root = $self->acedb_root;
     my $release    = $self->release;
 
-    my $manager = $self->production_manager;
-
     foreach my $node (@$local_nodes,@$remote_nodes) {
 	$self->log->debug("adjusting acedb symlink on $node");
 
-	my $ssh = Net::OpenSSH->new("$manager\@$node");
+	my $ssh = $self->ssh($node);
 	$ssh->error and die "Can't ssh to $manager\@$node: " . $ssh->error;	
 	$ssh->system("cd $acedb_root ; rm wormbase ; ln -s wormbase_$release wormbase") or
 	    $self->log->logdie("remote command updating the acedb symlink failed " . $ssh->error);
@@ -55,7 +52,7 @@ sub update_mysql_symlinks {
 	$self->log->debug("adjusting mysql symlinks on $node");
 	my ($species) = $self->wormbase_managed_species;  # Will be species updated this release.
 	foreach my $name (@$species) {
-	    my $ssh = Net::OpenSSH->new("$manager\@$node");
+	    my $ssh = $self->ssh($node);
 	    $ssh->error and die "Can't ssh to $manager\@$node: " . $ssh->error;	
 	    $ssh->system("cd $mysql_data_dir ; rm $name ; ln -s $name_$release $name") or
 		$self->log->logdie("remote command updating the mysql symlink failed " . $ssh->error);

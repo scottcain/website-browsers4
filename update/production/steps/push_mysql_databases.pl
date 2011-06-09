@@ -16,7 +16,7 @@ unless ($method && $release) {
 Usage: $0 --method [by_package|by_directory]
 
 To sync ALL data/*WSXXX directories as a tarball:
- ./push_mysql_databases.pl --method by_package
+ ./push_mysql_databases.pl --method by_package --release WSXXX
 
 To push out a single release by rsyncing the directory:
  ./push_mysql_databases.pl --method by_directory --release WSXXX

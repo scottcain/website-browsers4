@@ -3,7 +3,7 @@ package WormBase::Roles::Config;
 # Shared configuration for WormBase administration.
 
 use Moose::Role;
-
+use Net::OpenSSH;
 
 ####################################
 #
@@ -12,6 +12,15 @@ use Moose::Role;
 ####################################
 
 has 'production_manager' => ( is => 'ro', default => 'tharris') ;
+
+sub ssh {
+    my ($self,$node) = @_;
+    my $manager = $self->production_manager;
+    my $ssh = Net::OpenSSH->new("$manager\@$node");
+    $ssh->error and die "Can't ssh to $manager\@$node: " . $ssh->error;	
+    return $ssh;
+}
+
 
 ####################################
 #
@@ -204,7 +213,12 @@ has 'local_acedb_nodes' => (
             wb-web1.oicr.on.ca
             wb-web2.oicr.on.ca
 	    wb-web3.oicr.on.ca
-	    wb-web4.oicr.on.ca/]
+	    wb-web4.oicr.on.ca
+            wb-web6.oicr.on.ca
+            wb-web7.oicr.on.ca
+	    wb-web8.oicr.on.ca
+	    wb-web9.oicr.on.ca
+            wb-web10.oicr.on.ca/],
     },
     );
 
@@ -224,7 +238,12 @@ has 'local_support_database_nodes' => (
             wb-web1.oicr.on.ca
             wb-web2.oicr.on.ca
 	    wb-web3.oicr.on.ca
-	    wb-web4.oicr.on.ca/]
+	    wb-web4.oicr.on.ca
+            wb-web6.oicr.on.ca
+            wb-web7.oicr.on.ca
+	    wb-web8.oicr.on.ca
+	    wb-web9.oicr.on.ca
+            wb-web10.oicr.on.ca/],
     },
     );
 
@@ -246,7 +265,12 @@ has 'local_mysql_database_nodes' => (
             wb-web1.oicr.on.ca
             wb-web2.oicr.on.ca
 	    wb-web3.oicr.on.ca
-	    wb-web4.oicr.on.ca/]
+	    wb-web4.oicr.on.ca
+            wb-web6.oicr.on.ca
+            wb-web7.oicr.on.ca
+	    wb-web8.oicr.on.ca
+	    wb-web9.oicr.on.ca
+            wb-web10.oicr.on.ca/],
     },
     );
 
