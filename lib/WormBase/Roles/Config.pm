@@ -28,10 +28,14 @@ sub ssh {
 #
 ####################################
 
-has 'wormbase_root' => ( is => 'ro', default => '/usr/local/wormbase');
+# The full wormbase root (NOT the app root)
+has 'wormbase_root'   => ( is => 'ro', default => '/usr/local/wormbase');
 
-has 'tmp_dir'       => ( is => 'ro', lazy_build => 1 );
-			 
+# The staging directory that serves staging.wormbase.org. Will be mirrored into production.
+has 'app_staging_dir' => ( is => 'ro', default => '/usr/local/wormbase/website/staging');
+
+
+has 'tmp_dir'       => ( is => 'ro', lazy_build => 1 );			 
 sub _build_tmp_dir {
     my $self = shift;
     my $dir = $self->wormbase_root . "/tmp/staging";
@@ -204,6 +208,48 @@ sub _build_remote_ftp_releases_dir {
 # Production related configuration
 #
 ####################################
+
+# WormBase 2.0: used in deploy_sofware
+has 'local_app_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw/wb-web6.oicr.on.ca
+            wb-web7.oicr.on.ca
+	    wb-web8.oicr.on.ca
+	    wb-web9.oicr.on.ca
+            wb-web10.oicr.on.ca/],
+    },
+    );
+
+has 'remote_app_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw//]},
+    );
+
+
+# WormBase 1.0: Used in push_software
+has 'local_web_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw/wb-mining.oicr.on.ca
+            wb-web1.oicr.on.ca
+            wb-web2.oicr.on.ca
+	    wb-web3.oicr.on.ca
+	    wb-web4.oicr.on.ca/],
+    },
+    );
+
+has 'remote_web_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw/canopus.caltech.edu/]},
+    );
+
 
 has 'local_acedb_nodes' => (
     is => 'ro',

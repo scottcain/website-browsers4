@@ -32,7 +32,7 @@ sub update_acedb_symlinks {
 	$self->log->debug("adjusting acedb symlink on $node");
 
 	my $ssh = $self->ssh($node);
-	$ssh->error and die "Can't ssh to $manager\@$node: " . $ssh->error;	
+	$ssh->error && $self->log->logdie("Can't ssh to $node: " . $ssh->error);
 	$ssh->system("cd $acedb_root ; rm wormbase ; ln -s wormbase_$release wormbase") or
 	    $self->log->logdie("remote command updating the acedb symlink failed " . $ssh->error);
 	
@@ -53,7 +53,7 @@ sub update_mysql_symlinks {
 	my ($species) = $self->wormbase_managed_species;  # Will be species updated this release.
 	foreach my $name (@$species) {
 	    my $ssh = $self->ssh($node);
-	    $ssh->error and die "Can't ssh to $manager\@$node: " . $ssh->error;	
+	    $ssh->error && $self->log->logdie("Can't ssh to $manager\@$node: " . $ssh->error);	
 	    $ssh->system("cd $mysql_data_dir ; rm $name ; ln -s $name_$release $name") or
 		$self->log->logdie("remote command updating the mysql symlink failed " . $ssh->error);
 	}

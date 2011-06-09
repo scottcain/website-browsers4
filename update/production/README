@@ -49,33 +49,41 @@ Staging -> Production, 05/2011
      ./push_mysql_databases.pl --method by_package --release WSXXX
 
 
+<! ----------------------------------------------------
+
+      Check out and test software into staging/
+
+   ----------------------------------------------------
+
+
+
+4. Deploy newest version of the webapp.
+   
+   Rsync the staging/ directory to new directories on production
+   nodes in unique directories by version.
+   
+   Also: create a software release on the FTP site and a snapshot for reference.
+
+  ./steps/deploy_webapp.pl WSXXXX
 
 
 
 
+5. Update symlinks on both production nodes and on the FTP site
+
+   ./steps/go_live.pl WSXXX 
 
 
+6. Restart services (not yet done)
 
 
+Manually:
+
+* Update release notes on wiki
+* Send announcemtnt
+* Post announcement on blog
 
 
-4. Check out software, reconcile conflicts
-
-   create software release
-
-5. Push software
-
-6. Update symlinks on FTP site
-
-7. Update symlinks in production (go live)
-
-8. Update release notes on wiki
-
-9. Send announcemtnt
-
-10. Post announcement on blog
-
-11. restart services.
 
 
 
@@ -106,6 +114,8 @@ Notes:
    # Start after the build deadline date
    0 3 12-31 * * /home/tharris/projects/wormbase/website-admin/update/production/cron-rsync_acedb.sh
    0 8 12-31 * * /home/tharris/projects/wormbase/website-admin/update/production/cron-rsync_mysql_dbs.sh
+
+
 
 3. Sync AceDB
 

@@ -109,7 +109,7 @@ EOF
     # Rsync this 
     ssh ${node} mkdir /usr/local/wormbase/website/${target}
 
-    # Rsync the diretory to the new target dir
+    # Rsync the directory to the new target dir
     if rsync -Ca --exclude logs --exclude tmp --exclude .hg --exclude extlib.tgz --exclude extlib staging/ ${node}:/usr/local/wormbase/website/${target}
     then
 	success "Successfully pushed webapp ${software_version} onto ${node}"
