@@ -101,7 +101,8 @@ sub load_gffdb {
     }
     
     $ENV{TMP} = $self->tmp_dir;
-    
+    my $tmp   = $self->tmp_dir;
+
     my $db   = $species->db_symbolic_name;
     my $user = $self->mysql_user;
     my $pass = $self->mysql_pass;
@@ -111,7 +112,7 @@ sub load_gffdb {
 	# $cmd = "bp_bulk_load_gff.pl --user $user --password $pass -c -d $db --fasta $fasta $gff 2> /dev/null";	    
 	$cmd = "bp_bulk_load_gff.pl --user $user --password $pass -c -d $db --fasta $fasta $gff";
     } else {
-	$cmd = "bp_seqfeature_load.pl --user $user --password $pass --fast --create --dsn $db $gff $fasta";       
+	$cmd = "bp_seqfeature_load.pl --user $user --password $pass --fast --create -T $tmp --dsn $db $gff $fasta";       
     }
     
     # Load. Should expand error checking and reporting.

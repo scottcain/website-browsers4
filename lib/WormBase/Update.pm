@@ -142,7 +142,7 @@ has 'log_dir' => (
     );
 
 
-# defaul step
+# default step
 has 'step' => (
     is => 'ro',
     default => 'generic step',

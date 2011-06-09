@@ -4,6 +4,15 @@ package WormBase::Roles::Config;
 
 use Moose::Role;
 
+
+####################################
+#
+# The Production Manager
+#
+####################################
+
+has 'production_manager' => ( is => 'ro', default => 'tharris') ;
+
 ####################################
 #
 # WormBase root, tmp dir, support dbs

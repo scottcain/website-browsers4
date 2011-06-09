@@ -1,52 +1,91 @@
-package WormBase::Update::Staging::GoLive;
+package WormBase::Update::Production::GoLive;
 
 use Moose;
+use Net::OpenSSH;
 extends qw/WormBase::Update/;
 
 # The symbolic name of this step
 has 'step' => (
     is      => 'ro',
-    default => 'go live with a new (development) release of WormBase',
+    default => 'go live with a new production release of WormBase',
 );
 
 sub run {
     my $self = shift;       
     my $release = $self->release;
 
-    # This will be handled by the PRODUCTION GoLive.
-#    $self->update_ftp_site_symlinks();
+    $self->update_acedb_symlinks();
+    $self->update_mysql_symlinks();
+    $self->update_ftp_site_symlinks();
+}
 
-    # If we didn't provide a release, we might just
-    # be trying to maintain the structure of the FTP
-    # site. Do NOT update MySQL or AceDB links.
-    if ($release) {
-	$self->update_mysql_symlinks();
-	$self->update_acedb_symlink();
-	my $releases_dir = $self->ftp_releases_dir;
-	chdir($releases_dir);
-	$self->update_symlink({target => $release,
-			       symlink => 'current-dev.wormbase.org-release',
-			      });
+sub update_acedb_symlinks { 
+    my $self = shift;
+    $self->log->info("adjusting symlinks on acedb production servers");
+
+    my ($local_nodes)  = $self->local_acedb_nodes;
+    my ($remote_nodes) = $self->remote_acedb_nodes;
+
+    my $acedb_root = $self->acedb_root;
+    my $release    = $self->release;
+
+    my $manager = $self->production_manager;
+
+    foreach my $node (@$local_nodes,@$remote_nodes) {
+	$self->log->debug("adjusting acedb symlink on $node");
+
+	my $ssh = Net::OpenSSH->new("$manager\@$node");
+	$ssh->error and die "Can't ssh to $manager\@$node: " . $ssh->error;	
+	$ssh->system("cd $acedb_root ; rm wormbase ; ln -s wormbase_$release wormbase") or
+	    $self->log->logdie("remote command updating the acedb symlink failed " . $ssh->error);
+	
     }
 }
 
+sub update_mysql_symlinks { 
+    my $self = shift;
+    $self->log->info("adjusting symlinks on mysql production servers");
+    my ($local_nodes)  = $self->local_mysql_database_nodes;
+    my ($remote_nodes) = $self->remote_mysql_database_nodes;
+
+    my $mysql_data_dir = $self->mysql_data_dir;
+    my $release        = $self->release;
+    my $manager        = $self->production_manager;
+    foreach my $node (@$local_nodes,@$remote_nodes) {
+	$self->log->debug("adjusting mysql symlinks on $node");
+	my ($species) = $self->wormbase_managed_species;  # Will be species updated this release.
+	foreach my $name (@$species) {
+	    my $ssh = Net::OpenSSH->new("$manager\@$node");
+	    $ssh->error and die "Can't ssh to $manager\@$node: " . $ssh->error;	
+	    $ssh->system("cd $mysql_data_dir ; rm $name ; ln -s $name_$release $name") or
+		$self->log->logdie("remote command updating the mysql symlink failed " . $ssh->error);
+	}
+    }
+}
+
+
+# Change symlinks to point to the version being pushed out.
 sub update_ftp_site_symlinks {
     my $self = shift;
     my $releases_dir = $self->ftp_releases_dir;
     my $species_dir  = $self->ftp_species_dir;
+    
+    chdir($releases_dir);
+    $self->update_symlink({target => $release,
+			   symlink => 'current-www.wormbase.org-release',
+			  });
 
     # If provided, update symlinks on the FTP site
     # for that release.  Otherwise, walk through
     # the releases directory.
-    my $release = $self->release;	
+    my $release = $self->release;
 
     my @releases;
     if ($release) {
-	@releases = glob("$releases_dir/$current_release") or die "$!";
+	@releases = glob("$releases_dir/$release") or die "$!";
     } else {
 	@releases = glob("$releases_dir/*") or die "$!";
     }
-
 
     foreach my $release_path (@releases) {
 	next unless $release_path =~ /.*WS\d\d.*/;    
@@ -134,32 +173,6 @@ sub update_ftp_site_symlinks {
     }
 }
 
-
-
-
-sub update_mysql_symlinks {
-    my $self = shift;
-    
-    # Get a list of all species updated this release.
-    my ($species) = $self->wormbase_managed_species;
-    my $release   = $self->release;
-    my $mysql     = $self->mysql_data_dir;
-    foreach my $name (@$species) {	
-	chdir($mysql);  # cd to the data dir;
-	$self->update_symlink({ target  => "$name_$release",
-				symlink => $name, });
-    }
-}
-
-
-sub update_acedb_symlink {
-    my $self = shift;
-    my $acedb_root = $self->acedb_root;
-    my $release = $self->release;
-    chdir($acedb_root) or $self->log->warn("couldn't chdir to $acedb_root");
-    $self->update_symlink({ target  => "wormbase_$release",
-			    symlink => "wormbase" });
-}
     
 
 

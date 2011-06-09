@@ -22,6 +22,11 @@ has 'fatonib' => (
     default => '/usr/local/wormbase/services/blat/bin/faToNib',
     );
 
+has 'fatotwobit' => (
+    is => 'ro',
+    default => '/usr/local/wormbase/services/blat/bin/faToTwoBit',
+    );
+
 
 sub run {
     my $self = shift;   
@@ -53,42 +58,69 @@ sub prepare_dna {
     my $target_file = join("/",$species->blat_dir,$fasta_file);
     $target_file    =~ s/\.gz//; # Strip off the trailing .gz
  
-
-    
     # Unpack mirrored fasta
     system("gunzip -c $path/$fasta_file > $target_file") && $self->log->logdie("Couldn't unpack the fasta file to the blat staging directory");
+
     
-    $self->log->debug("unpacking dna for blat databases: complete");    
-    $self->log->debug("splitting $target_file into multiple fasta files");  
-    
-    chdir($species->blat_dir);
-    
-    my $seqIO = Bio::SeqIO->new(-file => $target_file, -format => 'fasta');
-    my $counter;
-    while (my $seq = $seqIO->next_seq()) {
-	$counter++;    
-	my $id = $seq->display_id;
-	my $seqout = Bio::SeqIO->new(-format => 'Fasta', -file => ">$id.dna");
-	$seqout->write_seq($seq);
-    }
-    $self->log->debug("splitting $target_file in multiple fasta files: complete");
+    # Only necessary for faToNib
+    if (0) {
+	$self->log->debug("unpacking dna for blat databases: complete");    
+	$self->log->debug("splitting $target_file into multiple fasta files");  
+	
+	chdir($species->blat_dir);
+	
+	my $seqIO = Bio::SeqIO->new(-file => $target_file, -format => 'fasta');
+	my $counter;
+	while (my $seq = $seqIO->next_seq()) {
+	    $counter++;    
+	    my $id = $seq->display_id;
+	    my $seqout = Bio::SeqIO->new(-format => 'Fasta', -file => ">$id.dna");
+	    $seqout->write_seq($seq);
+	}
+	$self->log->debug("splitting $target_file in multiple fasta files: complete");
+    }    
 }
 
 
 sub make_blatdb {
     my ($self,$species) = @_;
     $self->log->debug("formatting blat database for $species");
-    
-    my $fatonib = $self->fatonib;
-        
-    my $path = $species->blat_dir;
-    foreach my $file (glob("$path/*dna")) {
-	my ($root_dir, $nib_file_name) = $self->_parse_file_name($file) or return;
-	$nib_file_name =~ s/\.dna$/\.nib/; 
-	my $cmd = "$fatonib $file $path/$nib_file_name";
-	$self->system_call($cmd,'running fatonib');
 
+    # The more compact two-bit representation
+    my $fatotwobit = $self->fatotwobit;        
+    my $path       = $species->blat_dir;
+    my $fasta_file = $species->genomic_fasta;    # Just the filename
+    my $name       = $species->symbolic_name;
+
+    $fasta_file    =~ s/\.gz//; # Strip off the trailing .gz, it's already been unpacked.
+
+    my $input_file = join("/",$species->blat_dir,$fasta_file);
+    unless (-e "$input_file") {
+	$self->log->error(uc($name) . ': no fasta file found');
+	return;
     }
+    
+#    foreach my $file (glob("$path/*dna")) {
+#	my ($root_dir, $nib_file_name) = $self->_parse_file_name($file) or return;
+#	$nib_file_name =~ s/\.dna$/\.nib/; 
+    
+    # Input can contain multiple fasta per file
+    my $cmd = "$fatotwobit $input_file $path/$fasta_file.2bit";
+    $self->system_call($cmd,$cmd);
+#    }
+
+    if (0) {
+	# The old nib representation
+	my $fatonib = $self->fatonib;        
+	my $path = $species->blat_dir;
+	foreach my $file (glob("$path/*dna")) {
+	    my ($root_dir, $nib_file_name) = $self->_parse_file_name($file) or return;
+	    $nib_file_name =~ s/\.dna$/\.nib/; 
+	    my $cmd = "$fatonib $file $path/$nib_file_name";
+	    $self->system_call($cmd,'running fatonib');	    
+	}
+    }
+
     $self->log->debug("formatting blat database for $species: complete");
 }
 
