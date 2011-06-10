@@ -1,6 +1,6 @@
 package Update;
 
-use local::lib '/usr/local/wormbase/website-classic/extlib';
+use local::lib '/usr/local/wormbase/website/classic/extlib';
 use strict;
 use Net::FTP::Recursive;
 use Log::Log4perl;
@@ -8,25 +8,33 @@ use FindBin qw($Bin);
 use IO::File;
 our $AUTOLOAD;
 
-## test
+
+
+use Moose;
+   
+has 'master_log' => (
+    is => 'ro',
+    lazy_build => sub {
+	my $self     = shift;
+	my $log      = $self->log_dir . "/$release/$release.log";
+  	my $root_log = new IO::File ">>$log";
+  	return $root_log;
+    },
+    );
+	
+
+
+
+
+
+
+
 
 my %config =  (
-	       root => '/usr/local/wormbase', ## /website-classic
-	       
 	       directories => {
-			       support_dbs => "databases",
+####			       support_dbs => "databases",
 			       database_tarballs => 'mirror/database_tarballs',
-			      },
-
-	       # Where we will mirror files from Sanger
-	       mirror_dir => '/tmp/temporary_update_dir',
-	       
-	       # acedb and mysql
-	       	
-	       acedb_root     => '/usr/local/wormbase/acedb/',
-
-
-	       mysql_data_dir => '/usr/local/mysql/data',
+			      }	       
 	       
 	       # FTP server access
 	       wormbase_ftp_host   => 'brie4.cshl.org',
@@ -63,7 +71,6 @@ my %config =  (
 	       clustal_file  => 'wormpep_clw.sql',
 	       
 	       # BLAST DB config
-	       blastdb_format_script => '/usr/local/blast/bin/formatdb',
 	       formatdb    => {
 			       nucleotide => qq{-p F -t '%s' -i %s},
 			       ests       => qq{-p F -t '%s' -i %s},
@@ -138,113 +145,9 @@ my %config =  (
 	       
 	       fatonib => '/usr/local/blat/bin/faToNib',
 	       
-	       mysql_user => 'root',
-	       mysql_pass => '3l3g@nz',
-
 	      );
 
-sub new {
-  	my ($self,$params) = @_;
-  	my $this = bless $params,$self;
-  	$this->{config} = \%config;
-  
-  	my $release = $this->release;
 
-  	my $step = $this->step();
-
-	my $log_config = qq(
-	
-		log4perl.logger.rootLogger  = INFO,LOGFILE,Screen
-		
-		# Global spacing
-		log4perl.appender.LOGFILE=Log::Log4perl::Appender::File
-		log4perl.appender.LOGFILE.filename=$Bin/../logs/$release/$step.log
-		log4perl.appender.LOGFILE.mode=append
-		log4perl.appender.LOGFILE.layout = Log::Log4perl::Layout::PatternLayout
-		#log4perl.appender.LOGFILE.layout.ConversionPattern=[%d %p]%K%l − %r %m%n
-		log4perl.appender.LOGFILE.layout.ConversionPattern=[%d %p]%K%m (%M [%L])%n
-		#log4perl.appender.LOGFILE.layout.ConversionPattern=[%d %p]%K %n
-		
-		
-		log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
-		log4perl.appender.Screen.stderr  = 0
-		log4perl.appender.Screen.layout = Log::Log4perl::Layout::PatternLayout
-		#log4perl.appender.Screen.layout.ConversionPattern=[%d %r]%K%F %L %c − %m%n
-		log4perl.appender.Screen.layout.ConversionPattern=[%d %p]%K%m (%M [%L])%n
-		#log4perl.appender.Screen.layout.ConversionPattern=[%d %p]%K %n
-		);
-  
-  	Log::Log4perl::Layout::PatternLayout::add_global_cspec('K',
-		sub {
-		
-     		my ($layout, $message, $category, $priority, $caller_level) = @_;
-     		# FATAL, ERROR, WARN, INFO, DEBUG, TRACE
-			 return "   --> "    if $priority eq 'DEBUG';
-			 return " " if $priority eq 'INFO';
-			 return "  ! "   if $priority eq 'WARN';  # potential errors
-			 return " !! "   if $priority eq 'ERROR'; # errors
-			 return "!!! " if $priority eq 'FATAL';  # fatal errors
-			 return " ";
-	   	});
-
-  	Log::Log4perl::init(\$log_config);
-
-  	$this->_make_dir("$Bin/../logs");
-  	$this->_make_dir("$Bin/../logs/$release");
-  	
-
-  	my $root_log = new IO::File ">> $Bin/../logs/$release/$release.log";
-  	$this->{master_log} = $root_log;
-  	print $root_log "starting $step...\n";
-
-	  #  my $cfg = Config::Any->load_files({files =>  [ "Config.pm" ],use_ext => 1 });
-	  #    print Config::Any->extensions;
-	  #    print Config::Any->finder;
-	  #    print Config::Any->plugins;
-	  #    my $cfg = Config::Any::Perl->load("site_config.pl");
-	  #  print $cfg;
-  
-  	return $this;
-}
-
-sub execute {
-  my $self = shift;
-  $self->logit->info('BEGIN STEP: ' . $self->step);
-  $self->run();
-  $self->logit->info('END STEP  : ' . $self->step);
-}
-
-sub logit {
-  my $self = shift;
-  my $logger = Log::Log4perl->get_logger('rootLogger');
-  return $logger;
-}
-
-sub master_log { return shift->{master_log}; }
-
-sub mirror_directory {
-    my ($self,$path,$local_mirror_path) = @_;
-    
-    my $release    = $self->release;
-    my $release_id = $self->release_id;
-    
-    my $contact_email = $self->contact_email;
-    my $ftp_server    = $self->remote_ftp_server;
-    
-    $self->_reset_dir($local_mirror_path);
-    
-    my $cwd = getcwd();
-    $self->logit->info("  mirroring directory $path from $ftp_server to $local_mirror_path");
-    chdir $local_mirror_path or $self->logit->logdie("cannot chdir to local mirror directory: $local_mirror_path");
-    
-    my $ftp = Net::FTP::Recursive->new($ftp_server, Debug => 0, Passive => 1) or $self->logit->logdie("can't instantiate Net::FTP object");
-    $ftp->login('anonymous', $contact_email) or $self->logit->logdie("cannot login to remote FTP server");
-    $ftp->binary()                           or $self->logit->warn("couldn't switch to binary mode for FTP");
-    $ftp->cwd($path)                         or $self->logit->error("cannot chdir to remote dir ($path)") && return;
-    my $r = $ftp->rget(); 
-    $ftp->quit;
-    $self->logit->info("  mirroring directory: complete");
-}
 
 sub mirror_file {
     my ($self,$path,$remote_file,$local_mirror_path) = @_;
@@ -384,52 +287,6 @@ sub unpack_archived_sequence {
 
 
 
-sub _reset_dir {
-    my ($self,$target) = @_;
-        
-    $target =~ /\S+/ or return;
-    
-#    $self->_remove_dir($target) or return;
-    $self->_make_dir($target) or return;    
-    return 1;
-}
-
-sub _remove_dir {
-    my ($self,$target) = @_;
-
-    $target =~ /\S+/ or return;
-    $self->logit->warn("trying to remove $target directory which doesn't exist") unless -e $target;
-    system ("rm -rf $target") or $self->logit->warn("couldn't remove the $target directory");
-    return 1;
-}
-
-sub _make_dir {
-  my ($self,$target) = @_;
-  
-  $target =~ /\S+/ or return;
-  if (-e $target) {
-    $self->logit->warn("trying to create $target directory, which already exists");
-    return 1;
-  }
-  mkdir $target, 0775;
-  return 1;
-}
-
-
-sub get_filename {
-  my ($self,$type,$species) = @_;
-
-  # Custom filenames with inserted values.
-  my $filename;
-  if ($type && $species) {
-    $filename = sprintf($self->config->{filenames}->{custom}->{$type},$species,$self->release);
-  } else {
-    $filename = $self->config->{filenames}->{generic}->{$type};
-  }
-  $self->logit->logdie("Couldn't fetch a suitable output filename for $type:$species") unless $filename;
-  return $filename;
-}
-
 # Parse the species from a g_species string
 sub species_alone {
   my ($self,$species) = @_;
@@ -443,20 +300,7 @@ sub species_alone {
   return $1;
 }
 
-sub system_call {
 
-	my ($cmd, $check_file) = @_;
-	system ("echo \'start\' > $check_file");
-	system ("$cmd; echo \'done\' > $check_file");
-	
-	my $status;
-	
-	do {
-	
-		$status = `cat $check_file`;
-		sleep (10);	
-	} while (!($status=~ m/done/));
-}
 
 # Accessors
 sub support_dbs {
@@ -502,17 +346,6 @@ sub get_epcr_dir {
 }
 
 sub bin_root { return $Bin; }
-sub release  { return shift->{release}; };
-sub release_id {
-  my $self = shift;
-  my $release = $self->release;
-  $release =~ /WS(.*)/;
-  return $1;
-}
-
-sub config {
-  return shift->{config};
-}
 
 sub species {
     my $self = shift;

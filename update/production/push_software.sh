@@ -79,6 +79,7 @@ function rsync_software() {
                 --exclude cache/ \
                 --exclude session/ \
                 --exclude databases/ \
+                --exclude httpd.conf \
                 --exclude tmp/ \
                 --exclude ace_images/ \
                 --exclude html/rss/ \

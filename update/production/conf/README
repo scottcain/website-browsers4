@@ -1,5 +1,0 @@
-Configuration files for maintaining production nodes.
-
-nodes_* list nodes in the wormbase cluster.  These are used
-for the push_software.sh, push_databases.sh, restart_servers.sh,
-and update.sh scripts.
