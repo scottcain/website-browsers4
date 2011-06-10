@@ -6,17 +6,19 @@ use strict;
 use WormBase::Update::Production::PushSupportDatabases;
 use Getopt::Long;
 
-my ($release,$method);
+my ($release,$method,$help);
 GetOptions('release=s' => \$release,
-	   'method=s'  => \$method);
+	   'method=s'  => \$method,
+	   'help=s'    => \$help);
 
-unless ($method) {
+$method ||= 'all_directories';
+if ($help) {
     die <<END;
     
 Usage: $0 --method [by_package|all_directories|by_directory] [--release]
 
 To sync the full support database directory:
- ./push_support_databases.pl --method all_directories
+ ./push_support_databases.pl
 
 To push out a single release using a tarball:
  ./push_support_databases.pl --method by_package --release WSXXX

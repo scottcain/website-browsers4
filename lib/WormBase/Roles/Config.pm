@@ -209,6 +209,18 @@ sub _build_remote_ftp_releases_dir {
 #
 ####################################
 
+# The WormBase NFS server.
+has 'local_nfs_server' => (
+    is => 'ro',
+    default => 'wb-web1.oicr.on.ca'
+    );
+
+has 'local_nfs_root' => (
+    is => 'ro',
+    default => '/usr/local/wormbase/shared',
+    );
+
+
 # WormBase 2.0: used in deploy_sofware
 has 'local_app_nodes' => (
     is => 'ro',
@@ -230,7 +242,8 @@ has 'remote_app_nodes' => (
     );
 
 
-# WormBase 1.0: Used in push_software
+# WormBase 1.0: Used in push_software.
+# Can go away when we retire the old site.
 has 'local_web_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',

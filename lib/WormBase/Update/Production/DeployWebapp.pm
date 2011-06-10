@@ -8,9 +8,6 @@ package WormBase::Update::Production::DeployWebapp;
 # Installing modules (or rsync them)
 # ssh $NODE "cd /usr/local/wormbase/website/production; source wormbase.env; perl Makefile.PL; make installdeps"
 
-# Restart starman Here or in separate services module?
-#    ssh $node "cd /usr/local/wormbase/website/production; source wormbase.env ; bin/starman-production.sh restart"
-
 use Moose;
 extends qw/WormBase::Update/;
 
@@ -57,7 +54,7 @@ sub _build_app_version {
     my $release = $self->release;  
     my $software_version  = $self->pm_version;
     my $software_revision = $self->hg_revision;
-    my $date = `date +%Y-%m-%d`;
+    my $date = `date +%Y.%m.%d`;
     chomp $date;
     
     my $dir = "$release-$date-v${software_version}r$software_revision";
@@ -89,7 +86,7 @@ sub dump_version_file {
     my $software_version = $self->pm_version;
     my $software_revision = $self->hg_revision;
     
-    my $date = `date +%Y-%m-%d`;
+    my $date = `date +%Y.%m.%d`;
     chomp $date;
 
     # Before syncing, dump a small file with these versions.
@@ -133,7 +130,8 @@ sub rsync_staging_directory {
 
     my $app_root = $self->wormbase_root;
     my $app_version = $self->app_version;
-    
+    my $staging_dir = $self->app_staging_dir;    
+
     foreach my $node (@$local_nodes,@$remote_nodes) {
 	$self->log->debug("rsync staging to $node");
 	my $ssh = $self->ssh($node);
@@ -141,13 +139,13 @@ sub rsync_staging_directory {
 
 	$ssh->system("mkdir $app_root/website/$app_version") or $self->log->logdie("Couldn't create a new app version on $node: " . $ssh->error);
 
-	$self->system_call("rsync -Ca --exclude logs --exclude tmp --exclude .hg --exclude extlib.tgz --exclude extlib /usr/local/wormbase/website/staging/ ${node}:/usr/local/wormbase/website/$app_version",'rsyncing staging directory into production');
+	$self->system_call("rsync -Ca --exclude logs --exclude tmp --exclude .hg --exclude extlib.tgz --exclude extlib $taging_dir/ ${node}:$app_root/website/$app_version",'rsyncing staging directory into production');
 
 
 	# Update the symlink.  Here or part of GoLive?
-	$ssh->system("cd /usr/local/wormbase/website; mkdir $app_root/logs ; chmod 777 $app_root/logs ; rm production;  ln -s $app_version production")
+	$ssh->system("cd $app_root/website; mkdir $app_root/logs ; chmod 777 $app_root/logs ; rm production;  ln -s $app_version production")
 	    or $self->log->logdie("Couldn't update the production symlink");
-	
+		
     }
 }
 
@@ -155,7 +153,7 @@ sub create_software_release {
     my $self = shift;
     $self->log->info('creating software release');
     my $wormbase_root = $self->wormbase_root;
-    my $app_version = $self->app_version;
+    my $app_version   = $self->app_version;
     
     $self->system_call("cp -r $wormbase_root/website/staging /usr/local/ftp/pub/wormbase/software/$app_version",'creating software release');
     chdir($self->ftp_root . "/software");
