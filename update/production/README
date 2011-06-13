@@ -20,22 +20,21 @@ Staging -> Production, 05/2011
 
 2. Support Databases (steps/push_support_databases.pl)
 
-  Push support databases into production via a tarball, a single
-  database directory, or all current support database
-  directories.
+  Push support databases into production.
 
-  To run it under cron keeping ALL database/WS* directories in sync:
-     ./push_support_databases.pl --method all_directories
+  The default -- and hard-coded -- behavior is to sync the local
+  support databases directory to our ${NFS mount}/shared/databases. 
+  Other options include via a tarball, a single database directory,
+  or all current support database directories.
+
+  To keep ALL database/WS* directories in sync:
+     ./push_support_databases.pl
 
    # Start after the build deadline date
    0 3 12-31 * * /home/tharris/projects/wormbase/website-admin/update/production/steps/push_support_databases.pl
 
-  To push out a single release using a tarball:
-     ./push_support_databases.pl --method by_package --release WSXXX
-
-  To push out a single release by rsyncing the directory:
-     ./push_support_databases.pl --method by_directory --release WSXXX
-
+ For additional information:
+     ./push_support_databases.pl --help
 
 3. MySQL databases (steps/push_mysql_databases.pl)
 
