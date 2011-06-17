@@ -71,14 +71,14 @@ sub _build_dbh {
 sub run {
     my $self = shift;
     my $release = $self->release;
+    
     $self->copy_ontology();
     
-    # The ontology directory should already exist. Let's make certain.    
-#    my $datadir = $support_db_dir . "/$release/ontology";
+#    # The ontology directory should already exist. Let's make certain.    
+    my $datadir = $self->support_databases_dir. "/$release/ontology";
 
-
-    # Iterate over each ontology
-    foreach my $ontology (keys %ontology2name) {	
+#    # Iterate over each ontology
+   foreach my $ontology (keys %ontology2name) {	
 
 	# compile search_data.txt  
 	$self->compile_search_data($ontology);
@@ -89,22 +89,29 @@ sub run {
 	# compile parent2ids relationships
 	$self->compile_ontology_relationships($ontology,2);
     }
-    
-    # compile id2name
-    $self->parse_search_data(0,1,$self->id2name_file);
-    $self->parse_search_data(1,0,$self->name2id_file);
-    $self->parse_search_data(0,5,$self->id2association_counts_file);    
-    $self->clean_up_search_data();
-   	# $self->get_cummulative_association_counts($self->id2total_association_file);
+   
+   	# compile id2name
+   	$self->parse_search_data(0,1,$self->id2name_file);
+   	$self->parse_search_data(1,0,$self->name2id_file);
+   	$self->parse_search_data(0,5,$self->id2association_counts_file);    
+   	$self->clean_up_search_data();
 	$self->get_geneid2go_ids();
 	$self->get_pheno_gene_data_not();
-    $self->get_pheno_gene_data();
+   	$self->get_pheno_gene_data();
 	$self->get_pheno_rnai_data();
 	$self->get_pheno_variation_data();
 	$self->get_pheno_rnai_data(1);
 	$self->get_pheno_variation_data(1);
 	$self->get_pheno_xgene_data();
+
+
+ my $bin_path = $self->bin_path . "/../helpers/";
+ my $cmd = "get_cummulative_association_counts.pl $release";
+	$self->system_call("$bin_path/$cmd",
+			   "$datadir/dump_ontology_resource_file.chk");
+
     $self->log->debug("crazy gene page compiles complete");
+    
 }
 
 
@@ -723,7 +730,7 @@ sub call_list_paths {
 	my $output_ar = \@output; 
 	#our %id2parents = %{$id2parents_ref};
 	#our %id2name = %{$id2name_hr};
-	$self->list_paths($path_array,$output_ar, $id2parents_ref,$id2name_hr,$parent2ids_hr,$id2association_counts_hr);
+	$self->list_paths($path_array, $id2parents_ref,$id2name_hr,$parent2ids_hr,$id2association_counts_hr); #$output_ar,
 
 }
 
@@ -731,9 +738,9 @@ sub list_paths {
 
 	## enter array
 	
-	my ($self, $destinations_ar, $output_ar,$id2parents_ref,$id2name_hr, $parent2ids_hr,$id2association_counts_hr) = @_;
+	my ($self, $destinations_ar, $id2parents_ref,$id2name_hr, $parent2ids_hr,$id2association_counts_hr) = @_; #$output_ar,
 	my @destinations = @{$destinations_ar};
-	my @output_array = @{$output_ar};
+	my @output_array; # = @{$output_ar};
 	my @path_builds;
 	
 	if (!(@destinations)){
