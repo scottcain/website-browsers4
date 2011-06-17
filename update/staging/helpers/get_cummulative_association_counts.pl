@@ -21,16 +21,16 @@ get_cummulative_associations();
 
 sub get_cummulative_associations {
 
-#my @ids = keys %id2name;
+my @ids = keys %id2name;
 
-my @ids = qw(WBPhenotype:0000604 
-			WBPhenotype:0000218
-			GO:0030104
-			GO:0016714
-			GO:0019899
-			WBbt:006702
-			WBbt:0006339
-			);
+# my @ids = qw(WBPhenotype:0000604 
+# 			WBPhenotype:0000218
+# 			GO:0030104
+# 			GO:0016714
+# 			GO:0019899
+# 			WBbt:006702
+# 			WBbt:0006339
+# 			);
 
 open OUT, ">$outfile" or die "Cannot open outfile\n";
 
