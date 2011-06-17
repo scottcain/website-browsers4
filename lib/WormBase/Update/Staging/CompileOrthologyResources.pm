@@ -74,6 +74,7 @@ sub run {
     my $gene_association_file =
       "$datadir/gene_association." . $release . ".wb.ce";
     my $gene_id2omim_ids_txt_file   = "$datadir/gene_id2omim_ids.txt";
+    my $gene_list_text_file = "$datadir/gene_list.txt";
     my $go_id2omim_ids_txt_file     = "$datadir/go_id2omim_ids.txt";
     my $morbidmap_file              = "$datadir/morbidmap";
     my $omim_id2all_ortholog_data_txt_file =
@@ -92,154 +93,241 @@ sub run {
     my $hs_proteins_txt_file    = "$datadir/hs_proteins.txt";
     my $omim_id2_gene_name_file = "$datadir/omim_id2gene_name.txt";
     my $omim2disease_txt_file   = "$datadir/omim2disease.txt";
-
 	my $hs_ensembl_id2omim_txt_file = "$datadir/hs_ensembl_id2omim.txt";
 	my $omim_id2disease_txt_file     = "$datadir/omim_id2disease.txt";
 	my $omim_id2disease_desc_txt_file  = "$datadir/omim_id2disease_desc.txt";
 	my $omim_id2disease_notes_txt_file = "$datadir/omim_id2disease_notes.txt";
 	my $gene_id2go_bp_txt_file      = "$datadir/gene_id2go_bp.txt";
     my $gene_id2go_mf_txt_file      = "$datadir/gene_id2go_mf.txt";
+    my $last_processed_gene;
+    
 	our $gene_id2phenotype_txt_file  = "$datadir/gene_id2phenotype.txt";
 	
-#     $self->log->info("getting precompiled data");
-#     $self->get_precompile_data("$onto_gene_association_file");
-#     $self->log->debug("get_precompile_data done");
+	$self->log->info("creating gene_list.txt");	
+    $self->get_genes_with_orthologs($gene_list_text_file);   
+    $self->log->debug("get_genes_with_orthologs done");
+	
+	$self->log->info("creating ortholog_other_data.txt");	
+    $self->get_all_ortholog_other_data($datadir, $last_processed_gene);   
+    $self->log->debug("get_all_ortholog_other_data done");  
+	
+    $self->log->info("getting precompiled data");
+    $self->get_precompile_data("$onto_gene_association_file");
+    $self->log->debug("get_precompile_data done");
 
-#     $self->log->info("reconfiguring OMIM file");
-#     $self->reconfigure_omim_file( $omim_txt_file, $omim_reconfigured_txt_file );
-#     $self->log->info("reconfiguring OMIM file done");
-# 
-#     $self->log->info("getting associated phenes");
-#     $self->get_all_associated_phenotypes($gene_id2phenotype_txt_file);
-#     $self->log->info("getting associated phenes done");
+    $self->log->info("reconfiguring OMIM file");
+    $self->reconfigure_omim_file( $omim_txt_file, $omim_reconfigured_txt_file );
+    $self->log->info("reconfiguring OMIM file done");
 
-#     $self->log->info("pulling omim descriptions");
-#     $self->pull_omim_desc($omim_reconfigured_txt_file,$omim_id2disease_desc_txt_file);
-#     $self->log->info("pulling omim descriptions done");
+    $self->log->info("getting associated phenes");
+    $self->get_all_associated_phenotypes($gene_id2phenotype_txt_file);
+    $self->log->info("getting associated phenes done");
 
-#     $self->log->info("getting associated function go terms");
-#     $self->get_all_associated_go_terms( "F", $gene_association_file,
-#         $gene_id2go_mf_txt_file );
-#     $self->log->info("getting associated function go terms done");
-# 
-#     $self->log->info("getting associated process go terms");
-#     $self->get_all_associated_go_terms( "P", $gene_association_file,
-#         $gene_id2go_bp_txt_file );
-#     $self->log->info("getting associated process go terms done");
+    $self->log->info("pulling omim descriptions");
+    $self->pull_omim_desc($omim_reconfigured_txt_file,$omim_id2disease_desc_txt_file);
+    $self->log->info("pulling omim descriptions done");
 
-#     $self->log->info("getting omim text notes");
-#     $self->pull_omim_txt_notes( $omim_reconfigured_txt_file,
-#         $omim_id2disease_notes_txt_file );
-#     $self->log->info("getting omim text notes done");
-# 
-#     $self->log->info("processing omim 2 disease data");
-#     $self->process_omim_2_disease_data( $morbidmap_file,
-#         $omim_id2disease_txt_file );
-#     $self->log->info("processing omim 2 disease data done");
+    $self->log->info("getting associated function go terms");
+    $self->get_all_associated_go_terms( "F", $gene_association_file,
+        $gene_id2go_mf_txt_file );
+    $self->log->info("getting associated function go terms done");
 
-#     $self->log->info("printing hs orthology other data");
-#     $self->print_hs_ortholog_other_data( $ortholog_other_data_txt_file,
-#         $ortholog_other_data_hs_only_txt_file );
-#     $self->log->info("printing hs orthology other data done");
+    $self->log->info("getting associated process go terms");
+    $self->get_all_associated_go_terms( "P", $gene_association_file,
+        $gene_id2go_bp_txt_file );
+    $self->log->info("getting associated process go terms done");
 
-#     $self->log->info("updating hs protein list");
-#     $self->update_hs_protein_list( $all_proteins_txt_file,
-#         $hs_proteins_txt_file );
-#     $self->log->info("updating hs protein list done");
-# 
-#     $self->log->info("processing ensembl 2 omim data");
-#     $self->process_ensembl_2_omim_data( $hs_proteins_txt_file,
-#         $hs_ensembl_id2omim_txt_file );
-#     $self->log->info("processing ensembl 2 omim data done");
-# 
-#     $self->log->info("assembling disease data");
-#     $self->assemble_disease_data( $ortholog_other_data_hs_only_txt_file,
-#         $full_disease_data_txt_file,$hs_ensembl_id2omim_txt_file,$omim_id2disease_txt_file,$omim_id2disease_desc_txt_file,$omim_id2disease_notes_txt_file,$gene_id2go_bp_txt_file,$gene_id2go_mf_txt_file,$gene_id2phenotype_txt_file);
-#     $self->log->info("assembling disease data done");
-# 
-#     $self->log->info("printing disease page data");
-#     $self->print_disease_page_data( $full_disease_data_txt_file,
-#         $disease_page_data_txt_file );
-#     $self->log->info("printing disease page data done");
-# 
-#     $self->log->info("processing omim 2 all ortholog data");
-#     $self->process_pipe_delineated_file(
-#         $disease_page_data_txt_file,    1,
-#         '0-1-2-3-4-5-6-7-8-9-10-11-12', 0,
-#         $omim_id2all_ortholog_data_txt_file
-#     );
-#     $self->log->info("processing omim 2 all ortholog data done");
-# 
-#     $self->log->info("getting disease synonyms");
-#     $self->pull_disease_synonyms( $omim_txt_file,
-#         $omim_id2disease_synonyms_txt_file );
-#     $self->log->info("getting disease synonyms done");
+    $self->log->info("getting omim text notes");
+    $self->pull_omim_txt_notes( $omim_reconfigured_txt_file,
+        $omim_id2disease_notes_txt_file );
+    $self->log->info("getting omim text notes done");
 
-#     $self->log->info("processing omim 2 phenotype");
-#     $self->process_pipe_delineated_file( $disease_page_data_txt_file, 1, '8', 1,
-#         $omim_id2phenotypes_txt_file );
-#     $self->log->info("processing omim 2 phenotype done");
-# 
-#     $self->log->info("processing omim 2 go id file");
-#     $self->process_pipe_delineated_file( $disease_page_data_txt_file, 1, '9-10',
-#         1, $omim_id2go_ids_txt_file );
-#     $self->log->info("processing omim 2 go id file done");
+    $self->log->info("processing omim 2 disease data");
+    $self->process_omim_2_disease_data( $morbidmap_file,
+        $omim_id2disease_txt_file );
+    $self->log->info("processing omim 2 disease data done");
 
-# $self->process_pipe_delineated_file($disease_page_data_txt_file,1,'0',0,$omim_id2disease_name_txt_file );
-# $self->process_pipe_delineated_file($disease_page_data_txt_file,2,'1',1,$gene_id2omim_ids_txt_file);
-#     $self->log->info("compiling omim go data");
-#     $self->compile_omim_go_data( $omim_id2go_ids_txt_file,$go_id2omim_ids_txt_file);
-#     $self->log->info("compiling omim go data done");
+    $self->log->info("printing hs orthology other data");
+    $self->print_hs_ortholog_other_data( $ortholog_other_data_txt_file,
+        $ortholog_other_data_hs_only_txt_file );
+    $self->log->info("printing hs orthology other data done");
 
-#     $self->log->info("assembling search data");
-#     	$self->assemble_search_data($disease_search_data_txt_file,$omim_id2all_ortholog_data_txt_file,$omim_id2disease_name_txt_file,$omim_id2disease_desc_txt_file,$omim_id2disease_notes_txt_file,$omim_id2disease_synonyms_txt_file,$omim_id2phenotypes_txt_file);
-#     $self->log->info("assembling search data done");
+    $self->log->info("updating hs protein list");
+    $self->update_hs_protein_list( $all_proteins_txt_file,
+        $hs_proteins_txt_file );
+    $self->log->info("updating hs protein list done");
+
+    $self->log->info("processing ensembl 2 omim data");
+    $self->process_ensembl_2_omim_data( $hs_proteins_txt_file,
+        $hs_ensembl_id2omim_txt_file );
+    $self->log->info("processing ensembl 2 omim data done");
+
+    $self->log->info("assembling disease data");
+    $self->assemble_disease_data( $ortholog_other_data_hs_only_txt_file,
+        $full_disease_data_txt_file,$hs_ensembl_id2omim_txt_file,$omim_id2disease_txt_file,$omim_id2disease_desc_txt_file,$omim_id2disease_notes_txt_file,$gene_id2go_bp_txt_file,$gene_id2go_mf_txt_file,$gene_id2phenotype_txt_file);
+    $self->log->info("assembling disease data done");
+
+    $self->log->info("printing disease page data");
+    $self->print_disease_page_data( $full_disease_data_txt_file,
+        $disease_page_data_txt_file );
+    $self->log->info("printing disease page data done");
+
+    $self->log->info("processing omim 2 all ortholog data");
+    $self->process_pipe_delineated_file(
+        $disease_page_data_txt_file,    1,
+        '0-1-2-3-4-5-6-7-8-9-10-11-12', 0,
+        $omim_id2all_ortholog_data_txt_file
+    );
+    $self->log->info("processing omim 2 all ortholog data done");
+
+    $self->log->info("getting disease synonyms");
+    $self->pull_disease_synonyms( $omim_txt_file,
+        $omim_id2disease_synonyms_txt_file );
+    $self->log->info("getting disease synonyms done");
+
+    $self->log->info("processing omim 2 phenotype");
+    $self->process_pipe_delineated_file( $disease_page_data_txt_file, 1, '8', 1,
+        $omim_id2phenotypes_txt_file );
+    $self->log->info("processing omim 2 phenotype done");
+
+    $self->log->info("processing omim 2 go id file");
+    $self->process_pipe_delineated_file( $disease_page_data_txt_file, 1, '9-10',
+        1, $omim_id2go_ids_txt_file );
+    $self->log->info("processing omim 2 go id file done");
+	
+	$self->log->info("processing omim to disease name file");
+	$self->process_pipe_delineated_file($disease_page_data_txt_file,1,'0',0,$omim_id2disease_name_txt_file );
+	$self->log->info("processing omim to disease name file done");
+	
+	$self->log->info("processing gene_id to omim_ids file");
+	$self->process_pipe_delineated_file($disease_page_data_txt_file,2,'1',1,$gene_id2omim_ids_txt_file);
+	$self->log->info("processing gene_id to omim_ids file done");
+
+    $self->log->info("compiling omim go data");
+    $self->compile_omim_go_data( $omim_id2go_ids_txt_file,$go_id2omim_ids_txt_file);
+    $self->log->info("compiling omim go data done");
+
+    $self->log->info("assembling search data");
+    	$self->assemble_search_data($disease_search_data_txt_file,$omim_id2all_ortholog_data_txt_file,$omim_id2disease_name_txt_file,$omim_id2disease_desc_txt_file,$omim_id2disease_notes_txt_file,$omim_id2disease_synonyms_txt_file,$omim_id2phenotypes_txt_file);
+    $self->log->info("assembling search data done");
 
     $self->log->info("processing omim 2 gene name");
     $self->process_omim_id2_gene_name( $gene_id2omim_ids_txt_file,
         $omim_id2_gene_name_file );
     $self->log->info("processing omim 2 gene done");
-# 
-#     $self->log->info("pushing out files for next release");
-#     $self->push_files_for_next_release( $all_proteins_txt_file,
-#         $hs_proteins_txt_file );
-#     $self->log->info("pushing out files for next release done");
+
+    $self->log->info("pushing out files for next release");
+    $self->push_files_for_next_release( $all_proteins_txt_file,
+        $hs_proteins_txt_file );
+    $self->log->info("pushing out files for next release done");
 }
 
-# sub get_precompile_data {
-# 
-#     my ($self, $onto_gene_association_file) = @_;
-#     my $datadir            = $self->datadir;
-#     my $ontology_datadir   = $self->ontology_datadir;
-#     my $pc_datadir         = $self->precompile_datadir;
-#     my $precompile_datadir = "$pc_datadir/orthology_staging";
-# 
-#     ## get external, and data from last release
-#     my $check_file = "$datadir/get_precompile.chk";
-# 
-#     ## system_call -- set up a template
-#     my $pull_extenal_data_command = "cp $precompile_datadir/* $datadir";
-#     $self->system_call( $pull_extenal_data_command, $check_file );
-# 
-#     ## copy ontology data
-# 
-#     # id2name.txt
-#     my $copy_id2name_cmd = "cp $ontology_datadir\/id2name.txt $datadir";
-#     $self->system_call( $copy_id2name_cmd, $check_file );
-# 
-#     # name2id.txt
-#     my $copy_name2id_cmd = "cp $ontology_datadir\/name2id.txt $datadir";
-#     $self->system_call( $copy_name2id_cmd, $check_file );
-# 
-#     # gene_association file
-#     my $copy_gene_association_command =
-#       "cp $ontology_datadir\/$onto_gene_association_file $datadir";
-#     $self->system_call( $copy_gene_association_command, $check_file );
-# 
-#     ## unzip OMIM file
-#     my $unzip_cmd = "gunzip $datadir/omim.txt.Z";
-#     $self->system_call( $unzip_cmd, $check_file );
-# }
+###################
+#
+# METHODS
+#
+###################
+
+sub get_genes_with_orthologs {
+    my ($self,$outfile) = @_;
+    open OUTFILE, ">$outfile" or $self->log->logdie("Cannot open gene_list output file");
+    my $class = 'Gene';
+	my $genes = $self->dbh->fetch_many(-class => $class);
+	
+	while(my $gene = $genes->next){
+		my @oo = $gene->Ortholog_other;
+		
+		if (@oo) {
+			print OUTFILE "$gene\n";
+		} else 
+		{
+			next;
+		}
+	}
+	close OUTFILE;
+}
+
+
+sub get_all_ortholog_other_data {
+    my ($self,$datadir,$last_processed_gene) = @_;
+    my $gene_list = "gene_list.txt";
+    my $ortholog_other_data_txt_file = "ortholog_other_data.txt";
+	my $last_processed_gene_txt = "last_processed_gene.txt";
+	my $DB = $self->dbh;
+	
+	open GENELIST, "< $datadir/$gene_list" or die "Cannot open $gene_list for getting orthologs\n";
+
+	my $gene_id;
+	
+	## iterate down list to last entry processed
+	
+	if ($last_processed_gene) {
+		while (!($gene_id eq $last_processed_gene)) {
+			$gene_id = <GENELIST>;
+			chomp $gene_id;
+		} 
+	}
+
+	open OUT, ">> $datadir/$ortholog_other_data_txt_file" or die "Cannot open $datadir/$ortholog_other_data_txt_file\n"; 
+	
+	foreach my $gene_id (<GENELIST>) {
+		chomp $gene_id;
+		my $gene = $DB->fetch(-class=>'Gene', -name=>$gene_id);
+		print "processing\: $gene_id\n";
+		my @ortholog_others;
+		eval{ @ortholog_others = $gene->Ortholog_other;};
+		
+		foreach my $ortholog_other (@ortholog_others){
+			my $method; 
+		  	eval{$method = $ortholog_other->right(2);};
+		  	my $protein_id;
+			eval{$protein_id = $ortholog_other->DB_info->right(3);};
+			my $db;
+			eval{$db = $ortholog_other->DB_info->right;};
+			my $fa;
+			eval{$fa = "From_analysis";};
+			my $species;
+			eval{$species = $ortholog_other->Species;}; 
+			print OUT "$gene\|$db\|$protein_id\|$species\|$fa\|$method\n";
+        }
+		system("echo $gene_id > $datadir/$last_processed_gene_txt");		
+	}	
+}
+
+sub get_precompile_data {
+
+    my ($self, $onto_gene_association_file) = @_;
+    my $datadir            = $self->datadir;
+    my $ontology_datadir   = $self->ontology_datadir;
+    my $pc_datadir         = $self->precompile_datadir;
+    my $precompile_datadir = "$pc_datadir/orthology_staging";
+
+    ## get external, and data from last release
+    my $check_file = "$datadir/get_precompile.chk";
+
+    ## system_call -- set up a template
+    my $pull_extenal_data_command = "cp $precompile_datadir/* $datadir";
+    $self->system_call( $pull_extenal_data_command, $check_file );
+
+    ## copy ontology data
+
+    # id2name.txt
+    my $copy_id2name_cmd = "cp $ontology_datadir\/id2name.txt $datadir";
+    $self->system_call( $copy_id2name_cmd, $check_file );
+
+    # name2id.txt
+    my $copy_name2id_cmd = "cp $ontology_datadir\/name2id.txt $datadir";
+    $self->system_call( $copy_name2id_cmd, $check_file );
+
+    # gene_association file
+    my $copy_gene_association_command =
+      "cp $ontology_datadir\/$onto_gene_association_file $datadir";
+    $self->system_call( $copy_gene_association_command, $check_file );
+
+    ## unzip OMIM file
+    my $unzip_cmd = "gunzip $datadir/omim.txt.Z";
+    $self->system_call( $unzip_cmd, $check_file );
+}
 
 sub reconfigure_omim_file {
 
