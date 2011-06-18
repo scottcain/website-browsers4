@@ -42,7 +42,7 @@ sub update_ftp_site_symlinks {
 
     my @releases;
     if ($release) {
-	@releases = glob("$releases_dir/$current_release") or die "$!";
+	@releases = glob("$releases_dir/$release") or die "$!";
     } else {
 	@releases = glob("$releases_dir/*") or die "$!";
     }
@@ -146,7 +146,7 @@ sub update_mysql_symlinks {
     my $mysql     = $self->mysql_data_dir;
     foreach my $name (@$species) {	
 	chdir($mysql);  # cd to the data dir;
-	$self->update_symlink({ target  => "$name_$release",
+	$self->update_symlink({ target  => "${name}_$release",
 				symlink => $name, });
     }
 }

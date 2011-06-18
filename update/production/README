@@ -20,6 +20,13 @@ Staging -> Production, 05/2011
 
 2. Support Databases (steps/push_support_databases.pl)
 
+  UPDATE: The *best* way to do this is probably tar the dir
+  (not gzip it) and send it over the wire:
+  tar -c /path/to/dir | ssh remote_server 'tar -xvf - -C /absolute/path/to/remotedir'
+
+  Or Rsync:
+  rsync -avW -e ssh /path/to/dir/ remote_server:/path/to/remotedir
+
   Push support databases into production.
 
   The default -- and hard-coded -- behavior is to sync the local
@@ -68,12 +75,16 @@ Staging -> Production, 05/2011
 
 
 
-5. Update symlinks on both production nodes and on the FTP site
+5. Update (acedb and mysql) symlinks on both production nodes; 
+   update symlinks on the  FTP site
 
    ./steps/go_live.pl WSXXX 
 
 
-6. Restart services (not yet done)
+6. Restart services
+  
+   (This only restarts starman)
+  ./steps/restart_starman.pl WSXXX
 
 
 Manually:
@@ -82,6 +93,27 @@ Manually:
 * Send announcemtnt
 * Post announcement on blog
 
+
+
+
+
+To update the software ONLY:
+
+
+4. Deploy newest version of the webapp.
+   
+   Rsync the staging/ directory to new directories on production
+   nodes in unique directories by version.
+   
+   Also: create a software release on the FTP site and a snapshot for reference.
+
+  ./steps/deploy_webapp.pl WSXXXX
+
+
+6. Restart services
+  
+   (This only restarts starman)
+  ./steps/restart_starman.pl WSXXX
 
 
 

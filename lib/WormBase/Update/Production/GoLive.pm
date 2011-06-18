@@ -51,10 +51,11 @@ sub update_mysql_symlinks {
     foreach my $node (@$local_nodes,@$remote_nodes) {
 	$self->log->debug("adjusting mysql symlinks on $node");
 	my ($species) = $self->wormbase_managed_species;  # Will be species updated this release.
+	push @$species,'clustal';   # clustal database, too.
 	foreach my $name (@$species) {
 	    my $ssh = $self->ssh($node);
 	    $ssh->error && $self->log->logdie("Can't ssh to $manager\@$node: " . $ssh->error);	
-	    $ssh->system("cd $mysql_data_dir ; rm $name ; ln -s $name_$release $name") or
+	    $ssh->system("cd $mysql_data_dir ; rm $name ; ln -s ${name}_$release $name") or
 		$self->log->logdie("remote command updating the mysql symlink failed " . $ssh->error);
 	}
     }
@@ -67,15 +68,15 @@ sub update_ftp_site_symlinks {
     my $releases_dir = $self->ftp_releases_dir;
     my $species_dir  = $self->ftp_species_dir;
     
-    chdir($releases_dir);
-    $self->update_symlink({target => $release,
-			   symlink => 'current-www.wormbase.org-release',
-			  });
-
     # If provided, update symlinks on the FTP site
     # for that release.  Otherwise, walk through
     # the releases directory.
     my $release = $self->release;
+
+    chdir($releases_dir);
+    $self->update_symlink({target => $release,
+			   symlink => 'current-www.wormbase.org-release',
+			  });
 
     my @releases;
     if ($release) {

@@ -10,9 +10,9 @@
 # Description:       starts nginx using start-stop-daemon
 ### END INIT INFO
 
-PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/wormbase/services/nginx/sbin
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/wormbase/shared/services/nginx/sbin
 PIDFILE=/usr/local/wormbase/logs/nginx.pid
-DAEMON=/usr/local/wormbase/services/nginx/sbin/nginx
+DAEMON=/usr/local/wormbase/shared/services/nginx/sbin/nginx
 NAME=nginx
 DESC=nginx
 

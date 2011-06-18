@@ -132,14 +132,31 @@ sub rsync_staging_directory {
     my $app_version = $self->app_version;
     my $staging_dir = $self->app_staging_dir;    
 
-    foreach my $node (@$local_nodes,@$remote_nodes) {
+    
+    my $nfs_server = $self->local_nfs_server;
+    my $nfs_root   = $self->local_nfs_root;
+
+    $self->log->debug("rsync staging to nfs: $nfs_server");
+    my $ssh = $self->ssh($nfs_server);
+    $ssh->error && $self->log->logdie("Can't ssh to $nfs_server: " . $ssh->error);
+    
+    $ssh->system("mkdir $nfs_root/website/$app_version") or $self->log->logdie("Couldn't create a new app version on $nfs_server: " . $ssh->error);
+
+    $self->system_call("rsync -Ca --exclude tmp --exclude .hg --exclude extlib $staging_dir/ $nfs_server:$nfs_root/website/$app_version",'rsyncing staging directory into production');
+
+    # Update the symlink.  Here or part of GoLive?
+    $ssh->system("cd $nfs_root/website ; rm production ;  ln -s $app_version production")
+	or $self->log->logdie("Couldn't update the production symlink");
+   
+    foreach my $node (@$remote_nodes) {
+#    foreach my $node (@$local_nodes,@$remote_nodes) {
 	$self->log->debug("rsync staging to $node");
 	my $ssh = $self->ssh($node);
 	$ssh->error && $self->log->logdie("Can't ssh to $node: " . $ssh->error);
 
 	$ssh->system("mkdir $app_root/website/$app_version") or $self->log->logdie("Couldn't create a new app version on $node: " . $ssh->error);
 
-	$self->system_call("rsync -Ca --exclude logs --exclude tmp --exclude .hg --exclude extlib.tgz --exclude extlib $taging_dir/ ${node}:$app_root/website/$app_version",'rsyncing staging directory into production');
+	$self->system_call("rsync -Ca --exclude logs --exclude tmp --exclude .hg --exclude extlib.tgz --exclude extlib $staging_dir/ ${node}:$app_root/website/$app_version",'rsyncing staging directory into production');
 
 
 	# Update the symlink.  Here or part of GoLive?
