@@ -1,4 +1,4 @@
-package WormBase::Update::Staging::CompileOrthologyResources.pm;
+package WormBase::Update::Staging::CompileOrthologData;
 
 
 use lib "/usr/local/wormbase/website/tharris/extlib";
@@ -57,7 +57,8 @@ sub get_all_ortholog_other_data {
     my $gene_list = "gene_list.txt";
     my $ortholog_other_data_txt_file = "ortholog_other_data.txt";
 	my $last_processed_gene_txt = "last_processed_gene.txt";
-
+	my $DB = $self->dbh;
+	
 	open GENELIST, "< $datadir/$gene_list" or die "Cannot open $gene_list for getting orthologs\n";
 
 	my $gene_id;
