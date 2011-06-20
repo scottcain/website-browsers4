@@ -35,13 +35,13 @@ sub restart_starman {
     my ($self,$node,$ssh) = @_;
 
     my $app_root    = $self->wormbase_root;
-
+    $self->log->info("restarting starman on $node");
 #    ssh $node "cd /usr/local/wormbase/website/production; source wormbase.env ; bin/starman-production.sh restart"
 
 #    $ssh->system("cd $app_root/website/$app_version; cp wormbase.env.template wormbase.env ; perl -p -i -e 's/\\[% app %\\]/production/g' wormbase.env")
 #	or $self->log->logdie("couldn't fix the environment file");	
     
-    $ssh->system("cd $app_root/website/production; bin/starman-production.sh stop ; bin/starman-production.sh start")
+    $ssh->system("cd $app_root/website/production; bin/starman-production.sh stop ; sleep 5; killall -9 starman ; rm -f /tmp/production.pid ; bin/starman-production.sh start")
 	or $self->log->logdie("couldn't restart starman" . $ssh->error);	
 
     
