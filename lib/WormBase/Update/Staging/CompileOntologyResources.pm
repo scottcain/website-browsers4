@@ -72,37 +72,37 @@ sub run {
     my $self = shift;
     my $release = $self->release;
     
-    $self->copy_ontology();
-    
-#    # The ontology directory should already exist. Let's make certain.    
-    my $datadir = $self->support_databases_dir. "/$release/ontology";
-
-#    # Iterate over each ontology
-   foreach my $ontology (keys %ontology2name) {	
-
-	# compile search_data.txt  
-	$self->compile_search_data($ontology);
-	
-	# compile id2parents relationships
-	$self->compile_ontology_relationships($ontology,1);
-	
-	# compile parent2ids relationships
-	$self->compile_ontology_relationships($ontology,2);
-    }
-   
-   	# compile id2name
-   	$self->parse_search_data(0,1,$self->id2name_file);
-   	$self->parse_search_data(1,0,$self->name2id_file);
-   	$self->parse_search_data(0,5,$self->id2association_counts_file);    
-   	$self->clean_up_search_data();
-	$self->get_geneid2go_ids();
-	$self->get_pheno_gene_data_not();
-   	$self->get_pheno_gene_data();
-	$self->get_pheno_rnai_data();
-	$self->get_pheno_variation_data();
-	$self->get_pheno_rnai_data(1);
-	$self->get_pheno_variation_data(1);
-	$self->get_pheno_xgene_data();
+#    $self->copy_ontology();
+#    
+    # The ontology directory should already exist. Let's make certain.    
+	my $datadir = $self->support_databases_dir. "/$release/ontology";
+#
+##    # Iterate over each ontology
+#   foreach my $ontology (keys %ontology2name) {	
+#
+#	# compile search_data.txt  
+#	$self->compile_search_data($ontology);
+#	
+#	# compile id2parents relationships
+#	$self->compile_ontology_relationships($ontology,1);
+#	
+#	# compile parent2ids relationships
+#	$self->compile_ontology_relationships($ontology,2);
+#    }
+#   
+#   	# compile id2name
+#   	$self->parse_search_data(0,1,$self->id2name_file);
+#   	$self->parse_search_data(1,0,$self->name2id_file);
+#   	$self->parse_search_data(0,5,$self->id2association_counts_file);    
+#   	$self->clean_up_search_data();
+#	$self->get_geneid2go_ids();
+#	$self->get_pheno_gene_data_not();
+#   	$self->get_pheno_gene_data();
+#	$self->get_pheno_rnai_data();
+#	$self->get_pheno_variation_data();
+#	$self->get_pheno_rnai_data(1);
+#	$self->get_pheno_variation_data(1);
+#	$self->get_pheno_xgene_data();
 
 
  my $bin_path = $self->bin_path . "/../helpers/";
