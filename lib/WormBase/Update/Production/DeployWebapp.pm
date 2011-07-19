@@ -45,6 +45,35 @@ sub _build_hg_revision {
     return $hg_revision;
 }
 
+has 'git_commits' => (
+    is => 'ro',
+    lazy_build => 1,
+    );
+
+sub _build_git_commits {       
+    my $self = shift;
+    chdir($self->app_staging_dir);
+    my $revision = `git describe`;
+    chomp $revision;
+    my ($ws,$commits,$hash) = split("-",$revision);
+    $commits ||= '0';
+    return $commits;
+}
+
+has 'git_cumulative_commits' => (
+    is => 'ro',
+    lazy_build => 1,
+    );
+
+sub _build_git_cumulative_commits {       
+    my $self = shift;
+    chdir($self->app_staging_dir);
+    my $commits = `git shortlog | grep -E '^[ ]+\\w+' | wc -l`;
+    chomp $commits;
+    return $commits;
+}
+
+
 has 'app_version' => (
     is => 'ro',
     lazy_build => 1);
@@ -53,7 +82,8 @@ sub _build_app_version {
     my $self = shift;
     my $release = $self->release;  
     my $software_version  = $self->pm_version;
-    my $software_revision = $self->hg_revision;
+#    my $software_revision = $self->git_cumulative_commits;
+    my $software_revision = $self->git_commits;
     my $date = `date +%Y.%m.%d`;
     chomp $date;
     
@@ -84,7 +114,8 @@ sub dump_version_file {
     chdir($self->app_staging_dir);
     my $release = $self->release;  
     my $software_version = $self->pm_version;
-    my $software_revision = $self->hg_revision;
+    my $software_commits = $self->git_commits;
+    my $software_commits_running = $self->git_cumulative_commits;
     
     my $date = `date +%Y.%m.%d`;
     chomp $date;
@@ -96,7 +127,9 @@ sub dump_version_file {
 DATE=$date
 DATABASE_VERSION=$release
 SOFTWARE_VERSION=$software_version
-CHANGESET=$software_revision
+COMMITS_SINCE_TAG=$software_commits
+COMMITS_CUMULATIVE=$software_commits_running
+VERSION_STRING="v{$software_version}r${software_commits}"
 END
 close OUT;
 
