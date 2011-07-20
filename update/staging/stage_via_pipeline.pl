@@ -16,6 +16,7 @@ my @steps = qw/
               CompileGeneResources
               CompileOntologyResources
               UnpackClustalWDatabase
+              ConvertGFF2ToGFF3
 /;
 
 my $start = [gettimeofday];
