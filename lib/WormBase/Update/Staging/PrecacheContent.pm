@@ -3,6 +3,8 @@ package WormBase::Update::Staging::PrecacheContent;
 use Moose;
 use Ace;
 use WWW::Mechanize;
+use Config::JFDI;
+use Data::Dumper;
 extends qw/WormBase::Update/;
 
 # The symbolic name of this step
@@ -14,80 +16,126 @@ has 'step' => (
 sub run {
     my $self = shift;       
     my $release = $self->release;
+    $self->precache_content();
     
-    foreach my $class (qw/gene variation protein/) {
-	$self->precache_classic_content($class);
-    }
+#    foreach my $class (qw/gene variation protein/) {
+#	$self->precache_classic_content($class);
+#    }
 }
 
 
 # Precache specific WormBase widgets.
-# Use this script to populate the ON DISK (not squid) cache.
-# It should be run after a release to populate the cache.
-# This SHOULD be responsive to the app's config file
-# which has "precache" directives for widgets.
-# Oh well.
+# Reads the application configuration file and looks for widgets
+# with the "precache" flag set.
 
-# The cache will reside at /usr/local/wormbase/shared/cache.
-# I will need to sync this to production (and hopefully the
-# cache will be portable).
-# Cached entries will not be rendered HTML but raw data.
+# For each of these, a REST request for HTML will be sent.
+
+# The web app will cache data structures at:
+# /usr/local/wormbase/shared/cache.
+
+# Returned HTML will be stored at:
+# /usr/local/wormbase/databases/cache/VERSION
+
 
 sub precache_content {
     my $self = shift;
-    # Class, object name, widget
+
+    $|++;
+
+    my $c = Config::JFDI->new(file => '/usr/local/wormbase/website/tharris/wormbase.conf');
+    my $config = $c->get;
+
     my $base_url = 'http://beta.wormbase.org/rest/widget/%s/%s/%s';
     
     my $db      = Ace->connect(-host=>'localhost',-port=>2005);
-    
-    my %classes = ( gene      => [ qw/overview/ ],
-		    variation => [ qw/overview/ ],
-		    protein   => [ qw/overview external_links molecular_details homology history/ ],
-	);
-    
     my $version = $db->status->{database}{version};
+    my $cache_root = join("/",$self->support_databases_dir,$version,'cache');
+    system("mkdir -p $cache_root/logs");
 
-    foreach my $class (keys %classes) {
-	my $cache = join("/",$self->support_databases_dir,$version,'cache',$class);
-	my %previous = _parse_cache_log($cache,$version); 
-	system("mkdir -p $cache");
-	open OUT,">>$cache/$version-precached-pages.txt";
-	my $start = time();
+    
+    # Turn off autocheck so that server errors don't kill us.
+    my $mech = WWW::Mechanize->new(-agent     => 'WormBase-PreCacher/1.0',
+				   -autocheck => 0 );
+    
+    # Set the stack depth to 0: no need to retain history;
+    $mech->stack_depth(0);
+    
+#    print Dumper($config);
+    foreach my $class (sort keys %{$config->{sections}->{species}}) {
+	next if $class eq 'title'; # Kludge.
 	
-	my $ace_class = ucfirst($class);
-	my $i = $db->fetch_many($ace_class => '*');
-	while (my $obj = $i->next) {
+	# Horribly broken classes, currently uncacheable.
+	next if $class eq 'anatomy_term';
+
+
+	foreach my $widget (keys %{$config->{sections}->{species}->{$class}->{widgets}}) {
+	    my $precache = eval { $config->{sections}->{species}->{$class}->{widgets}->{$widget}->{precache}; };
+	    $precache ||= 0;
+
+#	    print join("-",keys %{$config->{sections}->{species}->{$class}->{widgets}->{$widget}}) . "\n";
+#	    print join("\t",$class,$widget,$precache) . "\n";
 	    
-	    if ($previous{$obj}) {
-		print STDERR "Already seen $class $obj. Skipping...";
-		print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
-		next;
-	    }
-	    
-	    print STDERR "Fetching and caching $obj\n";
-	    print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n"; 
-	    
-	    my %status;
-	    foreach my $widget (@{$classes->{$class}}) {
-		my $url = sprintf($base_url,$obj->name,$widget);
+	    if ($precache) {
+		my $cache = join("/",$cache_root,$class,$widget);
+		system("mkdir -p $cache");
 		
-		my $cache_start = time();
+		my $cache_log = join("/",$cache_root,'logs',"$version-$class-$widget.txt");
+		my %previous = _parse_cached_widgets_log($cache_log); 
 		
-		# No need to watch state - create a new agent for each gene to keep memory usage low.
-		my $mech = WWW::Mechanize->new(-agent => 'WormBase-PreCacher/1.0');
-		$mech->get($url);
-		my $success = ($mech->success) ? 'success' : 'failed';
-		my $cache_stop = time();
-		print OUT join("\t",$class,$obj,$widget,$url,$success,$cache_stop - $cache_start),"\n";
-		$status{$class}++;
+		# Open cache log for writing.
+		open OUT,">>$cache_log";
+
+		# And set up the cache error file
+		my $cache_err = join("/",$cache_root,'logs',"errors.txt");
+		open ERROR,">>$cache_err";
+		
+	    	my $start = time();
+
+		my %status;
+		
+		# Assume that classes in the config file match AceDB classes.
+		my $ace_class = ucfirst($class);
+		my $i = $db->fetch_many($ace_class => '*');
+		while (my $obj = $i->next) {
+		    if ($previous{$obj}) {
+			print STDERR "Already seen $class $obj. Skipping...";
+			print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
+			next;
+		    }
+		    
+		    print STDERR "Fetching and caching $class:$widget:$obj\n";
+		    print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n"; 
+		    
+		    my $cache_start = time();
+		    # Create a REST request of the following format:
+		    # curl -H content-type:application/json http://api.wormbase.org/rest/widget/gene/WBGene00006763/cloned_by
+
+		    # api delivers HTML by default.
+                    # $mech->add_header("Content-Type" => 'text/html');
+
+		    my $url = sprintf($base_url,$class,$obj,$widget);
+		    eval { $mech->get($url) };
+		    my $success = ($mech->success) ? 'success' : 'failed';
+		    my $cache_stop = time();
+		    print OUT join("\t",$class,$obj,$widget,$url,$success,$cache_stop - $cache_start),"\n";
+		    $status{$class}++;
+		 
+		    if ($mech->success) {
+			$mech->save_content("$cache/$obj.html");
+#			open CACHE,">$cache/$obj.html";
+#			print CACHE $mech->content;
+#			close CACHE;
+		    } else {
+			print ERROR join("\t",$class,$obj,$widget,$url,$success,$cache_stop - $cache_start),"\n";
+		    }		    	
+		}
+		my $end = time();
+		my $seconds = $end - $start;
+		print OUT "\n\nTime required to cache " . (scalar keys %status) . ": ";
+		printf OUT "%d days, %d hours, %d minutes and %d seconds\n",(gmtime $seconds)[7,2,1,0];    
+		close OUT;
 	    }
-	}
-	
-	my $end = time();
-	my $seconds = $end - $start;
-	print OUT "\n\nTime required to cache " . (scalar keys %status) . ": ";
-	printf OUT "%d days, %d hours, %d minutes and %d seconds\n",(gmtime $seconds)[7,2,1,0];    
-	close OUT;
+	}	
     }
 }
 
@@ -183,7 +231,29 @@ sub _parse_cache_log {
     }
     return undef;
 }
-    
+
+
+sub _parse_cached_widgets_log {
+    my $cache_log = shift;
+
+#    open IN,"$previous";
+#    return unless (-e "$cache/$version-precached-pages.txt");
+    if (-e "$cache_log") {
+	open IN,"$cache_log" or die "$!";
+	my %previous;
+	while (<IN>) {
+	    chomp;
+	    my ($class,$obj,$name,$url,$status,$cache_stop) = split("\t");
+	    $previous{$obj}++ unless $status eq 'failed';
+	    print STDERR "Recording $obj as seen...";
+	    print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
+	}
+	close IN;
+	return %previous;
+    }
+    return undef;
+}
+
 
 
 1;
