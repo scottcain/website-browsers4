@@ -219,7 +219,11 @@ sub precache_to_couchdb {
 		while (my $obj = $i->next) {
 
 		    # In the future we might want to selectively REPLACE documents.
-		    next if ($self->check_if_stashed_in_couchdb($class,$widget,$obj));
+		    if ($self->check_if_stashed_in_couchdb($class,$widget,$obj)) {
+			print STDERR " --> $class:$widget:$obj ALREADY CACHED; SKIPPING\n";
+			print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n"; 
+			next;
+		    }
 		    
 		    print STDERR "Fetching and caching $class:$widget:$obj\n";
 		    print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n"; 
