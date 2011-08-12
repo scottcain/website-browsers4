@@ -13,7 +13,6 @@ with 'WormBase::Roles::Config';
 has 'symbolic_name' => ( is => 'rw' );
 has 'release'       => ( is => 'rw' );
 
-
 # Database symbolic name. Mostly for MySQL
 has 'db_symbolic_name' => (
     is => 'rw',

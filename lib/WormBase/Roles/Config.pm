@@ -24,6 +24,17 @@ sub ssh {
 
 ####################################
 #
+# Couch DB
+#
+####################################
+
+# This is the location of our root couch db server; corresponds to web6
+
+has 'couchdbhost'     => ( is => 'ro', default => '206.108.125.165:5984' );
+
+
+####################################
+#
 # WormBase root, tmp dir, support dbs
 #
 ####################################

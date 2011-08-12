@@ -26,7 +26,6 @@ sub run {
     # OR each node gets their own.
     my ($local_nodes)  = $self->local_support_database_nodes; 
     my ($remote_nodes) = $self->remote_support_database_nodes;
-#    foreach my $node (@$remote_nodes,@$local_nodes) {
     foreach my $node (@$local_nodes,@$remote_nodes) {
 #    foreach my $node (@$remote_nodes) {
 	# Three approaches:

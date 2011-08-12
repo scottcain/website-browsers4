@@ -19,6 +19,11 @@ Staging -> Production, 05/2011
 
 
 2. Support Databases (steps/push_support_databases.pl)
+   
+  TODO:
+  Add FIFO to accelerate synchronization
+  http://engineering.tumblr.com/post/7658008285/efficiently-copying-files-to-multiple-destinations
+
 
   UPDATE: The *best* way to do this is probably tar the dir
   (not gzip it) and send it over the wire:

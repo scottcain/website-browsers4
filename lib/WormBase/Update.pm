@@ -10,8 +10,8 @@ use FindBin qw($Bin);
 use Moose;
 extends qw/WormBase/;
 
-with 'WormBase::Roles::Config';
-   
+with qw/WormBase::Roles::Config/;
+
 has 'blastdb_format_script' => (
     is => 'ro',
     default => '/usr/local/wormbase/services/blast/bin/formatdb',
