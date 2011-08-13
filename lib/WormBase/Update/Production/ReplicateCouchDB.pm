@@ -51,8 +51,13 @@ sub replicate {
 				       target => $remote_node . ":5984",
 				       database => lc($self->release) } );
     
-    foreach (keys %$response) {
-	print $_ . " " . $response->{$_} . "\n";
+    if ($response->{ok}) {
+	$self->log->info("successfully replicated to $remote_node");
+	foreach (keys %{$response}) {
+	    $self->log->info("\t","$_: " . $response->{$_});
+	}			 
+    } else {
+	$self->log->warn("failed to replicate to $remote_node: " . $response->{error});
     }
 }
 

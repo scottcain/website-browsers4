@@ -34,6 +34,7 @@ sub _build_ua {
     my $ua = $self->useragent_class->new();
     $ua->agent($self->useragent);
     $ua->env_proxy;
+    $ua->timeout(6000);  # Arbitrarily large timeout; initial replication is expensive.
     return $ua;
 }
 
@@ -84,6 +85,15 @@ sub create_database {
     return $data;
 }
 
+
+
+# curl -X POST http://127.0.0.1:5984/_replicate  \
+#   -d '{"source":"database", "target":"http://admin:password@127.0.0.1:5984/database"}' -H "Content-Type: application/json"
+
+# curl -X POST http://127.0.0.1:5984/_replicate  \
+#   -d '{"source":"ws226", "target":"http://206.108.125.165:5984/ws226"}' -H "Content-Type: application/json"
+
+
 sub replicate {
     my ($self,$params) = @_;
     my $master   = $params->{master};
@@ -94,7 +104,7 @@ sub replicate {
     $self->create_database($target,$database);
     
     # Manually costructing JSON. How stupid.
-    my $content = '{"source":"' . $database . '","target":"' . "http://$target:5984/$database" . '"}';
+    my $content = '{"source":"' . $database . '","target":"' . "http://$target/$database" . '"}';
 
     my $msg = $self->_prepare_admin_request({method  => 'POST',
 					     master  => $master,
@@ -227,13 +237,11 @@ sub _prepare_admin_request {
     my $uri  = URI->new("http://$master/$path");
     my $msg  = HTTP::Request->new($method,$uri);
 
-    $msg->header('content-type' => 'application/json');
-
     # Append content to the body if it exists
     if ($content) {
 	$msg->content($content);
+	$msg->header('Content-Type' => 'application/json');
     }
-
     return $msg;    
 }
 
