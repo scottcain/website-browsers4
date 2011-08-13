@@ -28,10 +28,28 @@ sub ssh {
 #
 ####################################
 
-# This is the location of our root couch db server; corresponds to web6
+# Master couchdb is on the development server.
+has 'couchdbmaster'     => ( is => 'ro', default => '206.108.125.180:5984' );
 
-has 'couchdbhost'     => ( is => 'ro', default => '206.108.125.165:5984' );
+# WormBase 2.0: used in deploy_sofware
+has 'local_couchdb_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw/206.108.125.165
+            206.108.125.164
+            206.108.125.163
+            206.108.125.162
+            206.108.125.166/],
+    },
+    );
 
+has 'remote_couchdb_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw//]},
+    );
 
 ####################################
 #

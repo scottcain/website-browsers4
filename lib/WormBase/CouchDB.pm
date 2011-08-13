@@ -48,21 +48,65 @@ sub _build_db_symbolic_name {
 }    
 
 # After object construction, make sure that the database exists.
-sub BUILD {
+#sub BUILD {
+#    my $self = shift;
+#    $self->create_database();
+#}
+
+sub test_connection {
     my $self = shift;
-    $self->create_database();
+
 }
+
 
 # curl -X PUT $couchdb/$release"
 sub create_database {
-    my $self = shift;
+    my $self     = shift;
+    my $host     = shift;
+    my $database = shift;
 
-    my $msg  = $self->_prepare_request({method => 'PUT'});
+    my $msg;
+
+    # trying to create a database on a different target
+    if ($host && $database) {	
+	$msg  = $self->_prepare_request({method   => 'PUT',
+					 database => "$database",
+					 host     => $host,
+					});
+    } else {
+	$msg  = $self->_prepare_request({method   => 'PUT',
+					 database => lc($self->release),
+					});
+    }
+    
     my $res = $self->_send_request($msg);    
-
     my $data =  $self->_parse_result($res);
     return $data;
 }
+
+sub replicate {
+    my ($self,$params) = @_;
+    my $master   = $params->{master};
+    my $target   = $params->{target};
+    my $database = $params->{database};
+
+    # Create the database on the target host.
+    $self->create_database($target,$database);
+    
+    # Manually costructing JSON. How stupid.
+    my $content = '{"source":"' . $database . '","target":"' . "http://$target:5984/$database" . '"}';
+
+    my $msg = $self->_prepare_admin_request({method  => 'POST',
+					     master  => $master,
+					     path    => '_replicate',
+					     content => $content,
+					    });
+    my $res = $self->_send_request($msg);    
+    my $data =  $self->_parse_result($res);
+    return $data;
+}
+    
+
 
 # Create a new document with an optional attachment.
 # curl -X PUT $couchdb/$release/uuid
@@ -71,28 +115,27 @@ sub create_database {
 #        -d @/usr/local/wormbase/databases/WS226/cache/gene/overview/WBGene00006763.html -H "Content-Type: text/html"
 # Assuming here that we are ONLY stocking our couchdb, not updating it.
 sub create_document {
-    my $self = shift;
+    my $self   = shift;
     my $params = shift;
     my $attachment = $params->{attachment};
     my $uuid       = $params->{uuid};
-    my $msg;
 
     my $res;
-
+    my $msg;
     # Attachments have a different URI target
     # and must include the attachment content.
+    
     if ($attachment) {
 	$msg  = $self->_prepare_request({method  => 'PUT',
 					 path    => "$uuid/attachment",
 					 content => "$attachment" } 
 	    );
-	$res = $self->_send_request($msg);
     } else {
 	$msg  = $self->_prepare_request({method => 'PUT',
 					 path   => $uuid });
-	$res  = $self->_send_request($msg);
     }
 
+    $res     = $self->_send_request($msg);
     my $data = $self->_parse_result($res);
     return $data;
 }
@@ -155,10 +198,13 @@ sub _prepare_request {
     my $method  = $opts->{method};
     my $path    = $opts->{path};
     my $content = $opts->{content};
+    my $host    = $opts->{host} || $self->couchdbmaster;
         
-    my $database  = lc($self->release);
-    my $full_path = $path ? $database . "/$path" : $database;
-    my $uri  = URI->new("http://" . $self->couchdbhost . "/$full_path");
+    my $database  = $opts->{database} || lc($self->release);
+
+    # Prepend the database unless this is just a database request.
+    my $full_path = $path ? $database . "/$path" : $database;    
+    my $uri  = URI->new("http://" . $host . "/$full_path");
     my $msg  = HTTP::Request->new($method,$uri);
 
     # Append content to the body if it exists (this is the attachment mechanism)
@@ -169,17 +215,35 @@ sub _prepare_request {
     return $msg;    
 }
 
+
+# No database required for admin requests.
+sub _prepare_admin_request {
+    my ($self,$opts) = @_;
+    my $master  = $opts->{master};   # The server we are sending request to.
+    my $method  = $opts->{method};
+    my $path    = $opts->{path};
+    my $content = $opts->{content};
+        
+    my $uri  = URI->new("http://$master/$path");
+    my $msg  = HTTP::Request->new($method,$uri);
+
+    $msg->header('content-type' => 'application/json');
+
+    # Append content to the body if it exists
+    if ($content) {
+	$msg->content($content);
+    }
+
+    return $msg;    
+}
+
 sub _send_request {
     my $self    = shift;
     my $msg     = shift;
-    my $content = shift;
     
     my $ua = $self->ua;
-    if ($content) {
-	$ua->request($msg,$content);
-    } else {
-	$ua->request($msg);
-    }
+    $ua->request($msg);    
+
 }
 
 sub _parse_result {
