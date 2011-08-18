@@ -24,6 +24,51 @@ sub ssh {
 
 ####################################
 #
+# Couch DB
+#
+####################################
+
+# We precache directly to our production database. Not sure how intelligent this is.
+# This works because the staging database is +1 that in production.
+# Meanwhile, the production database can continue to cache to that database.
+has 'couchdbmaster'     => ( is => 'rw', default => '206.108.125.165:5984' );
+
+# Or: assume that we are running on the staging server
+# Create couchdb on localhost then replicate it.
+#has 'couchdbmaster'     => ( is => 'rw', default => '127.0.0.1:5984' );
+
+# The precache_host is the host we will send queries to.
+# Typically, this would be the staging server as it will
+# have the newest version of the database.
+
+# Adjust here to crawl the live site, too.  The app itself will cache content in
+# a single couchdb (PUT requests directed to a single host).
+#has 'precache_host'     => ( is => 'rw', default => 'http://staging.wormbase.org/');
+has 'precache_host'     => ( is => 'rw', default => 'http://beta.wormbase.org/');  # Probably not what we want later.
+
+
+# WormBase 2.0: used in deploy_sofware
+has 'local_couchdb_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw/206.108.125.165
+            206.108.125.164
+            206.108.125.163
+            206.108.125.162
+            206.108.125.166/],
+    },
+    );
+
+has 'remote_couchdb_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw//]},
+    );
+
+####################################
+#
 # WormBase root, tmp dir, support dbs
 #
 ####################################
@@ -68,7 +113,17 @@ sub _build_support_databases_dir {
 
 has 'release' => (
     is        => 'rw',
+#    lazy_build => 1,
     );
+
+#sub _build_release {
+#    my $self = shift;
+#    my $release = $self->{release};
+#
+#    # If not provided, then we need to fetch it from Acedb.
+#    unless ($release) {
+	
+
 
 sub release_id {
     my $self    = shift;
@@ -89,8 +144,8 @@ has 'acedb_root' => (
     lazy_build => 1 );
 
 sub _build_acedb_root {
-	my $self = shift;
-	return $self->wormbase_root . "/acedb";
+    my $self = shift;
+    return $self->wormbase_root . "/acedb";
 }
 
 has 'acedb_group' => (

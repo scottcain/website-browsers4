@@ -26,8 +26,8 @@ sub run {
     # OR each node gets their own.
     my ($local_nodes)  = $self->local_support_database_nodes; 
     my ($remote_nodes) = $self->remote_support_database_nodes;
-#    foreach my $node (@$remote_nodes,@$local_nodes) {
-    foreach my $node (@$remote_nodes) {
+    foreach my $node (@$local_nodes,@$remote_nodes) {
+#    foreach my $node (@$remote_nodes) {
 	# Three approaches:
 	# 1. Rsync a tgz
 	if ($self->method eq 'by_package') { $self->rsync_package($node); }
@@ -102,17 +102,18 @@ sub rsync_database_dir_to_nfs_mount {
     my $self = shift;
 
     my $wormbase_root = $self->wormbase_root;
-    my $root = $self->support_databases_dir;
+    my $root          = $self->support_databases_dir;
 
     my $nfs_server    = $self->local_nfs_server;
     my $nfs_root      = $self->local_nfs_root;
-    $self->log->info("rsyncing all (unpacked) support databases to $nfs_server");
+    $self->log->info("rsyncing all (unpacked) support databases to nfs mount: $nfs_server");
 
     $self->system_call("rsync --rsh=ssh -Cav -z --exclude '*bak*' $root $nfs_server:$nfs_root/",
 		       "rsyncing support $nfs_server:$nfs_root");
 
-    $self->log->info("rsyncing all (unpacked) support databases to $nfs_server");
+    $self->log->info("rsyncing all (unpacked) support databases to nfs mount: $nfs_server: done");
 
+    $self->log->info("rsyncing other support files to nfs mount: $nfs_server");
 
     # There are a few other things that we need to keep in sync, too.
     # Keep the shared directory in sync.
@@ -121,6 +122,7 @@ sub rsync_database_dir_to_nfs_mount {
     # Send the admin module over. Or could just do a checkout...
     $self->system_call("rsync -Ca /home/tharris/projects/wormbase/website-admin/ $nfs_server:$nfs_root/admin",'rsyncing website admin module');
 
+    $self->log->info("rsyncing other support files to nfs mount: $nfs_server: done");
 }
 
 

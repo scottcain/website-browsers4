@@ -38,12 +38,12 @@ sub rsync_staging_directory {
     my $nfs_root      = $self->local_nfs_root;
 
     foreach my $node (@$local_nodes,@$remote_nodes) {
-	$self->log->debug("rsync staging to $node");
+	$self->log->info("rsync staging directory to $node");
 #	my $ssh = $self->ssh($node);
 #	$ssh->error && $self->log->logdie("Can't ssh to $node: " . $ssh->error);
 
 	# Rsync the staging directory.
-	$self->system_call("rsync -Ca --exclude cache --exclude sessions --exclude databases --exclude tmp/ --exclude extlib --exclude ace_images/ --exclude html/rss/ $app_root/ ${node}:$wormbase_root/website/classic",'rsyncing classic site staging directory into production');
+	$self->system_call("rsync -Cav --exclude httpd.conf --exclude cache --exclude sessions --exclude databases --exclude tmp/ --exclude extlib --exclude ace_images/ --exclude html/rss/ $app_root/ ${node}:$wormbase_root/website/classic",'rsyncing classic site staging directory into production');
     }
 }
 
