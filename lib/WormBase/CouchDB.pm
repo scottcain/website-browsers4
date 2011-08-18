@@ -4,7 +4,7 @@ package WormBase::CouchDB;
 # Currently only supports creating databases,
 # adding and fetching documents.  Document deletes
 # and updates not yet supported.
-
+use lib '/usr/local/wormbase/website/tharris/extlib';
 use Moose;
 use URI::Escape;
 use JSON::Any qw/XS JSON/;
@@ -85,6 +85,17 @@ sub create_database {
     return $data;
 }
 
+sub get_current_databases {
+    my $self = shift;
+    my $master = $self->couchdbmaster;
+    my $msg    = $self->_prepare_admin_request({master   => $master,
+						method   => 'GET',						
+						path     => '_all_dbs',
+					       });
+    my $res = $self->_send_request($msg); 
+    my $data =  $self->_parse_result($res);
+    return $data;
+}
 
 
 # curl -X POST http://127.0.0.1:5984/_replicate  \
@@ -151,6 +162,25 @@ sub create_document {
 }
 
 
+# Check if a document exists, but don't bother parsing json.
+# curl -X PUT $couchdb/$release/uuid
+# curl -X GET http://127.0.0.1:5984/ws226/gene_WBGene00006763_overview
+sub check_for_document {
+    my $self = shift;
+    my $uuid = shift;
+    my $msg  = $self->_prepare_request({ method => 'GET',
+					 path   => $uuid });
+    my $res  = $self->_send_request($msg);
+    if ($res->is_success) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
+
+
+
 # Fetch a document
 # curl -X PUT $couchdb/$release/uuid
 # curl -X GET http://127.0.0.1:5984/ws226/gene_WBGene00006763_overview
@@ -161,11 +191,11 @@ sub get_document {
 					 path   => $uuid });
     my $res  = $self->_send_request($msg);
     if ($res->is_success) {
-	return $res->content;
+	my $data = $self->_parse_result($res);
+	return $data;
     } else {
 	return 0;
     }
-
 }
 
 

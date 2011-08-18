@@ -48,14 +48,14 @@ sub run {
     my $rnai_data_file         = "rnai_data.txt";
     my $phenotype_id2name_file = "phenotype_id2name.txt";
 
-    $self->log->info("creating gene_rnai_pheno.txt");	
-    $self->gene_rnai_pheno_data_compile("$datadir/$gene_rnai_pheno_file");
-    $self->log->debug("gene_rnai_pheno_data_compile done");
+#    $self->log->info("creating gene_rnai_pheno.txt");	
+#    $self->gene_rnai_pheno_data_compile("$datadir/$gene_rnai_pheno_file");
+#    $self->log->debug("gene_rnai_pheno_data_compile done");
 
 
-    $self->log->info("creating gene_rnai_pheno-not.txt");	
-    $self->gene_rnai_pheno_not_data_compile("$datadir/$gene_rnai_pheno_file");
-    $self->log->debug("gene_rnai_pheno_not_data_compile done");
+#    $self->log->info("creating gene_rnai_pheno-not.txt");	
+#    $self->gene_rnai_pheno_not_data_compile("$datadir/$gene_rnai_pheno_file");
+#    $self->log->debug("gene_rnai_pheno_not_data_compile done");
 
     $self->log->info("creating gene_xgene_pheno.txt");	    
     $self->gene_xgene_pheno_data_compile("$datadir/$gene_xgene_pheno_file");
@@ -87,7 +87,7 @@ sub gene_rnai_pheno_data_compile {
 	foreach my $rnai ($object->RNAi_result) {
 	    
 	    my @phenotypes = $rnai->Phenotype;
-		
+	    
 	    foreach my $interaction ($rnai->Interaction) {
 		my @types = $interaction->Interaction_type;
 		foreach (@types) {		    
@@ -95,7 +95,7 @@ sub gene_rnai_pheno_data_compile {
 		}
 	    }
 	    next unless @phenotypes > 0;
-
+	    
 	    my %uniq = map { ("$object\|$rnai\|$_\|$na" => 1) } @phenotypes;
 	    print OUTFILE join("\n",keys %uniq);
 	}
@@ -137,10 +137,10 @@ sub gene_xgene_pheno_data_compile{
     while (my $object = $i->next) {
 	my @xgenes = $object->Drives_Transgene;
 	my @xgene_product = $object->Transgene_product;
-	my @xgene_rescue = $object->Rescued_by_transgene;
+#	my @xgene_rescue = $object->Rescued_by_transgene;
 	
 	push @xgenes,@xgene_product;
-	push @xgenes,@xgene_rescue;
+#	push @xgenes,@xgene_rescue;
 	
 	foreach my $xgene (@xgenes) {
 	    

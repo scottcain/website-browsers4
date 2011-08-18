@@ -1,6 +1,6 @@
 package WormBase::Update;
 
-use local::lib '/usr/local/wormbase/website/classic/extlib';
+use local::lib '/usr/local/wormbase/website/tharris/extlib';
 use Time::HiRes qw(gettimeofday tv_interval);
 
 use Digest::MD5;
@@ -210,15 +210,19 @@ before 'execute' => sub {
     # We provided a release. We're good to execute.
     return if $self->release;
 
+    # Nothing to do for replicating.
+    return if $self->step eq 'replicating couchdb from the master to other nodes';
+
     # Maybe we didn't provide a release. This only
     # makes sense in the context of automatic mirroring.
     unless ($self->step =~ /mirror/ 
 	    || $self->step eq 'push acedb to production'
-	    || $self->step eq 'push support databases to production'
+	    || $self->step eq 'push support databases to production'	    
 	) {
 	$self->log->logdie("no release provided; discovering a new release only makes sense during the mirroring step.");
     }
     
+
     my $releases = $self->existing_releases;
     
     # Save the most current release.

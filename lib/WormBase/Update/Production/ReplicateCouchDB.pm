@@ -1,5 +1,6 @@
 package WormBase::Update::Production::ReplicateCouchDB;
 
+use local::lib '/usr/local/wormbase/website/tharris/extlib';
 use Moose;
 use Ace;
 use WWW::Mechanize;
@@ -43,21 +44,30 @@ sub run {
 sub replicate {
     my $self        = shift;
     my $remote_node = shift;
+    my $master  = $self->couchdbmaster;
 
-    $self->log->info("replicating from master couchdb to $remote_node"); 
+    $self->log->info("replicating from master couchdb on $master to $remote_node"); 
+    return if $self->couchdbmaster =~ /$remote_node/;
     
-    my $couch  = $self->couchdb;
-    my $response = $couch->replicate({ master => $self->couchdbmaster,
-				       target => $remote_node . ":5984",
-				       database => lc($self->release) } );
-    
-    if ($response->{ok}) {
-	$self->log->info("successfully replicated to $remote_node");
-	foreach (keys %{$response}) {
-	    $self->log->info("\t","$_: " . $response->{$_});
-	}			 
-    } else {
-	$self->log->warn("failed to replicate to $remote_node: " . $response->{error});
+    my $couch    = $self->couchdb;
+
+    # Get a list of available databases.
+    my $databases = $couch->get_current_databases();
+    foreach my $database (@$databases) {
+	next unless $database =~ /^ws.*/;
+	
+	my $response = $couch->replicate({ master => $self->couchdbmaster,
+					   target => $remote_node . ":5984",
+					   database => $database } );
+	
+	if ($response->{ok}) {
+	    $self->log->info("successfully replicated to $remote_node");
+	    foreach (keys %{$response}) {
+		$self->log->info("\t","$_: " . $response->{$_});
+	    }			 
+	} else {
+	    $self->log->warn("failed to replicate to $remote_node: " . $response->{error});
+	}
     }
 }
 

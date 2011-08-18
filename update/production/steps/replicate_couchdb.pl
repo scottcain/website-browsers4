@@ -5,7 +5,14 @@ use lib "$Bin/../../../lib";
 use strict;
 use WormBase::Update::Production::ReplicateCouchDB;
 
-my $release = shift or die "Usage: $0 [WSVersion]";
+#system('source /home/tharris/.bash_profile');
 
-my $agent = WormBase::Update::Production::ReplicateCouchDB->new({ release => $release });
+my $release = shift or warn "Suggested Usage: $0 [WSVersion] (otherwise all dbs will by replicated)";
+
+my $agent;
+if ($release) {
+    $agent = WormBase::Update::Production::ReplicateCouchDB->new({ release => $release });
+} else {
+    $agent = WormBase::Update::Production::ReplicateCouchDB->new();
+}
 $agent->execute();

@@ -63,7 +63,8 @@ sub _build_dbh {
     my $self = shift;
     my $release = $self->release;
     my $acedb   = $self->acedb_root;
-    my $dbh     = Ace->connect(-path => "$acedb/wormbase_$release") or $self->log->logdie("couldn't open ace:$!");
+    my $dbh     = Ace->connect(-path => "$acedb/wormbase_$release") or $self->log->warn("couldn't open ace:$!");
+    $dbh = Ace->connect(-host => 'localhost',-port => 2005) unless $dbh;    
     return $dbh;
 }
 
@@ -72,44 +73,46 @@ sub run {
     my $self = shift;
     my $release = $self->release;
     
-#    $self->copy_ontology();
-#    
     # The ontology directory should already exist. Let's make certain.    
-	my $datadir = $self->support_databases_dir. "/$release/ontology";
-#
-##    # Iterate over each ontology
-#   foreach my $ontology (keys %ontology2name) {	
-#
-#	# compile search_data.txt  
-#	$self->compile_search_data($ontology);
-#	
-#	# compile id2parents relationships
-#	$self->compile_ontology_relationships($ontology,1);
-#	
-#	# compile parent2ids relationships
-#	$self->compile_ontology_relationships($ontology,2);
-#    }
-#   
-#   	# compile id2name
-#   	$self->parse_search_data(0,1,$self->id2name_file);
-#   	$self->parse_search_data(1,0,$self->name2id_file);
-#   	$self->parse_search_data(0,5,$self->id2association_counts_file);    
-#   	$self->clean_up_search_data();
-#	$self->get_geneid2go_ids();
-#	$self->get_pheno_gene_data_not();
-#   	$self->get_pheno_gene_data();
-#	$self->get_pheno_rnai_data();
-#	$self->get_pheno_variation_data();
-#	$self->get_pheno_rnai_data(1);
-#	$self->get_pheno_variation_data(1);
-#	$self->get_pheno_xgene_data();
+    my $datadir = $self->support_databases_dir. "/$release/ontology";
+    
+    $self->copy_ontology();   
 
 
- my $bin_path = $self->bin_path . "/../helpers/";
- my $cmd = "get_cummulative_association_counts.pl $release";
-	$self->system_call("$bin_path/$cmd",
-			   "$datadir/dump_ontology_resource_file.chk");
+#    # Iterate over each ontology
+   foreach my $ontology (keys %ontology2name) {	
 
+	# compile search_data.txt  
+	$self->compile_search_data($ontology);
+	
+	# compile id2parents relationships
+	$self->compile_ontology_relationships($ontology,1);
+	
+	# compile parent2ids relationships
+	$self->compile_ontology_relationships($ontology,2);
+    }
+   
+    # compile id2name
+    $self->parse_search_data(0,1,$self->id2name_file);
+    $self->parse_search_data(1,0,$self->name2id_file);
+    $self->parse_search_data(0,5,$self->id2association_counts_file);    
+    $self->clean_up_search_data();
+    $self->get_geneid2go_ids();
+    $self->get_pheno_gene_data_not();
+    $self->get_pheno_gene_data();
+    $self->get_pheno_rnai_data();
+    $self->get_pheno_variation_data();
+    $self->get_pheno_rnai_data(1);
+    $self->get_pheno_variation_data(1);
+    $self->get_pheno_xgene_data();
+
+    
+    my $bin_path = $self->bin_path . "/../helpers/";
+#    my $cmd = "get_cumulative_association_counts.pl $release";
+#    $self->system_call("$bin_path/$cmd",
+#		       "$bin_path/$cmd");
+ 
+    $self->get_cumulative_association_counts('id2total_associations.txt');
     $self->log->debug("crazy gene page compiles complete");
     
 }
@@ -357,7 +360,7 @@ sub clean_up_search_data {
     close OUT;
 }
 
-sub get_cummulative_association_counts{
+sub get_cumulative_association_counts{
 
 	my $self = shift;
 	my $outfile = shift;
@@ -370,7 +373,7 @@ sub get_cummulative_association_counts{
 	
 	my @ids = keys %id2name;
 	
-	open OUT, ">$outfile" or $self->log->logdie("Cannot open output file");
+	open OUT, ">$data_directory/$outfile" or $self->log->logdie("Cannot open output file");
 	foreach my $term_id (@ids) {
 	
 		my @path_array = ($term_id); ## 
