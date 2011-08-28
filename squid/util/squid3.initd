@@ -27,7 +27,7 @@ SQUID_ARGS="-D -YC"
 
 # The squid configuration file
 #CONFIG=/etc/squid3/squid.conf
-CONFIG=/usr/local/wormbase/admin/squid/etc/squid3-basic.conf
+CONFIG=/usr/local/wormbase/website-admin/squid/etc/squid3-basic.conf
 
 # A basic start commmand
 SQUIDSTART="$SQUID -s -f $CONFIG"
