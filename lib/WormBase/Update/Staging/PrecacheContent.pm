@@ -155,6 +155,9 @@ sub precache_content {
 }
 
 
+# Request objects serially.  The precache_host will handle stashing them
+# into couchdb.
+
 sub precache_to_couchdb {
     my $self = shift;
 

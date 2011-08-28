@@ -281,7 +281,8 @@ has 'local_app_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw/wb-web6.oicr.on.ca
+	[qw/wb-web1.oicr.on.ca
+            wb-web6.oicr.on.ca
             wb-web7.oicr.on.ca
 	    wb-web8.oicr.on.ca
 	    wb-web9.oicr.on.ca

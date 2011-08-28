@@ -13,8 +13,7 @@ has 'step' => (
 
 sub run {
     my $self = shift;           
-    my $release = $self->release;
-
+#    my $release = $self->release;
 
     $self->log->info('restarting services');
     my ($local_nodes)  = $self->local_app_nodes;
@@ -42,8 +41,7 @@ sub restart_starman {
 
 #    $ssh->system("cd $app_root/website/$app_version; cp wormbase.env.template wormbase.env ; perl -p -i -e 's/\\[% app %\\]/production/g' wormbase.env")
 #	or $self->log->logdie("couldn't fix the environment file");	
-    
-    $ssh->system("cd $app_root/website/production; bin/starman-production.sh stop ; sleep 5; killall -9 starman ; rm -f /tmp/production.pid ; bin/starman-production.sh start")
+    $ssh->system("cd $app_root/website/production; script/wormbase-init.sh stop ; sleep 5; killall -9 starman ; rm -f /tmp/production.pid ; script/wormbase-init.sh start")
 	or $self->log->logdie("couldn't restart starman" . $ssh->error); 
 }
 
