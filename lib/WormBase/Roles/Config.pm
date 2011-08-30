@@ -42,9 +42,14 @@ has 'couchdbmaster'     => ( is => 'rw', default => '206.108.125.165:5984' );
 # have the newest version of the database.
 
 # Adjust here to crawl the live site, too.  The app itself will cache content in
-# a single couchdb (PUT requests directed to a single host).
+# a single couchdb (PUT requests directed to a single host by proxy).
 #has 'precache_host'     => ( is => 'rw', default => 'http://staging.wormbase.org/');
-has 'precache_host'     => ( is => 'rw', default => 'http://beta.wormbase.org/');  # Probably not what we want later.
+
+# Prewarming the cache, we should direct requests against the development site.
+# This app would actually cache on localhost.
+
+# Later, we might want to crawl the live site at a low rate, too.
+has 'precache_host'     => ( is => 'rw', default => 'http://beta.wormbase.org/');
 
 
 # WormBase 2.0: used in deploy_sofware
@@ -282,6 +287,10 @@ has 'local_app_nodes' => (
     isa => 'ArrayRef',
     default => sub {
 	[qw/wb-web1.oicr.on.ca
+            wb-web2.oicr.on.ca
+            wb-web3.oicr.on.ca
+            wb-web4.oicr.on.ca
+            wb-mining.oicr.on.ca
             wb-web6.oicr.on.ca
             wb-web7.oicr.on.ca
 	    wb-web8.oicr.on.ca

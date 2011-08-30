@@ -192,9 +192,10 @@ sub precache_to_couchdb {
 	# Horribly broken classes, currently uncacheable.
 	next if $class eq 'anatomy_term';
 	next unless $class eq 'gene';
-	
+
 	foreach my $widget (keys %{$config->{sections}->{species}->{$class}->{widgets}}) {
-#	    next unless $widget eq 'overview';
+#	    next unless $widget eq 'external_links';
+	    next unless $widget eq 'genetics';
 	    my $precache = eval { $config->{sections}->{species}->{$class}->{widgets}->{$widget}->{precache}; };
 	    $precache ||= 0;
 	    

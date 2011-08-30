@@ -21,6 +21,7 @@ sub run {
     
 #    foreach my $node (@$local_nodes,@$remote_nodes) {
     foreach my $node (@$local_nodes) {
+	next if $node =~ /web1\./;
 	my $ssh = $self->ssh($node);
 	$ssh->error && $self->log->logdie("Can't ssh to $node: " . $ssh->error);
 
