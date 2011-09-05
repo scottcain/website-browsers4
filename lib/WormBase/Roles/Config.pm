@@ -290,7 +290,8 @@ has 'local_app_nodes' => (
             wb-web2.oicr.on.ca
             wb-web3.oicr.on.ca
             wb-web4.oicr.on.ca
-            wb-mining.oicr.on.ca
+            wb-gb1.oicr.on.ca
+            wb-gb2.oicr.on.ca
             wb-web6.oicr.on.ca
             wb-web7.oicr.on.ca
 	    wb-web8.oicr.on.ca
@@ -298,6 +299,8 @@ has 'local_app_nodes' => (
             wb-web10.oicr.on.ca/],
     },
     );
+
+#            wb-mining.oicr.on.ca
 
 has 'remote_app_nodes' => (
     is => 'ro',
