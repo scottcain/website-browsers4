@@ -195,7 +195,7 @@ sub precache_to_couchdb {
 
 	foreach my $widget (keys %{$config->{sections}->{species}->{$class}->{widgets}}) {
 #	    next unless $widget eq 'external_links';
-	    next unless $widget eq 'genetics';
+	    next unless $widget eq 'homology';
 	    my $precache = eval { $config->{sections}->{species}->{$class}->{widgets}->{$widget}->{precache}; };
 	    $precache ||= 0;
 	    
