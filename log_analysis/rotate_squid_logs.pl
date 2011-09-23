@@ -9,7 +9,7 @@ $GZIP       = '/bin/gzip';
 @LOGNAMES=('access_log');
 %ARCHIVE=('access_log'=>1);
 
-$CONFIG = '/usr/local/wormbase/admin/squid/etc/squid3-basic.conf';
+$CONFIG = '/usr/local/wormbase/website-admin/squid/etc/squid3-basic.conf';
 $SQUID  = '/usr/sbin/squid3';
 
 # Change to the squid log directory
