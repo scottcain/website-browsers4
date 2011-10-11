@@ -33,9 +33,9 @@ todayMonth=`date +%m`
 tomorrowMonth=`perl -e '@T=localtime(time+86400);printf("%02d",$T[4]+1)'`
 
 
-#if [ $tomorrowMonth != $todayMonth ]; then
+if [ $tomorrowMonth != $todayMonth ]; then
 
-if [ $todayMonth ]; then
+#if [ $todayMonth ]; then
 
   echo "Analyzing WormBase logs for ${DATE}"
 
@@ -43,7 +43,7 @@ if [ $todayMonth ]; then
   # This isn't perfect since the cron job runs
   # at 23:59 on the last day of the month.
   cd ${LOGDIR}/raw
-  mv /usr/local/wormbase/logs/*lo* .
+  mv /usr/local/wormbase/logs/_lo* .
 
   # Tell nginx to start some new logs.
   if [ ! ${DEBUG} ]; then
