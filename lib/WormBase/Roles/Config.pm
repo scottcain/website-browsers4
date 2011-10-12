@@ -175,6 +175,7 @@ sub _build_drh {
     return $drh;
 }
 
+
 has 'mysql_data_dir' => ( is => 'ro',  default => '/usr/local/mysql/data' );
 has 'mysql_user'     => ( is => 'ro',  default => 'root'      );
 has 'mysql_pass'     => ( is => 'ro',  default => '3l3g@nz'   );
