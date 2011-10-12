@@ -213,6 +213,9 @@ before 'execute' => sub {
     # Nothing to do for replicating.
     return if $self->step eq 'replicating couchdb from the master to other nodes';
 
+    # Nothing to do for restart services
+    return if $self->step eq 'restarting services';
+
     # Maybe we didn't provide a release. This only
     # makes sense in the context of automatic mirroring.
     unless ($self->step =~ /mirror/ 

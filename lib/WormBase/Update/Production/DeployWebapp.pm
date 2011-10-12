@@ -99,7 +99,7 @@ sub run {
 
     $self->dump_version_file;
     $self->rsync_staging_directory;    
-    $self->create_environment_file;
+#    $self->create_environment_file;
     $self->create_software_release;
     $self->save_production_reference;
 }
@@ -146,6 +146,43 @@ sub create_environment_file {
     my $app_root    = $self->wormbase_root;
     my $app_version = $self->app_version;
     
+    open OUT,">/tmp/wormbase.env";
+    print OUT <<'END';
+#!/bin/sh
+
+# The directory that contains your checked out source
+export APPROOT=/usr/local/wormbase/website
+
+# This is a symbolic name of the application corresponding
+# to its directory on the file system at $APPROOT/$APP
+export APP=production    # eg, tharris, acabunoc, staging, production
+
+# Number of workers to launch.
+export WORKERS=10
+
+# When testing behind a reverse proxy, this port should
+# correspond to your assigned virtual host
+# todd.wormbase.org: 9001
+# abby.wormbase.org: 9002
+# xshi.wormbase.org: 9003
+# staging.wormbase.org: 5000
+export PORT=5000
+
+# To daemonize the server, uncomment and set to true.
+#export DAEMONIZE=
+export ENVIRONMENT=development
+
+# Location of your local::lib Perl libaries.
+# Here, assumed to be at $APPROOT/$APP/extlib.
+# Adjust as necessary.
+export PERL5LIB="$APPROOT/$APP/extlib/lib/perl5:$APPROOT/$APP/extlib/lib/perl5/x86_64-linux-gnu-thread-multi:$APPROOT/$APP/lib:$APPROOT/$APP/extlib/gbrowse2/current/lib/perl5/x86_64-linux-gnu-thread-multi:$PERL5LIB"
+export MODULEBUILDRC="$APPROOT/$APP/extlib/.modulebuildrc"
+export PERL_MM_OPT="INSTALL_BASE=$APPROOT/$APP/extlib"
+export PATH="$APPROOT/$APP/extlib/bin:$PATH"
+END
+;
+    close OUT;
+
     foreach my $node (@$local_nodes,@$remote_nodes) {
 	my $ssh = $self->ssh($node);
 	$ssh->error && $self->log->logdie("Can't ssh to $node: " . $ssh->error);
@@ -165,35 +202,40 @@ sub rsync_staging_directory {
     my $app_version = $self->app_version;
     my $staging_dir = $self->app_staging_dir;    
 
+    # Syncing to an NFS mount?
+    if (0) {
+	my $nfs_server = $self->local_nfs_server;
+	my $nfs_root   = $self->local_nfs_root;
+
+	$self->log->debug("rsync staging to nfs: $nfs_server");
+	my $ssh = $self->ssh($nfs_server);
+	$ssh->error && $self->log->logdie("Can't ssh to $nfs_server: " . $ssh->error);
     
-    my $nfs_server = $self->local_nfs_server;
-    my $nfs_root   = $self->local_nfs_root;
+	$ssh->system("mkdir $nfs_root/website/$app_version") or $self->log->logdie("Couldn't create a new app version on $nfs_server: " . $ssh->error);
+	$self->system_call("rsync -Ca --exclude tmp --exclude .hg --exclude extlib $staging_dir/ $nfs_server:$nfs_root/website/$app_version",'rsyncing staging directory into production');
 
-    $self->log->debug("rsync staging to nfs: $nfs_server");
-    my $ssh = $self->ssh($nfs_server);
-    $ssh->error && $self->log->logdie("Can't ssh to $nfs_server: " . $ssh->error);
-    
-    $ssh->system("mkdir $nfs_root/website/$app_version") or $self->log->logdie("Couldn't create a new app version on $nfs_server: " . $ssh->error);
 
-    $self->system_call("rsync -Ca --exclude tmp --exclude .hg --exclude extlib $staging_dir/ $nfs_server:$nfs_root/website/$app_version",'rsyncing staging directory into production');
+	# Should also rsync our libraries from web6 across
+	# rsync -Cav extlib/ wb-web10.oicr.on.ca:/usr/local/wormbase/extlib
 
-    # Update the symlink.  Here or part of GoLive?
-    $ssh->system("cd $nfs_root/website ; rm production ;  ln -s $app_version production")
-	or $self->log->logdie("Couldn't update the production symlink");
-   
-    foreach my $node (@$remote_nodes) {
-#    foreach my $node (@$local_nodes,@$remote_nodes) {
+	# Update the symlink.  Here or part of GoLive?
+	$ssh->system("cd $nfs_root/website ; rm production ;  ln -s $app_version production")
+	    or $self->log->logdie("Couldn't update the production symlink");
+    }
+
+#    foreach my $node (@$remote_nodes) {
+    foreach my $node (@$local_nodes,@$remote_nodes) {
 	$self->log->debug("rsync staging to $node");
 	my $ssh = $self->ssh($node);
 	$ssh->error && $self->log->logdie("Can't ssh to $node: " . $ssh->error);
 
 	$ssh->system("mkdir $app_root/website/$app_version") or $self->log->logdie("Couldn't create a new app version on $node: " . $ssh->error);
 
-	$self->system_call("rsync -Ca --exclude logs --exclude tmp --exclude .hg --exclude extlib.tgz --exclude extlib $staging_dir/ ${node}:$app_root/website/$app_version",'rsyncing staging directory into production');
+	$self->system_call("rsync -Ca --exclude logs --exclude tmp --exclude .hg --exclude extlib.tgz --exclude wormbase.env --exclude extlib $staging_dir/ ${node}:$app_root/website/$app_version",'rsyncing staging directory into production');
 
 
 	# Update the symlink.  Here or part of GoLive?
-	$ssh->system("cd $app_root/website; mkdir $app_root/logs ; chmod 777 $app_root/logs ; rm production;  ln -s $app_version production")
+	$ssh->system("cd $app_root/website; mkdir $app_root/website/$app_version/logs ; chmod 777 $app_root/website/$app_version/logs ; rm production;  ln -s $app_version production")
 	    or $self->log->logdie("Couldn't update the production symlink");
 		
     }
