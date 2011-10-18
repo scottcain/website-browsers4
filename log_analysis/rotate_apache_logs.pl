@@ -6,11 +6,11 @@ $HOSTNAME=`hostname`;
 chomp $HOSTNAME;
 
 #$PIDFILE='/etc/httpd/run/httpd.pid';
-#if ($HOSTNAME =~ /wb\-dev/) {
-#    $PIDFILE='/var/run/apache2.pid';
-#} else {
+if ($HOSTNAME eq 'ip-10-196-103-21') {
+    $PIDFILE='/var/run/apache2.pid';
+} else {
     $PIDFILE = '/usr/local/apache2/logs/httpd.pid';
-#}
+}
 
 $LOGPATH    = '/usr/local/wormbase/logs';
 
