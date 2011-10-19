@@ -33,11 +33,11 @@ sub run {
     my $self = shift;       
     my $release = $self->release;
     # $self->precache_content();
-    $self->precache_to_couchdb();
+#    $self->precache_to_couchdb();
 
-#    foreach my $class (qw/gene variation protein/) {
-#	$self->precache_classic_content($class);
-#    }
+    foreach my $class (qw/gene variation protein/) {
+	$self->precache_classic_content($class);
+    }
 }
 
 
@@ -70,7 +70,9 @@ sub precache_content {
     system("mkdir -p $cache_root/logs");
     
     # Turn off autocheck so that server errors don't kill us.
-    my $mech = WWW::Mechanize->new(-agent     => 'WormBase-PreCacher/1.0',
+    #-agent     => 'WormBase-PreCacher/1.0',
+    my $mech = WWW::Mechanize->new(
+				   -agent => 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.2 (KHTML, like Gecko) Ubuntu/11.04 Chromium/15.0.871.0 Chrome/15.0.871.0 Safari/535.2',
 				   -autocheck => 0 );
     
     # Set the stack depth to 0: no need to retain history;
