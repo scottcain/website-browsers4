@@ -1,0 +1,49 @@
+ACEINDEX
+-------------------------------
+
+The aceindex.cc script reads in data dumps from AceDB and loads them into a
+Xapian database used for searching by the WormBase website.
+
+author: Abigail Cabunoc
+
+
+INSTALL
+-------------------------------
+
+  To install before compiling the indexer:
+    C++ libraries:
+      http://oligarchy.co.uk/xapian/1.2.4/xapian-core-1.2.4.tar.gz (also needed to run search)
+      http://www.hyperrealm.com/libconfig/libconfig-1.4.8.tar.gz
+
+  To install to run the search (not needed for running the indexer):
+    C++ library:
+      http://oligarchy.co.uk/xapian/1.2.4/xapian-core-1.2.4.tar.gz
+    Perl modules:
+      Search::Xapian
+      Catalyst::Model::Xapian
+
+
+
+INDEXING ACEDB
+-------------------------------
+
+  1) Dump AceDB
+      cd /usr/local/wormbase/acedb/bin
+      ./tace ../wormbase
+
+      acedb> @dump_ace_for_search.script
+
+
+  2) Compile Indexer
+      g++ -o aceindex -L/usr/local/lib -l xapian -lconfig++ aceindex.cc
+
+     NOTE:  you may need to do this:
+            export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+
+
+  3) Run Indexer
+      ./aceindex settings.conf WSXXX
+
+     NOTE:  remember to set the database version. Also, you may 
+            want to look at settings.conf to make sure everything 
+            is set properly.
