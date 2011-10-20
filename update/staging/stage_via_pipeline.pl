@@ -12,10 +12,13 @@ my @steps = qw/
               CreateDirectories
               CreateBlastDatabases
               CreateBlatDatabases
+              UnpackClustalWDatabase
               LoadGenomicGFFDatabases
               CompileGeneResources
               CompileOntologyResources
-              UnpackClustalWDatabase
+              CompileOrthologyResources
+              DumpAnnotations
+              ConvertGFF2ToGFF3
 /;
 
 my $start = [gettimeofday];

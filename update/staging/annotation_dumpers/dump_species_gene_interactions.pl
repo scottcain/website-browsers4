@@ -46,7 +46,7 @@ exit 0 unless $species_alone eq 'elegans';
 
 use constant NA => 'N/A';
 
-print "# $g. $species_along gene interactions\n";
+print "# $g. $species_alone gene interactions\n";
 print "# WormBase version: " . $dbh->version . "\n";
 print "# Generated: $date\n";
 print '# ' . join('\t',qw/WBInteractionID Interaction_type Citation Gene1-WBID Gene1-Molecular_name Gene1-CGC_name Gene2-WBID Gene2-Molecular_name Gene2-CGC_name .../),"\n";

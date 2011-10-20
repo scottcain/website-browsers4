@@ -24,6 +24,56 @@ sub ssh {
 
 ####################################
 #
+# Couch DB
+#
+####################################
+
+# We precache directly to our production database. Not sure how intelligent this is.
+# This works because the staging database is +1 that in production.
+# Meanwhile, the production database can continue to cache to that database.
+has 'couchdbmaster'     => ( is => 'rw', default => '206.108.125.165:5984' );
+
+# Or: assume that we are running on the staging server
+# Create couchdb on localhost then replicate it.
+#has 'couchdbmaster'     => ( is => 'rw', default => '127.0.0.1:5984' );
+
+# The precache_host is the host we will send queries to.
+# Typically, this would be the staging server as it will
+# have the newest version of the database.
+
+# Adjust here to crawl the live site, too.  The app itself will cache content in
+# a single couchdb (PUT requests directed to a single host by proxy).
+#has 'precache_host'     => ( is => 'rw', default => 'http://staging.wormbase.org/');
+
+# Prewarming the cache, we should direct requests against the development site.
+# This app would actually cache on localhost.
+
+# Later, we might want to crawl the live site at a low rate, too.
+has 'precache_host'     => ( is => 'rw', default => 'http://beta.wormbase.org/');
+
+
+# WormBase 2.0: used in deploy_sofware
+has 'local_couchdb_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw/206.108.125.165
+            206.108.125.164
+            206.108.125.163
+            206.108.125.162
+            206.108.125.166/],
+    },
+    );
+
+has 'remote_couchdb_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw//]},
+    );
+
+####################################
+#
 # WormBase root, tmp dir, support dbs
 #
 ####################################
@@ -68,7 +118,17 @@ sub _build_support_databases_dir {
 
 has 'release' => (
     is        => 'rw',
+#    lazy_build => 1,
     );
+
+#sub _build_release {
+#    my $self = shift;
+#    my $release = $self->{release};
+#
+#    # If not provided, then we need to fetch it from Acedb.
+#    unless ($release) {
+	
+
 
 sub release_id {
     my $self    = shift;
@@ -89,8 +149,8 @@ has 'acedb_root' => (
     lazy_build => 1 );
 
 sub _build_acedb_root {
-	my $self = shift;
-	return $self->wormbase_root . "/acedb";
+    my $self = shift;
+    return $self->wormbase_root . "/acedb";
 }
 
 has 'acedb_group' => (
@@ -119,6 +179,7 @@ sub _build_drh {
     my $drh = DBI->install_driver('mysql');
     return $drh;
 }
+
 
 has 'mysql_data_dir' => ( is => 'ro',  default => '/usr/local/mysql/data' );
 has 'mysql_user'     => ( is => 'ro',  default => 'root'      );
@@ -226,13 +287,21 @@ has 'local_app_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw/wb-web6.oicr.on.ca
+	[qw/wb-web1.oicr.on.ca
+            wb-web2.oicr.on.ca
+            wb-web3.oicr.on.ca
+            wb-web4.oicr.on.ca
+            wb-gb1.oicr.on.ca
+            wb-gb2.oicr.on.ca
+            wb-web6.oicr.on.ca
             wb-web7.oicr.on.ca
 	    wb-web8.oicr.on.ca
 	    wb-web9.oicr.on.ca
             wb-web10.oicr.on.ca/],
     },
     );
+
+#            wb-mining.oicr.on.ca
 
 has 'remote_app_nodes' => (
     is => 'ro',

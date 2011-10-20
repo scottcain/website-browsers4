@@ -21,12 +21,11 @@ sub run {
     if ($self->method eq 'by_package') { $self->package_database(); }
 
     # Sync the support databases dir to our local NFS mount.
-    $self->rsync_database_dir_to_nfs_mount();
+#    $self->rsync_database_dir_to_nfs_mount();
 
     # OR each node gets their own.
     my ($local_nodes)  = $self->local_support_database_nodes; 
     my ($remote_nodes) = $self->remote_support_database_nodes;
-#    foreach my $node (@$remote_nodes,@$local_nodes) {
     foreach my $node (@$local_nodes,@$remote_nodes) {
 #    foreach my $node (@$remote_nodes) {
 	# Three approaches:
@@ -121,7 +120,7 @@ sub rsync_database_dir_to_nfs_mount {
     $self->system_call("rsync -Ca $wormbase_root/shared/website-shared-files $nfs_server:$nfs_root/",'rsyncing website shared files');
     
     # Send the admin module over. Or could just do a checkout...
-    $self->system_call("rsync -Ca /home/tharris/projects/wormbase/website-admin/ $nfs_server:$nfs_root/admin",'rsyncing website admin module');
+#    $self->system_call("rsync -Ca /home/tharris/projects/wormbase/website-admin/ $nfs_server:$nfs_root/admin",'rsyncing website admin module');
 
     $self->log->info("rsyncing other support files to nfs mount: $nfs_server: done");
 }
@@ -147,6 +146,15 @@ sub rsync_single_release {
     $self->log->info("rsyncing $database to $node");
 
     $self->system_call("rsync --rsh=ssh -Cav --exclude '*bak*' $database $node:$root/","rsyncing $database to $node");
+
+    # There are a few other things that we need to keep in sync, too.
+    $self->system_call("rsync -Ca $wormbase_root/website-shared-files $node:/usr/local/wormbase/",'rsyncing website shared files');
+    
+    # Send the admin module over. Or could just do a checkout...
+    $self->system_call("rsync -Ca /home/tharris/projects/wormbase/website-admin $node:/usr/local/wormbase/",'rsyncing website admin module');
+
+
+
     $self->log->info("rsyncing $database to $node: done");
 }
 
