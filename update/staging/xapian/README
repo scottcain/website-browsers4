@@ -27,18 +27,19 @@ INSTALL
 INDEXING ACEDB
 -------------------------------
 
-  1) Dump AceDB
-      cd /usr/local/wormbase/acedb/bin
-      ./tace ../wormbase
 
-      acedb> @dump_ace_for_search.script
-
-
-  2) Compile Indexer
+  1) Compile Indexer (if not compiled already)
       g++ -o aceindex -L/usr/local/lib -l xapian -lconfig++ aceindex.cc
 
      NOTE:  you may need to do this:
             export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+
+
+  2) Dump AceDB
+      cd /usr/local/wormbase/acedb/bin
+      ./tace ../wormbase
+
+      acedb> @dump_ace_for_search.script
 
 
   3) Run Indexer

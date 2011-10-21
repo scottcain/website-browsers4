@@ -64,15 +64,15 @@ splitFields (string &fields, bool first = false){
   size_t quote = fields.find_first_of('"');
   while(quote != string::npos){
     fields = fields.substr(quote+1);
-    
+
     quote = fields.find_first_of('"');
     string word = fields.substr(0, quote);
     if(fields[quote-1] == '\\'){
       quote--;
     }
     fields = fields.substr(quote+1);
-    
     ret += word + " ";
+
     if(first){
      return word; 
     }
@@ -145,10 +145,10 @@ indexLineEnd(string field_name, string line, string copy, string obj_name, Xapia
       if((field_name.find("author")) == 0){ first = false; }
       
       if(field_name.find(d) != string::npos){
-        ret = field_name + "=" + splitFields(copy, first) + "\n";
+        ret = ret + field_name + "=" + splitFields(copy, first) + "\n";
         continue;
       }else if((int(field_name.find("address")) == 0) && (line.find("institution") != string::npos)){ 
-        ret = "institution=" + splitFields(copy, first) + "\n";
+        ret = ret + "institution=" + splitFields(copy, true) + "\n";
         continue;
       }
     }
@@ -248,6 +248,7 @@ indexFile(char* filename, string desc[], int desc_size, Setting &root){
         //add the class and wbid as terms
         indexer.index_text(obj_name, 500); //EXTRA EXTRA count on the wbid
         indexer.index_text(obj_class);
+        indexer.index_text(obj_class + obj_name);
         cout << obj_class << ": " << obj_name;
         
         
