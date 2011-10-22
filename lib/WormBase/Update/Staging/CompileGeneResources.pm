@@ -48,14 +48,13 @@ sub run {
     my $rnai_data_file         = "rnai_data.txt";
     my $phenotype_id2name_file = "phenotype_id2name.txt";
 
-#    $self->log->info("creating gene_rnai_pheno.txt");	
-#    $self->gene_rnai_pheno_data_compile("$datadir/$gene_rnai_pheno_file");
-#    $self->log->debug("gene_rnai_pheno_data_compile done");
+    $self->log->info("creating gene_rnai_pheno.txt");	
+    $self->gene_rnai_pheno_data_compile("$datadir/$gene_rnai_pheno_file");
+    $self->log->debug("gene_rnai_pheno_data_compile done");
 
-
-#    $self->log->info("creating gene_rnai_pheno-not.txt");	
-#    $self->gene_rnai_pheno_not_data_compile("$datadir/$gene_rnai_pheno_file");
-#    $self->log->debug("gene_rnai_pheno_not_data_compile done");
+    $self->log->info("creating gene_rnai_pheno-not.txt");	
+    $self->gene_rnai_pheno_not_data_compile("$datadir/$gene_rnai_pheno_file");
+    $self->log->debug("gene_rnai_pheno_not_data_compile done");
 
     $self->log->info("creating gene_xgene_pheno.txt");	    
     $self->gene_xgene_pheno_data_compile("$datadir/$gene_xgene_pheno_file");
@@ -121,6 +120,7 @@ sub gene_rnai_pheno_not_data_compile {
 		print  OUTFILE "$object\|$rnai\|$phenotype\|$na\n";
 	    }
 	}
+	$self->dbh->memory_cache_clear();
     }
 }
 
@@ -154,13 +154,16 @@ sub gene_xgene_pheno_data_compile{
 		} else {
 		    $na = "";
 		}
+		
+		# Better to dump all lines than | uniq instead of this.
 		$lines{"$object\|$xgene\|$phenotype\|$na"} = 1;
 	    }	
 	}
+	$self->dbh->memory_cache_clear();
     }
     
     foreach my $line (keys %lines) {
-		print OUTPUT "$line\n";
+	print OUTPUT "$line\n";
     }
 }
 
@@ -186,16 +189,15 @@ sub variation_data_compile{
 		my $na = "";
 		foreach my $attribute (@attributes) {
 		    
-		    if ($attribute =~ m/^not$/i){
-			
+		    if ($attribute =~ m/^not$/i){			
 			$na = $attribute;
-		    } else {
-			
+		    } else {			
 			next;		
 		    }
 		}
 		print  OUTFILE "$object\|$variation\|$phenotype\|$na\|$seq_status\|$variation_name\n";
 	    }
+	    $self->dbh->memory_cache_clear();
 	}
     }
 }
@@ -246,6 +248,7 @@ sub rnai_data_compile{
 	} else {	    
 	    next;
 	}
+	$self->dbh->memory_cache_clear();
     }
 }
 

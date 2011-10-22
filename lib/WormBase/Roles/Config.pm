@@ -204,6 +204,15 @@ has 'ftp_releases_dir' => (
     lazy_build => 1,
     );
 
+# Where the production FTP site lives.
+# Assumes that the user running the update script
+# has access and that the ftp_root is the 
+# same as above.
+has 'production_ftp_host' => (
+    is         => 'ro',
+    default    => 'wb-dev.oicr.on.ca',
+    );
+
 sub _build_ftp_releases_dir {
     my $self = shift;
     return $self->ftp_root . "/releases";

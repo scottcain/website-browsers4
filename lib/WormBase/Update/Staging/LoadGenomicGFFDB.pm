@@ -148,7 +148,7 @@ sub create_database {
     my $user = $self->mysql_user;
     my $pass = $self->mysql_pass;	
     my $host = $self->mysql_host;
-    
+
     # Create the database
     $drh->func('createdb', $database, $host, $user, $pass, 'admin') or $self->log->logdie("couldn't create database $database: $!");
     
