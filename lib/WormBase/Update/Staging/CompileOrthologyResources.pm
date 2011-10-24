@@ -38,7 +38,7 @@ has 'precompile_datadir' => (
     lazy => 1,
 	default => sub {
 		my $self = shift;
-		return "/usr/local/wormbase/tmp_staging";
+		return "/usr/local/wormbase/tmp/staging";
 	}
 );
 
@@ -119,6 +119,7 @@ sub _build_disease_ace_file {
     return $self->datadir . "/Disease.ace";
 }
 
+# This is the SAME file as omim2disease.txt above.
 has 'omim_id2disease_txt_file' => (
     is         => 'ro',
     lazy_build => 1
@@ -126,7 +127,7 @@ has 'omim_id2disease_txt_file' => (
 
 sub _build_omim_id2disease_txt_file {
     my $self    = shift;
-    return $self->datadir . "/omim_id2disease.txt";
+    return $self->datadir . "/omim2disease.txt";
 }
 
 
@@ -372,38 +373,36 @@ sub _build_gene_id2omim_ids_txt_file {
 
 sub run {
     my $self         = shift;
-    $self->compile_gene_list();	
-    $self->get_all_ortholog_other_data();   
-    $self->get_precompile_data();
-    $self->reconfigure_omim_file();
-    $self->get_all_associated_phenotypes();
-    $self->pull_omim_desc();
+#    $self->compile_gene_list();	
+#    $self->get_all_ortholog_other_data();   
+#    $self->get_precompile_data();
+#    $self->reconfigure_omim_file();
+#    $self->get_all_associated_phenotypes();
+#    $self->pull_omim_desc();
+#
+#    $self->get_all_associated_go_terms('F');
+#    $self->get_all_associated_go_terms('P');
+# 
+#    $self->pull_omim_txt_notes();
+#   $self->process_omim_2_disease_data();
+#   $self->print_hs_ortholog_other_data();
+#    $self->update_hs_protein_list();
+#    $self->process_ensembl_2_omim_data();
+#    $self->assemble_disease_data();
+#    $self->print_disease_page_data();
+# 
+#    $self->log->info("processing omim 2 all ortholog data");
+#    $self->process_pipe_delineated_file($self->disease_page_data_txt_file,
+#					 1,
+#					 '0-1-2-3-4-5-6-7-8-9-10-11-12', 0,
+#					 $self->omim_id2all_ortholog_data_txt_file);
+#    
+#    $self->log->info("processing omim 2 all ortholog data done");
 
-    $self->get_all_associated_go_terms('F');
-    $self->get_all_associated_go_terms('P');
-
- 
-    $self->pull_omim_txt_notes();
-    $self->process_omim_2_disease_data();
-    $self->print_hs_ortholog_other_data();
-    $self->update_hs_protein_list();
-    $self->process_ensembl_2_omim_data();
-    $self->assemble_disease_data();
-    $self->print_disease_page_data();
- 
-    $self->log->info("processing omim 2 all ortholog data");
-    $self->process_pipe_delineated_file($self->disease_page_data_txt_file,
-					 1,
-					 '0-1-2-3-4-5-6-7-8-9-10-11-12', 0,
-					 $self->omim_id2all_ortholog_data_txt_file);
-    
-    $self->log->info("processing omim 2 all ortholog data done");
- 
-
-    $self->pull_disease_synonyms();
+#    $self->pull_disease_synonyms();
  
     $self->log->info("processing omim 2 phenotype");
-    $self->process_pipe_delineated_file('disease_page_data.txt', 1, '8', 1,
+    $self->process_pipe_delineated_file($self->disease_page_data_txt_file, 1, '8', 1,
 					$self->omim_id2phenotypes_txt_file);
      $self->log->info("processing omim 2 phenotype done");
  
@@ -420,7 +419,7 @@ sub run {
     $self->log->info("processing omim to disease name file done");
  	
     $self->log->info("processing gene_id to omim_ids file");
-    $self->process_pipe_delineated_file($self->disease_page_data_txxt_file,
+    $self->process_pipe_delineated_file($self->disease_page_data_txt_file,
 					2,'1',1,$self->gene_id2omim_ids_txt_file);
     $self->log->info("processing gene_id to omim_ids file done");
     
@@ -568,40 +567,38 @@ sub get_all_ortholog_other_data {
 sub get_precompile_data {
     my $self = shift;
 
+    $self->log->info("getting precompiled data");
+
     my $release = $self->release;
     my $onto_gene_association_file = "gene_association." . $release . ".wb.ce";
-    $self->log->info("getting precompiled data");
+
 
     my $datadir            = $self->datadir;
     my $ontology_datadir   = $self->ontology_datadir;
     my $pc_datadir         = $self->precompile_datadir;
-    my $precompile_datadir = "$pc_datadir/orthology_staging";
+    my $precompile_datadir = "$pc_datadir/orthology";
+        
+    # system_call -- set up a template
+    my $pull_external_data_command = "cp $precompile_datadir/* $datadir";
+    $self->system_call( $pull_external_data_command, $pull_external_data_command );
     
-    ## get external, and data from last release
-    my $check_file = "$datadir/get_precompile.chk";
-    
-    ## system_call -- set up a template
-    my $pull_extenal_data_command = "cp $precompile_datadir/* $datadir";
-    $self->system_call( $pull_extenal_data_command, $check_file );
-    
-    ## copy ontology data
-    
+    # Copy files from databases/WSVER/ontology    
     # id2name.txt
     my $copy_id2name_cmd = "cp $ontology_datadir\/id2name.txt $datadir";
-    $self->system_call( $copy_id2name_cmd, $check_file );
+    $self->system_call( $copy_id2name_cmd, $copy_id2name_cmd );
     
     # name2id.txt
     my $copy_name2id_cmd = "cp $ontology_datadir\/name2id.txt $datadir";
-    $self->system_call( $copy_name2id_cmd, $check_file );
+    $self->system_call( $copy_name2id_cmd, $copy_name2id_cmd );
     
     # gene_association file
-    my $copy_gene_association_command =
+    my $copy_gene_association_cmd =
 	"cp $ontology_datadir\/$onto_gene_association_file $datadir";
-    $self->system_call( $copy_gene_association_command, $check_file );
+    $self->system_call( $copy_gene_association_cmd, $copy_gene_association_cmd );
     
-    ## unzip OMIM file
+    # unzip OMIM file
     my $unzip_cmd = "gunzip $datadir/omim.txt.Z";
-    $self->system_call( $unzip_cmd, $check_file );
+    $self->system_call( $unzip_cmd, $unzip_cmd );
 
     $self->log->debug("get_precompile_data done");
 }
@@ -930,9 +927,8 @@ sub process_ensembl_2_omim_data {
 
     my $DB = $self->dbh;
 
-    my $infile =  $self->hs_proteins_txt_file;
-
-    my $outfile =     $self->hs_ensembl_id2omim_txt_file;
+    my $infile  = $self->hs_proteins_txt_file;
+    my $outfile = $self->hs_ensembl_id2omim_txt_file;
     
     open INFILE,  "$infile"    or $self->log->logdie("Cannot open $infile");
     open OUTFILE, "> $outfile" or $self->log->logdie("Cannot open $outfile");
@@ -1004,20 +1000,22 @@ sub assemble_disease_data {
         my $omim_id;
 
         chomp $line;
-        my ( $wb_id, $db, $ortholog_id, $sp, $analysis, $method ) = split /\|/,
-          $line;
+        my ( $wb_id, $db, $ortholog_id, $sp, $analysis, $method ) = split /\|/, $line;
         my $phenotype;
         my $functions;
         my $biological_processes;
         my %data;
 
+	
+	
         if ( $hs_gene_id2omim_id{$ortholog_id} ) {
             $omim_id = $hs_gene_id2omim_id{$ortholog_id};
-        }
-
-        else {
+        } else {
             $omim_id = "NO_OMIM";
         }
+	print "ORTHOLOG ID: $ortholog_id; WB ID: $wb_id\n"; 
+	print "OMIM ID: $omim_id\n";
+
 
         if ( $omim_id2disease{$omim_id} ) {
             $disease = $omim_id2disease{$omim_id};
@@ -1026,8 +1024,7 @@ sub assemble_disease_data {
             $disease = "NO_DISEASE";
         }
 
-        print OUT
-"$disease\|$omim_id\|$line\|$gene_id2phenotype{$wb_id}\|$gene_id2go_bp{$wb_id}\|$gene_id2go_mf{$wb_id}\|$omim_id2disease_desc{$omim_id}\|$omim_id2disease_notes{$omim_id}\n";
+        print OUT "$disease\|$omim_id\|$line\|$gene_id2phenotype{$wb_id}\|$gene_id2go_bp{$wb_id}\|$gene_id2go_mf{$wb_id}\|$omim_id2disease_desc{$omim_id}\|$omim_id2disease_notes{$omim_id}\n";
     }
 
     $self->log->info("assembling disease data done");
@@ -1040,9 +1037,8 @@ sub print_disease_page_data {
     my $in_file = $self->full_disease_data_txt_file;
     my $out_file = $self->disease_page_data_txt_file;
 
-    my $check_file = "print_disease_page_data.chk";
     my $grep_cmd   = "grep -v NO_DISEASE $in_file > $out_file";
-    $self->system_call( $grep_cmd, $check_file );
+    $self->system_call( $grep_cmd, $grep_cmd );
     $self->log->info("printing disease page data done");
 }
 

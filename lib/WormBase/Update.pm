@@ -280,9 +280,9 @@ sub build_hash{
 	open FILE, "<$file_name" or die "Cannot open the file: $file_name\n";
 	my %hash;
 	foreach my $line (<FILE>) {
-		chomp ($line);
-		my ($key, $value) = split '=>',$line;
-		$hash{$key} = $value;
+	    chomp ($line);
+	    my ($key, $value) = split '=>',$line;
+	    $hash{$key} = $value;
 	}
 	return %hash;
 }

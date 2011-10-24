@@ -2,6 +2,12 @@
 Staging -> Production, 05/2011
 ======================================================
 
+Background:
+* We build releases in EC2, then sync BACK to OICR.
+* When a new release goes live into production,
+  we need to push from our development machines to
+  production nodes at OICR.
+
 1. AceDB (steps/push_acedb.pl)
 
   Push acedb into production via a tarball, a single 

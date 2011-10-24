@@ -24,9 +24,11 @@ See complete documentation on the WormBase wiki.
    ./steps/create_blat_databases.pl WSXXX (requires ~ 5 hours for 16 species)
 
 5. Load Genomic GFF databases
+
    ./steps/load_genomic_gff_databases.pl WSXXX
 
 6. Load the clustal database
+
    ./steps/unpack_clustal_databases.pl WSXXX
 
 7. Compile Gene Resources
@@ -35,23 +37,38 @@ See complete documentation on the WormBase wiki.
 
 8. Compile Ontology Resources
   
-   ./steps/compile_orthology_resources.pl WSXXX
+   ./steps/compile_ontology_resources.pl WSXXX
 
 9. Compile Orthology Resources
 
+   ./steps/compile_orthology_resources.pl WSXXX
+
 10. Convert GFF2 into GFF3
+
+   ./steps/convert_gff2_to_gff3.sh WSXXX
 
 11. Create commonly requested files
 
-12. Push from staging VM to the development machine and staging host
+12. Precache content
 
-13. (Development host) Go live.
-    * Adjusts symlinks locally (mysql and 
+    ./steps/precache_content.pl WSXXX
+
+13. Push built databases from the staging build VM 
+    to the development host(s) at OICR.
+
+    If ANYTHING is wrong with the staged release,
+    this step will need to be repeated.
+
+    These are in the production steps/ directory.
+     ./push_acedb.pl --method by_directory --release WSXXX
+     ./push_support_databases.pl --method by_directory --release WSXXX
+     ./push_mysql_databases.pl --method by_directory --release WSXXX
+
+14. (Development host) Go live.
+
+    ./steps/go_lives.pl WSXXX
+
+    * Adjusts symlinks locally (mysql and acedb)
     * Copies the FTP site to the server hosting development.
 
 
-
-Finally....
-
-10. Precache content
-    ./steps/precache_content.pl WSXXX
