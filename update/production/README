@@ -2,6 +2,11 @@
 Staging -> Production, 05/2011
 ======================================================
 
+See for an up-to-date description.
+
+http://wiki.wormbase.org/index.php/Software_Life_Cycle:_4._Updating_The_Production_Servers#Tag_the_software
+
+
 1. AceDB (steps/push_acedb.pl)
 
   Push acedb into production via a tarball, a single 
@@ -73,10 +78,12 @@ Staging -> Production, 05/2011
    Rsync the staging/ directory to new directories on production
    nodes in unique directories by version.
    
-   Also: create a software release on the FTP site and a snapshot for reference.
+   Also: creates a software release on the FTP site and a snapshot for reference.
 
   ./steps/deploy_webapp.pl WSXXXX
 
+  And the classic application (for now)
+  ./steps/push_classic_software.pl
 
 
 
