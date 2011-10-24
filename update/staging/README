@@ -2,6 +2,8 @@ Staging a new release; testing 2011.06.03 with WS226
 
 See complete documentation on the WormBase wiki.
 
+  http://wiki.wormbase.org/index.php/Software_Life_Cycle:_1._Updating_The_Development_Server
+
 1. Mirror a new release from Sanger. (run under cron)
 
   steps/mirror_new_release.sh  // The next newest version will be discovered automatically.
@@ -15,7 +17,6 @@ See complete documentation on the WormBase wiki.
 
    ./steps/unpack_acedb WSXXX
 
-
 3. Create BLAST databases (requires ~ 2 hours for 16 species)
    ./steps/create_blast_databases.pl WSXXX
 
@@ -23,15 +24,51 @@ See complete documentation on the WormBase wiki.
    ./steps/create_blat_databases.pl WSXXX (requires ~ 5 hours for 16 species)
 
 5. Load Genomic GFF databases
+
    ./steps/load_genomic_gff_databases.pl WSXXX
 
 6. Load the clustal database
-   ./steps/local_clustal_databases.pl WSXXX
 
+   ./steps/unpack_clustal_databases.pl WSXXX
 
+7. Compile Gene Resources
 
+   ./steps/compile_gene_resources.pl WSXXX
 
-Finally....
+8. Compile Ontology Resources
+  
+   ./steps/compile_ontology_resources.pl WSXXX
 
-10. Precache content
+9. Compile Orthology Resources
+
+   ./steps/compile_orthology_resources.pl WSXXX
+
+10. Convert GFF2 into GFF3
+
+   ./steps/convert_gff2_to_gff3.sh WSXXX
+
+11. Create commonly requested files
+
+12. Precache content
+
     ./steps/precache_content.pl WSXXX
+
+13. Push built databases from the staging build VM 
+    to the development host(s) at OICR.
+
+    If ANYTHING is wrong with the staged release,
+    this step will need to be repeated.
+
+    These are in the production steps/ directory.
+     ./push_acedb.pl --method by_directory --release WSXXX
+     ./push_support_databases.pl --method by_directory --release WSXXX
+     ./push_mysql_databases.pl --method by_directory --release WSXXX
+
+14. (Development host) Go live.
+
+    ./steps/go_lives.pl WSXXX
+
+    * Adjusts symlinks locally (mysql and acedb)
+    * Copies the FTP site to the server hosting development.
+
+

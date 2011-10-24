@@ -63,7 +63,7 @@ sub prepare_dna {
 
     
     # Only necessary for faToNib
-    if (0) {
+    if (1) {
 	$self->log->debug("unpacking dna for blat databases: complete");    
 	$self->log->debug("splitting $target_file into multiple fasta files");  
 	
@@ -109,7 +109,7 @@ sub make_blatdb {
     $self->system_call($cmd,$cmd);
 #    }
 
-    if (0) {
+    if (1) {
 	# The old nib representation
 	my $fatonib = $self->fatonib;        
 	my $path = $species->blat_dir;

@@ -6,6 +6,12 @@ See for an up-to-date description.
 
 http://wiki.wormbase.org/index.php/Software_Life_Cycle:_4._Updating_The_Production_Servers#Tag_the_software
 
+Background:
+* We build releases in EC2, then sync BACK to OICR.
+* When a new release goes live into production,
+  we need to push from our development machines to
+  production nodes at OICR.
+
 
 1. AceDB (steps/push_acedb.pl)
 

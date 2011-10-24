@@ -180,6 +180,7 @@ sub _build_drh {
     return $drh;
 }
 
+
 has 'mysql_data_dir' => ( is => 'ro',  default => '/usr/local/mysql/data' );
 has 'mysql_user'     => ( is => 'ro',  default => 'root'      );
 has 'mysql_pass'     => ( is => 'ro',  default => '3l3g@nz'   );
@@ -201,6 +202,15 @@ has 'ftp_root' => (
 has 'ftp_releases_dir' => (
     is         => 'ro',
     lazy_build => 1,
+    );
+
+# Where the production FTP site lives.
+# Assumes that the user running the update script
+# has access and that the ftp_root is the 
+# same as above.
+has 'production_ftp_host' => (
+    is         => 'ro',
+    default    => 'wb-dev.oicr.on.ca',
     );
 
 sub _build_ftp_releases_dir {
