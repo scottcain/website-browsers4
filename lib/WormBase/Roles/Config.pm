@@ -294,10 +294,7 @@ has 'local_app_nodes' => (
             wb-gb2.oicr.on.ca
             wb-web6.oicr.on.ca
             wb-web7.oicr.on.ca
-	    wb-web8.oicr.on.ca
-	    wb-web9.oicr.on.ca
-            wb-web10.oicr.on.ca/],
-    },
+/]},
     );
 
 #            wb-mining.oicr.on.ca
@@ -343,9 +340,7 @@ has 'local_acedb_nodes' => (
 	    wb-web4.oicr.on.ca
             wb-web6.oicr.on.ca
             wb-web7.oicr.on.ca
-	    wb-web8.oicr.on.ca
-	    wb-web9.oicr.on.ca
-            wb-web10.oicr.on.ca/],
+/],
     },
     );
 
@@ -368,9 +363,7 @@ has 'local_support_database_nodes' => (
 	    wb-web4.oicr.on.ca
             wb-web6.oicr.on.ca
             wb-web7.oicr.on.ca
-	    wb-web8.oicr.on.ca
-	    wb-web9.oicr.on.ca
-            wb-web10.oicr.on.ca/],
+/],
     },
     );
 
@@ -385,6 +378,7 @@ has 'remote_support_database_nodes' => (
 has 'local_mysql_database_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
+
     default => sub {
 	[qw/wb-gb1.oicr.on.ca
             wb-gb2.oicr.on.ca   
@@ -395,9 +389,7 @@ has 'local_mysql_database_nodes' => (
 	    wb-web4.oicr.on.ca
             wb-web6.oicr.on.ca
             wb-web7.oicr.on.ca
-	    wb-web8.oicr.on.ca
-	    wb-web9.oicr.on.ca
-            wb-web10.oicr.on.ca/],
+/],
     },
     );
 
