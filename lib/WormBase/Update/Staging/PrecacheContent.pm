@@ -33,11 +33,12 @@ sub run {
     my $self = shift;       
     my $release = $self->release;
     # $self->precache_content();
-    $self->precache_to_couchdb();
+    # $self->precache_to_couchdb();
 
-#    foreach my $class (qw/gene variation protein/) {
-#	$self->precache_classic_content($class);
-#    }
+#    foreach my $class (qw/gene variation protein gene_class/) {
+    foreach my $class (qw/gene variation protein gene_class/) {
+	$self->precache_classic_content($class);
+    }
 }
 
 
