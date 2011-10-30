@@ -4,8 +4,25 @@ use FindBin qw/$Bin/;
 use lib "$Bin/../../../lib";
 use strict;
 use WormBase::Update::Staging::GoLive;
+use Getopt::Long;
 
-my $release = shift or warn "Typical Usage: $0 [WSVersion]";
+my ($release,$target,$help);
+GetOptions('release=s' => \$release,
+	   'target=s'  => \$target,
+	   'help=s'    => \$help);
 
-my $agent = WormBase::Update::Staging::GoLive->new({ release => $release });
+if ($help || (!$target && !$release)) {
+    die <<END;
+    
+Usage: $0 --target [development|mirror|production|staging] [--release] WSXXXX
+
+Go live with a new release of acedb on either the staging, development, 
+or production nodes by adjusting the acedb and mysql symlinks.
+
+END
+;
+}
+
+my $agent = WormBase::Update::Staging::GoLive->new({ release => $release,
+						     target  => $target });
 $agent->execute();
