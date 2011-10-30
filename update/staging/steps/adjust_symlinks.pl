@@ -3,7 +3,7 @@
 use FindBin qw/$Bin/;
 use lib "$Bin/../../../lib";
 use strict;
-use WormBase::Update::Staging::GoLive;
+use WormBase::Update::Staging::AdjustSymlinks;
 use Getopt::Long;
 
 my ($release,$target,$help);
@@ -23,6 +23,6 @@ END
 ;
 }
 
-my $agent = WormBase::Update::Staging::GoLive->new({ release => $release,
-						     target  => $target });
+my $agent = WormBase::Update::Staging::AdjustSymlinks->new({ release => $release,
+							     target  => $target });
 $agent->execute();

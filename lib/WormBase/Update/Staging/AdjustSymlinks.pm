@@ -1,4 +1,4 @@
-package WormBase::Update::Staging::GoLive;
+package WormBase::Update::Staging::AdjustSymlinks;
 
 use Moose;
 extends qw/WormBase::Update/;
@@ -6,7 +6,7 @@ extends qw/WormBase::Update/;
 # The symbolic name of this step
 has 'step' => (
     is      => 'ro',
-    default => 'go live with a new release of WormBase',
+    default => 'adjust acedb and mysql symlinks for a new release of WormBase',
 );
 
 sub run {
