@@ -6,41 +6,80 @@ extends qw/WormBase::Update/;
 # The symbolic name of this step
 has 'step' => (
     is      => 'ro',
-    default => 'go live with a new (development) release of WormBase',
+    default => 'go live with a new release of WormBase',
 );
 
 sub run {
     my $self = shift;       
+    my $release = $self->release;    
+    my $target  = $self->target;  # production, development, staging, mirror
+    
+    ###################################
+    # Acedb
+    my ($acedb_nodes) = $self->target_nodes('acedb');	
+    foreach my $node (@$acedb_nodes) {
+	$self->update_acedb_symlink($node);
+    }
+    
+    ###################################
+    # MySQL
+    my ($acedb_nodes) = $self->target_nodes('mysql');	
+    foreach my $node (@$mysql_nodes) {
+	$self->update_mysql_symlinks($node);
+    }
+}	    
+
+
+sub update_acedb_symlink {
+    my ($self,$node) = @_;
+    my $acedb_root = $self->acedb_root;
     my $release = $self->release;
 
-    # This will be handled by the PRODUCTION GoLive.
-#    $self->update_ftp_site_symlinks();
+    $self->log->debug("adjusting acedb symlink on $node");
+    
+    my $ssh = $self->ssh($node);
+    $ssh->error && $self->log->logdie("Can't ssh to $node: " . $ssh->error);
+    $ssh->system("cd $acedb_root ; rm wormbase ; ln -s wormbase_$release wormbase") or
+	$self->log->logdie("remote command updating the acedb symlink failed " . $ssh->error);
+}
 
-    # If we didn't provide a release, we might just
-    # be trying to maintain the structure of the FTP
-    # site. Do NOT update MySQL or AceDB links.
-    if ($release) {
-	$self->update_mysql_symlinks();
-	$self->update_acedb_symlink();
-	my $releases_dir = $self->ftp_releases_dir;
-	chdir($releases_dir);
-	$self->update_symlink({target => $release,
-			       symlink => 'current-dev.wormbase.org-release',
-			      });
-	
-	$self->rsync_ftp_directory();
+
+sub update_mysql_symlinks {
+    my $self = shift;
+    $self->log->debug("adjusting mysql symlinks on $node");
+    
+    # Get a list of all species updated this release.
+    my ($species) = $self->wormbase_managed_species;
+    push @$species,'clustal';   # clustal database, too.
+
+    my $mysql_data_dir = $self->mysql_data_dir;
+    my $release        = $self->release;
+    my $manager        = $self->production_manager;
+
+    foreach my $name (@$species) {
+	my $ssh = $self->ssh($node);
+	$ssh->error && $self->log->logdie("Can't ssh to $manager\@$node: " . $ssh->error);	
+	$ssh->system("cd $mysql_data_dir ; rm $name ; ln -s ${name}_$release $name") or
+	    $self->log->logdie("remote command updating the mysql symlink failed " . $ssh->error);
     }
 }
 
+
+# Change symlinks to point to the version being pushed out.
 sub update_ftp_site_symlinks {
     my $self = shift;
     my $releases_dir = $self->ftp_releases_dir;
     my $species_dir  = $self->ftp_species_dir;
-
+    
     # If provided, update symlinks on the FTP site
     # for that release.  Otherwise, walk through
     # the releases directory.
-    my $release = $self->release;	
+    my $release = $self->release;
+
+    chdir($releases_dir);
+    $self->update_symlink({target => $release,
+			   symlink => 'current-www.wormbase.org-release',
+			  });
 
     my @releases;
     if ($release) {
@@ -48,7 +87,6 @@ sub update_ftp_site_symlinks {
     } else {
 	@releases = glob("$releases_dir/*") or die "$!";
     }
-
 
     foreach my $release_path (@releases) {
 	next unless $release_path =~ /.*WS\d\d.*/;    
@@ -135,52 +173,6 @@ sub update_ftp_site_symlinks {
 	}
     }
 }
-
-
-
-
-sub update_mysql_symlinks {
-    my $self = shift;
-    
-    # Get a list of all species updated this release.
-    my ($species) = $self->wormbase_managed_species;
-    my $release   = $self->release;
-    my $mysql     = $self->mysql_data_dir;
-    foreach my $name (@$species) {	
-	chdir($mysql);  # cd to the data dir;
-	$self->update_symlink({ target  => "${name}_$release",
-				symlink => $name, });
-    }
-}
-
-
-sub update_acedb_symlink {
-    my $self = shift;
-    my $acedb_root = $self->acedb_root;
-    my $release = $self->release;
-    chdir($acedb_root) or $self->log->warn("couldn't chdir to $acedb_root");
-    $self->update_symlink({ target  => "wormbase_$release",
-			    symlink => "wormbase" });
-}
-    
-
-
-
-# Rsync the staging server's FTP directory
-# to the live FTP directory (assuming that the
-# two are running on different machines).
-sub rsync_ftp_directory {
-    my $self = shift;
-
-    my $production_host  = $self->production_ftp_host;
-    my $ftp_root         = $self->ftp_root;
-    $self->log->info("rsyncing to FTP site to $production_host");
-	
-#	$self->system_call("rsync -Cav --exclude httpd.conf --exclude cache --exclude sessions --exclude databases --exclude tmp/ --exclude extlib --exclude ace_images/ --exclude html/rss/ $app_root/ ${node}:$wormbase_root/shared/website/classic",'rsyncing classic site staging directory into production');
-    $self->system_call("rsync -Cav $ftp_root/ ${production_host}:$ftp_root",'rsyncing staging FTP site to the production host');
-    }
-}
-
 
 
 1;
