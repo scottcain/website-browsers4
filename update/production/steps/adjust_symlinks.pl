@@ -1,0 +1,1 @@
+../../staging/steps/adjust_symlinks.pl
