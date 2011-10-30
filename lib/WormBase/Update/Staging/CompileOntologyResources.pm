@@ -111,8 +111,8 @@ sub run {
     $self->system_call("$bin_path/$cmd",
 		       "$bin_path/$cmd");
     
-#    $self->get_cumulative_association_counts('id2total_associations.txt');
-    $self->log->debug("crazy gene page compiles complete");
+    $self->get_cumulative_association_counts('id2total_associations.txt');
+    $self->log->info("crazy gene page compiles complete");
 }
 
 
@@ -138,7 +138,7 @@ sub copy_ontology {
 
 sub compile_search_data {
     my ($self,$type,) = @_;
-    $self->log->debug("compiling search_data.txt for $type");
+    $self->log->info("compiling search_data.txt for $type");
     
     my $obo_tag   = $type . '_obo_file';
     my $assoc_tag = $type . '_assoc_file';
@@ -211,7 +211,7 @@ sub compile_search_data {
 
 sub compile_ontology_relationships {
     my ($self,$type,$format) = @_;
-    $self->log->debug("compiling ontology relationships for $type");
+    $self->log->info("compiling ontology relationships for $type");
     
     my $obo_tag   = $type . '_obo_file';
     my $assoc_tag = $type . '_assoc_file';
@@ -316,7 +316,7 @@ sub parse_search_data {
     my ($self,$index_1,$index_2,$output_file) = @_;
     
     my $output = join("/",$self->datadir,$output_file);
-    $self->log->debug("parsing search data to $output");
+    $self->log->info("parsing search data to $output");
 
     my $datafile = join("/",$self->datadir,$self->search_data_preprocessed_file);
     open OUT, ">$output" or $self->log->logdie("Cannot open the output file: $output $!");
