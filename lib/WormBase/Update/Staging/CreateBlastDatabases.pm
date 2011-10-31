@@ -33,7 +33,7 @@ sub run {
     my $release = $self->release;
     foreach my $name (@$species) {
 	my $species = WormBase->create('Species',{ symbolic_name => $name, release => $release });
-
+#	next unless $name =~ /elegans/;
 	$self->log->info("$name: start");
 
 	# Creating blast databases by system calls to shell scripts.
@@ -45,8 +45,8 @@ sub run {
 #	$self->system_call( $self->create_blastdb_script . " $release protein $name",
 #			    "creating protein blastdb for $name");
 		
-	$self->create_genomic_blast_db($species);
-	$self->create_protein_db($species);
+#	$self->create_genomic_blast_db($species);
+#	$self->create_protein_db($species);
 	$self->create_est_db($species);   # elegans only
 	$self->create_gene_db($species);  # elegans only
 	$self->log->info("$name: done");

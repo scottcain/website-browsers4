@@ -20,7 +20,7 @@ sub run {
     my $self = shift;
     
     # get a list of acedb nodes
-    my ($nodes) = $self->local_acedb_nodes;
+    my ($nodes) = $self->production_acedb_nodes;
 
     $self->package_database() if ($self->method eq 'by_package');
 

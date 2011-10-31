@@ -24,10 +24,9 @@ sub run {
 #    $self->rsync_database_dir_to_nfs_mount();
 
     # OR each node gets their own.
-    my ($local_nodes)  = $self->local_support_database_nodes; 
-    my ($remote_nodes) = $self->remote_support_database_nodes;
-    foreach my $node (@$local_nodes,@$remote_nodes) {
-#    foreach my $node (@$remote_nodes) {
+    my ($local_nodes)  = $self->production_support_nodes; 
+#    foreach my $node (@$local_nodes,@$remote_nodes) {
+    foreach my $node (@$local_nodes) {
 	# Three approaches:
 	# 1. Rsync a tgz
 	if ($self->method eq 'by_package') { $self->rsync_package($node); }
@@ -117,7 +116,7 @@ sub rsync_database_dir_to_nfs_mount {
 
     # There are a few other things that we need to keep in sync, too.
     # Keep the shared directory in sync.
-    $self->system_call("rsync -Ca $wormbase_root/shared/website-shared-files $nfs_server:$nfs_root/",'rsyncing website shared files');
+    $self->system_call("rsync -Cavv $wormbase_root/website-shared-files $nfs_server:$nfs_root/",'rsyncing website shared files');
     
     # Send the admin module over. Or could just do a checkout...
 #    $self->system_call("rsync -Ca /home/tharris/projects/wormbase/website-admin/ $nfs_server:$nfs_root/admin",'rsyncing website admin module');
@@ -147,13 +146,13 @@ sub rsync_single_release {
 
     $self->system_call("rsync --rsh=ssh -Cav --exclude '*bak*' $database $node:$root/","rsyncing $database to $node");
 
+    my $wormbase_root = $self->wormbase_root;
+
     # There are a few other things that we need to keep in sync, too.
-    $self->system_call("rsync -Ca $wormbase_root/website-shared-files $node:/usr/local/wormbase/",'rsyncing website shared files');
+    $self->system_call("rsync -Cavv $wormbase_root/website-shared-files $node:/usr/local/wormbase/",'rsyncing website shared files');
     
     # Send the admin module over. Or could just do a checkout...
-    $self->system_call("rsync -Ca /home/tharris/projects/wormbase/website-admin $node:/usr/local/wormbase/",'rsyncing website admin module');
-
-
+#    $self->system_call("rsync -Ca /home/tharris/projects/wormbase/website-admin $node:/usr/local/wormbase/",'rsyncing website admin module');
 
     $self->log->info("rsyncing $database to $node: done");
 }

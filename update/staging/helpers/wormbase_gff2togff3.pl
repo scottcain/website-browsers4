@@ -24,8 +24,8 @@ use constant PURGE => 1;
 # Default SOFA file
 # SOFA Release 2.1 is available. Also switching to sofa.obo (instead
 # of sofa.ontology)
-our $DEFAULT_SOFA =
-  qq[GET 'http://song.cvs.sourceforge.net/*checkout*/song/ontology/sofa.obo?revision=1.54' |];
+#our $DEFAULT_SOFA =  qq[wget 'http://song.cvs.sourceforge.net/viewvc/song/ontology/sofa.obo?revision=1.54' |];
+our $DEFAULT_SOFA =  qq[GET 'http://song.cvs.sourceforge.net/*checkout*/song/ontology/sofa.obo?revision=1.54' |];
 
 my $usage = qq($0 [-sofa <SOFA file>] [-sort] -species <elegans|briggsae> -gff <gff file>);
 
@@ -1222,11 +1222,13 @@ sub parse_sofa {
     open(FILE, $file) or die "Cannot open file ($file): $!";
 
     my %terms;
+    print "FILE IS : $file";
 
     while (my $line = <FILE>) {
         chomp $line;
-        next unless $line;
 
+        next unless $line;
+	
         if ($line =~ /^\[([^\[\]]+)\]/) {
             $mode = $1;
             if (   $mode ne 'Term'
@@ -1247,6 +1249,6 @@ sub parse_sofa {
     {    # Something *most likely* went wrong in acquiring/processing sofa
         die "Cannot retrieve/parse SOFA file!";
     }
-
+    
     return \%terms;
 }

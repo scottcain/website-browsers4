@@ -19,7 +19,7 @@ sub run {
     my $self = shift;
     
     # get a list of nodes
-    my ($nodes) = $self->local_mysql_database_nodes;
+    my ($nodes) = $self->production_mysql_nodes;
 
     $self->package_database() if ($self->method eq 'by_package');
 

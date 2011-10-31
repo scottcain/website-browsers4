@@ -45,7 +45,7 @@ sub rsync_staging_directory {
 	# Rsync the staging directory.
 #	$self->system_call("rsync -Cav --exclude httpd.conf --exclude cache --exclude sessions --exclude databases --exclude tmp/ --exclude extlib --exclude ace_images/ --exclude html/rss/ $app_root/ ${node}:$wormbase_root/website/classic",'rsyncing classic site staging directory into production');
 	
-	$self->system_call("rsync -Cav --exclude httpd.conf --exclude cache --exclude sessions --exclude databases --exclude tmp/ --exclude extlib --exclude ace_images/ --exclude html/rss/ $app_root/ ${node}:$wormbase_root/shared/website/classic",'rsyncing classic site staging directory into production');
+	$self->system_call("rsync -Cav --exclude httpd.conf --exclude cache --exclude sessions --exclude databases --exclude tmp/ --exclude extlib --exclude ace_images/ --exclude html/rss/ $app_root/ ${node}:$wormbase_root/website/classic",'rsyncing classic site staging directory into production');
     }
 }
 
