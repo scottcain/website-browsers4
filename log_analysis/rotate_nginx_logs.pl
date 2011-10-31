@@ -1,59 +1,32 @@
 #!/usr/bin/perl
 # Simple log rotation script for nginx
 
-$LOGPATH    = '/usr/local/wormbase/logs';
-$MAXCYCLE   = 7;
-$GZIP       = '/bin/gzip';
+my $logroot   = '/usr/local/wormbase/logs';
+my $maxcycle  = 7;
+my $gzip      = '/bin/gzip';
+my @logs      = qw/access_log error_log cache_log/;
 
-@PREFIXES = qw/www beta nginx blog forum wiki api couchdb cache/;
-@LOGS     = qw/access_log error_log cache_log purge_log/;
-
-%ARCHIVE=('www-access_log'     => 1,
-	  'www-error_log'      => 1,
-	  'www-cache_log'      => 1,
-	  'beta-access_log'    => 1,
-	  'beta-error_log'     => 1,
-	  'beta-cache_log'     => 1,
-	  'nginx-access_log'   => 1,
-	  'nginx-error_log'    => 1,
-	  'blog-access_log'    => 1,
-	  'blog-error_log'     => 1,
-	  'wiki-access_log'    => 1,
-	  'wiki-error_log'     => 1,
-	  'forum-access_log'   => 1,
-	  'forum-error_log'    => 1,
-	  'api-access_log'     => 1,
-	  'api-error_log'      => 1,
-	  'couchdb-access_log' => 1,
-	  'couchdb-error_log'  => 1,
-	  'cache-purge_log'    => 1,
-);
-
-# Change to the squid log directory
-chdir $LOGPATH;
-
-foreach $prefix (@PREFIXES) {
-    foreach $log (@LOGS) {
-	my $filename = "$prefix-$log";
-
-	next if ($prefix eq 'nginx' && $log eq 'cache_log');
-	next unless ($ARCHIVE{"$prefix-$log"});
+opendir (DIR, $logroot) or die $!;
+while (my $logdir = readdir(DIR)) {
+    next if ($logdir =~ m/^\./);
+    
+    # A file test to check that it is a directory    
+    next unless (-d "$logroot/$logdir");
+    
+    chdir "$logroot/$logdir";
+    
+    foreach my $filename (@logs) {
+	# Not all hosts have the cache log.
+	next unless -e "$logroot/$logdir/$filename";
 	
-	system "$GZIP -c $filename.$MAXCYCLE >> $filename.gz" 
-	    if -e "$filename.$MAXCYCLE" and $ARCHIVE{$filename};
-	for (my $s=$MAXCYCLE; $s--; $s >= 0 ) {
+	system "$gzip -c $filename.$maxcycle >> $filename.gz" 
+	    if -e "$filename.$maxcycle";# and $ARCHIVE{$filename};
+	for (my $s=$maxcycle; $s--; $s >= 0 ) {
 	    $oldname = $s ? "$filename.$s" : $filename;
 	    
-	    # Processing the primary access_log file
-	    # Need to handle this a bit differently so that squid
-	    # can continue writing to the log file
+	    # This is the first entry, eg access_log -> access_log.1
 	    if ($filename eq $oldname) {
-		# Rotate the current log file without interrupting the logging process
 		system("mv $filename $filename.1");
-		
-		
-#            # Tell squid to close the current log and open a new one
-#            system("$SQUID -k rotate -f ${CONFIG}");
 	    } else {
 		# Dealing with other log files
 		$newname = join(".",$filename,$s+1);
