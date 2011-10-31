@@ -24,10 +24,9 @@ sub run {
 #    $self->rsync_database_dir_to_nfs_mount();
 
     # OR each node gets their own.
-    my ($local_nodes)  = $self->local_support_database_nodes; 
-    my ($remote_nodes) = $self->remote_support_database_nodes;
-    foreach my $node (@$local_nodes,@$remote_nodes) {
-#    foreach my $node (@$remote_nodes) {
+    my ($local_nodes)  = $self->production_support_nodes; 
+#    foreach my $node (@$local_nodes,@$remote_nodes) {
+    foreach my $node (@$local_nodes) {
 	# Three approaches:
 	# 1. Rsync a tgz
 	if ($self->method eq 'by_package') { $self->rsync_package($node); }

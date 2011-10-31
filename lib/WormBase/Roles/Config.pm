@@ -129,6 +129,45 @@ has 'release' => (
 #    unless ($release) {
 	
 
+# target and target_nodes: symbolic names of production, development, mirror
+# Used when pushing a staged release to other nodes.
+has 'target' => (
+    is        => 'rw',
+#    lazy_build => 1,
+    );
+
+around 'target' => sub {
+    my $orig   = shift;
+    my $self   = shift;
+
+    my $target = $self->$orig();
+
+    die unless ($target =~ /^(production|development|mirror|staging)$/);
+    return $target;
+};
+
+
+# Return nodes that should require specific components.
+# Should be one of support, mysql, acedb.
+# Will call a corresponding method of "production_support_nodes", eg.
+has 'target_nodes' => (
+    is => 'rw',
+    );
+
+around 'target_nodes' => sub {
+    my $orig = shift;
+    my $self = shift;
+    my $type = shift;
+
+    die "Available target types should be one of: acedb, mysql, support\n" unless 
+	($type =~ /^(acedb|mysql|support)$/);
+    
+    my $target = $self->target;
+    my $method = join('_',$target,$type,'nodes');
+    return $self->$method;
+};
+
+
 
 sub release_id {
     my $self    = shift;
@@ -338,8 +377,26 @@ has 'remote_web_nodes' => (
 	[qw/canopus.caltech.edu/]},
     );
 
+###############
+# ACEDB NODES
+###############
+has 'staging_acedb_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw/wb-dev.oicr.on.ca/]
+    },
+    );
 
-has 'local_acedb_nodes' => (
+has 'development_acedb_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw/wb-dev.oicr.on.ca/]
+    },
+    );
+
+has 'production_acedb_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
@@ -348,21 +405,30 @@ has 'local_acedb_nodes' => (
             wb-web2.oicr.on.ca
 	    wb-web3.oicr.on.ca
 	    wb-web4.oicr.on.ca
-            wb-web6.oicr.on.ca
-            wb-web7.oicr.on.ca
-/],
+            canopus.caltech.edu/],
     },
     );
 
-has 'remote_acedb_nodes' => (
+###############
+# SUPPORT NODES
+###############
+has 'staging_support_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw/canopus.caltech.edu/]},
+	[qw/wb-web7.oicr.on.ca/]
+    },
     );
 
+has 'development_support_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw/wb-dev.oicr.on.ca/]
+    },
+    );
 
-has 'local_support_database_nodes' => (
+has 'production_support_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
@@ -371,24 +437,33 @@ has 'local_support_database_nodes' => (
             wb-web2.oicr.on.ca
 	    wb-web3.oicr.on.ca
 	    wb-web4.oicr.on.ca
-            wb-web6.oicr.on.ca
-            wb-web7.oicr.on.ca
+            canopus.caltech.edu
 /],
     },
     );
 
-has 'remote_support_database_nodes' => (
+###############
+# MYSQL NODES
+###############
+has 'staging_mysql_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw/canopus.caltech.edu/]
+	[qw/wb-web7.oicr.on.ca/],
     },
     );
 
-has 'local_mysql_database_nodes' => (
+has 'development_mysql_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
+    default => sub {
+	[qw/wb-dev.oicr.on.ca/],
+    },
+    );
 
+has 'production_mysql_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
     default => sub {
 	[qw/wb-gb1.oicr.on.ca
             wb-gb2.oicr.on.ca   
@@ -397,19 +472,11 @@ has 'local_mysql_database_nodes' => (
             wb-web2.oicr.on.ca
 	    wb-web3.oicr.on.ca
 	    wb-web4.oicr.on.ca
-            wb-web6.oicr.on.ca
-            wb-web7.oicr.on.ca
+            canopus.caltech.edu
 /],
     },
     );
 
-has 'remote_mysql_database_nodes' => (
-    is => 'ro',
-    isa => 'ArrayRef',
-    default => sub {
-	[qw/canopus.caltech.edu/]
-    },
-    );
 
 ####################################
 #

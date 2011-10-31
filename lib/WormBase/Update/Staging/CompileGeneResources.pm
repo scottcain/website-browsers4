@@ -48,10 +48,10 @@ sub run {
     my $rnai_data_file         = "rnai_data.txt";
     my $phenotype_id2name_file = "phenotype_id2name.txt";
 
-#    $self->gene_rnai_pheno_data_compile("$datadir/$gene_rnai_pheno_file");
-#    $self->gene_xgene_pheno_data_compile("$datadir/$gene_xgene_pheno_file");
-#    $self->variation_data_compile("$datadir/$variation_data_file");   
-#    $self->rnai_data_compile ("$datadir/$gene_rnai_pheno_file","$datadir/$rnai_data_file");
+    $self->gene_rnai_pheno_data_compile("$datadir/$gene_rnai_pheno_file");
+    $self->gene_xgene_pheno_data_compile("$datadir/$gene_xgene_pheno_file");
+    $self->variation_data_compile("$datadir/$variation_data_file");   
+    $self->rnai_data_compile ("$datadir/$gene_rnai_pheno_file","$datadir/$rnai_data_file");
     $self->phenotype_id2name("$datadir/$phenotype_id2name_file");
 }
 

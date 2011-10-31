@@ -38,7 +38,7 @@ has 'precompile_datadir' => (
     lazy => 1,
 	default => sub {
 		my $self = shift;
-		return "/usr/local/wormbase/tmp/staging";
+		return "/usr/local/wormbase/website-admin/update/staging/orthology_data";
 	}
 );
 
@@ -373,33 +373,34 @@ sub _build_gene_id2omim_ids_txt_file {
 
 sub run {
     my $self         = shift;
-#    $self->compile_gene_list();	
-#    $self->get_all_ortholog_other_data();   
-#    $self->get_precompile_data();
-#    $self->reconfigure_omim_file();
-#    $self->get_all_associated_phenotypes();
-#    $self->pull_omim_desc();
-#
-#    $self->get_all_associated_go_terms('F');
-#    $self->get_all_associated_go_terms('P');
-# 
-#    $self->pull_omim_txt_notes();
-#   $self->process_omim_2_disease_data();
-#   $self->print_hs_ortholog_other_data();
-#    $self->update_hs_protein_list();
-#    $self->process_ensembl_2_omim_data();
-#    $self->assemble_disease_data();
-#    $self->print_disease_page_data();
-# 
-#    $self->log->info("processing omim 2 all ortholog data");
-#    $self->process_pipe_delineated_file($self->disease_page_data_txt_file,
-#					 1,
-#					 '0-1-2-3-4-5-6-7-8-9-10-11-12', 0,
-#					 $self->omim_id2all_ortholog_data_txt_file);
-#    
-#    $self->log->info("processing omim 2 all ortholog data done");
+    $self->compile_gene_list();	
+    $self->get_all_ortholog_other_data();   
+    $self->get_precompile_data();
+    $self->reconfigure_omim_file();
 
-#    $self->pull_disease_synonyms();
+    $self->get_all_associated_phenotypes();    # creates gene_id2phenotype.txt
+    $self->pull_omim_desc();                   # creates omim_id2disease_desc.txt
+
+    $self->get_all_associated_go_terms('F');   # creates gene_id2go_mf.txt
+    $self->get_all_associated_go_terms('P');   # creates gene_id2go_bp.txt
+ 
+    $self->pull_omim_txt_notes();              # creates omim_id2disease_notes.txt
+    $self->process_omim_2_disease_data();      # creates omim2disease.txt
+    $self->print_hs_ortholog_other_data();     # creates ortholog_other_data_hs_only.txt
+    $self->update_hs_protein_list();           # creates all_proteins.txt and hs_proteins.txt
+    $self->process_ensembl_2_omim_data();      # creates hs_ensembl_id2omim.txt
+    $self->assemble_disease_data();             # creates full_disease_data.txt
+    $self->print_disease_page_data();           # creates disease_page_data.txt
+ 
+    $self->log->info("processing omim 2 all ortholog data");
+    $self->process_pipe_delineated_file($self->disease_page_data_txt_file,
+					 1,
+					 '0-1-2-3-4-5-6-7-8-9-10-11-12', 0,
+					 $self->omim_id2all_ortholog_data_txt_file);
+    
+    $self->log->info("processing omim 2 all ortholog data done");
+
+    $self->pull_disease_synonyms();
  
     $self->log->info("processing omim 2 phenotype");
     $self->process_pipe_delineated_file($self->disease_page_data_txt_file, 1, '8', 1,
@@ -575,8 +576,7 @@ sub get_precompile_data {
 
     my $datadir            = $self->datadir;
     my $ontology_datadir   = $self->ontology_datadir;
-    my $pc_datadir         = $self->precompile_datadir;
-    my $precompile_datadir = "$pc_datadir/orthology";
+    my $precompile_datadir = $self->precompile_datadir;
         
     # system_call -- set up a template
     my $pull_external_data_command = "cp $precompile_datadir/* $datadir";
@@ -657,24 +657,34 @@ sub reconfigure_omim_file {
     $self->log->info("reconfiguring OMIM file done");
 }
 
+
+# Phenotypes are no longer attached directly to Genes.  This won't work.
 sub get_all_associated_phenotypes {
     my ($self) = @_;
     $self->log->info("getting associated phenes");
     
     my $gene_id2phenotype_txt_file  = $self->gene_id2phenotype_txt_file;
     
-    my $class             = 'Gene';
-    my $tag               = 'Phenotype';
-    my $aql_query         = "select all class $class where exists_tag ->$tag";
+#    my $class             = 'Gene';
+#    my $tag               = 'Phenotype';
+#    my $aql_query         = "select all class $class where exists_tag ->$tag";
     my $DB = $self->dbh;
-    my @objects_full_list = $DB->aql($aql_query);
+#    my @objects_full_list = $DB->aql($aql_query);
     open OUT, "> $gene_id2phenotype_txt_file" or $self->log->logdie("Cannot open $gene_id2phenotype_txt_file");
+
+    my $i = $DB->fetch_many(-class=>'Gene');
     
-    foreach my $object (@objects_full_list) {
-        my $gene      = shift @{$object};
-        my $gene_id   = $gene->name;
-        my $phenotype = $gene->$tag;
-        print OUT "$gene_id\=\>$phenotype\n";
+#    foreach my $object (@objects_full_list) {
+    while (my $gene = $i->next){
+	my @variations = $gene->Allele;
+	my %phenes;
+	foreach (@variations) {
+	    map { $phenes{$_}++ } $_->Phenotype;
+	}
+	next unless (keys %phenes > 0);
+	foreach my $phenotype (keys %phenes) {
+	    print OUT "$gene\=\>$phenotype\n";
+	}
     }
     $self->log->info("getting associated phenes done");
 }
@@ -1037,8 +1047,8 @@ sub print_disease_page_data {
     my $in_file = $self->full_disease_data_txt_file;
     my $out_file = $self->disease_page_data_txt_file;
 
-    my $grep_cmd   = "grep -v NO_DISEASE $in_file > $out_file";
-    $self->system_call( $grep_cmd, $grep_cmd );
+    system("grep -v NO_DISEASE $in_file > $out_file");
+#    $self->system_call( $grep_cmd, $grep_cmd );
     $self->log->info("printing disease page data done");
 }
 
