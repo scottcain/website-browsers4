@@ -99,7 +99,7 @@ sub rsync_acedb_to_target_node {
     my $database   = "$acedb_root/wormbase_" . $self->release;
     $self->log->info("rsyncing $database to $node");
     
-    $self->system_call("rsync --rsh=ssh -Cavv --exclude serverlog.wrm --exclude log.wrm --exclude readlocks $database $node:$acedb_root/","rsyncing $database to $node");
+    $self->system_call("rsync --rsh=ssh -Cav --exclude serverlog.wrm --exclude log.wrm --exclude readlocks $database $node:$acedb_root/","rsyncing $database to $node");
     $self->log->info("rsyncing $database to $node: done");
     
 #    $self->system_call("cd $acedb_root; pwd; chgrp -R acedb wormbase_* ; chmod 666 wormbase_*/database/block* wormbase_*/database/log.wrm wormbase_*/database/serverlog.wrm ; rm -rf wormbase_*/database/readlocks",
@@ -148,9 +148,12 @@ sub fix_acedb_permissions {
     my ($self,$node) = @_;
     my $acedb_root = $self->acedb_root;
     
-    $self->system_call("cd $acedb_root; pwd; chgrp -R acedb wormbase_* ; chmod 666 wormbase_*/database/block* wormbase_*/database/log.wrm wormbase_*/database/serverlog.wrm ; rm -rf wormbase_*/database/readlocks",
-		       'fixing acedb permissions');
-        
+    my $manager = $self->production_manager;
+    my $ssh     = $self->ssh($node);
+    $ssh->error && $self->log->logdie("Can't ssh to $manager\@$node: " . $ssh->error);	
+
+    $ssh->system("cd $acedb_root; pwd; chgrp -R acedb wormbase_* ; chmod 666 wormbase_*/database/block* wormbase_*/database/log.wrm wormbase_*/database/serverlog.wrm ; rm -rf wormbase_*/database/readlocks") or
+	$self->log->logdie("remote command fixing acedb permissions failed " . $ssh->error);
 }
 
 
@@ -275,9 +278,12 @@ sub fix_mysql_permissions {
     my $root = $self->mysql_data_dir;
     my $release = $self->release;
     
-    $self->system_call("cd $root; pwd; chmod -R 2775 *$release",
-		       'fixing mysql permissions');
-        
+    my $manager        = $self->production_manager;
+
+    my $ssh = $self->ssh($node);
+    $ssh->error && $self->log->logdie("Can't ssh to $manager\@$node: " . $ssh->error);	
+    $ssh->system("cd $root; pwd; chmod -R 2775 *$release",) or 
+	$self->log->logdie("fixing mysql permissions failed " . $ssh->error);
 }
 
 
@@ -326,7 +332,7 @@ sub rsync_support_dbs_to_target_node {
     my $wormbase_root = $self->wormbase_root;
     
     # There are a few other things that we need to keep in sync, too.
-    $self->system_call("rsync -Cavv $wormbase_root/website-shared-files $node:/usr/local/wormbase/",'rsyncing website shared files');
+#    $self->system_call("rsync -Cav $wormbase_root/website-shared-files $node:/usr/local/wormbase/",'rsyncing website shared files');
     
     # Send the admin module over. Or could just do a checkout...
 #    $self->system_call("rsync -Ca /home/tharris/projects/wormbase/website-admin $node:/usr/local/wormbase/",'rsyncing website admin module');
@@ -382,7 +388,7 @@ sub rsync_database_dir_to_nfs_mount {
 
     # There are a few other things that we need to keep in sync, too.
     # Keep the shared directory in sync.
-    $self->system_call("rsync -Cavv $wormbase_root/website-shared-files $nfs_server:$nfs_root/",'rsyncing website shared files');
+    $self->system_call("rsync -Cav $wormbase_root/website-shared-files $nfs_server:$nfs_root/",'rsyncing website shared files');
     
     # Send the admin module over. Or could just do a checkout...
 #    $self->system_call("rsync -Ca /home/tharris/projects/wormbase/website-admin/ $nfs_server:$nfs_root/admin",'rsyncing website admin module');
