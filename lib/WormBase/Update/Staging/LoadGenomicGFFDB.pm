@@ -53,6 +53,12 @@ sub load_gffdb {
     $self->create_database($species);
     
     my $gff     = $species->gff_file;       # this includes the full path.
+
+    # HACK HACK HACK HACK - We need to use a different input
+    # file until we have GFF3
+    # This needs to be c_elegans.WSXXX.GBrowse.gff2.gz NOT the core GFF file (c_elegans.WSXXX.annotations.gff2.gz)
+    $gff =~ s/annotations/GBrowse/;
+
     my $fasta   = join("/",$species->release_dir,$species->genomic_fasta);  # this does not.
     if ($name =~ /elegans/) {
 
