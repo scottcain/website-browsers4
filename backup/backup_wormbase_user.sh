@@ -15,6 +15,14 @@ DATE=`date +%Y-%m-%d`
 BACKUPS_ROOT=/home/tharris/backups
 
 
+BLOG_HOST=wb-social.oicr.on.ca
+BLOG_USER=tharris
+FORUM_HOST=wb-social.oicr.on.ca
+FORUM_USER=tharris
+WIKI_HOST=wb-social.oicr.on.ca
+WIKI_USER=tharris
+
+
 ##############################
 # BRIE6
 #    WormBook prodution site and wbg database
@@ -24,7 +32,7 @@ if [ ${THIS_HOST} = "wb-dev" ]
 then
 
     #######################
-    #  WORMBOOK / THE WBG
+    #  WormBase User
     #######################
     # Create a suitable backup directory
     echo "Backing up production:wormbase_user to ${BACKUP_HOST}";
@@ -33,7 +41,7 @@ then
 #    mkdir -p /usr/local/wormbase/backups/mysqldumps/user
 #    /usr/local/mysql/bin/mysqldump \
 #             -h ${MYSQL_HOST} -u wormbase wormbase_user \
-#	     | gzip -c > /usr/local/wormbase/backups/mysqldumps/user/${DATE}-production-wormbase_user.sql.gz
+#	     | gzip -c > /usr/local/wormbase/backups/userdb/${DATE}-production-wormbase_user.sql.gz
 
     # Rsync the site directory for easy restoration
     # No reason to maintain daily backups; 1 copy is sufficient.
@@ -43,20 +51,75 @@ then
 #	  ${BACKUP_USER}@${BACKUP_HOST}:backups/wormbook/production/.
 
     # Back up the wiki, the blog, the forums
+
+    #######################
+    #  Blog
+    #######################
     echo "Backing up production:blog to ${BACKUP_HOST}";
+    # One copy
+#    /usr/local/mysql/bin/mysqldump \
+#             -h wb-social.oicr.on.ca -u wormbase -p3l3g@nz wormbase_wordpress_blog \
+#	     | gzip -c > /usr/local/wormbase/backups/blog/mysqldumps/${DATE}-mysqldump-wormbase_wordpress_blog.sql.gz
+#
+#    rsync -avv --rsh=ssh --exclude logs/ ${BLOG_USER}@${BLOG_HOST}:/usr/local/wormbase/website-blog/ \
+#	  /usr/local/wormbase/backups/blog/.
+
+    # Or daily copies
+    mkdir -p /usr/local/wormbase/backups/blog/${DATE}
     /usr/local/mysql/bin/mysqldump \
              -h wb-social.oicr.on.ca -u wormbase -p3l3g@nz wormbase_wordpress_blog \
-	     | gzip -c > /usr/local/wormbase/backups/mysqldumps/blog/${DATE}-production-blog.sql.gz
+	     | gzip -c > /usr/local/wormbase/backups/blog/${DATE}/${DATE}-mysqldump-wormbase_wordpress_blog.sql.gz
+    rsync -avv --rsh=ssh --exclude logs/ ${BLOG_USER}@${BLOG_HOST}:/usr/local/wormbase/website-blog/ \
+	  /usr/local/wormbase/backups/blog/${DATE}/.
+    cd /usr/local/wormbase/backups/blog
+    tar -czf ${DATE}.tgz ${DATE}
+    rm -rf ${DATE}
 
+    #######################
+    #  Wiki
+    #######################
     echo "Backing up production:wiki to ${BACKUP_HOST}";
+    # One copy
+#    /usr/local/mysql/bin/mysqldump \
+#             -h wb-social.oicr.on.ca -u wormbase -p3l3g@nz wormbasewiki \
+#	     | gzip -c > /usr/local/wormbase/backups/wiki/mysqldumps/${DATE}-mysqldump-wormbasewiki.sql.gz
+#
+#    rsync -avv --rsh=ssh --exclude logs/ ${BLOG_USER}@${BLOG_HOST}:/usr/local/wormbase/website-wiki/ \
+#	  /usr/local/wormbase/backups/wiki/.
+
+    # Or daily copies
+    mkdir -p /usr/local/wormbase/backups/wiki/${DATE}
     /usr/local/mysql/bin/mysqldump \
              -h wb-social.oicr.on.ca -u wormbase -p3l3g@nz wormbasewiki \
-	     | gzip -c > /usr/local/wormbase/backups/mysqldumps/wiki/${DATE}-production-wiki.sql.gz
+	     | gzip -c > /usr/local/wormbase/backups/wiki/${DATE}/${DATE}-mysqldump-wormbasewiki.sql.gz
+    rsync -avv --rsh=ssh --exclude logs/ ${BLOG_USER}@${BLOG_HOST}:/usr/local/wormbase/website-wiki/ \
+	  /usr/local/wormbase/backups/wiki/${DATE}/.
+    cd /usr/local/wormbase/backups/wiki
+    tar -czf ${DATE}.tgz ${DATE}
+    rm -rf ${DATE}
 
+    #######################
+    #  Forums
+    #######################
     echo "Backing up production:forums to ${BACKUP_HOST}";
+    # One copy
+#    /usr/local/mysql/bin/mysqldump \
+#             -h wb-social.oicr.on.ca -u wormbase -p3l3g@nz wormbaseforumsmf \
+#	     | gzip -c > /usr/local/wormbase/backups/wiki/mysqldumps/${DATE}-mysqldump-wormbaseforumsmf.sql.gz
+#
+#    rsync -avv --rsh=ssh --exclude logs/ ${BLOG_USER}@${BLOG_HOST}:/usr/local/wormbase/website-forums/ \
+#	  /usr/local/wormbase/backups/forums/.
+
+    # Or daily copies
+    mkdir -p /usr/local/wormbase/backups/forums/${DATE}
     /usr/local/mysql/bin/mysqldump \
              -h wb-social.oicr.on.ca -u wormbase -p3l3g@nz wormbaseforumsmf \
-	     | gzip -c > /usr/local/wormbase/backups/mysqldumps/forums/${DATE}-production-forums.sql.gz
+	     | gzip -c > /usr/local/wormbase/backups/forums/${DATE}/${DATE}-mysqldump-wormbaseforumsmf.sql.gz
+    rsync -avv --rsh=ssh --exclude logs/ ${BLOG_USER}@${BLOG_HOST}:/usr/local/wormbase/website-forums/ \
+	  /usr/local/wormbase/backups/forums/${DATE}/.
+    cd /usr/local/wormbase/backups/forums
+    tar -czf ${DATE}.tgz ${DATE}
+    rm -rf ${DATE}
 
 fi
   
