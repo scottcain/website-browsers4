@@ -30,13 +30,10 @@ then
     echo "Backing up production:wormbase_user to ${BACKUP_HOST}";
 
     # Dump the wormbase_user database    
-#    /usr/local/mysql/bin/mysqldump --socket=/usr/local/mysql/mysql.sock \
-#	  -u root  wormbase_user | \
-#          gzip -c >  /usr/local/wormbase/mysqldumps/${DATE}-wormbase_user.sql.gz
-#    mkdir /usr/local/wormbase/mysqldumps
-    /usr/local/mysql/bin/mysqldump \
-             -h ${MYSQL_HOST} -u wormbase wormbase_user \
-	     | gzip -c > /usr/local/wormbase/mysqldumps/${DATE}-production-wormbase_user.sql.gz
+#    mkdir -p /usr/local/wormbase/backups/mysqldumps/user
+#    /usr/local/mysql/bin/mysqldump \
+#             -h ${MYSQL_HOST} -u wormbase wormbase_user \
+#	     | gzip -c > /usr/local/wormbase/backups/mysqldumps/user/${DATE}-production-wormbase_user.sql.gz
 
     # Rsync the site directory for easy restoration
     # No reason to maintain daily backups; 1 copy is sufficient.
@@ -44,6 +41,22 @@ then
 #	  ${BACKUP_USER}@${BACKUP_HOST}:backups/wormbook/production/.
 #     rsync -avv --rsh=ssh /usr/local/bookworm/ \
 #	  ${BACKUP_USER}@${BACKUP_HOST}:backups/wormbook/production/.
+
+    # Back up the wiki, the blog, the forums
+    echo "Backing up production:blog to ${BACKUP_HOST}";
+    /usr/local/mysql/bin/mysqldump \
+             -h wb-social.oicr.on.ca -u wormbase -p3l3g@nz wormbase_wordpress_blog \
+	     | gzip -c > /usr/local/wormbase/backups/mysqldumps/blog/${DATE}-production-blog.sql.gz
+
+    echo "Backing up production:wiki to ${BACKUP_HOST}";
+    /usr/local/mysql/bin/mysqldump \
+             -h wb-social.oicr.on.ca -u wormbase -p3l3g@nz wormbasewiki \
+	     | gzip -c > /usr/local/wormbase/backups/mysqldumps/wiki/${DATE}-production-wiki.sql.gz
+
+    echo "Backing up production:forums to ${BACKUP_HOST}";
+    /usr/local/mysql/bin/mysqldump \
+             -h wb-social.oicr.on.ca -u wormbase -p3l3g@nz wormbaseforumsmf \
+	     | gzip -c > /usr/local/wormbase/backups/mysqldumps/forums/${DATE}-production-forums.sql.gz
 
 fi
   
