@@ -75,6 +75,8 @@ Find Strain
 Write /usr/local/wormbase/tmp/acedmp/Strain.ace
 Find Structure_data
 Write /usr/local/wormbase/tmp/acedmp/Structure_data.ace
+Find Transcript
+Write /usr/local/wormbase/tmp/acedmp/Transcript.ace
 Find Transgene
 Write /usr/local/wormbase/tmp/acedmp/Transgene.ace
 Find Variation
