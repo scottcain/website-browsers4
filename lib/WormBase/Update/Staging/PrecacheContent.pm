@@ -443,11 +443,13 @@ sub precache_classic_content {
     my ($self,$class) = @_;
     my $db = Ace->connect(-host=>'localhost',-port=>2005) || die "Couldn't open database";
     
+    my $base_url = $self->precache_host;
+
     $|++;
     
-    my %class2url = ( gene => 'http://dev.wormbase.org/db/gene/gene?class=Gene;name=',
-		      variation => 'http://dev.wormbase.org/db/gene/variation?class=Variation;name=',
-		      protein   => 'http://dev.wormbase.org/db/seq/protein?class=Protein;name=',);
+    my %class2url = ( gene      => $base_url . 'db/gene/gene?class=Gene;name=',
+		      variation => $base_url . 'db/gene/variation?class=Variation;name=',
+		      protein   => $base_url . 'db/seq/protein?class=Protein;name=',);
     
     my $version = $db->status->{database}{version};
     my $cache = join("/",$self->support_databases_dir,$version,'cache',$class);

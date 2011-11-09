@@ -73,14 +73,18 @@ mkdir /usr/local/wormbase/tmp/acedmp
 #    this step will need to be repeated.
 ./steps/adjust_symlinks.pl --release $RELEASE --target staging
 
+# 17. Adjust symlinks on the FTP site (creating the current_dev symlinks)
+
+
 
 14. Begin precaching content
 
     ./steps/precache_content.pl WSXXX
 
 
-
 15. Send notification to staff that new release is available.
+
+
 
 --- at production release ---
 

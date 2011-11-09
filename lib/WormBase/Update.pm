@@ -242,6 +242,140 @@ before 'execute' => sub {
 
 
 
+
+
+# Update symlinks to the current development or production version
+# as appropriate.  Type should be set to production or development.
+sub update_ftp_site_symlinks {
+    my $self = shift;
+    my $type = shift;
+    my $releases_dir = $self->ftp_releases_dir;
+    my $species_dir  = $self->ftp_species_dir;
+    
+    # If provided, update symlinks on the FTP site
+    # for that release.  Otherwise, walk through
+    # the releases directory.
+    my $release = $self->release;
+
+    chdir($releases_dir);
+    if ($type) {
+	$self->update_symlink({target => $release,
+			       symlink => 'current-dev.wormbase.org-release',
+			      });
+    } else {
+	$self->update_symlink({target => $release,
+			       symlink => 'current-www.wormbase.org-release',
+			      });
+    }
+
+    my @releases;
+    if ($release) {
+	@releases = glob("$releases_dir/$release") or die "$!";
+    } else {
+	@releases = glob("$releases_dir/*") or die "$!";
+    }
+
+    foreach my $release_path (@releases) {
+	next unless $release_path =~ /.*WS\d\d.*/;    
+	my @species = glob("$release_path/species/*");
+	
+	my ($release) = ($release_path =~ /.*(WS\d\d\d).*/);
+	
+	# Where should the release notes go?
+	# chdir "$FTP_SPECIES_ROOT";
+	
+	foreach my $species_path (@species) {
+	    next if $species_path =~ /README/;
+	    
+	    my ($species) = ($species_path =~ /.*\/(.*)/);
+	    
+	    # Create a symlink to each file in /species
+	    opendir DIR,"$species_path" or die "Couldn't open the dir: $!";
+	    while (my $file = readdir(DIR)) {
+		
+		# Create some directories. Probably already exist.
+		system("mkdir -p $species_dir/$species");
+		chdir "$species_dir/$species";
+		mkdir("gff");
+		mkdir("annotation");
+		mkdir("sequence");
+		
+		chdir "$species_dir/$species/sequence";
+		mkdir("genomic");
+		mkdir("transcripts");
+		mkdir("protein");
+		
+		# GFF?
+		chdir "$species_dir/$species";
+		if ($file =~ /gff/) {
+		    chdir("gff") or die "$!";
+		    $self->update_symlink({target => "../../../releases/$release/species/$species/$file",
+					   symlink => $file,
+					   release => $release,
+					   type    => $type,
+					  });
+		} elsif ($file =~ /genomic|sequence/) {
+		    chdir "$species_dir/$species/sequence/genomic" or die "$!";
+		    $self->update_symlink({target  => "../../../../releases/$release/species/$species/$file",
+					   symlink => $file,
+					   release => $release,
+					   type    => $type,
+					  });
+		} elsif ($file =~ /transcripts/) {
+		    chdir "$species_dir/$species/sequence/transcripts" or die "$! $species";
+		    $self->update_symlink({target  => "../../../../releases/$release/species/$species/$file",
+					   symlink => $file,
+					   release => $release,
+					   type    => $type,
+					  });
+		} elsif ($file =~ /wormpep|protein/) {
+		    chdir "$species_dir/$species/sequence/protein" or die "$!";
+		    $self->update_symlink({target  => "../../../../releases/$release/species/$species/$file",
+					   symlink => $file,
+					   release => $release,
+					   type    => $type,
+					  });
+		    
+		    # best_blast_hits isn't in the annotation/ folder
+		} elsif ($file =~ /best_blast/) {
+		    chdir "$species_dir/$species";
+		    mkdir("annotation");
+		    chdir("annotation");
+		    mkdir("best_blast_hits");
+		    chdir("best_blast_hits");
+		    $self->update_symlink({target  => "../../../../releases/$release/species/$species/$file",
+					   symlink => $file,
+					   release => $release,
+					   type    => $type,
+					  });
+		} else { }
+	    }
+	    
+	    # Annotations, but only those with the standard format.
+#	chdir "$FTP_SPECIES_ROOT/$species";
+	    opendir DIR,"$species_path/annotation" or next;
+	    while (my $file = readdir(DIR)) {
+		next unless $file =~ /^$species/;
+		chdir "$species_dir/$species";
+		
+		mkdir("annotation");
+		chdir("annotation");
+		
+		my ($description) = ($file =~ /$species\.WS\d\d\d\.(.*?)\..*/);
+		mkdir($description);
+		chdir($description);
+		$self->update_symlink({target  => "../../../../releases/$release/species/$species/annotation/$file",
+				       symlink => $file,
+				       release => $release,
+				       type    => $type,
+				      });
+	    }
+	}
+    }
+}
+
+
+
 # Update a symlink to a file. If "release" is provided,
 # assume that we also want to flag that file as the
 # "current" version.
@@ -250,13 +384,18 @@ sub update_symlink {
     my $target  = $params->{target};
     my $release = $params->{release};
     my $symlink = $params->{symlink};
+    my $type    = $params->{type};  # Set to development to provide links to current dev version.
     $self->log->debug("updating $symlink -> $target");
     
     unlink($symlink)          or $self->log->warn("couldn't unlink $symlink; perhaps it didn't exist to begin with");
     symlink($target,$symlink) or $self->log->warn("couldn't create the $symlink");
     
     if ($release) {
-	$symlink =~ s/$release/current/;
+	if ($type eq 'development') {
+	    $symlink =~ s/$release/current_development/;
+	} else {
+	    $symlink =~ s/$release/current/;
+	}
 	unlink($symlink)           or $self->log->warn("couldn't unlink $symlink; perhaps it didn't exist to begin with");
 	symlink($target,$symlink)  or $self->log->warn("couldn't create the current symlink");
     }
