@@ -32,10 +32,9 @@ DATE=`date +%Y.%m`
 todayMonth=`date +%m`
 tomorrowMonth=`perl -e '@T=localtime(time+86400);printf("%02d",$T[4]+1)'`
 
+#if [ $tomorrowMonth != $todayMonth ]; then
 
-if [ $tomorrowMonth != $todayMonth ]; then
-
-#if [ $todayMonth ]; then
+if [ $todayMonth ]; then
 
   echo "Analyzing WormBase logs for ${DATE}"
 
@@ -43,27 +42,29 @@ if [ $tomorrowMonth != $todayMonth ]; then
   # This isn't perfect since the cron job runs
   # at 23:59 on the last day of the month.
   cd ${LOGDIR}/raw
-  mv /usr/local/wormbase/logs/_lo* .
-
-  # Tell nginx to start some new logs.
-  if [ ! ${DEBUG} ]; then
-      kill -USR1 `cat /usr/local/wormbase/logs/nginx.pid`
-  fi
 
   for PREFIX in beta www nginx blog wiki forum blog couchdb api
   do
+
+      mv /usr/local/wormbase/logs/${PREFIX}/*_lo* .
+
+      # Tell nginx to start some new logs.
+      if [ ! ${DEBUG} ]; then
+         kill -USR1 `cat /usr/local/wormbase/logs/nginx.pid`
+      fi
+
       for LOG in access_log cache_log error_log
       do
           # Move the current access log out of the way.
 	  mv ${PREFIX}-${LOG} ${PREFIX}-${LOG}.0
 
           # Unpack the archive (unpacks to *access.log)
-	  gunzip ${PREFIX}-${LOG}.gz
-	  mv ${PREFIX}-${LOG} ${PREFIX}-${LOG}.8
+	  gunzip ${LOG}.gz
+	  mv ${LOG} $${LOG}.8
 
-	  cat ${PREFIX}-${LOG}.8 ${PREFIX}-${LOG}.7 ${PREFIX}-${LOG}.6 ${PREFIX}-${LOG}.5 \
-	      ${PREFIX}-${LOG}.4 ${PREFIX}-${LOG}.3 ${PREFIX}-${LOG}.2 ${PREFIX}-${LOG}.1 \
-	      ${PREFIX}-${LOG}.0 | sudo -u ${USER} gzip -c > ${PREFIX}-${LOG}.${DATE}.gz
+	  cat ${LOG}.8 ${LOG}.7 ${LOG}.6 ${LOG}.5 \
+	      ${LOG}.4 ${LOG}.3 ${LOG}.2 ${LOG}.1 \
+	      ${LOG}.0 | sudo -u ${USER} gzip -c > ${PREFIX}-${LOG}.${DATE}.gz
 
           # Fix permissions on the logs
 	  sudo chown ${USER} ${PREFIX}-${LOG}.${DATE}.gz
@@ -85,9 +86,9 @@ if [ $tomorrowMonth != $todayMonth ]; then
 	  fi
 
           # Delete the old logs
-	  rm -rf ${PREFIX}-${LOG}.0 ${PREFIX}-${LOG}.1 ${PREFIX}-${LOG}.2 \
-	      ${PREFIX}-${LOG}.3 ${PREFIX}-${LOG}.4 ${PREFIX}-${LOG}.5 \
-              ${PREFIX}-${LOG}.6 ${PREFIX}-${LOG}.7 ${PREFIX}-${LOG}.8  
+	  rm -rf ${LOG}.0 ${LOG}.1 ${LOG}.2 \
+	      ${LOG}.3 ${LOG}.4 ${LOG}.5 \
+              ${LOG}.6 ${LOG}.7 ${LOG}.8  
 
 
       ################################

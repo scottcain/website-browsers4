@@ -23,19 +23,21 @@ while (my $logdir = readdir(DIR)) {
 	    if -e "$filename.$maxcycle";# and $ARCHIVE{$filename};
 	for (my $s=$maxcycle; $s--; $s >= 0 ) {
 	    $oldname = $s ? "$filename.$s" : $filename;
-	    
+	    	    
 	    # This is the first entry, eg access_log -> access_log.1
 	    if ($filename eq $oldname) {
 		system("mv $filename $filename.1");
+		# print "NEW FILENAME IS SAME AS OLD $filename\n";	       
 	    } else {
 		# Dealing with other log files
 		$newname = join(".",$filename,$s+1);
 		rename $oldname,$newname if -e $oldname;
+		# print "FILENAME IS NOT SAME AS OLD $filename; renaming to $newname\n";
 	    }
 	}
     }
 }
 
-system("kill -USR1 `cat /usr/local/wormbase/logs/nginx.pid`");
+ system("kill -USR1 `cat /usr/local/wormbase/logs/nginx.pid`");
 
 

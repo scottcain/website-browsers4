@@ -49,7 +49,7 @@ has 'couchdbmaster'     => ( is => 'rw', default => '206.108.125.165:5984' );
 # This app would actually cache on localhost.
 
 # Later, we might want to crawl the live site at a low rate, too.
-has 'precache_host'     => ( is => 'rw', default => 'http://beta.wormbase.org/');
+has 'precache_host'     => ( is => 'rw', default => 'http://staging.wormbase.org/');
 
 
 # WormBase 2.0: used in deploy_sofware
@@ -362,11 +362,10 @@ has 'local_web_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw/wb-mining.oicr.on.ca
+	[qw/wormbase.org
+            wb-mining.oicr.on.ca
             wb-web1.oicr.on.ca
-            wb-web2.oicr.on.ca
-	    wb-web3.oicr.on.ca
-	    wb-web4.oicr.on.ca/],
+            /],
     },
     );
 
