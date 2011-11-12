@@ -32,12 +32,12 @@ while (my $logdir = readdir(DIR)) {
 		# Dealing with other log files
 		$newname = join(".",$filename,$s+1);
 		rename $oldname,$newname if -e $oldname;
-		# print "FILENAME IS NOT SAME AS OLD $filename; renaming to $newname\n";
+		print "FILENAME IS NOT SAME AS OLD $filename; renaming $logdir/$oldname to $newname\n";
 	    }
 	}
     }
 }
 
- system("kill -USR1 `cat /usr/local/wormbase/logs/nginx.pid`");
+system("kill -USR1 `cat /usr/local/wormbase/logs/nginx.pid`");
 
 

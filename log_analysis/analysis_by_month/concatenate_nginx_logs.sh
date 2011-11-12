@@ -32,9 +32,9 @@ DATE=`date +%Y.%m`
 todayMonth=`date +%m`
 tomorrowMonth=`perl -e '@T=localtime(time+86400);printf("%02d",$T[4]+1)'`
 
-#if [ $tomorrowMonth != $todayMonth ]; then
+if [ $tomorrowMonth != $todayMonth ]; then
 
-if [ $todayMonth ]; then
+#if [ $todayMonth ]; then
 
   echo "Analyzing WormBase logs for ${DATE}"
 
@@ -60,7 +60,7 @@ if [ $todayMonth ]; then
 
           # Unpack the archive (unpacks to *access.log)
 	  gunzip ${LOG}.gz
-	  mv ${LOG} $${LOG}.8
+	  mv ${LOG} ${LOG}.8
 
 	  cat ${LOG}.8 ${LOG}.7 ${LOG}.6 ${LOG}.5 \
 	      ${LOG}.4 ${LOG}.3 ${LOG}.2 ${LOG}.1 \
