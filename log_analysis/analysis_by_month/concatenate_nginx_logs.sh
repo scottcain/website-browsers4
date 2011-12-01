@@ -46,7 +46,7 @@ if [ $tomorrowMonth != $todayMonth ]; then
   for PREFIX in beta www nginx blog wiki forum blog couchdb api
   do
 
-      mv /usr/local/wormbase/logs/${PREFIX}/*_lo* .
+      mv /usr/local/wormbase/logs/${PREFIX}/* .
 
       # Tell nginx to start some new logs.
       if [ ! ${DEBUG} ]; then
@@ -56,7 +56,8 @@ if [ $tomorrowMonth != $todayMonth ]; then
       for LOG in access_log cache_log error_log
       do
           # Move the current access log out of the way.
-	  mv ${PREFIX}-${LOG} ${PREFIX}-${LOG}.0
+	  #mv ${PREFIX}-${LOG} ${PREFIX}-${LOG}.0
+	  mv ${LOG} ${LOG}.0
 
           # Unpack the archive (unpacks to *access.log)
 	  gunzip ${LOG}.gz
