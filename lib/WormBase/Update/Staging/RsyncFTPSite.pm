@@ -20,9 +20,12 @@ sub run {
 			       symlink => 'current-dev.wormbase.org-release',
 			      });
 	
-	$self->rsync_ftp_directory();
+	# Update symlinks to the development version
+	$self->update_ftp_site_symlinks('development');
+	$self->rsync_ftp_directory();       
     }
 }
+
 
 # Rsync the staging server's FTP directory
 # to the production FTP directory (assuming that the
