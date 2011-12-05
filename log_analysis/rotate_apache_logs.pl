@@ -5,21 +5,15 @@
 $HOSTNAME=`hostname`;
 chomp $HOSTNAME;
 
-#$PIDFILE='/etc/httpd/run/httpd.pid';
-if ($HOSTNAME eq 'ip-10-196-103-21') {
-    $PIDFILE='/var/run/apache2.pid';
-} else {
-    $PIDFILE = '/usr/local/apache2/logs/httpd.pid';
-}
-
-$LOGPATH    = '/usr/local/wormbase/logs';
+$PIDFILE='/var/run/apache2.pid';
+$LOGPATH    = '/usr/local/wormbase/logs/classic';
 
 $MAXCYCLE   = 7;
 $GZIP       = '/usr/bin/gzip';
 
-@LOGNAMES =("classic-httpd-access.log","classic-httpd-error.log");
-%ARCHIVE  =("classic-httpd-access.log"=>1,
-	    "classic-httpd-error.log"=>1);
+@LOGNAMES =("access.log","error.log");
+%ARCHIVE  =("access.log"=>1,
+	    "error.log"=>1);
 
 chdir $LOGPATH;  # Change to the log directory
 foreach $filename (@LOGNAMES) {
