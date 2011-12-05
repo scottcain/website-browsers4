@@ -42,9 +42,14 @@ has 'couchdbmaster'     => ( is => 'rw', default => '206.108.125.165:5984' );
 # have the newest version of the database.
 
 # Adjust here to crawl the live site, too.  The app itself will cache content in
-# a single couchdb (PUT requests directed to a single host).
+# a single couchdb (PUT requests directed to a single host by proxy).
 #has 'precache_host'     => ( is => 'rw', default => 'http://staging.wormbase.org/');
-has 'precache_host'     => ( is => 'rw', default => 'http://beta.wormbase.org/');  # Probably not what we want later.
+
+# Prewarming the cache, we should direct requests against the development site.
+# This app would actually cache on localhost.
+
+# Later, we might want to crawl the live site at a low rate, too.
+has 'precache_host'     => ( is => 'rw', default => 'http://staging.wormbase.org/');
 
 
 # WormBase 2.0: used in deploy_sofware
@@ -124,6 +129,45 @@ has 'release' => (
 #    unless ($release) {
 	
 
+# target and target_nodes: symbolic names of production, development, mirror
+# Used when pushing a staged release to other nodes.
+has 'target' => (
+    is        => 'rw',
+#    lazy_build => 1,
+    );
+
+around 'target' => sub {
+    my $orig   = shift;
+    my $self   = shift;
+
+    my $target = $self->$orig();
+
+    die unless ($target =~ /^(production|development|mirror|staging)$/);
+    return $target;
+};
+
+
+# Return nodes that should require specific components.
+# Should be one of support, mysql, acedb.
+# Will call a corresponding method of "production_support_nodes", eg.
+has 'target_nodes' => (
+    is => 'rw',
+    );
+
+around 'target_nodes' => sub {
+    my $orig = shift;
+    my $self = shift;
+    my $type = shift;
+
+    die "Available target types should be one of: acedb, mysql, support\n" unless 
+	($type =~ /^(acedb|mysql|support)$/);
+    
+    my $target = $self->target;
+    my $method = join('_',$target,$type,'nodes');
+    return $self->$method;
+};
+
+
 
 sub release_id {
     my $self    = shift;
@@ -175,6 +219,7 @@ sub _build_drh {
     return $drh;
 }
 
+
 has 'mysql_data_dir' => ( is => 'ro',  default => '/usr/local/mysql/data' );
 has 'mysql_user'     => ( is => 'ro',  default => 'root'      );
 has 'mysql_pass'     => ( is => 'ro',  default => '3l3g@nz'   );
@@ -196,6 +241,15 @@ has 'ftp_root' => (
 has 'ftp_releases_dir' => (
     is         => 'ro',
     lazy_build => 1,
+    );
+
+# Where the production FTP site lives.
+# Assumes that the user running the update script
+# has access and that the ftp_root is the 
+# same as above.
+has 'production_ftp_host' => (
+    is         => 'ro',
+    default    => 'wb-dev.oicr.on.ca',
     );
 
 sub _build_ftp_releases_dir {
@@ -282,13 +336,17 @@ has 'local_app_nodes' => (
     isa => 'ArrayRef',
     default => sub {
 	[qw/wb-web1.oicr.on.ca
-            wb-web6.oicr.on.ca
-            wb-web7.oicr.on.ca
-	    wb-web8.oicr.on.ca
-	    wb-web9.oicr.on.ca
-            wb-web10.oicr.on.ca/],
-    },
+            wb-web2.oicr.on.ca
+            wb-web4.oicr.on.ca
+            wb-gb1.oicr.on.ca
+            wb-gb2.oicr.on.ca
+/]},
     );
+
+#            wb-web3.oicr.on.ca
+#            wb-web6.oicr.on.ca
+#            wb-web7.oicr.on.ca
+#            wb-mining.oicr.on.ca
 
 has 'remote_app_nodes' => (
     is => 'ro',
@@ -304,11 +362,10 @@ has 'local_web_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw/wb-mining.oicr.on.ca
+	[qw/wormbase.org
+            wb-mining.oicr.on.ca
             wb-web1.oicr.on.ca
-            wb-web2.oicr.on.ca
-	    wb-web3.oicr.on.ca
-	    wb-web4.oicr.on.ca/],
+            /],
     },
     );
 
@@ -319,8 +376,26 @@ has 'remote_web_nodes' => (
 	[qw/canopus.caltech.edu/]},
     );
 
+###############
+# ACEDB NODES
+###############
+has 'staging_acedb_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw/wb-dev.oicr.on.ca/]
+    },
+    );
 
-has 'local_acedb_nodes' => (
+has 'development_acedb_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw/wb-dev.oicr.on.ca/]
+    },
+    );
+
+has 'production_acedb_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
@@ -329,23 +404,30 @@ has 'local_acedb_nodes' => (
             wb-web2.oicr.on.ca
 	    wb-web3.oicr.on.ca
 	    wb-web4.oicr.on.ca
-            wb-web6.oicr.on.ca
-            wb-web7.oicr.on.ca
-	    wb-web8.oicr.on.ca
-	    wb-web9.oicr.on.ca
-            wb-web10.oicr.on.ca/],
+            canopus.caltech.edu/],
     },
     );
 
-has 'remote_acedb_nodes' => (
+###############
+# SUPPORT NODES
+###############
+has 'staging_support_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw/canopus.caltech.edu/]},
+	[qw/wb-web7.oicr.on.ca/]
+    },
     );
 
+has 'development_support_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw/wb-dev.oicr.on.ca/]
+    },
+    );
 
-has 'local_support_database_nodes' => (
+has 'production_support_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
@@ -354,23 +436,31 @@ has 'local_support_database_nodes' => (
             wb-web2.oicr.on.ca
 	    wb-web3.oicr.on.ca
 	    wb-web4.oicr.on.ca
-            wb-web6.oicr.on.ca
-            wb-web7.oicr.on.ca
-	    wb-web8.oicr.on.ca
-	    wb-web9.oicr.on.ca
-            wb-web10.oicr.on.ca/],
+            canopus.caltech.edu
+/],
     },
     );
 
-has 'remote_support_database_nodes' => (
+###############
+# MYSQL NODES
+###############
+has 'staging_mysql_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw/canopus.caltech.edu/]
+	[qw/wb-web7.oicr.on.ca/],
     },
     );
 
-has 'local_mysql_database_nodes' => (
+has 'development_mysql_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw/wb-dev.oicr.on.ca/],
+    },
+    );
+
+has 'production_mysql_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
@@ -381,21 +471,11 @@ has 'local_mysql_database_nodes' => (
             wb-web2.oicr.on.ca
 	    wb-web3.oicr.on.ca
 	    wb-web4.oicr.on.ca
-            wb-web6.oicr.on.ca
-            wb-web7.oicr.on.ca
-	    wb-web8.oicr.on.ca
-	    wb-web9.oicr.on.ca
-            wb-web10.oicr.on.ca/],
+            canopus.caltech.edu
+/],
     },
     );
 
-has 'remote_mysql_database_nodes' => (
-    is => 'ro',
-    isa => 'ArrayRef',
-    default => sub {
-	[qw/canopus.caltech.edu/]
-    },
-    );
 
 ####################################
 #

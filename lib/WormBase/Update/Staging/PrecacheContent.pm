@@ -33,11 +33,12 @@ sub run {
     my $self = shift;       
     my $release = $self->release;
     # $self->precache_content();
-    $self->precache_to_couchdb();
+    # $self->precache_to_couchdb();
 
-#    foreach my $class (qw/gene variation protein/) {
-#	$self->precache_classic_content($class);
-#    }
+#    foreach my $class (qw/gene variation protein gene_class/) {
+    foreach my $class (qw/gene variation protein gene_class/) {
+	$self->precache_classic_content($class);
+    }
 }
 
 
@@ -70,7 +71,9 @@ sub precache_content {
     system("mkdir -p $cache_root/logs");
     
     # Turn off autocheck so that server errors don't kill us.
-    my $mech = WWW::Mechanize->new(-agent     => 'WormBase-PreCacher/1.0',
+    #-agent     => 'WormBase-PreCacher/1.0',
+    my $mech = WWW::Mechanize->new(
+				   -agent => 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.2 (KHTML, like Gecko) Ubuntu/11.04 Chromium/15.0.871.0 Chrome/15.0.871.0 Safari/535.2',
 				   -autocheck => 0 );
     
     # Set the stack depth to 0: no need to retain history;
@@ -192,9 +195,10 @@ sub precache_to_couchdb {
 	# Horribly broken classes, currently uncacheable.
 	next if $class eq 'anatomy_term';
 	next unless $class eq 'gene';
-	
+
 	foreach my $widget (keys %{$config->{sections}->{species}->{$class}->{widgets}}) {
-#	    next unless $widget eq 'overview';
+#	    next unless $widget eq 'external_links';
+	    next unless $widget eq 'homology';
 	    my $precache = eval { $config->{sections}->{species}->{$class}->{widgets}->{$widget}->{precache}; };
 	    $precache ||= 0;
 	    
@@ -439,11 +443,13 @@ sub precache_classic_content {
     my ($self,$class) = @_;
     my $db = Ace->connect(-host=>'localhost',-port=>2005) || die "Couldn't open database";
     
+    my $base_url = $self->precache_host;
+
     $|++;
     
-    my %class2url = ( gene => 'http://dev.wormbase.org/db/gene/gene?class=Gene;name=',
-		      variation => 'http://dev.wormbase.org/db/gene/variation?class=Variation;name=',
-		      protein   => 'http://dev.wormbase.org/db/seq/protein?class=Protein;name=',);
+    my %class2url = ( gene      => $base_url . 'db/gene/gene?class=Gene;name=',
+		      variation => $base_url . 'db/gene/variation?class=Variation;name=',
+		      protein   => $base_url . 'db/seq/protein?class=Protein;name=',);
     
     my $version = $db->status->{database}{version};
     my $cache = join("/",$self->support_databases_dir,$version,'cache',$class);

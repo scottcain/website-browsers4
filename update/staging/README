@@ -1,37 +1,96 @@
-Staging a new release; testing 2011.06.03 with WS226
+#!/bin/bash 
 
-See complete documentation on the WormBase wiki.
+# Stage a new release of WormBase
+# See complete documentation on the WormBase wiki.
+#  http://wiki.wormbase.org/index.php/Software_Life_Cycle:_1._Updating_The_Development_Server
 
-1. Mirror a new release from Sanger. (run under cron)
+RELEASE=$1
 
-  steps/mirror_new_release.sh  // The next newest version will be discovered automatically.
+if [ ! $RELEASE ]; then
+   exit "Usage: $0 WSXXX"
+fi
 
-  OR
- 
-  steps/mirror_new_release.sh  WSXXX
+# 1. Mirror a new release from Sanger. (run under cron)
+# ./steps/mirror_new_release.sh  // The next newest version will be discovered automatically.
+#  OR
+ ./steps/mirror_new_release.sh  $RELEASE
+
+# 2. Unpack AceDB
+./steps/unpack_acedb $RELEASE
+
+# 3. Create BLAST databases (requires ~ 2 hours for 16 species)
+./steps/create_blast_databases.pl $RELEASE
+
+# 4. Create BLAT databases (requires ~ 5 hours for 16 species)
+./steps/create_blat_databases.pl $RELEASE
+
+# 5. Load Genomic GFF databases
+/steps/load_genomic_gff_databases.pl $RELEASE
+
+# 6. Load the clustal database
+./steps/unpack_clustal_databases.pl $RELEASE
+
+#7. Compile Gene Resources
+./steps/compile_gene_resources.pl $RELEASE
+
+# 8. Compile Ontology Resources
+./steps/compile_ontology_resources.pl $RELEASE
+
+# 9. Compile Orthology Resources
+./steps/compile_orthology_resources.pl $RELEASE
+
+# 10. Convert GFF2 into GFF3
+./steps/convert_gff2_to_gff3.sh $RELEASE
+
+# 11. Create commonly requested files
+./steps/dump_annotations.pl $RELEASE
+
+# 12. Create the xapian search database
+#     See xapian/README for more information
+mkdir /usr/local/wormbase/tmp/acedmp
+
+#    1) Dump AceDB (this needs to be run manually)
+# cd /usr/local/wormbase/acedb/bin
+# ./tace ../wormbase
+# acedb> @/usr/local/wormbase/website-admin/update/staging/xapian/dump_ace_for_search.script
+
+#    2) Run Indexer
+#  ./xapian/aceindex settings.conf $RELEASE
+
+# 13. Check out new software to the staging server.
+
+# 14. Rsync staging FTP site to the production FTP site.
+./steps/rsync_staging_ftp_site_to_production.pl $RELEASE
+
+# 15. Push a newly staged version to development and/or production servers.
+#    If ANYTHING is wrong with the staged release,
+#    this step will need to be repeated.
+./steps/push_staged_release_to_nodes.pl --release $RELEASE --target development
+
+# 16. Go live with the newly staged version on the staging serve
+#    adjusts symlinks on this (staging) server
+#    If ANYTHING is wrong with the staged release,
+#    this step will need to be repeated.
+./steps/adjust_symlinks.pl --release $RELEASE --target staging
+
+# 17. Adjust symlinks on the FTP site (creating the current_dev symlinks)
 
 
-2. Unpack AceDB
 
-   ./steps/unpack_acedb WSXXX
+14. Begin precaching content
 
-
-3. Create BLAST databases (requires ~ 2 hours for 16 species)
-   ./steps/create_blast_databases.pl WSXXX
-
-4. Create BLAT databases
-   ./steps/create_blat_databases.pl WSXXX (requires ~ 5 hours for 16 species)
-
-5. Load Genomic GFF databases
-   ./steps/load_genomic_gff_databases.pl WSXXX
-
-6. Load the clustal database
-   ./steps/local_clustal_databases.pl WSXXX
-
-
-
-
-Finally....
-
-10. Precache content
     ./steps/precache_content.pl WSXXX
+
+
+15. Send notification to staff that new release is available.
+
+
+
+--- at production release ---
+
+* Need to update links on FTP site (currently this is part of production/go_live- this needs to be
+  updated and/or broken out so that it simply runs as a cron job.
+* ./push_acedb.pl
+* ./push_mysql_databases.pl
+* ./push_support_databases.pl
+* ./go_live.pl

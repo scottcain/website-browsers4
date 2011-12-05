@@ -75,9 +75,8 @@ sub run {
     
     # The ontology directory should already exist. Let's make certain.    
     my $datadir = $self->support_databases_dir. "/$release/ontology";
-    
-    $self->copy_ontology();   
 
+    $self->copy_ontology();   
 
 #    # Iterate over each ontology
    foreach my $ontology (keys %ontology2name) {	
@@ -92,7 +91,7 @@ sub run {
 	$self->compile_ontology_relationships($ontology,2);
     }
    
-    # compile id2name
+
     $self->parse_search_data(0,1,$self->id2name_file);
     $self->parse_search_data(1,0,$self->name2id_file);
     $self->parse_search_data(0,5,$self->id2association_counts_file);    
@@ -108,15 +107,13 @@ sub run {
 
     
     my $bin_path = $self->bin_path . "/../helpers/";
-#    my $cmd = "get_cumulative_association_counts.pl $release";
-#    $self->system_call("$bin_path/$cmd",
-#		       "$bin_path/$cmd");
- 
-    $self->get_cumulative_association_counts('id2total_associations.txt');
-    $self->log->debug("crazy gene page compiles complete");
+    my $cmd = "get_cumulative_association_counts.pl $release";
+    $self->system_call("$bin_path/$cmd",
+		       "$bin_path/$cmd");
     
+    $self->get_cumulative_association_counts('id2total_associations.txt');
+    $self->log->info("crazy gene page compiles complete");
 }
-
 
 
 sub copy_ontology {
@@ -141,7 +138,7 @@ sub copy_ontology {
 
 sub compile_search_data {
     my ($self,$type,) = @_;
-    $self->log->debug("compiling search_data.txt for $type");
+    $self->log->info("compiling search_data.txt for $type");
     
     my $obo_tag   = $type . '_obo_file';
     my $assoc_tag = $type . '_assoc_file';
@@ -214,7 +211,7 @@ sub compile_search_data {
 
 sub compile_ontology_relationships {
     my ($self,$type,$format) = @_;
-    $self->log->debug("compiling ontology relationships for $type");
+    $self->log->info("compiling ontology relationships for $type");
     
     my $obo_tag   = $type . '_obo_file';
     my $assoc_tag = $type . '_assoc_file';
@@ -319,7 +316,7 @@ sub parse_search_data {
     my ($self,$index_1,$index_2,$output_file) = @_;
     
     my $output = join("/",$self->datadir,$output_file);
-    $self->log->debug("parsing search data to $output");
+    $self->log->info("parsing search data to $output");
 
     my $datafile = join("/",$self->datadir,$self->search_data_preprocessed_file);
     open OUT, ">$output" or $self->log->logdie("Cannot open the output file: $output $!");
@@ -771,11 +768,14 @@ sub list_paths {
 			# print "DESTINATION\:$destination\n";
 			## get term at head of the path
 			my ($parent) = split '%',$destination; #
-			# my $discard;
-			$parent =~ s/^.*&//; 
-			# ($discard,$child) = split '\&',$child;
-			# print "$child\n";
-	  		my $children = $$parent2ids_hr{$parent}; # $parents = $$id2parents_ref{$child}
+	  		my $children;
+			if ($parent) {
+			    # my $discard;
+			    $parent =~ s/^.*&//; 
+			    # ($discard,$child) = split '\&',$child;
+			    # print "$child\n";			    
+			    $children = $$parent2ids_hr{$parent}; # $parents = $$id2parents_ref{$child}			
+			}
 			if($children){ ## $parents
 				## get parents
 				# print "PARENTS\:$parents\n";

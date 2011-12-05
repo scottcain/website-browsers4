@@ -6,7 +6,7 @@
 
 DEBUG=
 
-BINDIR=/usr/local/wormbase/admin/log_analysis
+BINDIR=/usr/local/wormbase/website-admin/log_analysis
 LOGDIR=/usr/local/wormbase/log_archive
 PURGE_SCRIPT=${BINDIR}/purge_squid_logs.pl
 
@@ -85,13 +85,12 @@ if [ $tomorrowMonth != $todayMonth ]; then
   rm -rf access_log.0 access_log.1 access_log.2 access_log.3 access_log.4 access_log.5 \
          access_log.6 access_log.7 access_log.8  
 
-
   ################################
   # Add hostnames by jdresolve
   ################################
-  echo "Adding hostnames..."
+#  echo "Adding hostnames..."
 
-  sudo -u ${USER} gunzip -c ${LOGDIR}/raw/access_log.${DATE}.gz | ${JDRESOLVE}/jdresolve -s 16 -l 300000 -r - | gzip -c > ${LOGDIR}/with_hosts/access_log.${DATE}.gz
+#  sudo -u ${USER} gunzip -c ${LOGDIR}/raw/access_log.${DATE}.gz | ${JDRESOLVE}/jdresolve -s 16 -l 300000 -r - | gzip -c > ${LOGDIR}/with_hosts/access_log.${DATE}.gz
 
   # Concatante to the full year log
 # 2010.09 - ON HOLD, NEED POST-PROCESSING PRIOR TO CONCATENATION
