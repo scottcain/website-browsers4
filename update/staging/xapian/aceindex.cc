@@ -25,7 +25,6 @@
  */
 
 #include <xapian.h>
-#include <xapian/compactor.h>
 #include <libconfig.h++>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -96,7 +95,7 @@ parseSpecies (string &species) {
 
 bool 
 indexLineBegin(string field_name, string line, string copy, string obj_name, Xapian::Document doc, Xapian::Document syn_doc){
-  if(((field_name.find("name") != string::npos)         && 
+  if((((field_name.find("name") != string::npos) || (field_name.find("term") != string::npos))         && 
       (field_name.find("molecular") == string::npos)    &&
       (field_name.find("middle") == string::npos)    &&
       (field_name.find("first") == string::npos))   || 
