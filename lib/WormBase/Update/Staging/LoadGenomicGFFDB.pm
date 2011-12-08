@@ -53,14 +53,15 @@ sub load_gffdb {
     $self->create_database($species);
     
     my $gff     = $species->gff_file;       # this includes the full path.
-
-    # HACK HACK HACK HACK - We need to use a different input
-    # file until we have GFF3
-    # This needs to be c_elegans.WSXXX.GBrowse.gff2.gz NOT the core GFF file (c_elegans.WSXXX.annotations.gff2.gz)
-    $gff =~ s/annotations/GBrowse/;
-
     my $fasta   = join("/",$species->release_dir,$species->genomic_fasta);  # this does not.
+
     if ($name =~ /elegans/) {
+
+	# HACK HACK HACK HACK - We need to use a different input
+	# file until we have GFF3
+	# This needs to be c_elegans.WSXXX.GBrowse.gff2.gz NOT the core GFF file (c_elegans.WSXXX.annotations.gff2.gz)
+	$gff =~ s/annotations/GBrowse/;
+
 
 	# Create the ESTs file
 	# Now created by hinxton.
@@ -68,6 +69,7 @@ sub load_gffdb {
 	
 	# Need to do some small processing for some species.
 	$self->log->debug("processing $name GFF files");
+
 	
 	# WS226: Hinxton supplies us GBrowse GFF named g_species.release.GBrowse.gff2.gz
 	# We just need to drop the introns and assembly tag.
@@ -89,6 +91,8 @@ sub load_gffdb {
 	$species->gff_file("$output"); # Swap out the GFF files to load.
 	$gff = $species->gff_file;
 	$self->system_call($cmd,'processing C. elegans GFF');
+
+
 #    } elsif ($name =~ /briggsae/) {
 #
 #	# This really only needs to change =~ s/CHROMOSOME_// 

@@ -28,7 +28,7 @@ Background:
   And the classic application (for now)
   ./steps/push_classic_software.pl
 
-4. Update symlinks on the FTP site (run from the server hosting the FTP site):
+4. Update symlinks on the FTP site (run on the server hosting the FTP site):
 
    ./steps/update_production_ftp_symlinks.pl --release WSXXX
 

@@ -13,27 +13,37 @@ fi
 # 1. Mirror a new release from Sanger. (run under cron)
 # ./steps/mirror_new_release.sh  // The next newest version will be discovered automatically.
 #  OR
- ./steps/mirror_new_release.sh  $RELEASE
+# END : mirror a new release from the Hinxton FTP site; in 0 days, 0 hours, 37 minutes and 25 seconds
+./steps/mirror_new_release.sh  $RELEASE
 
 # 2. Unpack AceDB
-./steps/unpack_acedb $RELEASE
+# END : unpack and customize acedb; in 0 days, 0 hours, 18 minutes and 20 seconds
+./steps/unpack_acedb.pl $RELEASE
+
+# 3. Mirror and unpack AceDB to Caltech
+# END : push acedb to caltech; in 0 days, 1 hours, 4 minutes and 33 seconds
+./steps/sync_acedb_to_caltech.pl $RELEASE
 
 # 3. Create BLAST databases (requires ~ 2 hours for 16 species)
+# END : build BLAST databases; in 0 days, 2 hours, 5 minutes and 6 seconds
 ./steps/create_blast_databases.pl $RELEASE
 
 # 4. Create BLAT databases (requires ~ 5 hours for 16 species)
 ./steps/create_blat_databases.pl $RELEASE
 
 # 5. Load Genomic GFF databases
-/steps/load_genomic_gff_databases.pl $RELEASE
+END : load genomic gff databases; in 0 days, 22 hours, 58 minutes and 28 seconds
+//steps/load_genomic_gff_databases.pl $RELEASE
 
 # 6. Load the clustal database
 ./steps/unpack_clustal_databases.pl $RELEASE
 
 #7. Compile Gene Resources
+# END : compile gene page resources; in 0 days, 1 hours, 11 minutes and 52 seconds
 ./steps/compile_gene_resources.pl $RELEASE
 
 # 8. Compile Ontology Resources
+# This step takes ~ 5 hours or more
 ./steps/compile_ontology_resources.pl $RELEASE
 
 # 9. Compile Orthology Resources
