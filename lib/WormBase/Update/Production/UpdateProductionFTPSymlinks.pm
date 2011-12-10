@@ -1,4 +1,4 @@
-package WormBase::Update::Staging::UpdateProductionFTPSymlinks;
+package WormBase::Update::Production::UpdateProductionFTPSymlinks;
 
 use Moose;
 extends qw/WormBase::Update/;
