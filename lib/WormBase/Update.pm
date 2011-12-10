@@ -258,9 +258,13 @@ sub update_ftp_site_symlinks {
     my $release = $self->release;
 
     chdir($releases_dir);
-    if ($type) {
+    if ($type eq 'development') {
 	$self->update_symlink({target => $release,
 			       symlink => 'current-dev.wormbase.org-release',
+			      });
+    } elsif ($type eq 'production') {
+	$self->update_symlink({target => $release,
+			       symlink => 'current-www.wormbase.org-release',
 			      });
     } else {
 	$self->update_symlink({target => $release,
