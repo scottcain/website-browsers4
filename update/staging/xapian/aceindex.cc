@@ -33,7 +33,9 @@
 #include <fstream>
 #include <string>
 #include <cstdlib> // For exit().
+#include <stdio.h>
 #include <cstring>
+#include <dirent.h>
 
 
 
@@ -93,7 +95,7 @@ parseSpecies (string &species) {
 
 bool 
 indexLineBegin(string field_name, string line, string copy, string obj_name, Xapian::Document doc, Xapian::Document syn_doc){
-  if(((field_name.find("name") != string::npos)         && 
+  if((((field_name.find("name") != string::npos) || (field_name.find("term") != string::npos))         && 
       (field_name.find("molecular") == string::npos)    &&
       (field_name.find("middle") == string::npos)    &&
       (field_name.find("first") == string::npos))   || 
@@ -351,6 +353,33 @@ indexLongText(char* filename, Setting &root){
     }
 }
 
+void 
+compactDB(string db_path){
+  
+    Xapian::Compactor compact;
+    compact.add_source(db_path + "-full");
+    compact.set_destdir(db_path);
+    
+    compact.set_renumber(false);
+    compact.set_compaction_level(Xapian::Compactor::FULLER);
+    compact.compact();
+    
+    DIR *pDIR;
+    struct dirent *entry;
+    string pth = db_path + "-full";
+    if( pDIR=opendir(pth.c_str()) ){
+        while(entry = readdir(pDIR)){
+              if( strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0 ){
+                string fpth = pth + "/" + entry->d_name;
+                remove(fpth.c_str());
+              }
+        }
+        remove(pth.c_str());
+        closedir(pDIR);
+    }
+  
+}
+
 
 int
 main(int argc, char **argv)
@@ -394,8 +423,8 @@ try {
 
 
     // Open the database for update, creating a new database if necessary.
-    db = Xapian::WritableDatabase(db_path + "/main", Xapian::DB_CREATE_OR_OPEN);
-    syn_db = Xapian::WritableDatabase(db_path + "/syn", Xapian::DB_CREATE_OR_OPEN);
+    db = Xapian::WritableDatabase(db_path + "/main-full", Xapian::DB_CREATE_OR_OPEN);
+    syn_db = Xapian::WritableDatabase(db_path + "/syn-full", Xapian::DB_CREATE_OR_OPEN);
 
   
     for(int j=0; j < classes_settings.getLength() ; j++) {
@@ -448,8 +477,9 @@ try {
       cout << "Done indexing " << filename << endl;
       
     }
-
-
+    compactDB(db_path + "/main");
+    compactDB(db_path + "/syn");  
+    
 } catch (const Xapian::Error &e) {
     cout << e.get_description() << endl;
     exit(1);

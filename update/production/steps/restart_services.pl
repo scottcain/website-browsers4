@@ -6,16 +6,17 @@ use strict;
 use WormBase::Update::Production::RestartServices;
 use Getopt::Long;
 
-my ($release,$help);
+my ($release,$help,$target);
 GetOptions('release=s' => \$release,
-	   'help=s'    => \$help);
+	   'help=s'    => \$help,
+	   'target=s'  => \$target);
 
 if ($help || (!$release)) {
     die <<END;
     
-Usage: $0 [--release] WSXXX
+Usage: $0 --target [development|production] [--release] WSXXXX
 
-Restart services on production machines.
+Restart services on [development|production] machines.
 
 END
 ;
@@ -23,9 +24,9 @@ END
 
 my $agent;
 if ($release) {
-    $agent = WormBase::Update::Production::RestartServices->new({ release => $release });
+    $agent = WormBase::Update::Production::RestartServices->new({ release => $release, target => $target });
 } else {
-    $agent = WormBase::Update::Production::RestartServices->new();
+    $agent = WormBase::Update::Production::RestartServices->new( { target => $target });
 }
 $agent->execute();
 

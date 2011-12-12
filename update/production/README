@@ -4,33 +4,7 @@ Staging -> Production, 05/2011
 
 See for an up-to-date description.
 
-http://wiki.wormbase.org/index.php/Software_Life_Cycle:_4._Updating_The_Production_Servers#Tag_the_software
-
-Background:
-* We stage releases at OICR, then sync to developent and production nodes.
-
-1. Push databases to production nodes
-
-  steps/push_staged_release_to_nodes.pl --release $RELEASE --target production
-
-2. Check out and test software on the staging host.
-
-3. Deploy newest version of the webapp.
-   
-   Rsync the staging/ directory to new directories on production
-   nodes in unique directories by version.  To be run from EITHER
-   the staging host of primary development host.
-   
-   Also: creates a software release on the FTP site and a snapshot for reference.
-
-  ./steps/deploy_webapp.pl WSXXXX
-
-  And the classic application (for now)
-  ./steps/push_classic_software.pl
-
-4. Update symlinks on the FTP site (run from the server hosting the FTP site):
-
-   ./steps/update_production_ftp_symlinks.pl --release WSXXX
+http://wiki.wormbase.org/index.php/Software_Life_Cycle:_4._Updating_The_Production_Servers
 
 5. Update (acedb and mysql) symlinks on both production nodes:
 
@@ -45,13 +19,13 @@ Background:
 Manually:
 
 * Update release notes on wiki
-* Send announcemtnt
+* Send announcement
 * Post announcement on blog
 
 
 
 To update the software ONLY:
-
+------------------------------------
 
 4. Deploy newest version of the webapp.
    
@@ -183,7 +157,7 @@ Notes:
 
 7. Tag the software
    
-   wb-dev> cvs_tag_relase.sh WSXXX // The new version being pushed out.
+   wb-dev> cvs_tag_release.sh WSXXX // The new version being pushed out.
 
 8. Create software release: 
 
