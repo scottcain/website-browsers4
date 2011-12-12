@@ -6,23 +6,6 @@ See for an up-to-date description.
 
 http://wiki.wormbase.org/index.php/Software_Life_Cycle:_4._Updating_The_Production_Servers
 
-5. Update (acedb and mysql) symlinks on both production nodes:
-
-   ./staging/steps/adjust_symlinks.pl --release WSXXX --target production
-
-6. Restart services
-  
-   (This only restarts starman)
-  ./steps/restart_starman.pl WSXXX
-
-
-Manually:
-
-* Update release notes on wiki
-* Send announcement
-* Post announcement on blog
-
-
 
 To update the software ONLY:
 ------------------------------------

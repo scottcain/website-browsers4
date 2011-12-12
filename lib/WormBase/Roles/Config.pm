@@ -388,7 +388,7 @@ has 'staging_acedb_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw/wb-dev.oicr.on.ca/]
+	[qw/wb-web7.oicr.on.ca/]
     },
     );
 
