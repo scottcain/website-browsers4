@@ -47,15 +47,14 @@ END : load genomic gff databases; in 0 days, 22 hours, 58 minutes and 28 seconds
 ./steps/compile_ontology_resources.pl $RELEASE
 
 # 9. Compile Orthology Resources
+# END : compile orthology resources; in 0 days, 2 hours, 35 minutes and 12 seconds
 ./steps/compile_orthology_resources.pl $RELEASE
 
 # 10. Convert GFF2 into GFF3
+# END : convert GFF2 annotations to GFF3; in 0 days, 2 hours, 45 minutes and 5 seconds
 ./steps/convert_gff2_to_gff3.sh $RELEASE
 
-# 11. Create commonly requested files
-./steps/dump_annotations.pl $RELEASE
-
-# 12. Create the xapian search database
+# 11. Create the xapian search database
 #     See xapian/README for more information
 mkdir /usr/local/wormbase/tmp/acedmp
 
@@ -67,40 +66,37 @@ mkdir /usr/local/wormbase/tmp/acedmp
 #    2) Run Indexer
 #  ./xapian/aceindex settings.conf $RELEASE
 
+# 12. Create commonly requested files
+# END : dump_annotations; in 0 days, 2 hours, 19 minutes and 59 seconds
+./steps/dump_annotations.pl $RELEASE
+
 # 13. Check out new software to the staging server.
 
 # 14. Rsync staging FTP site to the production FTP site.
+#     * Updates symlinks on the local staging FTP site; these are then synced
+
 ./steps/rsync_staging_ftp_site_to_production.pl $RELEASE
 
-# 15. Push a newly staged version to development and/or production servers.
+# 15. Push a newly staged version to development server(s).
 #    If ANYTHING is wrong with the staged release,
 #    this step will need to be repeated.
 ./steps/push_staged_release_to_nodes.pl --release $RELEASE --target development
 
-# 16. Go live with the newly staged version on the staging serve
-#    adjusts symlinks on this (staging) server
-#    If ANYTHING is wrong with the staged release,
-#    this step will need to be repeated.
+# 16. Go live with the newly staged version on the staging server by adjusting symlinks!
+#    * adjusts acedb and mysql symlinks on this (staging) server
+#
+#      If ANYTHING is wrong with the staged release,
+#      this step will need to be repeated.
+# Staging
+./steps/adjust_symlinks.pl --release $RELEASE --target staging
+# Development server(s)
 ./steps/adjust_symlinks.pl --release $RELEASE --target staging
 
-# 17. Adjust symlinks on the FTP site (creating the current_dev symlinks)
 
-
-
-14. Begin precaching content
-
-    ./steps/precache_content.pl WSXXX
+# 14. Begin precaching content
+./steps/precache_content.pl WSXXX
 
 
 15. Send notification to staff that new release is available.
 
 
-
---- at production release ---
-
-* Need to update links on FTP site (currently this is part of production/go_live- this needs to be
-  updated and/or broken out so that it simply runs as a cron job.
-* ./push_acedb.pl
-* ./push_mysql_databases.pl
-* ./push_support_databases.pl
-* ./go_live.pl
