@@ -335,7 +335,8 @@ has 'local_app_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw/ec2-50-19-229-229.compute-1.amazonaws.com
+	[qw/50.19.112.56
+            ec2-50-19-229-229.compute-1.amazonaws.com
             wb-web1.oicr.on.ca
             wb-web2.oicr.on.ca
             wb-web3.oicr.on.ca
