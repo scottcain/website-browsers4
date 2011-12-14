@@ -335,24 +335,24 @@ has 'local_app_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw/wb-web1.oicr.on.ca
+	[qw/50.19.112.56
+            ec2-50-19-229-229.compute-1.amazonaws.com
+            wb-web1.oicr.on.ca
             wb-web2.oicr.on.ca
+            wb-web3.oicr.on.ca
             wb-web4.oicr.on.ca
+            wb-web6.oicr.on.ca
+            wb-mining.oicr.on.ca
             wb-gb1.oicr.on.ca
-            wb-gb2.oicr.on.ca
 /]},
     );
-
-#            wb-web3.oicr.on.ca
-#            wb-web6.oicr.on.ca
-#            wb-web7.oicr.on.ca
-#            wb-mining.oicr.on.ca
+#            wb-gb2.oicr.on.ca
 
 has 'remote_app_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw//]},
+	[qw/canopus.caltech.edu/]},
     );
 
 
@@ -362,12 +362,18 @@ has 'local_web_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw/wormbase.org
+	[qw/ec2-50-19-229-229.compute-1.amazonaws.com
             wb-mining.oicr.on.ca
             wb-web1.oicr.on.ca
+            wb-web2.oicr.on.ca
+            wb-web3.oicr.on.ca
+            wb-web4.oicr.on.ca
+            wb-web6.oicr.on.ca
+            wb-gb1.oicr.on.ca
             /],
     },
     );
+#            wb-gb2.oicr.on.ca
 
 has 'remote_web_nodes' => (
     is => 'ro',
@@ -383,7 +389,7 @@ has 'staging_acedb_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw/wb-dev.oicr.on.ca/]
+	[qw/wb-web7.oicr.on.ca/]
     },
     );
 
@@ -395,11 +401,20 @@ has 'development_acedb_nodes' => (
     },
     );
 
+has 'caltech_acedb_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw/canopus.caltech.edu/],
+    },
+    );
+
 has 'production_acedb_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw/wb-mining.oicr.on.ca
+	[qw/ec2-50-19-229-229.compute-1.amazonaws.com
+	    wb-mining.oicr.on.ca
             wb-web1.oicr.on.ca
             wb-web2.oicr.on.ca
 	    wb-web3.oicr.on.ca
@@ -431,7 +446,8 @@ has 'production_support_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw/wb-mining.oicr.on.ca
+	[qw/ec2-50-19-229-229.compute-1.amazonaws.com
+            wb-mining.oicr.on.ca
             wb-web1.oicr.on.ca
             wb-web2.oicr.on.ca
 	    wb-web3.oicr.on.ca
@@ -464,8 +480,8 @@ has 'production_mysql_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw/wb-gb1.oicr.on.ca
-            wb-gb2.oicr.on.ca   
+	[qw/ec2-50-19-229-229.compute-1.amazonaws.com
+            wb-gb1.oicr.on.ca
             wb-mining.oicr.on.ca
             wb-web1.oicr.on.ca
             wb-web2.oicr.on.ca
