@@ -14,7 +14,7 @@ GetOptions('release=s' => \$release,
 if ($help || (!$target && !$release)) {
     die <<END;
     
-Usage: $0 --target [development|mirror|production] [--release] WSXXX
+Usage: $0 --target [development|mirror|production] --release WSXXX
 
 Push a staged release to other environments.
 

@@ -11,30 +11,26 @@ has 'step' => (
     default => 'load genomic gff databases',
     );
 
+has 'desired_species' => (
+    is => 'ro',
+    );
+    
 
 sub run {
     my $self = shift;
 
     # get a list of (symbolic g_species) names
-    my ($species) = $self->wormbase_managed_species;
+    my $desired_species = $self->desired_species;
+    my $species = [];
+    if ($desired_species) {
+	push @$species,$desired_species;
+    } else {
+	($species) = $self->wormbase_managed_species;
+    }
+    
     my $release = $self->release;
     foreach my $name (@$species) {
 	my $species = WormBase->create('Species',{ symbolic_name => $name, release => $release });
-
-	# Some conditionals used when debugging this module.
-	# This step should be parameterized to accept a species.
-#	next unless $name eq 'c_elegans';
-#	next if $name eq 'b_malayi';
-#	next if $name eq 'c_angaria';
-#	next if $name eq 'c_briggsae';
-#	next if $name eq 'c_brenneri';
-#	next if $name eq 'c_remanei';
-#	next if $name eq 'c_japonica';
-#	next if $name eq 'c_sp11';
-#	next if $name eq 'c_sp7';
-#	next if $name eq 'c_sp9';
-#	next if $name eq 'h_contortus';
-#	next if $name eq 'm_hapla';
 
 	$self->log->info(uc($name). ': start');	
 	$self->load_gffdb($species);

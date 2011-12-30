@@ -4,9 +4,22 @@ use FindBin qw/$Bin/;
 use lib "$Bin/../../../lib";
 use strict;
 use WormBase::Update::Staging::CompileGeneResources;
+use Getopt::Long;
 
-my $release = shift or die "Usage: $0 [WSVersion]";
+my ($release,$help);
+GetOptions('release=s' => \$release,
+	   'help=s'    => \$help);
 
-# Create Blast Databases
+if ($help || (!$release)) {
+    die <<END;
+    
+Usage: $0 --release WSXXX
+
+Compile flat files that power various gene page features. Yuck.
+
+END
+;
+}
+
 my $agent = WormBase::Update::Staging::CompileGeneResources->new({ release => $release });
 $agent->execute();

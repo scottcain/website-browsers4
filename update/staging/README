@@ -14,45 +14,49 @@ fi
 # ./steps/mirror_new_release.sh  // The next newest version will be discovered automatically.
 #  OR
 # END : mirror a new release from the Hinxton FTP site; in 0 days, 0 hours, 37 minutes and 25 seconds
-./steps/mirror_new_release.sh  $RELEASE
+./steps/mirror_new_release.sh  --release $RELEASE
 
 # 2. Unpack AceDB
 # END : unpack and customize acedb; in 0 days, 0 hours, 18 minutes and 20 seconds
-./steps/unpack_acedb.pl $RELEASE
+./steps/unpack_acedb.pl --release $RELEASE
 
 # 3. Mirror and unpack AceDB to Caltech
 # END : push acedb to caltech; in 0 days, 1 hours, 4 minutes and 33 seconds
-./steps/sync_acedb_to_caltech.pl $RELEASE
+./steps/rsync_acedb_to_caltech.pl --release $RELEASE --method by_directory
 
 # 3. Create BLAST databases (requires ~ 2 hours for 16 species)
 # END : build BLAST databases; in 0 days, 2 hours, 5 minutes and 6 seconds
-./steps/create_blast_databases.pl $RELEASE
+./steps/create_blast_databases.pl --release $RELEASE
 
 # 4. Create BLAT databases (requires ~ 5 hours for 16 species)
-./steps/create_blat_databases.pl $RELEASE
+./steps/create_blat_databases.pl --release $RELEASE
 
 # 5. Load Genomic GFF databases
 END : load genomic gff databases; in 0 days, 22 hours, 58 minutes and 28 seconds
-//steps/load_genomic_gff_databases.pl $RELEASE
+./steps/load_genomic_gff_databases.pl --release $RELEASE
 
 # 6. Load the clustal database
-./steps/unpack_clustal_databases.pl $RELEASE
+./steps/unpack_clustal_databases.pl --release $RELEASE
 
 #7. Compile Gene Resources
 # END : compile gene page resources; in 0 days, 1 hours, 11 minutes and 52 seconds
-./steps/compile_gene_resources.pl $RELEASE
+./steps/compile_gene_resources.pl --release $RELEASE
 
 # 8. Compile Ontology Resources
 # This step takes ~ 5 hours or more
-./steps/compile_ontology_resources.pl $RELEASE
+./steps/compile_ontology_resources.pl --release $RELEASE
 
 # 9. Compile Orthology Resources
 # END : compile orthology resources; in 0 days, 2 hours, 35 minutes and 12 seconds
-./steps/compile_orthology_resources.pl $RELEASE
+./steps/compile_orthology_resources.pl --release $RELEASE
+
+
+# 10. Compile interaction data.
+./steps/compile_interaction_resources.pl --release $RELEASE
 
 # 10. Convert GFF2 into GFF3
 # END : convert GFF2 annotations to GFF3; in 0 days, 2 hours, 45 minutes and 5 seconds
-./steps/convert_gff2_to_gff3.sh $RELEASE
+./steps/convert_gff2_to_gff3.sh --release $RELEASE
 
 # 11. Create the xapian search database
 #     See xapian/README for more information
@@ -64,18 +68,18 @@ mkdir /usr/local/wormbase/tmp/acedmp
 # acedb> @/usr/local/wormbase/website-admin/update/staging/xapian/dump_ace_for_search.script
 
 #    2) Run Indexer
-#  ./xapian/aceindex settings.conf $RELEASE
+#  ./xapian/aceindex.local settings.conf $RELEASE
 
 # 12. Create commonly requested files
 # END : dump_annotations; in 0 days, 2 hours, 19 minutes and 59 seconds
-./steps/dump_annotations.pl $RELEASE
+./steps/dump_annotations.pl --release $RELEASE
 
 # 13. Check out new software to the staging server.
 
 # 14. Rsync staging FTP site to the production FTP site.
 #     * Updates symlinks on the local staging FTP site; these are then synced
 
-./steps/rsync_staging_ftp_site_to_production.pl $RELEASE
+./steps/rsync_staging_ftp_site_to_production.pl --release $RELEASE
 
 # 15. Push a newly staged version to development server(s).
 #    If ANYTHING is wrong with the staged release,
@@ -94,7 +98,7 @@ mkdir /usr/local/wormbase/tmp/acedmp
 
 
 # 14. Begin precaching content
-./steps/precache_content.pl WSXXX
+./steps/precache_content.pl --release WSXXX
 
 
 15. Send notification to staff that new release is available.
