@@ -68,10 +68,21 @@ splitFields (string &fields, bool first = false){
     fields = fields.substr(quote+1);
 
     quote = fields.find_first_of('"');
-    string word = fields.substr(0, quote);
-    if(fields[quote-1] == '\\'){
-      quote--;
+    string word;
+    
+    if(quote==string::npos){
+      quote = fields.length();
     }
+    
+    if(quote>0){
+      word = fields.substr(0, quote);
+      if(fields[quote-1] == '\\'){
+        quote--;
+      }
+    }else{
+      quote = 0; 
+    }
+    
     fields = fields.substr(quote+1);
     ret += word + " ";
 
@@ -80,7 +91,11 @@ splitFields (string &fields, bool first = false){
     }
     quote = fields.find_first_of('"');
   }
-  return ret.substr(0, ret.length()-1);
+  if(ret.length()<1){
+    return ret; 
+  }else{
+    return ret.substr(0, ret.length()-1);
+  }
 }
 
 string
@@ -95,7 +110,7 @@ parseSpecies (string &species) {
 
 bool 
 indexLineBegin(string field_name, string line, string copy, string obj_name, Xapian::Document doc, Xapian::Document syn_doc){
-  if((((field_name.find("name") != string::npos) || (field_name.find("term") != string::npos))         && 
+  if((((field_name.find("name") != string::npos) || (int(field_name.find("term")) == 0))         && 
       (field_name.find("molecular") == string::npos)    &&
       (field_name.find("middle") == string::npos)    &&
       (field_name.find("first") == string::npos))   || 
@@ -269,6 +284,11 @@ indexFile(char* filename, string desc[], int desc_size, Setting &root){
         while(!line.empty()) {
           string copy = line;
           line = Xapian::Unicode::tolower(line);
+          size_t tab = line.find_first_of('\t');
+          if(tab==string::npos){
+            getline(read,line);
+            continue;
+          }
           string field_name = line.substr(0, line.find_first_of('\t'));
 
           bool done = indexLineBegin(field_name, line, copy, obj_name, doc, syn_doc);
@@ -356,6 +376,7 @@ indexLongText(char* filename, Setting &root){
 void 
 compactDB(string db_path){
   
+    cout << "Begin compacting " << db_path << endl;
     Xapian::Compactor compact;
     compact.add_source(db_path + "-full");
     compact.set_destdir(db_path);
@@ -377,7 +398,7 @@ compactDB(string db_path){
         remove(pth.c_str());
         closedir(pDIR);
     }
-  
+  cout << "Done compacting " << db_path << endl;
 }
 
 
@@ -479,7 +500,7 @@ try {
     }
     compactDB(db_path + "/main");
     compactDB(db_path + "/syn");  
-    
+    cout << "Done indexing AceDB" << endl;
 } catch (const Xapian::Error &e) {
     cout << e.get_description() << endl;
     exit(1);

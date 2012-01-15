@@ -32,7 +32,7 @@ sub rsync_staging_directory {
     my ($remote_nodes) = $self->remote_web_nodes;
 
     my $wormbase_root = $self->wormbase_root;
-    my $app_root      = $self->wormbase_root . "/website-classic-staging";
+    my $app_root      = $self->wormbase_root . "/website/classic";
     
     my $nfs_server    = $self->local_nfs_server;
     my $nfs_root      = $self->local_nfs_root;
@@ -45,7 +45,7 @@ sub rsync_staging_directory {
 	# Rsync the staging directory.
 #	$self->system_call("rsync -Cav --exclude httpd.conf --exclude cache --exclude sessions --exclude databases --exclude tmp/ --exclude extlib --exclude ace_images/ --exclude html/rss/ $app_root/ ${node}:$wormbase_root/website/classic",'rsyncing classic site staging directory into production');
 	
-	$self->system_call("rsync -Cav --exclude httpd.conf --exclude cache --exclude sessions --exclude databases --exclude tmp/ --exclude extlib --exclude ace_images/ --exclude html/rss/ $app_root/ ${node}:$wormbase_root/website/classic",'rsyncing classic site staging directory into production');
+	$self->system_call("rsync -Cav --exclude httpd.conf --exclude cache --exclude sessions --exclude html/session/ --exclude databases --exclude tmp/ --exclude extlib --exclude ace_images/ --exclude html/rss/ $app_root/ ${node}:$wormbase_root/website/classic",'rsyncing classic site staging directory into production');
     }
 }
 

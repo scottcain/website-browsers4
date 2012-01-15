@@ -4,8 +4,22 @@ use FindBin qw/$Bin/;
 use lib "$Bin/../../../lib";
 use strict;
 use WormBase::Update::Staging::PrecacheContent;
+use Getopt::Long;
 
-my $release = shift or die "Usage: $0 [WSVersion]";
+my ($release,$help);
+GetOptions('release=s' => \$release,
+	   'help=s'    => \$help);
+
+if ($help || (!$release)) {
+    die <<END;
+    
+Usage: $0 --release WSXXX
+
+Precache content on the classic site for a given release.
+
+END
+;
+}
 
 my $agent = WormBase::Update::Staging::PrecacheContent->new({ release => $release });
 $agent->execute();

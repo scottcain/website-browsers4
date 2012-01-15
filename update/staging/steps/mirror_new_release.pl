@@ -4,8 +4,23 @@ use FindBin qw/$Bin/;
 use lib "$Bin/../../../lib";
 use strict;
 use WormBase::Update::Staging::MirrorNewRelease;
+use Getopt::Long;
 
-my $release = shift; #  or die "Usage: $0 [WSXXX]";
+my ($release,$help);
+GetOptions('release=s' => \$release,
+	   'help=s'    => \$help);
+
+if ($help || (!$release)) {
+    die <<END;
+    
+Usage: $0 --release WSXXX
+
+Mirror a specific release (or by omitting --release, the entire Hinxton FTP site.)
+
+END
+;
+}
+
 my $agent;
 
 # Optionally mirror a specific release.
