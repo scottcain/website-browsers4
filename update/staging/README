@@ -13,39 +13,52 @@ fi
 # 1. Mirror a new release from Sanger. (run under cron)
 # ./steps/mirror_new_release.sh  // The next newest version will be discovered automatically.
 #  OR
- ./steps/mirror_new_release.sh  $RELEASE
+# END : mirror a new release from the Hinxton FTP site; in 0 days, 0 hours, 37 minutes and 25 seconds
+./steps/mirror_new_release.sh  --release $RELEASE
 
 # 2. Unpack AceDB
-./steps/unpack_acedb $RELEASE
+# END : unpack and customize acedb; in 0 days, 0 hours, 18 minutes and 20 seconds
+./steps/unpack_acedb.pl --release $RELEASE
+
+# 3. Mirror and unpack AceDB to Caltech
+# END : push acedb to caltech; in 0 days, 1 hours, 4 minutes and 33 seconds
+./steps/rsync_acedb_to_caltech.pl --release $RELEASE --method by_directory
 
 # 3. Create BLAST databases (requires ~ 2 hours for 16 species)
-./steps/create_blast_databases.pl $RELEASE
+# END : build BLAST databases; in 0 days, 2 hours, 5 minutes and 6 seconds
+./steps/create_blast_databases.pl --release $RELEASE
 
 # 4. Create BLAT databases (requires ~ 5 hours for 16 species)
-./steps/create_blat_databases.pl $RELEASE
+./steps/create_blat_databases.pl --release $RELEASE
 
 # 5. Load Genomic GFF databases
-/steps/load_genomic_gff_databases.pl $RELEASE
+END : load genomic gff databases; in 0 days, 22 hours, 58 minutes and 28 seconds
+./steps/load_genomic_gff_databases.pl --release $RELEASE
 
 # 6. Load the clustal database
-./steps/unpack_clustal_databases.pl $RELEASE
+./steps/unpack_clustal_databases.pl --release $RELEASE
 
 #7. Compile Gene Resources
-./steps/compile_gene_resources.pl $RELEASE
+# END : compile gene page resources; in 0 days, 1 hours, 11 minutes and 52 seconds
+./steps/compile_gene_resources.pl --release $RELEASE
 
 # 8. Compile Ontology Resources
-./steps/compile_ontology_resources.pl $RELEASE
+# This step takes ~ 5 hours or more
+./steps/compile_ontology_resources.pl --release $RELEASE
 
 # 9. Compile Orthology Resources
-./steps/compile_orthology_resources.pl $RELEASE
+# END : compile orthology resources; in 0 days, 2 hours, 35 minutes and 12 seconds
+./steps/compile_orthology_resources.pl --release $RELEASE
+
+
+# 10. Compile interaction data.
+./steps/compile_interaction_resources.pl --release $RELEASE
 
 # 10. Convert GFF2 into GFF3
-./steps/convert_gff2_to_gff3.sh $RELEASE
+# END : convert GFF2 annotations to GFF3; in 0 days, 2 hours, 45 minutes and 5 seconds
+./steps/convert_gff2_to_gff3.sh --release $RELEASE
 
-# 11. Create commonly requested files
-./steps/dump_annotations.pl $RELEASE
-
-# 12. Create the xapian search database
+# 11. Create the xapian search database
 #     See xapian/README for more information
 mkdir /usr/local/wormbase/tmp/acedmp
 
@@ -55,42 +68,39 @@ mkdir /usr/local/wormbase/tmp/acedmp
 # acedb> @/usr/local/wormbase/website-admin/update/staging/xapian/dump_ace_for_search.script
 
 #    2) Run Indexer
-#  ./xapian/aceindex settings.conf $RELEASE
+#  ./xapian/aceindex.local settings.conf $RELEASE
+
+# 12. Create commonly requested files
+# END : dump_annotations; in 0 days, 2 hours, 19 minutes and 59 seconds
+./steps/dump_annotations.pl --release $RELEASE
 
 # 13. Check out new software to the staging server.
 
 # 14. Rsync staging FTP site to the production FTP site.
-./steps/rsync_staging_ftp_site_to_production.pl $RELEASE
+#     * Updates symlinks on the local staging FTP site; these are then synced
 
-# 15. Push a newly staged version to development and/or production servers.
+./steps/rsync_staging_ftp_site_to_production.pl --release $RELEASE
+
+# 15. Push a newly staged version to development server(s).
 #    If ANYTHING is wrong with the staged release,
 #    this step will need to be repeated.
 ./steps/push_staged_release_to_nodes.pl --release $RELEASE --target development
 
-# 16. Go live with the newly staged version on the staging serve
-#    adjusts symlinks on this (staging) server
-#    If ANYTHING is wrong with the staged release,
-#    this step will need to be repeated.
+# 16. Go live with the newly staged version on the staging server by adjusting symlinks!
+#    * adjusts acedb and mysql symlinks on this (staging) server
+#
+#      If ANYTHING is wrong with the staged release,
+#      this step will need to be repeated.
+# Staging
+./steps/adjust_symlinks.pl --release $RELEASE --target staging
+# Development server(s)
 ./steps/adjust_symlinks.pl --release $RELEASE --target staging
 
-# 17. Adjust symlinks on the FTP site (creating the current_dev symlinks)
 
-
-
-14. Begin precaching content
-
-    ./steps/precache_content.pl WSXXX
+# 14. Begin precaching content
+./steps/precache_content.pl --release WSXXX
 
 
 15. Send notification to staff that new release is available.
 
 
-
---- at production release ---
-
-* Need to update links on FTP site (currently this is part of production/go_live- this needs to be
-  updated and/or broken out so that it simply runs as a cron job.
-* ./push_acedb.pl
-* ./push_mysql_databases.pl
-* ./push_support_databases.pl
-* ./go_live.pl

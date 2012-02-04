@@ -78,7 +78,7 @@ sub run {
 
     $self->copy_ontology();   
 
-#    # Iterate over each ontology
+    # Iterate over each ontology
    foreach my $ontology (keys %ontology2name) {	
 
 	# compile search_data.txt  
@@ -111,8 +111,8 @@ sub run {
     $self->system_call("$bin_path/$cmd",
 		       "$bin_path/$cmd");
     
-    $self->get_cumulative_association_counts('id2total_associations.txt');
-    $self->log->info("crazy gene page compiles complete");
+#    $self->get_cumulative_association_counts('id2total_associations.txt');
+    $self->log->info("crazy ontology compiles complete");
 }
 
 

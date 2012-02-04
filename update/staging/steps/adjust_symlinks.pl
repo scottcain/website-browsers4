@@ -14,7 +14,7 @@ GetOptions('release=s' => \$release,
 if ($help || (!$target && !$release)) {
     die <<END;
     
-Usage: $0 --target [development|mirror|production|staging] [--release] WSXXXX
+Usage: $0 --target [development|mirror|production|staging] --release WSXXXX
 
 Go live with a new release of acedb on either the staging, development, 
 or production nodes by adjusting the acedb and mysql symlinks.
