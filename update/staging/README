@@ -48,7 +48,8 @@ END : load genomic gff databases; in 0 days, 22 hours, 58 minutes and 28 seconds
 
 # 9. Compile Orthology Resources
 # END : compile orthology resources; in 0 days, 2 hours, 35 minutes and 12 seconds
-./steps/compile_orthology_resources.pl --release $RELEASE
+./steps/compile_orthology_resources.pl      --release $RELEASE
+./steps/compile_orthology_resources-beta.pl --release $RELEASE
 
 
 # 10. Compile interaction data.

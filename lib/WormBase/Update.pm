@@ -410,7 +410,7 @@ sub system_call {
     if ($result == 0) {
 	$self->log->debug("$msg: $cmd succeeded");
     } else {
-	$self->log->logdie("$msg: $cmd failed");
+	$self->log->warn("$msg: $cmd failed");
     }
 }
 
