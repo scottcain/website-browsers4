@@ -121,7 +121,7 @@ indexLineBegin(string field_name, string line, string copy, string obj_name, Xap
     indexer.index_text(line, 20); //index words separately
 
     if (line.length() > 2) {
-      if((doc.get_value(6).length() < 1)  || (int(field_name.find("standard_name")) == 0) || (int(field_name.find("public_name")) == 0)){
+      if(((doc.get_value(6).length() < 1)  || (int(field_name.find("standard_name")) == 0) || (int(field_name.find("public_name")) == 0)) && (field_name.find("other") == string::npos)){
         string text = splitFields(copy, true);
         doc.add_value(6, text);
         syn_doc.add_value(6, text);
