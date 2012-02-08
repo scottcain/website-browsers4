@@ -225,18 +225,18 @@ sub rsync_staging_directory {
 
 #    foreach my $node (@$remote_nodes) {
     foreach my $node (@$local_nodes,@$remote_nodes) {
-	$self->log->debug("rsync staging to $node");
+	$self->log->info("deploying the staging diretory to $node");
 	my $ssh = $self->ssh($node);
 	$ssh->error && $self->log->logdie("Can't ssh to $node: " . $ssh->error);
 
-	$ssh->system("mkdir $app_root/website/$app_version") or $self->log->logdie("Couldn't create a new app version on $node: " . $ssh->error);
+	$ssh->system("mkdir $app_root/website/$app_version") or $self->log->warn("Couldn't create a new app version on $node: " . $ssh->error);
 
 	$self->system_call("rsync -Ca --exclude logs --exclude tmp --exclude .hg --exclude extlib.tgz --exclude wormbase.env --exclude extlib $staging_dir/ ${node}:$app_root/website/$app_version",'rsyncing staging directory into production');
 
 
 	# Update the symlink.  Here or part of GoLive?
 	$ssh->system("cd $app_root/website; mkdir $app_root/website/$app_version/logs ; chmod 777 $app_root/website/$app_version/logs ; rm production;  ln -s $app_version production")
-	    or $self->log->logdie("Couldn't update the production symlink");
+	    or $self->log->warn("Couldn't update the production symlink");
 		
     }
 }

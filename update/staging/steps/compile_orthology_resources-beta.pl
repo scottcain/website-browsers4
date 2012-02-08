@@ -3,7 +3,7 @@
 use FindBin qw/$Bin/;
 use lib "$Bin/../../../lib";
 use strict;
-use WormBase::Update::Staging::CompileInteractionResources;
+use WormBase::Update::Staging::CompileOrthologyResourcesBeta;
 use Getopt::Long;
 
 my ($release,$help);
@@ -15,11 +15,12 @@ if ($help || (!$release)) {
     
 Usage: $0 --release WSXXX
 
-Compile flat files that power various interaction displays.
+Compile flat files that power the various orthology displays.
 
 END
 ;
 }
 
-my $agent = WormBase::Update::Staging::CompileInteractionResources->new({ release => $release });
+
+my $agent = WormBase::Update::Staging::CompileOrthologyResourcesBeta->new({ release => $release });
 $agent->execute();

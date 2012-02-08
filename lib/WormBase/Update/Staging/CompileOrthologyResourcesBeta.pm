@@ -1,4 +1,4 @@
-package WormBase::Update::Staging::CompileOrthologyResources;
+package WormBase::Update::Staging::CompileOrthologyResourcesBeta;
 
 
 use lib "/usr/local/wormbase/website/tharris/extlib";

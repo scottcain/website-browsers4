@@ -7,85 +7,6 @@ See for an up-to-date description.
 http://wiki.wormbase.org/index.php/Software_Life_Cycle:_4._Updating_The_Production_Servers
 
 
-To update the software ONLY:
-------------------------------------
-
-4. Deploy newest version of the webapp.
-   
-   Rsync the staging/ directory to new directories on production
-   nodes in unique directories by version.
-   
-   Also: create a software release on the FTP site and a snapshot for reference.
-
-  ./steps/deploy_webapp.pl WSXXXX
-
-
-6. Restart services
-  
-   (This only restarts starman)
-  ./steps/restart_starman.pl WSXXX
-
-
-
-
-Appendix 1: Pushing Acedb independently
-
-    Push acedb into production via a tarball, a single 
-    unpacked acedb database directory, or all acedb/wormbase*
-    directories.
-
-    To run it under cron syncing ALL acedb/wormbase_* directories:
-       ./push_acedb.pl --method all_directories
-
-    To push out a single release using a tarball:
-       ./push_acedb.pl --method by_package --release WSXXX
-
-    To push out a single release by rsyncing the directory:
-       ./push_acedb.pl --method by_directory --release WSXXX
-
-Appendix 2: Pushing support databases independently
-   
-    TODO:
-    Add FIFO to accelerate synchronization
-    http://engineering.tumblr.com/post/7658008285/efficiently-copying-files-to-multiple-destinations
-
-    UPDATE: The *best* way to do this is probably tar the dir
-    (not gzip it) and send it over the wire:
-    tar -c /path/to/dir | ssh remote_server 'tar -xvf - -C /absolute/path/to/remotedir'
-
-    Or Rsync:
-    rsync -avW -e ssh /path/to/dir/ remote_server:/path/to/remotedir
-
-    
-    The default -- and hard-coded -- behavior is to sync the local
-    support databases directory to our ${NFS mount}/shared/databases. 
-    Other options include via a tarball, a single database directory,
-    or all current support database directories.
-
-    To keep ALL database/WS* directories in sync:
-       ./push_support_databases.pl
-
-     # Start after the build deadline date
-     0 3 12-31 * * /home/tharris/projects/wormbase/website-admin/update/production/steps/push_support_databases.pl
-
-    For additional information:
-       ./push_support_databases.pl --help
-
-Appendix 3: Pushing MySQL databases independently
-
-    Push mysql databases into production via a tarball or by syncing
-    individual unpacked database directories.
-
-    Preferred: push out a single release by rsyncing individual databases:
-     ./push_mysql_databases.pl --method by_directory --release WSXXX
-
-    To push out a single release using a tarball:
-       ./push_mysql_databases.pl --method by_package --release WSXXX
-
-
-
-
-
 
 
 
@@ -165,9 +86,6 @@ Notes:
    brie3:wormbase/admin/update/development/build_new_paper_list.pl \
        /usr/local/acedb/elegans_WSXXX
 
-13. Add the release announcement to the home page (via the blog)
-
-   blog.wormbase.org/wp-admin/
 
 
 
