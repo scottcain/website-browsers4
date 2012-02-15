@@ -18,6 +18,7 @@ has 'step' => (
 );
 
 
+
 has 'pm_version' => (
     is => 'ro',
     lazy_build => 1
@@ -80,23 +81,26 @@ has 'app_version' => (
 
 sub _build_app_version {
     my $self = shift;
-    my $release = $self->release;  
+
+    # Getting the version from localhost doesn't work. It may be running a version > than production.
+    # Maybe get the current production version from rest instead?
+#    my $release = $self->production_release;  
+
     my $software_version  = $self->pm_version;
 #    my $software_revision = $self->git_cumulative_commits;
     my $software_revision = $self->git_commits;
     my $date = `date +%Y.%m.%d`;
     chomp $date;
     
-    my $dir = "$release-$date-v${software_version}r$software_revision";
+#    my $dir = "$release-$date-v${software_version}r$software_revision";
+    my $dir = "$date-v${software_version}r$software_revision";
     return $dir;
 }
 
 ########################################################
 
 sub run {
-    my $self = shift;           
-    my $release = $self->release;
-
+    my $self    = shift;
     $self->dump_version_file;
     $self->rsync_staging_directory;    
 #    $self->create_environment_file;
@@ -112,7 +116,11 @@ sub dump_version_file {
     $self->log->info('dumping software version file');
 
     chdir($self->app_staging_dir);
-    my $release = $self->release;  
+
+    # Getting the version from localhost doesn't work. It may be running a version > than production.
+    # Maybe get the current production version from rest instead?
+#    my $release = $self->production_release;  
+
     my $software_version = $self->pm_version;
     my $software_commits = $self->git_commits;
     my $software_commits_running = $self->git_cumulative_commits;
@@ -125,15 +133,14 @@ sub dump_version_file {
     open OUT,">VERSION.txt";
     print OUT <<END;
 DATE=$date
-DATABASE_VERSION=$release
 SOFTWARE_VERSION=$software_version
 COMMITS_SINCE_TAG=$software_commits
 COMMITS_CUMULATIVE=$software_commits_running
 VERSION_STRING="v{$software_version}r${software_commits}"
 END
 close OUT;
-
 }
+#DATABASE_VERSION=$release
 
 
 # The WormBase environment file
@@ -262,8 +269,9 @@ sub save_production_reference {
     $self->log->info('saving production reference');
     my $wormbase_root = $self->wormbase_root;
     chdir("$wormbase_root/website");
-    $self->system_call("rm -rf production",'removing the old production version');
-    $self->system_call("cp -r staging production",'saving the new production version');
+    my $staging_dir = $self->app_staging_dir;
+    $self->system_call("rm -rf production.current",'removing the old production version');
+    $self->system_call("cp -r $staging_dir production.current",'saving a reference of the current production version');
 }
 
 

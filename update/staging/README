@@ -79,6 +79,8 @@ mkdir /usr/local/wormbase/tmp/acedmp
 
 # 14. Rsync staging FTP site to the production FTP site.
 #     * Updates symlinks on the local staging FTP site; these are then synced
+# This is run by cron in the background, but needs to be run here with a version
+# in order to adjust symlinks on the FTP site.
 
 ./steps/rsync_staging_ftp_site_to_production.pl --release $RELEASE
 
@@ -95,7 +97,12 @@ mkdir /usr/local/wormbase/tmp/acedmp
 # Staging
 ./steps/adjust_symlinks.pl --release $RELEASE --target staging
 # Development server(s)
-./steps/adjust_symlinks.pl --release $RELEASE --target staging
+./steps/adjust_symlinks.pl --release $RELEASE --target development
+
+
+#13. Tag the software
+cd /usr/local/wormbase/website/staging
+git tag -a -m "${RELEASE}" ${RELEASE} HEAD
 
 
 # 14. Begin precaching content

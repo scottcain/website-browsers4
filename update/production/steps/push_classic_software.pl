@@ -10,16 +10,18 @@ my ($release,$help);
 GetOptions('release=s' => \$release,
 	   'help=s'    => \$help);
 
-if ($help || (!$release)) {
+if ($help) {
     die <<END;
 
 Usage: $0 [--release] WSXXX
 
-Deploy the classic version of the web app for the supplied release.
+Deploy the classic version of the web app for the (optional) supplied release.
 
 END
 ;
 }
+
+$release ||= 'non-release-specific-task';
 
 my $agent = WormBase::Update::Production::PushSoftware->new({ release => $release });
 $agent->execute();

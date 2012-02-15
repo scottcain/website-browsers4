@@ -3,6 +3,7 @@ package WormBase::Roles::Config;
 # Shared configuration for WormBase administration.
 
 use Moose::Role;
+use Ace;
 use Net::OpenSSH;
 
 ####################################
@@ -49,7 +50,8 @@ has 'couchdbmaster'     => ( is => 'rw', default => '206.108.125.165:5984' );
 # This app would actually cache on localhost.
 
 # Later, we might want to crawl the live site at a low rate, too.
-has 'precache_host'     => ( is => 'rw', default => 'http://staging.wormbase.org/');
+#has 'precache_host'     => ( is => 'rw', default => 'http://staging.wormbase.org/');
+has 'precache_host'     => ( is => 'rw', default => 'http://localhost:8080/');
 
 
 # WormBase 2.0: used in deploy_sofware
@@ -82,7 +84,9 @@ has 'remote_couchdb_nodes' => (
 has 'wormbase_root'   => ( is => 'ro', default => '/usr/local/wormbase');
 
 # The staging directory that serves staging.wormbase.org. Will be mirrored into production.
-has 'app_staging_dir' => ( is => 'ro', default => '/usr/local/wormbase/website/staging');
+#has 'app_staging_dir' => ( is => 'ro', default => '/usr/local/wormbase/website/staging');
+# Renamed to "production" for simplicty and parity with the production environment.
+has 'app_staging_dir' => ( is => 'ro', default => '/usr/local/wormbase/website/production');
 
 
 has 'tmp_dir'       => ( is => 'ro', lazy_build => 1 );			 
@@ -104,7 +108,7 @@ sub _build_support_databases_dir {
 
     # Create support db dirs, too.
     my @directories = qw/blast blat ontology tiling_array interaction orthology position_matrix gene/;
-    my $release        = $self->release;    
+    my $release     = $self->release;    
     $self->_make_dir("$dir/$release");
     
     foreach (@directories) {
@@ -115,19 +119,58 @@ sub _build_support_databases_dir {
 }
 
 
+has 'dbh' => (
+    is => 'ro',
+    lazy_build => 1);
+
+sub _build_dbh {
+    my $self = shift;
+    my $acedb   = $self->acedb_root;
+    my $dbh     = Ace->connect(-host => 'localhost',-port => '2005') or $self->log->logdie("couldn't open ace:$!");
+    return $dbh;
+}
+
 
 has 'release' => (
     is        => 'rw',
 #    lazy_build => 1,
     );
 
-#sub _build_release {
-#    my $self = shift;
-#    my $release = $self->{release};
+#around 'release' => sub {
+#    my $orig   = shift;
+#    my $self   = shift;
+#
+#    my $release = $self->$orig();
+#    return $release if $release;
 #
 #    # If not provided, then we need to fetch it from Acedb.
-#    unless ($release) {
-	
+#    my $dbh = $self->dbh;
+#    return $dbh->version;
+#};
+
+has 'production_release' => (
+    is        => 'rw',
+#    lazy_build => 1,
+    );
+
+around 'production_release' => sub {
+    my $orig   = shift;
+    my $self   = shift;
+
+    # We may have supplied a specific release
+    my $release = $self->release;
+    return $release if $release;
+
+    $release = $self->$orig();
+    return $release if $release;
+
+    # If not provided, then we need to fetch it from Acedb.
+    my $dbh = Ace->connect(-host=>'50.19.229.229',-port=>'2005');    
+    return $dbh->version;
+};
+
+
+
 
 # target and target_nodes: symbolic names of production, development, mirror
 # Used when pushing a staged release to other nodes.
