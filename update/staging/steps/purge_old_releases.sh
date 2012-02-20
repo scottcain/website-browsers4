@@ -1,8 +1,25 @@
-#!/bin/bash
+#!/usr/bin/perl -w
 
-RELEASE=$1
+use FindBin qw/$Bin/;
+use lib "$Bin/../../../lib";
+use strict;
+use WormBase::Update::Staging::PurgeOldReleases;
+use Getopt::Long;
 
-rm -rf /usr/local/wormbase/acedb/wormbase_${RELEASE}
-rm -rf /usr/local/wormbase/databases/${RELEASE}
-rm -rf /usr/local/ftp/pub/wormbase/releases/${RELEASE}
-rm -rf /usr/local/mysql/data/*${RELEASE}
+my ($release,$help);
+GetOptions('release=s' => \$release,
+	   'help=s'    => \$help);
+
+if ($help || (!$release)) {
+    die <<END;
+    
+Usage: $0 --release WSXXX
+
+Purge the specified old release from both production nodes AND the staging host.
+
+END
+;
+}
+
+my $agent = WormBase::Update::Staging::PurgeOldReleases->new({release => $release});
+$agent->execute();

@@ -29,9 +29,9 @@ sub ssh {
 #
 ####################################
 
-# We precache directly to our production database. Not sure how intelligent this is.
+# We precache directly to our production host. Not sure how intelligent this is.
 # This works because the staging database is +1 that in production.
-# Meanwhile, the production database can continue to cache to that database.
+# Meanwhile, production sites can continue to cache to production database.
 has 'couchdbmaster'     => ( is => 'rw', default => '206.108.125.165:5984' );
 
 # Or: assume that we are running on the staging server
@@ -51,8 +51,8 @@ has 'couchdbmaster'     => ( is => 'rw', default => '206.108.125.165:5984' );
 
 # Later, we might want to crawl the live site at a low rate, too.
 #has 'precache_host'     => ( is => 'rw', default => 'http://staging.wormbase.org/');
-has 'precache_host'     => ( is => 'rw', default => 'http://localhost:8080/');
-
+has 'precache_host'     => ( is => 'rw', default => 'http://localhost:5000/');
+has 'precache_classic_site_host' => ( is => 'rw', default => 'http://localhost:8080/');
 
 # WormBase 2.0: used in deploy_sofware
 has 'local_couchdb_nodes' => (
@@ -424,6 +424,10 @@ has 'remote_web_nodes' => (
     default => sub {
 	[qw/canopus.caltech.edu/]},
     );
+
+has 'staging_host' => (
+    is => 'ro',
+    default => 'wb-web7.oicr.on.ca' );
 
 ###############
 # ACEDB NODES
