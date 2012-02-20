@@ -51,8 +51,8 @@ has 'couchdbmaster'     => ( is => 'rw', default => '206.108.125.165:5984' );
 
 # Later, we might want to crawl the live site at a low rate, too.
 #has 'precache_host'     => ( is => 'rw', default => 'http://staging.wormbase.org/');
-has 'precache_host'     => ( is => 'rw', default => 'http://localhost:5000/');
-has 'precache_classic_site_host' => ( is => 'rw', default => 'http://localhost:8080/');
+has 'precache_host'     => ( is => 'rw', default => 'http://localhost:5000');
+has 'precache_classic_site_host' => ( is => 'rw', default => 'http://localhost:8080');
 
 # WormBase 2.0: used in deploy_sofware
 has 'local_couchdb_nodes' => (

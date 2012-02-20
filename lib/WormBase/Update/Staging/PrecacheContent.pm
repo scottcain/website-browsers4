@@ -446,7 +446,7 @@ sub precache_classic_content {
     my ($self,$class) = @_;
     my $db = Ace->connect(-host=>'localhost',-port=>2005) || die "Couldn't open database";
     
-    my $base_url = $self->precache_host;
+    my $base_url = $self->precache_classic_site_host;
 
     $|++;
     
