@@ -33,7 +33,7 @@ sub run {
     my $self = shift;       
     my $release = $self->release;
     # $self->precache_content();
-    # $self->precache_to_couchdb();
+    $self->precache_to_couchdb();
 
 #    foreach my $class (qw/gene variation protein gene_class/) {
     foreach my $class (qw/gene variation protein gene_class/) {
@@ -60,7 +60,7 @@ sub precache_content {
 
     $|++;
 
-    my $c = Config::JFDI->new(file => '/usr/local/wormbase/website/tharris/wormbase.conf');
+    my $c = Config::JFDI->new(file => '/usr/local/wormbase/website/staging/wormbase.conf');
     my $config = $c->get;
 
     my $base_url = $self->precache_host . '/rest/widget/%s/%s/%s';
@@ -171,7 +171,7 @@ sub precache_to_couchdb {
 
     $|++;
 
-    my $c = Config::JFDI->new(file => '/usr/local/wormbase/website/tharris/wormbase.conf');
+    my $c = Config::JFDI->new(file => '/usr/local/wormbase/website/staging/wormbase.conf');
     my $config = $c->get;
 
     my $base_url = $self->precache_host . '/rest/widget/%s/%s/%s';
@@ -197,7 +197,7 @@ sub precache_to_couchdb {
 	next unless $class eq 'gene';
 
 	# Allow class-level specification of precaching.
-	my $class_level_precache = eval { $config->{sections}->{species}->{$class}->{precache}; };
+	my $class_level_precache = eval { $config->{sections}->{species}->{$class}->{precache}; } || 0;
 
 	foreach my $widget (keys %{$config->{sections}->{species}->{$class}->{widgets}}) {
 #	    next unless $widget eq 'external_links';
@@ -205,7 +205,6 @@ sub precache_to_couchdb {
 	    my $precache = eval { $config->{sections}->{species}->{$class}->{widgets}->{$widget}->{precache}; };
 	    $precache ||= 0;
 	    $precache = 1 if $class_level_precache;
-
 #	    print join("-",keys %{$config->{sections}->{species}->{$class}->{widgets}->{$widget}}) . "\n";
 #	    print join("\t",$class,$widget,$precache) . "\n";
 	    
