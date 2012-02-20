@@ -45,7 +45,7 @@ sub load_gffdb {
     
     my $release = $self->release;
     my $name    = $species->symbolic_name;
-    
+
     $self->create_database($species);
     
     my $gff     = $species->gff_file;       # this includes the full path.
@@ -118,7 +118,8 @@ sub load_gffdb {
 	# $cmd = "bp_bulk_load_gff.pl --user $user --password $pass -c -d $db --fasta $fasta $gff 2> /dev/null";	    
 	$cmd = "bp_bulk_load_gff.pl --user $user --password $pass -c -d $db --fasta $fasta $gff";
     } else {
-	$cmd = "bp_seqfeature_load.pl --user $user --password $pass --fast --create -T $tmp --dsn $db $gff $fasta";       
+	$cmd = "bp_seqfeature_load.pl --summary --user $user --password $pass --fast --create -T $tmp --dsn $db $gff $fasta";       
+#	$cmd = "bp_seqfeature_load.pl --summary --user $user --password $pass --create -T $tmp --dsn $db $gff $fasta";       
     }
     
     # Load. Should expand error checking and reporting.

@@ -21,7 +21,7 @@ has _json_handler   => (
     default => sub { JSON::Any->new(utf8 => 1) },
     handles => { _from_json => 'from_json' },
     );
-has 'release'       => ( is => 'rw' );
+#has 'release'       => ( is => 'rw' );
 
 sub _build_ua {
     my $self = shift;

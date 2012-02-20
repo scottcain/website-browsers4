@@ -195,10 +195,14 @@ sub sec2human {
     return $time;
 }
 
-# When running the staging code automatically, we need to 
-# discover what the next release of the database is.
-# To do this, we get a list of the releases we already have
-# have on the FTP site then autoincrement.
+
+# We want some steps to run without having to require a specific
+# release (such as pushing software or mirroring a new release).
+# Some steps need to know what the current STAGED version is
+# (for example, mirroring should look to see if a NEW version has
+# arrived).
+# Other steps need to know what the current production version is.
+
 # This needs to be done BEFORE execute so that we can set 
 # up appropriate log files.
 # Really, this should only be called by the first step in the
@@ -210,12 +214,6 @@ before 'execute' => sub {
     # We provided a release. We're good to execute.
     return if $self->release;
 
-    # Nothing to do for replicating.
-    return if $self->step eq 'replicating couchdb from the master to other nodes';
-
-    # Nothing to do for restart services
-    return if $self->step eq 'restarting services';
-
     # Maybe we didn't provide a release. This only
     # makes sense in the context of automatic mirroring.
     unless ($self->step =~ /mirror/ 
@@ -225,7 +223,6 @@ before 'execute' => sub {
 	$self->log->logdie("no release provided; discovering a new release only makes sense during the mirroring step.");
     }
     
-
     my $releases = $self->existing_releases;
     
     # Save the most current release.
@@ -414,7 +411,7 @@ sub system_call {
     if ($result == 0) {
 	$self->log->debug("$msg: $cmd succeeded");
     } else {
-	$self->log->logdie("$msg: $cmd failed");
+	$self->log->warn("$msg: $cmd failed");
     }
 }
 

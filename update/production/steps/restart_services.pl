@@ -11,22 +11,19 @@ GetOptions('release=s' => \$release,
 	   'help=s'    => \$help,
 	   'target=s'  => \$target);
 
-if ($help || (!$release)) {
+if ($help || !$target) {
     die <<END;
     
-Usage: $0 --target [development|production] [--release] WSXXXX
+Usage: $0 --target [development|production] [--release WSXXXX]
 
-Restart services on [development|production] machines.
+Restart services on [development|production] machines. If release is provided, select optional
+services release-specific services will be restarted.
 
 END
 ;
 }
 
-my $agent;
-if ($release) {
-    $agent = WormBase::Update::Production::RestartServices->new({ release => $release, target => $target });
-} else {
-    $agent = WormBase::Update::Production::RestartServices->new( { target => $target });
-}
+$release ||= 'non-release-specific-task';
+my $agent  = WormBase::Update::Production::RestartServices->new({ release => $release, target => $target });
 $agent->execute();
 

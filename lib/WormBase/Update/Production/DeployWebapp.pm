@@ -18,6 +18,7 @@ has 'step' => (
 );
 
 
+
 has 'pm_version' => (
     is => 'ro',
     lazy_build => 1
@@ -80,23 +81,26 @@ has 'app_version' => (
 
 sub _build_app_version {
     my $self = shift;
-    my $release = $self->release;  
+
+    # Getting the version from localhost doesn't work. It may be running a version > than production.
+    # Maybe get the current production version from rest instead?
+#    my $release = $self->production_release;  
+
     my $software_version  = $self->pm_version;
 #    my $software_revision = $self->git_cumulative_commits;
     my $software_revision = $self->git_commits;
     my $date = `date +%Y.%m.%d`;
     chomp $date;
     
-    my $dir = "$release-$date-v${software_version}r$software_revision";
+#    my $dir = "$release-$date-v${software_version}r$software_revision";
+    my $dir = "$date-v${software_version}r$software_revision";
     return $dir;
 }
 
 ########################################################
 
 sub run {
-    my $self = shift;           
-    my $release = $self->release;
-
+    my $self    = shift;
     $self->dump_version_file;
     $self->rsync_staging_directory;    
 #    $self->create_environment_file;
@@ -112,7 +116,11 @@ sub dump_version_file {
     $self->log->info('dumping software version file');
 
     chdir($self->app_staging_dir);
-    my $release = $self->release;  
+
+    # Getting the version from localhost doesn't work. It may be running a version > than production.
+    # Maybe get the current production version from rest instead?
+#    my $release = $self->production_release;  
+
     my $software_version = $self->pm_version;
     my $software_commits = $self->git_commits;
     my $software_commits_running = $self->git_cumulative_commits;
@@ -125,15 +133,14 @@ sub dump_version_file {
     open OUT,">VERSION.txt";
     print OUT <<END;
 DATE=$date
-DATABASE_VERSION=$release
 SOFTWARE_VERSION=$software_version
 COMMITS_SINCE_TAG=$software_commits
 COMMITS_CUMULATIVE=$software_commits_running
 VERSION_STRING="v{$software_version}r${software_commits}"
 END
 close OUT;
-
 }
+#DATABASE_VERSION=$release
 
 
 # The WormBase environment file
@@ -225,18 +232,18 @@ sub rsync_staging_directory {
 
 #    foreach my $node (@$remote_nodes) {
     foreach my $node (@$local_nodes,@$remote_nodes) {
-	$self->log->debug("rsync staging to $node");
+	$self->log->info("deploying the staging diretory to $node");
 	my $ssh = $self->ssh($node);
 	$ssh->error && $self->log->logdie("Can't ssh to $node: " . $ssh->error);
 
-	$ssh->system("mkdir $app_root/website/$app_version") or $self->log->logdie("Couldn't create a new app version on $node: " . $ssh->error);
+	$ssh->system("mkdir $app_root/website/$app_version") or $self->log->warn("Couldn't create a new app version on $node: " . $ssh->error);
 
 	$self->system_call("rsync -Ca --exclude logs --exclude tmp --exclude .hg --exclude extlib.tgz --exclude wormbase.env --exclude extlib $staging_dir/ ${node}:$app_root/website/$app_version",'rsyncing staging directory into production');
 
 
 	# Update the symlink.  Here or part of GoLive?
 	$ssh->system("cd $app_root/website; mkdir $app_root/website/$app_version/logs ; chmod 777 $app_root/website/$app_version/logs ; rm production;  ln -s $app_version production")
-	    or $self->log->logdie("Couldn't update the production symlink");
+	    or $self->log->warn("Couldn't update the production symlink");
 		
     }
 }
@@ -262,8 +269,9 @@ sub save_production_reference {
     $self->log->info('saving production reference');
     my $wormbase_root = $self->wormbase_root;
     chdir("$wormbase_root/website");
-    $self->system_call("rm -rf production",'removing the old production version');
-    $self->system_call("cp -r staging production",'saving the new production version');
+    my $staging_dir = $self->app_staging_dir;
+    $self->system_call("rm -rf production.current",'removing the old production version');
+    $self->system_call("cp -r $staging_dir production.current",'saving a reference of the current production version');
 }
 
 
