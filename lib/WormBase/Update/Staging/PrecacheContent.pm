@@ -196,12 +196,16 @@ sub precache_to_couchdb {
 	next if $class eq 'anatomy_term';
 	next unless $class eq 'gene';
 
+	# Allow class-level specification of precaching.
+	my $class_level_precache = eval { $config->{sections}->{species}->{$class}->{precache}; };
+
 	foreach my $widget (keys %{$config->{sections}->{species}->{$class}->{widgets}}) {
 #	    next unless $widget eq 'external_links';
 	    next unless $widget eq 'homology';
 	    my $precache = eval { $config->{sections}->{species}->{$class}->{widgets}->{$widget}->{precache}; };
 	    $precache ||= 0;
-	    
+	    $precache = 1 if $class_level_precache;
+
 #	    print join("-",keys %{$config->{sections}->{species}->{$class}->{widgets}->{$widget}}) . "\n";
 #	    print join("\t",$class,$widget,$precache) . "\n";
 	    
