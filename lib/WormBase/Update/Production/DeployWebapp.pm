@@ -84,7 +84,8 @@ sub _build_app_version {
 
     # Getting the version from localhost doesn't work. It may be running a version > than production.
     # Maybe get the current production version from rest instead?
-#    my $release = $self->production_release;  
+    # In THIS case, we are using the supplied release.
+    my $release = $self->release;  
 
     my $software_version  = $self->pm_version;
 #    my $software_revision = $self->git_cumulative_commits;
@@ -92,8 +93,7 @@ sub _build_app_version {
     my $date = `date +%Y.%m.%d`;
     chomp $date;
     
-#    my $dir = "$release-$date-v${software_version}r$software_revision";
-    my $dir = "$date-v${software_version}r$software_revision";
+    my $dir = "$release-$date-v${software_version}r$software_revision";
     return $dir;
 }
 
@@ -232,7 +232,7 @@ sub rsync_staging_directory {
 
 #    foreach my $node (@$remote_nodes) {
     foreach my $node (@$local_nodes,@$remote_nodes) {
-	$self->log->info("deploying the staging diretory to $node");
+	$self->log->info("deploying the staging directory to $node");
 	my $ssh = $self->ssh($node);
 	$ssh->error && $self->log->logdie("Can't ssh to $node: " . $ssh->error);
 

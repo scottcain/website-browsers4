@@ -84,9 +84,7 @@ has 'remote_couchdb_nodes' => (
 has 'wormbase_root'   => ( is => 'ro', default => '/usr/local/wormbase');
 
 # The staging directory that serves staging.wormbase.org. Will be mirrored into production.
-#has 'app_staging_dir' => ( is => 'ro', default => '/usr/local/wormbase/website/staging');
-# Renamed to "production" for simplicty and parity with the production environment.
-has 'app_staging_dir' => ( is => 'ro', default => '/usr/local/wormbase/website/production');
+has 'app_staging_dir' => ( is => 'ro', default => '/usr/local/wormbase/website/staging');
 
 
 has 'tmp_dir'       => ( is => 'ro', lazy_build => 1 );			 
