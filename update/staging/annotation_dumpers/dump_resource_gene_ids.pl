@@ -57,13 +57,11 @@ while (my $gene = $i->next) {
 
     $name = '' if $molecular_name eq $name;  # No need to duplicate
     my $species     = $gene->Species;
-    unless ($species) {
-	warn "no species for $gene...\n";
-	next;
-    }
+    next unless ($species);
 
     my $taxonomy_id = $species->NCBITaxonomyID;
-    
+    next unless ($taxonomy_id);
+
     print join("\t",$taxonomy_id,$species,$gene,$name,$molecular_name),"\n";
 }
 

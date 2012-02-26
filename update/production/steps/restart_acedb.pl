@@ -16,7 +16,7 @@ if ($help || !$target) {
     
 Usage: $0 --target [development|production] [--release WSXXXX]
 
-Restart services on [development|production] machines. If release is provided, select optional
+Restart sgifaceserver on [development|production] machines. If release is provided, select optional
 services release-specific services will be restarted.
 
 END
@@ -27,8 +27,3 @@ $release ||= 'non-release-specific-task';
 my $acedb  = WormBase::Update::Production::RestartServices->new({ release => $release, target => $target, service => 'sgifaceserver'});
 $acedb->execute();
 
-my $mysql  = WormBase::Update::Production::RestartServices->new({ release => $release, target => $target, service => 'mysql'});
-$mysql->execute();
-
-my $starman  = WormBase::Update::Production::RestartServices->new({ release => $release, target => $target, service => 'starman'});
-$starman->execute();

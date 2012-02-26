@@ -69,7 +69,7 @@ sub precache_content {
     my $version = $db->status->{database}{version};
     my $cache_root = join("/",$self->support_databases_dir,$version,'cache');
     system("mkdir -p $cache_root/logs");
-    
+    	       
     # Turn off autocheck so that server errors don't kill us.
     #-agent     => 'WormBase-PreCacher/1.0',
     my $mech = WWW::Mechanize->new(
@@ -100,8 +100,8 @@ sub precache_content {
 		system("mkdir -p $cache");
 		
 		my $cache_log = join("/",$cache_root,'logs',"$version-$class-$widget.txt");
-		my %previous = _parse_cached_widgets_log($cache_log); 
-		
+		my %previous = $self->_parse_cached_widgets_log($cache_log); 
+
 		# Open cache log for writing.
 		open OUT,">>$cache_log";
 
@@ -180,7 +180,8 @@ sub precache_to_couchdb {
     my $version = $db->status->{database}{version};
     my $cache_root = join("/",$self->support_databases_dir,$version,'cache');
     system("mkdir -p $cache_root/logs");
-    
+        
+   
     # Turn off autocheck so that server errors don't kill us.
     my $mech = WWW::Mechanize->new(-agent     => 'WormBase-PreCacher/1.0',
 				   -autocheck => 0 );
@@ -211,9 +212,15 @@ sub precache_to_couchdb {
 	    if ($precache) {
 		my $cache = join("/",$cache_root,$class,$widget);
 		system("mkdir -p $cache");
-		
+
 		my $cache_log = join("/",$cache_root,'logs',"$version-$class-$widget.txt");
-		
+
+		# 1. To find out what we've already cached, just use our cache log and an offset to fetch()
+		my %previous = $self->_parse_cached_widgets_log($cache_log); 
+		next if defined $previous{COMPLETE};
+		my $count = scalar keys %previous;
+		$count ||= 0;
+
 		# Open cache log for writing.
 		open OUT,">>$cache_log";
 
@@ -227,15 +234,24 @@ sub precache_to_couchdb {
 		
 		# Assume that classes in the config file match AceDB classes, which might not be true.
 		my $ace_class = ucfirst($class);
-		my $i = $db->fetch_many($ace_class => '*');
-		while (my $obj = $i->next) {
+#		my $i = $db->fetch_many($ace_class => '*');
+#		while (my $obj = $i->next) {
+		my @objects = $db->fetch(-class => $ace_class,
+				   -name  => '*',
+				   -offset => $count,
+				   -fill   => undef,
+		    );
 
-		    # In the future we might want to selectively REPLACE documents.
-		    if ($self->check_if_stashed_in_couchdb($class,$widget,$obj)) {
-			print STDERR " --> $class:$widget:$obj ALREADY CACHED; SKIPPING\n";
-			print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n"; 
-			next;
-		    }
+		foreach my $obj (@objects) {
+		    # We're already selecting objects from a given offset,
+		    # assuming that those who have come before are already cached.
+		    # The code below checks for the presence of the document in couch.
+		    # Also: in the future we might want to selectively REPLACE documents.
+#		    if ($self->check_if_stashed_in_couchdb($class,$widget,$obj)) {
+#			print STDERR " --> $class:$widget:$obj ALREADY CACHED; SKIPPING\n";
+#			print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n"; 
+#			next;
+#		    }
 		    
 		    print STDERR "Fetching and caching $class:$widget:$obj\n";
 		    print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n"; 
@@ -263,7 +279,9 @@ sub precache_to_couchdb {
 		}
 		my $end = time();
 		my $seconds = $end - $start;
-		print OUT "\n\nTime required to cache " . (scalar keys %status) . ": ";
+		print OUT "COMPLETE\n";
+		print OUT "=\n";
+		print OUT "Time required to cache " . (scalar keys %status) . ": ";
 		printf OUT "%d days, %d hours, %d minutes and %d seconds\n",(gmtime $seconds)[7,2,1,0];    
 		close OUT;
 	    }
@@ -271,7 +289,7 @@ sub precache_to_couchdb {
     }
 }
 
-=pod
+
 
 sub precache_to_couchdb_parallel {
     my $self = shift;
@@ -283,10 +301,10 @@ sub precache_to_couchdb_parallel {
 
     $|++;
 
-    my $c = Config::JFDI->new(file => '/usr/local/wormbase/website/tharris/wormbase.conf');
+    my $c = Config::JFDI->new(file => '/usr/local/wormbase/website/staging/wormbase.conf');
     my $config = $c->get;
 
-    my $base_url = 'http://beta.wormbase.org/rest/widget/%s/%s/%s';
+    my $base_url = $self->precache_host . '/rest/widget/%s/%s/%s';
     
     my $db      = Ace->connect(-host=>'localhost',-port=>2005);
     my $version = $db->status->{database}{version};
@@ -294,7 +312,7 @@ sub precache_to_couchdb_parallel {
     system("mkdir -p $cache_root/logs");
     
     my $ua = LWP::Parallel::UserAgent->new();
-
+    
     # Turn off autocheck so that server errors don't kill us.
     my $mech = WWW::Mechanize->new(-agent     => 'WormBase-PreCacher/1.0',
 				   -autocheck => 0 );
@@ -304,23 +322,22 @@ sub precache_to_couchdb_parallel {
     
 #    print Dumper($config);
     foreach my $class (sort keys %{$config->{sections}->{species}}) {
-	next if $class eq 'title'; # Kludge.
+       	
+	# Allow class-level specification of precaching.
+	my $class_level_precache = eval { $config->{sections}->{species}->{$class}->{precache}; } || 0;
 	
-	# Horribly broken classes, currently uncacheable.
-	next if $class eq 'anatomy_term';
+	# Horribly broken classes, currently uncacheable.	
 	next unless $class eq 'gene';
 	
-	foreach my $widget (keys %{$config->{sections}->{species}->{$class}->{widgets}}) {
-	    next unless $widget eq 'overview';
+	foreach my $widget (keys %{$config->{sections}->{species}->{$class}->{widgets}}) {	    
 	    my $precache = eval { $config->{sections}->{species}->{$class}->{widgets}->{$widget}->{precache}; };
 	    $precache ||= 0;
-
+	    $precache = 1 if $class_level_precache;
 	    
 #	    print join("-",keys %{$config->{sections}->{species}->{$class}->{widgets}->{$widget}}) . "\n";
 #	    print join("\t",$class,$widget,$precache) . "\n";
 	    
-	    if ($precache) {
-
+	    if ($precache) {		
 		my @urls;
 
 		my $cache = join("/",$cache_root,$class,$widget);
@@ -328,28 +345,51 @@ sub precache_to_couchdb_parallel {
 		
 		my $cache_log = join("/",$cache_root,'logs',"$version-$class-$widget.txt");
 		
+		# 1. To find out what we've already cached, just use our cache log and an offset to fetch()
+		my %previous = $self->_parse_cached_widgets_log($cache_log); 
+		next if defined $previous{COMPLETE};
+		my $count = scalar keys %previous;
+		$count ||= 0;
+
+		# Set up my parallel user agent
+		my $pua = LWP::Parallel::UserAgent->new();
+		$pua->in_order  (1);  # handle requests in order of registration
+		$pua->duplicates(0);  # ignore duplicates
+		$pua->timeout   (30); # in seconds
+		$pua->max_req   (5);  # sets maximum number of parallel requests per host
+#		$pua->redirect  (1);  # follow redirects
+		
 		# Open cache log for writing.
 		open OUT,">>$cache_log";
-
+		
 		# And set up the cache error file
 		my $cache_err = join("/",$cache_root,'logs',"errors.txt");
 		open ERROR,">>$cache_err";
 		
 	    	my $start = time();
-
+		
 		my %status;
 		
 		# Assume that classes in the config file match AceDB classes, which might not be true.
 		my $ace_class = ucfirst($class);
-		my $i = $db->fetch_many($ace_class => '*');
-		while (my $obj = $i->next) {
-
-		    # In the future we might want to selectively REPLACE documents.
-		    if ($self->check_if_stashed_in_couchdb($class,$widget,$obj)) {
-			print STDERR " --> $class:$widget:$obj ALREADY CACHED; SKIPPING\n";
-			print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n"; 
-			next;
-		    }
+#		my $i = $db->fetch_many($ace_class => '*');
+#		while (my $obj = $i->next) {
+		my @objects = $db->fetch(-class => $ace_class,
+					 -name  => '*',
+					 -offset => $count,
+					 -fill   => undef,
+		    );
+		
+		foreach my $obj (@objects) {
+		    # We're already selecting objects from a given offset,
+		    # assuming that those who have come before are already cached.
+		    # The code below checks for the presence of the document in couch.
+		    # Also: in the future we might want to selectively REPLACE documents.
+#		    if ($self->check_if_stashed_in_couchdb($class,$widget,$obj)) {
+#			print STDERR " --> $class:$widget:$obj ALREADY CACHED; SKIPPING\n";
+#			print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n"; 
+#			next;
+#		    }
 		    
 		    print STDERR "Fetching and caching $class:$widget:$obj\n";
 		    print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n"; 
@@ -360,61 +400,50 @@ sub precache_to_couchdb_parallel {
 
 		    # api delivers HTML by default.
                     # $mech->add_header("Content-Type" => 'text/html');
-
+		    
 		    my $url = sprintf($base_url,$class,$obj,$widget);
-
+		    
 		    push @urls,HTTP::Request->new('GET',$url);
 		}
-
-		# Send the requests.
-		my $pua = LWP::Parallel::UserAgent->new();
-		$pua->in_order  (1);  # handle requests in order of registration
-		$pua->duplicates(0);  # ignore duplicates
-		$pua->timeout   (20);  # in seconds
-#		$pua->redirect  (1);  # follow redirects
 		
-		foreach my $req (@requests) {
-		    print "Registering '".$req->url."'\n";
-		    if ( my $res = $pua->register ($req) ) { 
+		foreach my $req (@urls) {
+		    print "Registering '". $req->url . "'\n";
+		    if ( my $res = $pua->register($req) ) { 
 			print STDERR $res->error_as_HTML; 
 		    }  
 		}
+		# Wait for all requests to return.
 		my $entries = $pua->wait();
-
+		
 		foreach (keys %$entries) {
 		    my $res = $entries->{$_}->response;
-
-    print "Answer for '",$res->request->url, "' was \t", $res->code,": ",
+		    
+		    print "Answer for '",$res->request->url, "' was \t", $res->code,": ",
 		    $res->message,"\n";
 		}
-
-
-
 	    }
-	
-	    
 
-		    eval { $mech->get($url) };
-		    my $success = ($mech->success) ? 'success' : 'failed';
-		    my $cache_stop = time();
-		    print OUT join("\t",$class,$obj,$widget,$url,$success,$cache_stop - $cache_start),"\n";
-		    $status{$class}++;
-		 
-		    if ($mech->success) {
-			my $response = $self->save_to_couchdb($class,$widget,$obj,$mech->content);
-		    } else {
-			print ERROR join("\t",$class,$obj,$widget,$url,$success,$cache_stop - $cache_start),"\n";
-		    }		    	
-		}
-		my $end = time();
-		my $seconds = $end - $start;
-		print OUT "\n\nTime required to cache " . (scalar keys %status) . ": ";
-		printf OUT "%d days, %d hours, %d minutes and %d seconds\n",(gmtime $seconds)[7,2,1,0];    
-		close OUT;
-	    }
-	}	
+#	    eval { $mech->get($url) };
+#	    my $success = ($mech->success) ? 'success' : 'failed';
+#	    my $cache_stop = time();
+#	    print OUT join("\t",$class,$obj,$widget,$url,$success,$cache_stop - $cache_start),"\n";
+#	    $status{$class}++;
+#	    
+#	    if ($mech->success) {
+#		my $response = $self->save_to_couchdb($class,$widget,$obj,$mech->content);
+#	    } else {
+#		print ERROR join("\t",$class,$obj,$widget,$url,$success,$cache_stop - $cache_start),"\n";
+#	    }
+	    my $end = time();
+	    my $seconds = $end - $start;
+	    print OUT "COMPLETE\n";
+	    print OUT "=\n";
+	    print OUT "\n\nTime required to cache " . (scalar keys %status) . ": ";
+	    printf OUT "%d days, %d hours, %d minutes and %d seconds\n",(gmtime $seconds)[7,2,1,0];    
+	    close OUT;
+	}
     }
-}
+}	
 
 =cut
 
@@ -537,14 +566,16 @@ sub _parse_cache_log {
 
 
 sub _parse_cached_widgets_log {
-    my $cache_log = shift;
-
-#    open IN,"$previous";
-#    return unless (-e "$cache/$version-precached-pages.txt");
+    my ($self,$cache_log) = @_;
+    $self->log->warn("Checking for previously cached widgets");
     if (-e "$cache_log") {
 	open IN,"$cache_log" or die "$!";
 	my %previous;
 	while (<IN>) {
+	    if (/COMPLETE/) {
+		$previous{COMPLETE};
+		next;
+	    }
 	    chomp;
 	    my ($class,$obj,$name,$url,$status,$cache_stop) = split("\t");
 	    $previous{$obj}++ unless $status eq 'failed';
@@ -556,6 +587,7 @@ sub _parse_cached_widgets_log {
     }
     return undef;
 }
+
 
 
 
