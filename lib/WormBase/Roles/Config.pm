@@ -29,14 +29,15 @@ sub ssh {
 #
 ####################################
 
+# couchdbmaster 
 # We precache directly to our production host. Not sure how intelligent this is.
 # This works because the staging database is +1 that in production.
 # Meanwhile, production sites can continue to cache to production database.
 has 'couchdbmaster'     => ( is => 'rw', default => '206.108.125.165:5984' );
 
-# Or: assume that we are running on the staging server
-# Create couchdb on localhost then replicate it.
-#has 'couchdbmaster'     => ( is => 'rw', default => '127.0.0.1:5984' );
+#has 'staging_couchdb_host' => ( is => 'rw', default => '206.108.125.165');
+has 'couchdb_root'      => ( is => 'rw', default => '/usr/local/wormbase/couchdb' );
+has 'couchdb_production_host' => ( is => 'rw', default => '206.108.125.165');
 
 # The precache_host is the host we will send queries to.
 # Typically, this would be the staging server as it will
@@ -54,7 +55,9 @@ has 'couchdbmaster'     => ( is => 'rw', default => '206.108.125.165:5984' );
 has 'precache_host'     => ( is => 'rw', default => 'http://localhost:5000');
 has 'precache_classic_site_host' => ( is => 'rw', default => 'http://localhost:8080');
 
-# WormBase 2.0: used in deploy_sofware
+# Each server gets its own couch.
+# See ReplicateCouchDB. If reads/writes to couch become a bottleneck
+# reinstate this.
 has 'local_couchdb_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
@@ -71,7 +74,7 @@ has 'remote_couchdb_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw//]},
+	[qw/canopus.caltech.edu/]},
     );
 
 ####################################
@@ -183,7 +186,7 @@ around 'target' => sub {
 
     my $target = $self->$orig();
 
-    die unless ($target =~ /^(production|development|mirror|staging)$/);
+    die unless ($target =~ /^(production|development|mirror|staging|new)$/);
     return $target;
 };
 
@@ -468,6 +471,17 @@ has 'production_acedb_nodes' => (
     },
     );
 
+has 'new_acedb_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw/wb-web1.oicr.on.ca
+            wb-web2.oicr.on.ca
+	    wb-web3.oicr.on.ca
+        /],
+    },
+    );
+
 ###############
 # SUPPORT NODES
 ###############
@@ -502,6 +516,8 @@ has 'production_support_nodes' => (
     },
     );
 
+
+
 ###############
 # MYSQL NODES
 ###############
@@ -533,6 +549,17 @@ has 'production_mysql_nodes' => (
 	    wb-web3.oicr.on.ca
 	    wb-web4.oicr.on.ca
             canopus.caltech.edu
+/],
+    },
+    );
+
+has 'new_mysql_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw/wb-web1.oicr.on.ca
+            wb-web2.oicr.on.ca
+	    wb-web3.oicr.on.ca
 /],
     },
     );

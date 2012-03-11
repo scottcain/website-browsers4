@@ -7,7 +7,18 @@ use WormBase::Update::Production::ReplicateCouchDB;
 
 #system('source /home/tharris/.bash_profile');
 
-my $release = shift or warn "Suggested Usage: $0 [WSVersion] (otherwise all dbs will by replicated)";
+use Getopt::Long;
+
+my ($release,$method);
+GetOptions('release=s' => \$release);
+
+unless ($release) {
+    die <<END;
+    
+Usage: $0 --release [WSXXX]
+END
+;
+}
 
 my $agent;
 if ($release) {

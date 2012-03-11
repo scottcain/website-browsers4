@@ -38,16 +38,14 @@ END : load genomic gff databases; in 0 days, 22 hours, 58 minutes and 28 seconds
 # 6. Load the clustal database
 ./steps/unpack_clustal_databases.pl --release $RELEASE
 
-#7. Compile Gene Resources
-# END : compile gene page resources; in 0 days, 1 hours, 11 minutes and 52 seconds
-./steps/compile_gene_resources.pl --release $RELEASE
-
 # 8. Compile Ontology Resources
+# (see the bottom of the file for the required state of ontology resources in the new site)
 # This step takes ~ 5 hours or more
-./steps/compile_ontology_resources.pl --release $RELEASE
+# ./steps/compile_ontology_resources.pl --release $RELEASE
 
 # 9. Compile Orthology Resources
 # END : compile orthology resources; in 0 days, 2 hours, 35 minutes and 12 seconds
+# (see the bottom of the file for the required state of ontology resources in the new site)
 ./steps/compile_orthology_resources.pl      --release $RELEASE
 ./steps/compile_orthology_resources-beta.pl --release $RELEASE
 

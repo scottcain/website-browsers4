@@ -24,12 +24,12 @@ has 'ao_obo_file'                   => ( is => 'ro' , default => 'anatomy_ontolo
 has 'ao_assoc_file'                 => ( is => 'ro' , default => 'anatomy_association.%s.wb'  );
 has 'po_obo_file'                   => ( is => 'ro' , default => 'phenotype_ontology.%s.obo' );
 has 'po_assoc_file'                 => ( is => 'ro' , default => 'phenotype_association.%s.wb');
-has 'id2parents_file'               => ( is => 'ro' , default => 'id2parents.txt'             );
-has 'parent2ids_file'               => ( is => 'ro' , default => 'parent2ids.txt'             );
-has 'id2name_file'                  => ( is => 'ro' , default => 'id2name.txt'                );
-has 'name2id_file'                  => ( is => 'ro' , default => 'name2id.txt'                );
-has 'id2association_counts_file'    => ( is => 'ro' , default => 'id2association_counts.txt'  ); 
-has 'id2total_association_file'    => ( is => 'ro' , default => 'id2total_associations.txt'  ); 
+#has 'id2parents_file'               => ( is => 'ro' , default => 'id2parents.txt'             );
+#has 'parent2ids_file'               => ( is => 'ro' , default => 'parent2ids.txt'             );
+#has 'id2name_file'                  => ( is => 'ro' , default => 'id2name.txt'                );
+#has 'name2id_file'                  => ( is => 'ro' , default => 'name2id.txt'                );
+#has 'id2association_counts_file'    => ( is => 'ro' , default => 'id2association_counts.txt'  ); 
+#has 'id2total_association_file'    => ( is => 'ro' , default => 'id2total_associations.txt'  ); 
 
 
 has 'datadir' => (
@@ -78,32 +78,35 @@ sub run {
 
     $self->copy_ontology();   
 
-    # Iterate over each ontology
-   foreach my $ontology (keys %ontology2name) {	
+    # No longer required on the new site.
+    if (0) {
+	# Iterate over each ontology
+	foreach my $ontology (keys %ontology2name) {	
+	    
+	    # compile search_data.txt  
+	    $self->compile_search_data($ontology);
 
-	# compile search_data.txt  
-	$self->compile_search_data($ontology);
-	
-	# compile id2parents relationships
-	$self->compile_ontology_relationships($ontology,1);
-	
-	# compile parent2ids relationships
-	$self->compile_ontology_relationships($ontology,2);
+	    # compile id2parents relationships
+	    $self->compile_ontology_relationships($ontology,1);
+	    
+	    # compile parent2ids relationships
+	    $self->compile_ontology_relationships($ontology,2);
+	}
     }
-   
 
-    $self->parse_search_data(0,1,$self->id2name_file);
-    $self->parse_search_data(1,0,$self->name2id_file);
-    $self->parse_search_data(0,5,$self->id2association_counts_file);    
-    $self->clean_up_search_data();
-    $self->get_geneid2go_ids();
-    $self->get_pheno_gene_data_not();
-    $self->get_pheno_gene_data();
-    $self->get_pheno_rnai_data();
-    $self->get_pheno_variation_data();
-    $self->get_pheno_rnai_data(1);
-    $self->get_pheno_variation_data(1);
-    $self->get_pheno_xgene_data();
+    # No longer required for the new website.
+    # $self->parse_search_data(0,1,$self->id2name_file);
+    # $self->parse_search_data(1,0,$self->name2id_file);
+    # $self->parse_search_data(0,5,$self->id2association_counts_file);    
+    # $self->clean_up_search_data();
+    # $self->get_geneid2go_ids();
+    # $self->get_pheno_gene_data_not();
+    # $self->get_pheno_gene_data();
+    # $self->get_pheno_rnai_data();
+    # $self->get_pheno_variation_data();
+    # $self->get_pheno_rnai_data(1);
+    # $self->get_pheno_variation_data(1);
+    # $self->get_pheno_xgene_data();
 
     
     my $bin_path = $self->bin_path . "/../helpers/";
