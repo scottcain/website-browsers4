@@ -1,6 +1,12 @@
 package WormBase::Update::Staging::CompileOrthologyResources;
 
-# Leftover from Norie.
+#######################################
+#
+# DEPRECATED. This module used to create a bunch of flat files
+# for driving select elements of the website.
+# These are no longer required.
+#
+#######################################
 
 use lib "/usr/local/wormbase/website/tharris/extlib";
 use Ace;

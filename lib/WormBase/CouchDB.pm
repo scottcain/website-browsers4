@@ -21,7 +21,16 @@ has _json_handler   => (
     default => sub { JSON::Any->new(utf8 => 1) },
     handles => { _from_json => 'from_json' },
     );
-has 'release'       => ( is => 'rw' );
+#has 'release'       => ( is => 'rw' );
+
+has 'couchdbhost' => (
+    is => 'rw',
+    default => sub {
+	my $self = shift;
+	my $host = $self->couchdbmaster;
+	return $host;
+    },
+    );
 
 sub _build_ua {
     my $self = shift;
@@ -63,16 +72,14 @@ sub test_connection {
 # curl -X PUT $couchdb/$release"
 sub create_database {
     my $self     = shift;
-    my $host     = shift;
     my $database = shift;
 
     my $msg;
 
     # trying to create a database on a different target
-    if ($host && $database) {	
+    if ($database) {	
 	$msg  = $self->_prepare_request({method   => 'PUT',
 					 database => "$database",
-					 host     => $host,
 					});
     } else {
 	$msg  = $self->_prepare_request({method   => 'PUT',
@@ -162,6 +169,25 @@ sub create_document {
 }
 
 
+# Delete a record and all it's attachments.
+sub delete_document {
+    my $self   = shift;
+    my $params = shift;
+    my $uuid   = $params->{uuid};
+
+    # Have to fetch the revision first. What a pain.
+    my $current_version = $self->get_document($uuid);
+    return unless $current_version;
+    my $rev = $current_version->{_rev};
+    my $msg  = $self->_prepare_request({method => 'DELETE',
+					path   => $uuid,
+					rev    => $rev,
+				       });
+    my $res  = $self->_send_request($msg);
+    my $data = $self->_parse_result($res);
+    return $data;
+}
+
 # Check if a document exists, but don't bother parsing json.
 # curl -X PUT $couchdb/$release/uuid
 # curl -X GET http://127.0.0.1:5984/ws226/gene_WBGene00006763_overview
@@ -188,7 +214,8 @@ sub get_document {
     my $self = shift;
     my $uuid = shift;
     my $msg  = $self->_prepare_request({ method => 'GET',
-					 path   => $uuid });
+					  path   => $uuid,
+					  });
     my $res  = $self->_send_request($msg);
     if ($res->is_success) {
 	my $data = $self->_parse_result($res);
@@ -238,15 +265,22 @@ sub _prepare_request {
     my $method  = $opts->{method};
     my $path    = $opts->{path};
     my $content = $opts->{content};
-    my $host    = $opts->{host} || $self->couchdbmaster;
+    my $host    = $self->couchdbhost || $self->couchdbmaster;   
         
     my $database  = $opts->{database} || lc($self->release);
 
     # Prepend the database unless this is just a database request.
     my $full_path = $path ? $database . "/$path" : $database;    
     my $uri  = URI->new("http://" . $host . "/$full_path");
-    my $msg  = HTTP::Request->new($method,$uri);
 
+    # We need to attach the revision if this is a delete.
+    if ($method eq 'DELETE') {
+	my $rev = $opts->{rev};
+	$uri .= "?rev=$rev";
+
+    }
+    my $msg  = HTTP::Request->new($method,$uri);
+   
     # Append content to the body if it exists (this is the attachment mechanism)
     if ($content) {
 	$msg->content($content);

@@ -9,6 +9,10 @@ has 'step' => (
     default => 'restarting services',
 );
 
+has 'service' => (
+    is => 'ro',
+    );
+
 ########################################################
 
 sub run {
@@ -17,37 +21,43 @@ sub run {
     my $release = $self->release;
 
     $self->log->info('restarting services');
+
+    my $service = $self->service;
     
+    if ($service eq 'sgifaceserver') {
     ###################################
-    # Acedb
-    my ($acedb_nodes) = $self->target_nodes('acedb');	
-    foreach my $node (@$acedb_nodes) {
-	my $ssh = $self->ssh($node);
-	$ssh->error && $self->log->logdie("Can't ssh to $node: " . $ssh->error);
-
-	$self->restart_acedb($node,$ssh);
-
-    }
-    
-    ###################################
-    # MySQL
-    my ($mysql_nodes) = $self->target_nodes('mysql');	
-    foreach my $node (@$mysql_nodes) {
-	my $ssh = $self->ssh($node);
-	$ssh->error && $self->log->logdie("Can't ssh to $node: " . $ssh->error);
-
-	$self->restart_mysql($node,$ssh);
+	# Acedb
+	my ($acedb_nodes) = $self->target_nodes('acedb');	
+	foreach my $node (@$acedb_nodes) {
+	    my $ssh = $self->ssh($node);
+	    $ssh->error && $self->log->logdie("Can't ssh to $node: " . $ssh->error);
+	    
+	    $self->restart_acedb($node,$ssh);	    
+	}
     }
 
-
-    # This should be local_app_nodes, remote_app_nodes;
-    my ($local_app_nodes) = $self->local_app_nodes();	
-    push @{$local_app_nodes},$self->remote_app_nodes();
-    foreach my $node (@$local_app_nodes) {
-	my $ssh = $self->ssh($node);
-	$ssh->error && $self->log->logdie("Can't ssh to $node: " . $ssh->error);
-	
-	$self->restart_starman($node,$ssh);
+    if ($service eq 'mysql') {
+	###################################
+	# MySQL
+	my ($mysql_nodes) = $self->target_nodes('mysql');	
+	foreach my $node (@$mysql_nodes) {
+	    my $ssh = $self->ssh($node);
+	    $ssh->error && $self->log->logdie("Can't ssh to $node: " . $ssh->error);
+	    
+	    $self->restart_mysql($node,$ssh);
+	}    
+    }
+    
+    if ($service eq 'starman') {
+	# This should be local_app_nodes, remote_app_nodes;
+	my ($local_app_nodes) = $self->local_app_nodes();	
+	push @{$local_app_nodes},$self->remote_app_nodes();
+	foreach my $node (@$local_app_nodes) {
+	    my $ssh = $self->ssh($node);
+	    $ssh->error && $self->log->logdie("Can't ssh to $node: " . $ssh->error);
+	    
+	    $self->restart_starman($node,$ssh);
+	}
     }
 }
 

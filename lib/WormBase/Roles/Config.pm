@@ -3,6 +3,7 @@ package WormBase::Roles::Config;
 # Shared configuration for WormBase administration.
 
 use Moose::Role;
+use Ace;
 use Net::OpenSSH;
 
 ####################################
@@ -28,14 +29,15 @@ sub ssh {
 #
 ####################################
 
-# We precache directly to our production database. Not sure how intelligent this is.
+# couchdbmaster 
+# We precache directly to our production host. Not sure how intelligent this is.
 # This works because the staging database is +1 that in production.
-# Meanwhile, the production database can continue to cache to that database.
+# Meanwhile, production sites can continue to cache to production database.
 has 'couchdbmaster'     => ( is => 'rw', default => '206.108.125.165:5984' );
 
-# Or: assume that we are running on the staging server
-# Create couchdb on localhost then replicate it.
-#has 'couchdbmaster'     => ( is => 'rw', default => '127.0.0.1:5984' );
+#has 'staging_couchdb_host' => ( is => 'rw', default => '206.108.125.165');
+has 'couchdb_root'      => ( is => 'rw', default => '/usr/local/wormbase/couchdb' );
+has 'couchdb_production_host' => ( is => 'rw', default => '206.108.125.165');
 
 # The precache_host is the host we will send queries to.
 # Typically, this would be the staging server as it will
@@ -49,10 +51,13 @@ has 'couchdbmaster'     => ( is => 'rw', default => '206.108.125.165:5984' );
 # This app would actually cache on localhost.
 
 # Later, we might want to crawl the live site at a low rate, too.
-has 'precache_host'     => ( is => 'rw', default => 'http://staging.wormbase.org/');
+#has 'precache_host'     => ( is => 'rw', default => 'http://staging.wormbase.org/');
+has 'precache_host'     => ( is => 'rw', default => 'http://localhost:5000');
+has 'precache_classic_site_host' => ( is => 'rw', default => 'http://localhost:8080');
 
-
-# WormBase 2.0: used in deploy_sofware
+# Each server gets its own couch.
+# See ReplicateCouchDB. If reads/writes to couch become a bottleneck
+# reinstate this.
 has 'local_couchdb_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
@@ -69,7 +74,7 @@ has 'remote_couchdb_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw//]},
+	[qw/canopus.caltech.edu/]},
     );
 
 ####################################
@@ -104,7 +109,7 @@ sub _build_support_databases_dir {
 
     # Create support db dirs, too.
     my @directories = qw/blast blat ontology tiling_array interaction orthology position_matrix gene/;
-    my $release        = $self->release;    
+    my $release     = $self->release;    
     $self->_make_dir("$dir/$release");
     
     foreach (@directories) {
@@ -115,19 +120,58 @@ sub _build_support_databases_dir {
 }
 
 
+has 'dbh' => (
+    is => 'ro',
+    lazy_build => 1);
+
+sub _build_dbh {
+    my $self = shift;
+    my $acedb   = $self->acedb_root;
+    my $dbh     = Ace->connect(-host => 'localhost',-port => '2005') or $self->log->logdie("couldn't open ace:$!");
+    return $dbh;
+}
+
 
 has 'release' => (
     is        => 'rw',
 #    lazy_build => 1,
     );
 
-#sub _build_release {
-#    my $self = shift;
-#    my $release = $self->{release};
+#around 'release' => sub {
+#    my $orig   = shift;
+#    my $self   = shift;
+#
+#    my $release = $self->$orig();
+#    return $release if $release;
 #
 #    # If not provided, then we need to fetch it from Acedb.
-#    unless ($release) {
-	
+#    my $dbh = $self->dbh;
+#    return $dbh->version;
+#};
+
+has 'production_release' => (
+    is        => 'rw',
+#    lazy_build => 1,
+    );
+
+around 'production_release' => sub {
+    my $orig   = shift;
+    my $self   = shift;
+
+    # We may have supplied a specific release
+    my $release = $self->release;
+    return $release if $release;
+
+    $release = $self->$orig();
+    return $release if $release;
+
+    # If not provided, then we need to fetch it from Acedb.
+    my $dbh = Ace->connect(-host=>'50.19.229.229',-port=>'2005');    
+    return $dbh->version;
+};
+
+
+
 
 # target and target_nodes: symbolic names of production, development, mirror
 # Used when pushing a staged release to other nodes.
@@ -142,7 +186,7 @@ around 'target' => sub {
 
     my $target = $self->$orig();
 
-    die unless ($target =~ /^(production|development|mirror|staging)$/);
+    die unless ($target =~ /^(production|development|mirror|staging|new)$/);
     return $target;
 };
 
@@ -382,6 +426,10 @@ has 'remote_web_nodes' => (
 	[qw/canopus.caltech.edu/]},
     );
 
+has 'staging_host' => (
+    is => 'ro',
+    default => 'wb-web7.oicr.on.ca' );
+
 ###############
 # ACEDB NODES
 ###############
@@ -423,6 +471,17 @@ has 'production_acedb_nodes' => (
     },
     );
 
+has 'new_acedb_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw/wb-web1.oicr.on.ca
+            wb-web2.oicr.on.ca
+	    wb-web3.oicr.on.ca
+        /],
+    },
+    );
+
 ###############
 # SUPPORT NODES
 ###############
@@ -457,6 +516,8 @@ has 'production_support_nodes' => (
     },
     );
 
+
+
 ###############
 # MYSQL NODES
 ###############
@@ -488,6 +549,17 @@ has 'production_mysql_nodes' => (
 	    wb-web3.oicr.on.ca
 	    wb-web4.oicr.on.ca
             canopus.caltech.edu
+/],
+    },
+    );
+
+has 'new_mysql_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw/wb-web1.oicr.on.ca
+            wb-web2.oicr.on.ca
+	    wb-web3.oicr.on.ca
 /],
     },
     );

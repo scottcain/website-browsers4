@@ -12,7 +12,7 @@ has 'step' => (
 sub run {
     my $self = shift;       
     my $release = $self->release;    
-    my $target  = $self->target;  # production, development, staging, mirror
+    my $target  = $self->target;  # production, development, staging, mirror, new
     
     ###################################
     # Acedb
