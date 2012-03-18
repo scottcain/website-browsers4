@@ -10,7 +10,8 @@ my ($release,$help);
 GetOptions('release=s' => \$release,
 	   'help=s'    => \$help);
 
-if ($help || (!$release)) {
+if ($help) {
+#if ($help || (!$release)) {
     die <<END;
 
 Usage: $0 [--release] WSXXX
@@ -21,5 +22,10 @@ END
 ;
 }
 
-my $agent = WormBase::Update::Production::DeployWebapp->new({ release => $release });
+my $agent;
+if ($release) {
+    $agent = WormBase::Update::Production::DeployWebapp->new({ release => $release });
+} else {
+    $agent = WormBase::Update::Production::DeployWebapp->new();
+}
 $agent->execute();

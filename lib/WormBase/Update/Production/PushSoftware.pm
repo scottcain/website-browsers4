@@ -17,8 +17,6 @@ has 'step' => (
 
 sub run {
     my $self = shift;           
-    my $release = $self->release;
-
     $self->rsync_staging_directory;    
 }
 

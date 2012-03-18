@@ -23,6 +23,8 @@ sub run {
 	# Update symlinks to the development version
 	$self->update_ftp_site_symlinks('development');
 	$self->rsync_ftp_directory();       
+    } else {
+	$self->rsync_ftp_directory();
     }
 }
 
