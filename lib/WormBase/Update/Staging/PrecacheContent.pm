@@ -1,6 +1,5 @@
 package WormBase::Update::Staging::PrecacheContent;
 
-use local::lib '/usr/local/wormbase/website/tharris/extlib';
 use Moose;
 use Ace;
 use WWW::Mechanize;
@@ -564,10 +563,11 @@ sub precache_classic_content {
 
     $|++;
     
-    my %class2url = ( gene      => $base_url . 'db/gene/gene?class=Gene;name=',
-		      variation => $base_url . 'db/gene/variation?class=Variation;name=',
-		      protein   => $base_url . 'db/seq/protein?class=Protein;name=',);
-    
+    my %class2url = ( gene      => $base_url . '/db/gene/gene?class=Gene;name=',
+		      variation => $base_url . '/db/gene/variation?class=Variation;name=',
+		      protein   => $base_url . '/db/seq/protein?class=Protein;name=',
+		      gene_class => $base_url . '/db/gene/gene_class?class=Gene_class?name=',
+	);
     my $version = $db->status->{database}{version};
     my $cache = join("/",$self->support_databases_dir,$version,'cache',$class);
     system("mkdir -p $cache");
@@ -585,10 +585,17 @@ sub precache_classic_content {
 #    my $query_class = ucfirst($class);
 #my $i     = $db->fetch_many(-query=>qq{find $query_class Species="Caenorhabditis elegans"});
 
-    my $i = $db->fetch_many(ucfirst($class),'*');
-    while (my $obj = $i->next) {
-	next if $class eq 'protein' && $obj->name != /^WP:/;
-	next unless $obj->Species eq 'Caenorhabditis elegans';
+    # Assume that classes in the config file match AceDB classes, which might not be true.
+    my $ace_class = ucfirst($class);
+    # Acedb is crapping out while using iterator?
+#	my $i = $db->fetch_many($ace_class => '*');
+#	while (my $obj = $i->next) {	
+    my @objects = map { $_->name } $db->fetch($ace_class => '*');
+    foreach my $obj (@objects) {
+#	my $i = $db->fetch_many(ucfirst($class),'*');
+#    while (my $obj = $i->next) {
+#	next if $class eq 'protein' && $obj->name != /^WP:/;
+#	next unless $obj->Species eq 'Caenorhabditis elegans';
 		
 	if ($previous{$obj}) {
 	    print STDERR "Already seen $class $obj. Skipping...";

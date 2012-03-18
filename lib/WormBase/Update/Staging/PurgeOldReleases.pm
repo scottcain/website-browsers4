@@ -1,6 +1,5 @@
 package WormBase::Update::Staging::PurgeOldReleases;
 
-use lib "/usr/local/wormbase/website/tharris/extlib";
 use Moose;
 extends qw/WormBase::Update/;
 

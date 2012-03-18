@@ -4,7 +4,6 @@ package WormBase::CouchDB;
 # Currently only supports creating databases,
 # adding and fetching documents.  Document deletes
 # and updates not yet supported.
-use lib '/usr/local/wormbase/website/tharris/extlib';
 use Moose;
 use URI::Escape;
 use JSON::Any qw/XS JSON/;

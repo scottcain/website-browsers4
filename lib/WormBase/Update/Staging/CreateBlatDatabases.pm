@@ -1,6 +1,5 @@
 package WormBase::Update::Staging::CreateBlatDatabases;
 
-use lib "/usr/local/wormbase/website/tharris/extlib";
 use Moose;
 use Bio::SeqIO;
 use WormBase::Species;

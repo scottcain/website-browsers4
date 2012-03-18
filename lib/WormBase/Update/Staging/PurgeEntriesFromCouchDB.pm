@@ -1,6 +1,5 @@
 package WormBase::Update::Staging::PurgeEntriesFromCouchDB;
 
-use local::lib '/usr/local/wormbase/website/tharris/extlib';
 use Moose;
 use Ace;
 use WormBase::CouchDB;

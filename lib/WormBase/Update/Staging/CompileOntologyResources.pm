@@ -1,6 +1,5 @@
 package WormBase::Update::Staging::CompileOntologyResources;
 
-use lib "/usr/local/wormbase/website/tharris/extlib";
 use DB_File;   # NOT REQUIRED ONCE CLASSIC IS RETIRED
 use Moose;
 extends qw/WormBase::Update/;

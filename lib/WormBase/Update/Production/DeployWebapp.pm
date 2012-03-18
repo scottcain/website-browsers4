@@ -33,18 +33,6 @@ sub _build_pm_version {
     return $software_version;
 }
 
-has 'hg_revision' => (
-    is => 'ro',
-    lazy_build => 1,
-    );
-
-sub _build_hg_revision {       
-    my $self = shift;
-    chdir($self->app_staging_dir);
-    my $hg_revision = `hg tip --template '{rev}'`;
-    chomp $hg_revision;
-    return $hg_revision;
-}
 
 has 'git_commits' => (
     is => 'ro',

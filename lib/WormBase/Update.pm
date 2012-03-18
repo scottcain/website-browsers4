@@ -1,6 +1,5 @@
 package WormBase::Update;
 
-use local::lib '/usr/local/wormbase/website/tharris/extlib';
 use Time::HiRes qw(gettimeofday tv_interval);
 
 use Digest::MD5;

@@ -1,6 +1,5 @@
 package WormBase::Update::Staging::MirrorNewRelease;
 
-use lib "/usr/local/wormbase/website/tharris/extlib";
 use Moose;
 use Net::FTP::Recursive;
 extends qw/WormBase::Update/;

@@ -53,7 +53,7 @@ has 'couchdb_production_host' => ( is => 'rw', default => '206.108.125.165');
 # Later, we might want to crawl the live site at a low rate, too.
 #has 'precache_host'     => ( is => 'rw', default => 'http://staging.wormbase.org/');
 has 'precache_host'     => ( is => 'rw', default => 'http://localhost:5000');
-has 'precache_classic_site_host' => ( is => 'rw', default => 'http://localhost:8080');
+has 'precache_classic_site_host' => ( is => 'rw', default => 'http://localhost:80');
 
 # Each server gets its own couch.
 # See ReplicateCouchDB. If reads/writes to couch become a bottleneck

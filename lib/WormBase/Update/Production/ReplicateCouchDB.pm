@@ -1,6 +1,5 @@
 package WormBase::Update::Production::ReplicateCouchDB;
 
-use local::lib '/usr/local/wormbase/website/tharris/extlib';
 use Moose;
 use Ace;
 use WWW::Mechanize;

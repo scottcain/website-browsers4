@@ -8,7 +8,6 @@ package WormBase::Update::Staging::CompileOrthologyResources;
 #
 #######################################
 
-use lib "/usr/local/wormbase/website/tharris/extlib";
 use Ace;
 use Moose;
 extends qw/WormBase::Update/;
