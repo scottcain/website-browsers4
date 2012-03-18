@@ -215,10 +215,19 @@ before 'execute' => sub {
     return if $self->release;
 
     # Maybe we didn't provide a release. This only
-    # makes sense in the context of automatic mirroring.
+    # makes sense in the context of certain steps.
+    if ($self->step eq 'deploying a new version of the webapp') {
+	# Get the current version of acedb in PRODUCTION
+	# This WON'T be correct for the first software push at a new release.
+	my $db = Ace->connect(-host=>'mining.wormbase.org',-port=>2005) || die "Couldn't open database";
+	my $version = $db->version;
+	$self->release($version);
+	return $version;
+    }
+
     unless ($self->step =~ /mirror/ 
 	    || $self->step eq 'push acedb to production'
-	    || $self->step eq 'push support databases to production'	    
+	    || $self->step eq 'push support databases to production'
 	) {
 	$self->log->logdie("no release provided; discovering a new release only makes sense during the mirroring step.");
     }

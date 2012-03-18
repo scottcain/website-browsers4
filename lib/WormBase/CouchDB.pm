@@ -240,6 +240,119 @@ sub get_attachment {
 	return 0;
     }
 }
+
+
+
+#### NOT DONE
+
+=pod
+
+# Read through an HTML directory to do a bulk insert of documents.
+sub do_bulk_insert {
+    my $self           = shift;
+    my $html_directory = shift;
+
+    my $bulksize = 1000; # number of documents to insert at a go.
+
+    # Read through the directory, bulksize at a time.
+    opendir(my $dh, $html_directory) || $self->log->warn("Couldn't open the html cache directory for reading");
+    my $seen = 0;
+    my @prepped_docs;
+
+    while (my $file = readdir $dh) {
+	$seen++;
+
+	# extract the uuid.
+	my $uuid = $file;
+	$uuid =~ s/\.html//;
+
+	# The attachment is the content of the file. Does this work?
+	my $attachment = `cat $html_directory/$file`;
+
+	push @prepped_docs,qq|{"_id":"$uuid","data":"$attachment"}|;
+
+	# We've seen enough. Let's load 'em up.
+	if ($seen == $bulksize) {
+	    my $doc = '{"docs":[';
+	    
+          -----
+    
+    my $res;
+    my $msg;
+    # Attachments have a different URI target
+    # and must include the attachment content.
+    
+	$msg  = $self->_prepare_request({method  => 'PUT',
+					 path    => "$uuid/attachment",
+					 content => "$attachment" } 
+	    );
+
+}
+
+=cut
+
+=pod 
+
+#!/bin/sh -e
+
+# usage: time benchbulk.sh
+# it takes about 30 seconds to run on my old MacBook with bulksize 1000
+
+BULKSIZE=100
+DOCSIZE=10
+INSERTS=10
+ROUNDS=10
+DBURL="http://127.0.0.1:5984/benchbulk"
+POSTURL="$DBURL/_bulk_docs"
+
+function make_bulk_docs() {
+  ROW=0
+  SIZE=$(($1-1))
+  START=$2
+  BODYSIZE=$3  
+  
+  BODY=$(printf "%0${BODYSIZE}d")
+
+  echo '{"docs":['
+    while [ $ROW -lt $SIZE ]; do
+    printf '{"_id":"%020d", "body":"'$BODY'"},' $(($ROW + $START))
+    let ROW=ROW+1
+  done
+  printf '{"_id":"%020d", "body":"'$BODY'"}' $(($ROW + $START))
+  echo ']}'
+}
+
+
+echo "Making $INSERTS bulk inserts of $BULKSIZE docs each"
+
+echo "Attempt to delete db at $DBURL"
+curl -X DELETE $DBURL -w\\n
+
+echo "Attempt to create db at $DBURL"
+curl -X PUT $DBURL -w\\n
+
+echo "Running $ROUNDS rounds of $INSERTS concurrent inserts to $POSTURL"
+RUN=0
+while [ $RUN -lt $ROUNDS ]; do
+
+  POSTS=0
+  while [ $POSTS -lt $INSERTS ]; do
+    STARTKEY=$[ POSTS * BULKSIZE + RUN * BULKSIZE * INSERTS ]
+    echo "startkey $STARTKEY bulksize $BULKSIZE"
+    DOCS=$(make_bulk_docs $BULKSIZE $STARTKEY $DOCSIZE)
+    # echo $DOCS
+    echo $DOCS | curl -T - -X POST $POSTURL -w%{http_code}\ %{time_total}\ sec\\n >/dev/null 2>&1 &
+    let POSTS=POSTS+1
+  done
+
+  echo "waiting"
+  wait
+  let RUN=RUN+1
+done
+
+curl $DBURL -w\\n
+
+=cut
 	
 
 
