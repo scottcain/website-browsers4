@@ -25,11 +25,20 @@ has 'couchdb' => (
 
 sub _build_couchdb {
     my $self = shift;
-    my $couchdb = WormBase->create('CouchDB',{ release => $self->release });
+    # Discover where our target couchdb is (for the
+    # express purpose of creating a couchdb)
+    my $couch_host;
+    if ($self->cache_query_host eq 'production') {
+	$couch_host = $self->couchdb_host_master;
+    } else {
+	$couch_host = $self->couchdb_host_staging;
+    }
+    
+    my $couchdb = WormBase->create('CouchDB',{ release => $self->release, couchdb_host => $couch_host });
     return $couchdb;
 }
 
-# For precaching a specific widget
+# Attributed used to precache a specific widget
 has 'class' => (
     is => 'rw',
     );
@@ -37,6 +46,15 @@ has 'class' => (
 has 'widget' => (
     is => 'rw',
     );
+
+# Specify which environment to direct queries to: staging or production.
+# This lets me run the precaching script at a low-level even after
+# a data release.
+has 'cache_query_host' => (
+    is => 'rw',
+    default => 'staging',
+    );
+
 
 sub run {
     my $self = shift;       
@@ -81,9 +99,10 @@ sub precache_content {
     $|++;
 
     my $c = Config::JFDI->new(file => '/usr/local/wormbase/website/staging/wormbase.conf');
-    my $config = $c->get;
-
-    my $base_url = $self->precache_host . '/rest/widget/%s/%s/%s';
+    my $config = $c->get;   
+    
+    my $method = 'cache_query_host_' . $self->cache_query_host;
+    my $base_url = $self->$method . '/rest/widget/%s/%s/%s';
     
     my $db      = Ace->connect(-host=>'localhost',-port=>2005);
     my $version = $db->status->{database}{version};
@@ -242,7 +261,8 @@ sub precache_to_couchdb_parallel {
     my $c = Config::JFDI->new(file => '/usr/local/wormbase/website/staging/wormbase.conf');
     my $config = $c->get;
 
-    my $base_url = $self->precache_host . '/rest/widget/%s/%s/%s';
+    my $method = 'cache_query_host_' . $self->cache_query_host;
+    my $base_url = $self->$method . '/rest/widget/%s/%s/%s';
     
     my $db      = Ace->connect(-host=>'localhost',-port=>2005);
     my $version = $db->status->{database}{version};
@@ -390,19 +410,21 @@ sub precache_to_couchdb_parallel {
 
 sub precache_to_couchdb_by_class {
     my $self = shift;
+
+    $|++;
     
     # Create a database corresponding to the current release,
     # silently failing if it already exists.
     my $couch = $self->couchdb;
+
     $couch->create_database;
 
-    $|++;
+    my $method = 'cache_query_host_' . $self->cache_query_host;
+    my $base_url = $self->$method . '/rest/widget/%s/%s/%s';
 
     my $c = Config::JFDI->new(file => '/usr/local/wormbase/website/staging/wormbase.conf');
     my $config = $c->get;
 
-    my $base_url = $self->precache_host . '/rest/widget/%s/%s/%s';
-    
     my $db      = Ace->connect(-host=>'localhost',-port=>2005);
     my $version = $db->status->{database}{version};
     my $cache_root = join("/",$self->support_databases_dir,$version,'cache');
@@ -492,10 +514,10 @@ sub precache_to_couchdb_by_class {
 		next if $widget eq 'references';
 		next if $widget eq 'human_diseases';
 		# These two are broken at the moment.
-		next if $widget eq 'interactions';
-		next if $widget eq 'phenotype';
-		next if $widget eq 'sequences';   
-		next if $widget eq 'location';    # had to adjust URL to NOT point at beta site.
+#		next if $widget eq 'interactions';
+#		next if $widget eq 'phenotype';
+#		next if $widget eq 'sequences';
+#		next if $widget eq 'location';
 
 		my $precache = eval { $config->{sections}->{species}->{$class}->{widgets}->{$widget}->{precache}; };
 		$precache ||= 0;
@@ -559,7 +581,7 @@ sub precache_classic_content {
     my ($self,$class) = @_;
     my $db = Ace->connect(-host=>'localhost',-port=>2005) || die "Couldn't open database";
     
-    my $base_url = $self->precache_classic_site_host;
+    my $base_url = $self->cache_query_host_classic;
 
     $|++;
     
@@ -623,7 +645,6 @@ sub precache_classic_content {
 	
 	print OUT join("\t"
 		       ,$obj
-		       ,$class eq 'gene' ? $obj->Public_name : ''
 		       ,$url
 		       ,$success
 		       ,$cache_stop - $cache_start)
@@ -681,7 +702,7 @@ sub _parse_cache_log {
 
 	while (<IN>) {
 	    chomp;
-	    my ($obj,$name,$url,$status,$cache_stop) = split("\t");
+	    my ($obj,$url,$status,$cache_stop) = split("\t");
 	    $previous{$obj}++ unless $status eq 'failed';
 	    print STDERR "Recording $obj as seen...";
 	    print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";

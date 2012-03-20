@@ -22,11 +22,11 @@ has _json_handler   => (
     );
 #has 'release'       => ( is => 'rw' );
 
-has 'couchdbhost' => (
+has 'couchdb_host' => (
     is => 'rw',
     default => sub {
 	my $self = shift;
-	my $host = $self->couchdbmaster;
+	my $host = $self->couchdb_host_master;
 	return $host;
     },
     );
@@ -93,7 +93,7 @@ sub create_database {
 
 sub get_current_databases {
     my $self = shift;
-    my $master = $self->couchdbmaster;
+    my $master = $self->couchdb_host_master;
     my $msg    = $self->_prepare_admin_request({master   => $master,
 						method   => 'GET',						
 						path     => '_all_dbs',
@@ -377,7 +377,7 @@ sub _prepare_request {
     my $method  = $opts->{method};
     my $path    = $opts->{path};
     my $content = $opts->{content};
-    my $host    = $self->couchdbhost || $self->couchdbmaster;   
+    my $host    = $self->couchdb_host || $self->couchdb_host_master;   
         
     my $database  = $opts->{database} || lc($self->release);
 

@@ -39,7 +39,8 @@ sub run {
 #    }
 
     # Or, we have a single couchdb host in production
-    my $host = $self->couchdb_production_host;
+    my $host = $self->couchdb_host_production;
+    $host =~ s/:5984//;  # strip the port since this is straight scp or rsync.
 #    $self->rsync($host);
     $self->scp($host);
 }
@@ -84,10 +85,10 @@ sub scp {
 sub replicate {
     my $self        = shift;
     my $remote_node = shift;
-    my $master      = $self->couchdbmaster;
+    my $master      = $self->couchdb_host_master;
 
     $self->log->info("replicating from master couchdb on $master to $remote_node"); 
-    return if $self->couchdbmaster =~ /$remote_node/;
+    return if $self->couchdb_host_master =~ /$remote_node/;
     
     my $couch    = $self->couchdb;
 
@@ -96,7 +97,7 @@ sub replicate {
     foreach my $database (@$databases) {
 	next unless $database =~ /^ws.*/;
 	
-	my $response = $couch->replicate({ master => $self->couchdbmaster,
+	my $response = $couch->replicate({ master => $self->couchdb_host_master,
 					   target => $remote_node . ":5984",
 					   database => $database } );
 	

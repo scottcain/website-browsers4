@@ -22,38 +22,50 @@ sub ssh {
     return $ssh;
 }
 
+# The precache_host is the host we will send queries to.
+# Typically, this would be the staging server as it will
+# have the newest version of the database.
+
+####################################
+#
+# Precaching
+# cache_query_host is where precache queries
+# are sent. The app configruration of that
+# host(s) controls in which couchdb the data
+# is stored.
+#
+####################################
+
+# Prewarming the cache, we simply direct request to the app on localhost.
+# The precache script can set this as appropriate to allow caching
+# of the production site at a low level.
+has 'cache_query_host_staging'    => ( is => 'rw', default => 'http://localhost:5000');
+has 'cache_query_host_production' => ( is => 'rw', default => 'http://beta.wormbase.org');
+has 'cache_query_host_classic'    => ( is => 'rw', default => 'http://localhost:80');
+
 
 ####################################
 #
 # Couch DB
+# Note that SOME of these parameters
+# are in conflict with app-level
+# configuration.
 #
 ####################################
+
+# Where our couchdb data directory lives.
+has 'couchdb_root'      => ( is => 'rw', default => '/usr/local/wormbase/couchdb' );
 
 # couchdbmaster 
 # We precache directly to our production host. Not sure how intelligent this is.
 # This works because the staging database is +1 that in production.
 # Meanwhile, production sites can continue to cache to production database.
-has 'couchdbmaster'     => ( is => 'rw', default => '206.108.125.165:5984' );
 
-#has 'staging_couchdb_host' => ( is => 'rw', default => '206.108.125.165');
-has 'couchdb_root'      => ( is => 'rw', default => '/usr/local/wormbase/couchdb' );
-has 'couchdb_production_host' => ( is => 'rw', default => '206.108.125.165');
+has 'couchdb_host_staging'     => ( is => 'rw', default => '206.108.125.164:5984' );
+has 'couchdb_host_production'  => ( is => 'rw', default => '23.21.171.141:5984');
 
-# The precache_host is the host we will send queries to.
-# Typically, this would be the staging server as it will
-# have the newest version of the database.
-
-# Adjust here to crawl the live site, too.  The app itself will cache content in
-# a single couchdb (PUT requests directed to a single host by proxy).
-#has 'precache_host'     => ( is => 'rw', default => 'http://staging.wormbase.org/');
-
-# Prewarming the cache, we should direct requests against the development site.
-# This app would actually cache on localhost.
-
-# Later, we might want to crawl the live site at a low rate, too.
-#has 'precache_host'     => ( is => 'rw', default => 'http://staging.wormbase.org/');
-has 'precache_host'     => ( is => 'rw', default => 'http://localhost:5000');
-has 'precache_classic_site_host' => ( is => 'rw', default => 'http://localhost:80');
+# Subtly different than production, the master host is that used for replication.
+has 'couchdb_host_master'     => ( is => 'rw', default => '23.21.171.141:5984' );
 
 # Each server gets its own couch.
 # See ReplicateCouchDB. If reads/writes to couch become a bottleneck
