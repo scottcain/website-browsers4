@@ -62,13 +62,13 @@ sub run {
 #    $self->precache_content('bulk_load');
 
 #    $self->precache_to_couchdb_parallel();
-    $self->precache_to_couchdb_by_class();
+#    $self->precache_to_couchdb_by_class();
 
 
 #    foreach my $class (qw/gene variation protein gene_class/) {
-#    foreach my $class (qw/gene variation protein gene_class/) {
-#	$self->precache_classic_content($class);
-#    }
+    foreach my $class (qw/gene variation protein gene_class/) {
+	$self->precache_classic_content($class);
+    }
 }
 
 
@@ -595,11 +595,14 @@ sub precache_classic_content {
     system("mkdir -p $cache");
     
     my $start = time();    
+        
+    my $log_file = join("/",$self->support_databases_dir,$version,'cache','logs',"$class-precached-pages.txt");
+    my %previous = _parse_cache_log($log_file); 
+
+    open OUT,">>$log_file";
     
-    my %previous = _parse_cache_log($cache,$version); 
-    
-    open OUT,">>$cache/$version-precached-pages.txt";
-    
+
+
     my %status;
 #my $i     = $db->fetch_many(-query=>qq{find Gene Species="Caenorhabditis elegans"});
 #my $i     = $db->fetch_many(-query=>qq{find Gene Species="Caenorhabditis elegans" AND CGC_name AND Molecular_name});
@@ -612,7 +615,9 @@ sub precache_classic_content {
     # Acedb is crapping out while using iterator?
 #	my $i = $db->fetch_many($ace_class => '*');
 #	while (my $obj = $i->next) {	
+
     my @objects = map { $_->name } $db->fetch($ace_class => '*');
+    my @uris;
     foreach my $obj (@objects) {
 #	my $i = $db->fetch_many(ucfirst($class),'*');
 #    while (my $obj = $i->next) {
@@ -625,32 +630,64 @@ sub precache_classic_content {
 	    next;
 	}
 	
+	my $url = $class2url{$class} . $obj;
+	push @uris,[$url,$obj];
+    }
+
+    # Max 5 processes for parallel download
+    my $pm = new Parallel::ForkManager(3); 
+    foreach my $entry (@uris) {	       		
+	my ($url,$obj) = @$entry;
+
 	print STDERR "Fetching and caching $obj";
 	print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
-	my $url = $class2url{$class} . $obj;
 	
 	my $cache_start = time();
-	# No need to watch state - create a new agent for each gene to keep memory usage low.
-	my $mech = WWW::Mechanize->new(-agent => 'WormBase-PreCacher/1.0');
-	$mech->get($url);
-	my $success = ($mech->success) ? 'success' : 'failed';
+	$pm->start and next; # do the fork
 	my $cache_stop = time();
-	$status{$obj} = $success;
+
+	my $content = get($url);
 	
-	if ($mech->success) {
+	if ($content) {
 	    open CACHE,">$cache/$obj.html";
-	    print CACHE $mech->content;
+	    print CACHE $content;
 	    close CACHE;
+	    $status{$obj} = 'success';
+
+	    print OUT join("\t"
+			   ,$obj
+			   ,$url
+			   ,'success'
+			   ,$cache_stop - $cache_start)
+		,"\n";
+	    
+	} else {
+	    $status{$obj} = 'failed';
+	    print OUT join("\t"
+			   ,$obj
+			   ,$url
+			   ,'failed'
+			   ,$cache_stop - $cache_start)
+		,"\n";
 	}
-	
-	print OUT join("\t"
-		       ,$obj
-		       ,$url
-		       ,$success
-		       ,$cache_stop - $cache_start)
-	    ,"\n";
+		    
+	$pm->finish; # do the exit in the child process
     }
-    
+    $pm->wait_all_children;
+
+	# No need to watch state - create a new agent for each gene to keep memory usage low.
+#	my $mech = WWW::Mechanize->new(-agent => 'WormBase-PreCacher/1.0');
+#	$mech->get($url);
+#	my $success = ($mech->success) ? 'success' : 'failed';
+#	my $cache_stop = time();
+
+	
+#	if ($mech->success) {
+#	    open CACHE,">$cache/$obj.html";
+#	    print CACHE $mech->content;
+#	    close CACHE;
+#	}
+	
     my $end = time();
     my $seconds = $end - $start;
     print OUT "\n\nTime required to cache " . (scalar keys %status) . "objects: ";
@@ -684,21 +721,22 @@ sub save_to_couchdb {
 
 
 sub _parse_cache_log {
-    my ($cache,$version) = @_;
+    my ($file) = @_;
 #    open IN,"$previous";
 #    return unless (-e "$cache/$version-precached-pages.txt");
-    if (-e "$cache/$version-precached-pages.txt") {
+
+    if (-e "$file") {
 	my %previous;
 
 	# First off, just tail the file to see if we're finished.
-	my $complete_flag = `tail -1 $cache/$version-precached-pages.txt`;
+	my $complete_flag = `tail -1 $file`;
 	chomp $complete_flag;
 	if ($complete_flag eq 'COMPLETE') {
 	    $previous{$complete_flag}++;
 	    return %previous;
 	}
 
-	open IN,"$cache/$version-precached-pages.txt" or die "$!";
+	open IN,"$file" or die "$!";
 
 	while (<IN>) {
 	    chomp;
