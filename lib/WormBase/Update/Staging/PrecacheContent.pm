@@ -64,11 +64,18 @@ sub run {
 #    $self->precache_to_couchdb_parallel();
 #    $self->precache_to_couchdb_by_class();
 
-
-#    foreach my $class (qw/gene variation protein gene_class/) {
-    foreach my $class (qw/gene variation protein gene_class/) {
+#    foreach my $class (qw/clone interaction pcr protein rnai sage_tag sequence
+#                          antibody expr_pattern gene gene_class gene_regulation strain structure_data variation
+#                          laboratory life_stage paper person phenotype
+#                           gene_ontology
+#                          /) {
+    foreach my $class (qw/gene_class gene_regulation strain structure_data variation
+                          laboratory life_stage paper person phenotype
+                          gene_ontology
+                          /) {
 	$self->precache_classic_content($class);
     }
+
 }
 
 
@@ -585,10 +592,26 @@ sub precache_classic_content {
 
     $|++;
     
-    my %class2url = ( gene      => $base_url . '/db/gene/gene?class=Gene;name=',
+    my %class2url = ( clone       => $base_url . '/db/seq/clone?class=Clone;name=',
+		      interaction => $base_url . '/db/seq/interaction?class=Interaction;name=',
+		      pcr         => $base_url . '/db/seq/pcr?class=PCR;name=',
+		      protein     => $base_url . '/db/seq/protein?class=Protein;name=',	
+		      rnai        => $base_url . '/db/rnai/protein?class=RNAi;name=',
+		      sage_tag    => $base_url . '/db/seq/sage?class=Sage_tag;name=',
+		      sequence    => $base_url . '/db/seq/sequence?class=Sequence;name=',
+		      antibody    => $base_url . '/db/gene/antibody?class=Antibody;name=',
+		      expr_pattern=> $base_url . '/db/gene/expression?class=Expr_pattern;name=',
+		      gene      => $base_url . '/db/gene/gene?class=Gene;name=',
+		      gene_class => $base_url . '/db/gene/gene_class?class=Gene_class;name=',
+		      gene_regulation => $base_url . '/db/gene/regulation?class=Gene_regulation;name=',
+		      strain => $base_url . '/db/gene/strain?class=Strain;name=',
+		      structure_data => $base_url . '/db/gene/structure_data?class=Structure_data;name=',
 		      variation => $base_url . '/db/gene/variation?class=Variation;name=',
-		      protein   => $base_url . '/db/seq/protein?class=Protein;name=',
-		      gene_class => $base_url . '/db/gene/gene_class?class=Gene_class?name=',
+		      laboratory => $base_url . '/db/misc/laboratory?class=Laboratory;name=',
+		      life_stage => $base_url . '/db/misc/life_stage?class=Life_stage;name=',
+		      person => $base_url . '/db/misc/person?class=Person;name=',
+		      phenotype => $base_url . '/db/misc/phenotype?class=Phenotype;name=',
+		      gene_ontology => $base_url . '/db/ontology/gene?class=Gene_ontology;name=',
 	);
     my $version = $db->status->{database}{version};
     my $cache = join("/",$self->support_databases_dir,$version,'cache',$class);
@@ -612,6 +635,8 @@ sub precache_classic_content {
 
     # Assume that classes in the config file match AceDB classes, which might not be true.
     my $ace_class = ucfirst($class);
+    $ace_class = 'RNAi'    if $ace_class eq 'Rnai';
+    $ace_class = 'GO_term' if $ace_class eq 'Gene_ontology';
     # Acedb is crapping out while using iterator?
 #	my $i = $db->fetch_many($ace_class => '*');
 #	while (my $obj = $i->next) {	
@@ -639,7 +664,7 @@ sub precache_classic_content {
     foreach my $entry (@uris) {	       		
 	my ($url,$obj) = @$entry;
 
-	print STDERR "Fetching and caching $obj";
+	print STDERR "Fetching and caching $class:$obj";
 	print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
 	
 	my $cache_start = time();
@@ -742,6 +767,7 @@ sub _parse_cache_log {
 	    chomp;
 	    my ($obj,$url,$status,$cache_stop) = split("\t");
 	    $previous{$obj}++ unless $status eq 'failed';
+	    next if $status eq 'failed';
 	    print STDERR "Recording $obj as seen...";
 	    print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
 	}
