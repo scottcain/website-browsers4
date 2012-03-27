@@ -28,9 +28,6 @@ fi
 # END : build BLAST databases; in 0 days, 2 hours, 5 minutes and 6 seconds
 ./steps/create_blast_databases.pl --release $RELEASE
 
-# 4. Create BLAT databases (requires ~ 5 hours for 16 species)
-./steps/create_blat_databases.pl --release $RELEASE
-
 # 5. Load Genomic GFF databases
 END : load genomic gff databases; in 0 days, 22 hours, 58 minutes and 28 seconds
 ./steps/load_genomic_gff_databases.pl --release $RELEASE
