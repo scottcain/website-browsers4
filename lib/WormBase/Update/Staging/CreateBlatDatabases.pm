@@ -35,10 +35,35 @@ sub run {
 	$self->log->info(uc($name). ': start');
 
 	my $species = WormBase::Species->new({ symbolic_name => $name, release => $self->release });
-	$self->prepare_dna($species);
-	$self->make_blatdb($species);
+
+	# With standalone blat, we only need the single concatenated fasta file.
+	# It's the same for both blast and blat.
+	$self->copy_dna($species);
+
+#	$self->prepare_dna($species);
+#	$self->make_blatdb($species);
 	$self->log->info(uc($name). ': done');
     }
+}
+
+
+sub copy_dna {
+    my ($self,$species) = @_;
+    $self->log->debug("unpacking dna for blat databases");
+    
+    my $path        = $species->release_dir;      # species home
+    my $fasta_file  = $species->genomic_fasta;    # Just the filename
+    my $name        = $species->symbolic_name;
+    unless (-e "$path/$fasta_file") {
+	$self->log->error(uc($name) . ': no fasta file found');
+	return;
+    }
+
+    my $target_file = join("/",$species->blat_dir,$fasta_file);
+    $target_file    =~ s/\.gz//; # Strip off the trailing .gz
+ 
+    # Unpack mirrored fasta
+    system("gunzip -c $path/$fasta_file > $target_file") && $self->log->logdie("Couldn't unpack the fasta file to the blat staging directory");
 }
 
 

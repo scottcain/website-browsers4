@@ -397,7 +397,6 @@ has 'local_app_nodes' => (
             wb-web2.oicr.on.ca
             wb-web3.oicr.on.ca
             wb-web4.oicr.on.ca
-            wb-web6.oicr.on.ca
             wb-mining.oicr.on.ca
             wb-gb1.oicr.on.ca
 /]},
@@ -411,32 +410,6 @@ has 'remote_app_nodes' => (
 	[qw/canopus.caltech.edu/]},
     );
 
-
-# WormBase 1.0: Used in push_software.
-# Can go away when we retire the old site.
-has 'local_web_nodes' => (
-    is => 'ro',
-    isa => 'ArrayRef',
-    default => sub {
-	[qw/ec2-50-19-229-229.compute-1.amazonaws.com
-            wb-mining.oicr.on.ca
-            wb-web1.oicr.on.ca
-            wb-web2.oicr.on.ca
-            wb-web3.oicr.on.ca
-            wb-web4.oicr.on.ca
-            wb-web6.oicr.on.ca
-            wb-gb1.oicr.on.ca
-            /],
-    },
-    );
-#            wb-gb2.oicr.on.ca
-
-has 'remote_web_nodes' => (
-    is => 'ro',
-    isa => 'ArrayRef',
-    default => sub {
-	[qw/canopus.caltech.edu/]},
-    );
 
 has 'staging_host' => (
     is => 'ro',

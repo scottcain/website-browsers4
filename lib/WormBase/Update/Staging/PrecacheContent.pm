@@ -189,7 +189,8 @@ sub precache_content {
 		my $i = $db->fetch_many($ace_class => '*');
 		while (my $obj = $i->next) {
 
-		    if ($previous{$obj}) {
+#		    if ($previous{$obj}) {
+		    if ($previous{"$class$obj$widget"}) {
 			print STDERR "Already seen $class $obj. Skipping...";
 			print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
 			next;
@@ -415,9 +416,8 @@ sub precache_to_couchdb_by_class {
     
     # Create a database corresponding to the current release,
     # silently failing if it already exists.
-    my $couch = $self->couchdb;
-
-    $couch->create_database;
+#    my $couch = $self->couchdb;
+#    $couch->create_database;
 
     my $method = 'cache_query_host_' . $self->cache_query_host;
     my $base_url = $self->$method . '/rest/widget/%s/%s/%s';
@@ -527,7 +527,8 @@ sub precache_to_couchdb_by_class {
 
 		if ($precache) {
 		    my $url = sprintf($base_url,$class,$obj,$widget);
-		    if ($previous{$url}) {
+#		    if ($previous{$url}) {	       
+		    if ($previous{"$class$obj$widget"}) {
 #			print STDERR "Already requested $url. Skipping...";
 #			print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
 			next;
@@ -737,7 +738,7 @@ sub _parse_cached_widgets_log {
 	    }
 	    chomp;
 	    my ($class,$obj,$name,$url,$status,$cache_stop) = split("\t");
-	    $previous{$obj}++ unless $status eq 'failed';
+	    $previous{"$class$obj$name"}++ unless $status eq 'failed';
 	    print STDERR "   Recording $obj as seen...";
 	    print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
 	}
@@ -772,7 +773,7 @@ sub _parse_cached_classes_log {
 	    }
 	    chomp;
 	    my ($class,$obj,$name,$url,$status,$cache_stop) = split("\t");
-	    $previous{$url}++ unless $status eq 'failed';
+	    $previous{"$class$obj$name"}++ unless $status eq 'failed';
 	    print STDERR "   Recording $obj as seen...";
 	    print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
 	}
