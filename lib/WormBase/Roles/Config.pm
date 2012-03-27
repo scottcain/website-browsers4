@@ -41,7 +41,7 @@ sub ssh {
 # of the production site at a low level.
 has 'cache_query_host_staging'    => ( is => 'rw', default => 'http://localhost:5000');
 has 'cache_query_host_production' => ( is => 'rw', default => 'http://beta.wormbase.org');
-has 'cache_query_host_classic'    => ( is => 'rw', default => 'http://localhost:80');
+has 'cache_query_host_classic'    => ( is => 'rw', default => 'http://localhost:8080');
 
 
 ####################################
