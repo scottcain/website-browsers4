@@ -381,7 +381,7 @@ sub crawl_website {
 	    }
 	    
             # Max 5 processes for parallel download
-	    my $pm = new Parallel::ForkManager(3); 
+	    my $pm = new Parallel::ForkManager(6); 
 	    foreach my $uri (@uris) {	       		
 		$status{$class}{uris}++;
 		my ($protocol,$nothing,$host,$rest,$widget_path,$class,$object,$widget) = split("/",$uri);
