@@ -88,7 +88,7 @@ sub _build_app_version {
 ########################################################
 
 sub run {
-    my $self    = shift;
+    my $self = shift;
     $self->dump_version_file;
     $self->rsync_staging_directory;    
 #    $self->create_environment_file;
@@ -220,19 +220,25 @@ sub rsync_staging_directory {
 
 #    foreach my $node (@$remote_nodes) {
     foreach my $node (@$local_nodes,@$remote_nodes) {
-	$self->log->info("deploying the staging directory to $node");
+	$self->log->info("   deploying the staging directory to $node");
 	my $ssh = $self->ssh($node);
 	$ssh->error && $self->log->logdie("Can't ssh to $node: " . $ssh->error);
 
-	$ssh->system("mkdir $app_root/website/$app_version") or $self->log->warn("Couldn't create a new app version on $node: " . $ssh->error);
-
-	$self->system_call("rsync -Ca --exclude logs --exclude tmp --exclude .hg --exclude extlib.tgz --exclude wormbase.env --exclude extlib $staging_dir/ ${node}:$app_root/website/$app_version",'rsyncing staging directory into production');
-
-
-	# Update the symlink.  Here or part of GoLive?
-	$ssh->system("cd $app_root/website; mkdir $app_root/website/$app_version/logs ; chmod 777 $app_root/website/$app_version/logs ; rm production;  ln -s $app_version production")
-	    or $self->log->warn("Couldn't update the production symlink");
-		
+	# Approach 1: each deployment push is a new directory.
+	if (0) {
+	    $ssh->system("mkdir $app_root/website/$app_version") or $self->log->warn("Couldn't create a new app version on $node: " . $ssh->error);
+	    $self->system_call("rsync -Ca --exclude logs --exclude tmp --exclude .hg --exclude extlib.tgz --exclude wormbase.env --exclude extlib $staging_dir/ ${node}:$app_root/website/$app_version",'rsyncing staging directory into production');
+	    # Update the symlink.  Here or part of GoLive?
+	    $ssh->system("cd $app_root/website; mkdir $app_root/website/$app_version/logs ; chmod 777 $app_root/website/$app_version/logs ; rm production;  ln -s $app_version production")
+		or $self->log->warn("Couldn't update the production symlink");	    
+	}
+	
+	# Approach 2: simply rsync to the production directory.
+	# First back up production.
+	$self->system_call("cp -r /usr/local/wormbase/production /usr/local/wormbase/website/archive/$app_version",
+			   'making a backup of the current production directory');	
+	$self->system_call("rsync -Ca --exclude logs --exclude tmp --exclude .hg --exclude extlib.tgz --exclude wormbase.env --exclude extlib $staging_dir/ ${node}:$app_root/website/production",'rsyncing staging directory into production');		
+	$self->send_hup_to_starman($ssh,$node);
     }
 }
 
@@ -261,6 +267,15 @@ sub save_production_reference {
     $self->system_call("rm -rf production.current",'removing the old production version');
     $self->system_call("cp -r $staging_dir production.current",'saving a reference of the current production version');
 }
+
+
+sub send_hup_to_starman {
+    my ($self,$ssh,$node) = @_;
+    $self->log->info("   sending HUP to starman on $node");
+    $ssh->system("kill -HUP `head -1 /tmp/production.pid`");
+}
+
+
 
 
 1;
