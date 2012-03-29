@@ -385,8 +385,6 @@ has 'local_nfs_root' => (
     default => '/usr/local/wormbase/shared',
     );
 
-
-# WormBase 2.0: used in deploy_sofware
 has 'local_app_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
@@ -398,10 +396,10 @@ has 'local_app_nodes' => (
             wb-web3.oicr.on.ca
             wb-web4.oicr.on.ca
             wb-mining.oicr.on.ca
-            wb-gb1.oicr.on.ca
 /]},
     );
-#            wb-gb2.oicr.on.ca
+# GBrowse node managed independently.
+#            wb-gb1.oicr.on.ca
 
 has 'remote_app_nodes' => (
     is => 'ro',
