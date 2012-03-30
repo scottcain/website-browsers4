@@ -40,7 +40,7 @@ sub ssh {
 # The precache script can set this as appropriate to allow caching
 # of the production site at a low level.
 has 'cache_query_host_staging'    => ( is => 'rw', default => 'http://localhost:5000');
-has 'cache_query_host_production' => ( is => 'rw', default => 'http://beta.wormbase.org');
+has 'cache_query_host_production' => ( is => 'rw', default => 'http://www.wormbase.org');
 has 'cache_query_host_classic'    => ( is => 'rw', default => 'http://localhost:8080');
 
 
@@ -454,17 +454,6 @@ has 'production_acedb_nodes' => (
     },
     );
 
-has 'new_acedb_nodes' => (
-    is => 'ro',
-    isa => 'ArrayRef',
-    default => sub {
-	[qw/wb-web1.oicr.on.ca
-            wb-web2.oicr.on.ca
-	    wb-web3.oicr.on.ca
-        /],
-    },
-    );
-
 ###############
 # SUPPORT NODES
 ###############
@@ -532,17 +521,6 @@ has 'production_mysql_nodes' => (
 	    wb-web3.oicr.on.ca
 	    wb-web4.oicr.on.ca
             canopus.caltech.edu
-/],
-    },
-    );
-
-has 'new_mysql_nodes' => (
-    is => 'ro',
-    isa => 'ArrayRef',
-    default => sub {
-	[qw/wb-web1.oicr.on.ca
-            wb-web2.oicr.on.ca
-	    wb-web3.oicr.on.ca
 /],
     },
     );
