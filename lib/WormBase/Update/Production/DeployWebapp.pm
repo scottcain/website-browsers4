@@ -235,8 +235,8 @@ sub rsync_staging_directory {
 	
 	# Approach 2: simply rsync to the production directory.
 	# First back up production.
-	$self->system_call("cp -r /usr/local/wormbase/production /usr/local/wormbase/website/archive/$app_version",
-			   'making a backup of the current production directory');	
+	$ssh->system("cp -r /usr/local/wormbase/website/production /usr/local/wormbase/website/archive/$app_version")
+	    or $self->log->warn("Couldn't back up the current production directory to $node:website/archive/$app_version");
 	$self->system_call("rsync -Ca --exclude logs --exclude tmp --exclude .hg --exclude extlib.tgz --exclude wormbase.env --exclude extlib $staging_dir/ ${node}:$app_root/website/production",'rsyncing staging directory into production');		
 	$self->send_hup_to_starman($ssh,$node);
     }
