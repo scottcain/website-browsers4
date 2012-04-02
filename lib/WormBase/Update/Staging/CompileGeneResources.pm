@@ -1,8 +1,15 @@
 package WormBase::Update::Staging::CompileGeneResources;
 
+#######################################
+#
+# DEPRECATED. This module used to create a bunch of flat files
+# for driving select elements of the website.
+# These are no longer required.
+#
+#######################################
+
 # Compile a bunch of flat-files that support the Gene Page. Eeeks.
 
-use lib "/usr/local/wormbase/website/tharris/extlib";
 use Ace;
 use Moose;
 extends qw/WormBase::Update/;

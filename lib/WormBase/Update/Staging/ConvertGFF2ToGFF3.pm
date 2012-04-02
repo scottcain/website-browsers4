@@ -1,6 +1,5 @@
 package WormBase::Update::Staging::ConvertGFF2ToGFF3;
 
-use lib "/usr/local/wormbase/website/tharris/extlib";
 use Moose;
 use DBI;
 extends qw/WormBase::Update/;

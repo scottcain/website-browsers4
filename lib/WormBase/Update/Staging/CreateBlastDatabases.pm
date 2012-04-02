@@ -1,6 +1,5 @@
 package WormBase::Update::Staging::CreateBlastDatabases;
 
-use lib "/usr/local/wormbase/website/tharris/extlib";
 use Moose;
 extends qw/WormBase::Update/;
 
@@ -45,10 +44,11 @@ sub run {
 #	$self->system_call( $self->create_blastdb_script . " $release protein $name",
 #			    "creating protein blastdb for $name");
 		
-#	$self->create_genomic_blast_db($species);
-#	$self->create_protein_db($species);
+	$self->create_genomic_blast_db($species);
+	$self->create_protein_db($species);
 	$self->create_est_db($species);   # elegans only
-	$self->create_gene_db($species);  # elegans only
+# No longer in use as of WS230
+#	$self->create_gene_db($species);  # elegans only
 	$self->log->info("$name: done");
     }
 }
@@ -128,6 +128,8 @@ sub create_est_db {
     $self->make_blastdb('ests',$species);
     $self->log->info("$name: successfully built est blast db");
 }
+
+# 2012.02.07: Retired by TH. This is absurd.
 
 # The "Genes" blast database.
 # Currently.

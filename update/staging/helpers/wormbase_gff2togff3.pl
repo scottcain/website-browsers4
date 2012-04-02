@@ -94,6 +94,8 @@ our %GENE2TRANSCRIPT; # 1-to-many
 our %CDS2TRANSCRIPT;  # 1-to-many
 our %CDS2WORMPEP;     # 1-to-1
 our %CDS2BRIGPEP;     # 1-to-1
+our %GENE2LOCUS;      # 1-to-1
+
 
 our %PSEUDOGENES_BY_EXON; # Index
 our %PSEUDOGENES_BY_BLOCK; # Index
@@ -145,6 +147,7 @@ our %TRANSCRIPT_INDEX_FEATURES = map { $_ => 1 } qw(
   snRNA_primary_transcript:snRNA
   tRNA_primary_transcript:tRNA
   tRNA_primary_transcript:tRNAscan-SE-1.23
+  
 );
 
 # Feature list
@@ -495,6 +498,13 @@ while (my $line = <FILE>) {
         $feature->{attributes}->{Gene} = $gene;
     }        
 
+
+    # Hack to add Locus to Gene entries.
+    if ($attributes->{Gene} && $attributes->{Locus}) {
+	$GENE2LOCUS{$attributes->{Gene}} = $attributes->{Locus};
+    }
+
+
     # Use this feature to generate lookup tables for coding genes
     if ($TRANSCRIPT_INDEX_FEATURES{$key} || $CDS_INDEX_FEATURES{$key}) {
         my $gene       = $attributes->{Gene};
@@ -503,13 +513,16 @@ while (my $line = <FILE>) {
         my $wormpep    = $attributes->{WormPep};
         my $brigpep    = $attributes->{Brigpep};
         
-        # Sanity check
-        if (($TRANSCRIPT_INDEX_FEATURES{$key} && !$transcript)
+	my $locus      = $attributes->{Locus};
+	my $notes      = $attributes->{Note};
+	
+	# Sanity check
+	if (($TRANSCRIPT_INDEX_FEATURES{$key} && !$transcript)
             ||
             ($CDS_INDEX_FEATURES{$key} && !$cds)) {
             print $LOG "Invalid index: $line\n";
-        }    
-
+	}    
+	
         # Remove attributes that have been accounted for
         foreach my $attribute (qw(Gene Transcript CDS WormPep Brigpep Remapep Jappep)) {
             delete $attributes->{$attribute} if $attributes->{$attribute};
@@ -900,6 +913,9 @@ foreach my $transcript (sort keys %TRANSCRIPT) {
         $GENE{$gene}{strand}     = $TRANSCRIPT{$transcript}{strand};
         $GENE{$gene}{phase}      = '.';
         $GENE{$gene}{attributes} = {ID => "Gene:$gene"};
+	if ($GENE2LOCUS{$gene}) {
+	    $GENE{$gene}{attributes}{Locus} = $GENE2LOCUS{$gene};
+	}
         if ($TRANSCRIPT{$transcript}{attributes}{placeholder_transcript}) {
             $GENE{$gene}{attributes}{placeholder_gene} = 1;
         }    

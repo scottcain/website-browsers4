@@ -3,6 +3,7 @@ package WormBase::Roles::Config;
 # Shared configuration for WormBase administration.
 
 use Moose::Role;
+use Ace;
 use Net::OpenSSH;
 
 ####################################
@@ -21,38 +22,54 @@ sub ssh {
     return $ssh;
 }
 
-
-####################################
-#
-# Couch DB
-#
-####################################
-
-# We precache directly to our production database. Not sure how intelligent this is.
-# This works because the staging database is +1 that in production.
-# Meanwhile, the production database can continue to cache to that database.
-has 'couchdbmaster'     => ( is => 'rw', default => '206.108.125.165:5984' );
-
-# Or: assume that we are running on the staging server
-# Create couchdb on localhost then replicate it.
-#has 'couchdbmaster'     => ( is => 'rw', default => '127.0.0.1:5984' );
-
 # The precache_host is the host we will send queries to.
 # Typically, this would be the staging server as it will
 # have the newest version of the database.
 
-# Adjust here to crawl the live site, too.  The app itself will cache content in
-# a single couchdb (PUT requests directed to a single host by proxy).
-#has 'precache_host'     => ( is => 'rw', default => 'http://staging.wormbase.org/');
+####################################
+#
+# Precaching
+# cache_query_host is where precache queries
+# are sent. The app configruration of that
+# host(s) controls in which couchdb the data
+# is stored.
+#
+####################################
 
-# Prewarming the cache, we should direct requests against the development site.
-# This app would actually cache on localhost.
+# Prewarming the cache, we simply direct request to the app on localhost.
+# The precache script can set this as appropriate to allow caching
+# of the production site at a low level.
+has 'cache_query_host_staging'    => ( is => 'rw', default => 'http://localhost:5000');
+has 'cache_query_host_production' => ( is => 'rw', default => 'http://www.wormbase.org');
+has 'cache_query_host_classic'    => ( is => 'rw', default => 'http://localhost:8080');
 
-# Later, we might want to crawl the live site at a low rate, too.
-has 'precache_host'     => ( is => 'rw', default => 'http://staging.wormbase.org/');
 
+####################################
+#
+# Couch DB
+# Note that SOME of these parameters
+# are in conflict with app-level
+# configuration.
+#
+####################################
 
-# WormBase 2.0: used in deploy_sofware
+# Where our couchdb data directory lives.
+has 'couchdb_root'      => ( is => 'rw', default => '/usr/local/wormbase/couchdb' );
+
+# couchdbmaster 
+# We precache directly to our production host. Not sure how intelligent this is.
+# This works because the staging database is +1 that in production.
+# Meanwhile, production sites can continue to cache to production database.
+
+has 'couchdb_host_staging'     => ( is => 'rw', default => '206.108.125.164:5984' );
+has 'couchdb_host_production'  => ( is => 'rw', default => '23.21.171.141:5984');
+
+# Subtly different than production, the master host is that used for replication.
+has 'couchdb_host_master'     => ( is => 'rw', default => '23.21.171.141:5984' );
+
+# Each server gets its own couch.
+# See ReplicateCouchDB. If reads/writes to couch become a bottleneck
+# reinstate this.
 has 'local_couchdb_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
@@ -69,7 +86,7 @@ has 'remote_couchdb_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw//]},
+	[qw/canopus.caltech.edu/]},
     );
 
 ####################################
@@ -104,7 +121,7 @@ sub _build_support_databases_dir {
 
     # Create support db dirs, too.
     my @directories = qw/blast blat ontology tiling_array interaction orthology position_matrix gene/;
-    my $release        = $self->release;    
+    my $release     = $self->release;    
     $self->_make_dir("$dir/$release");
     
     foreach (@directories) {
@@ -115,19 +132,58 @@ sub _build_support_databases_dir {
 }
 
 
+has 'dbh' => (
+    is => 'ro',
+    lazy_build => 1);
+
+sub _build_dbh {
+    my $self = shift;
+    my $acedb   = $self->acedb_root;
+    my $dbh     = Ace->connect(-host => 'localhost',-port => '2005') or $self->log->logdie("couldn't open ace:$!");
+    return $dbh;
+}
+
 
 has 'release' => (
     is        => 'rw',
 #    lazy_build => 1,
     );
 
-#sub _build_release {
-#    my $self = shift;
-#    my $release = $self->{release};
+#around 'release' => sub {
+#    my $orig   = shift;
+#    my $self   = shift;
+#
+#    my $release = $self->$orig();
+#    return $release if $release;
 #
 #    # If not provided, then we need to fetch it from Acedb.
-#    unless ($release) {
-	
+#    my $dbh = $self->dbh;
+#    return $dbh->version;
+#};
+
+has 'production_release' => (
+    is        => 'rw',
+#    lazy_build => 1,
+    );
+
+around 'production_release' => sub {
+    my $orig   = shift;
+    my $self   = shift;
+
+    # We may have supplied a specific release
+    my $release = $self->release;
+    return $release if $release;
+
+    $release = $self->$orig();
+    return $release if $release;
+
+    # If not provided, then we need to fetch it from Acedb.
+    my $dbh = Ace->connect(-host=>'50.19.229.229',-port=>'2005');    
+    return $dbh->version;
+};
+
+
+
 
 # target and target_nodes: symbolic names of production, development, mirror
 # Used when pushing a staged release to other nodes.
@@ -142,7 +198,7 @@ around 'target' => sub {
 
     my $target = $self->$orig();
 
-    die unless ($target =~ /^(production|development|mirror|staging)$/);
+    die unless ($target =~ /^(production|development|mirror|staging|new)$/);
     return $target;
 };
 
@@ -329,52 +385,33 @@ has 'local_nfs_root' => (
     default => '/usr/local/wormbase/shared',
     );
 
-
-# WormBase 2.0: used in deploy_sofware
 has 'local_app_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw/wb-web1.oicr.on.ca
+	[qw/50.19.112.56
+            ec2-50-19-229-229.compute-1.amazonaws.com
+            wb-web1.oicr.on.ca
             wb-web2.oicr.on.ca
+            wb-web3.oicr.on.ca
             wb-web4.oicr.on.ca
-            wb-gb1.oicr.on.ca
-            wb-gb2.oicr.on.ca
+            wb-mining.oicr.on.ca
 /]},
     );
-
-#            wb-web3.oicr.on.ca
-#            wb-web6.oicr.on.ca
-#            wb-web7.oicr.on.ca
-#            wb-mining.oicr.on.ca
+# GBrowse node managed independently.
+#            wb-gb1.oicr.on.ca
 
 has 'remote_app_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw//]},
-    );
-
-
-# WormBase 1.0: Used in push_software.
-# Can go away when we retire the old site.
-has 'local_web_nodes' => (
-    is => 'ro',
-    isa => 'ArrayRef',
-    default => sub {
-	[qw/wormbase.org
-            wb-mining.oicr.on.ca
-            wb-web1.oicr.on.ca
-            /],
-    },
-    );
-
-has 'remote_web_nodes' => (
-    is => 'ro',
-    isa => 'ArrayRef',
-    default => sub {
 	[qw/canopus.caltech.edu/]},
     );
+
+
+has 'staging_host' => (
+    is => 'ro',
+    default => 'wb-web7.oicr.on.ca' );
 
 ###############
 # ACEDB NODES
@@ -383,7 +420,7 @@ has 'staging_acedb_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw/wb-dev.oicr.on.ca/]
+	[qw/wb-web7.oicr.on.ca/]
     },
     );
 
@@ -395,11 +432,20 @@ has 'development_acedb_nodes' => (
     },
     );
 
+has 'caltech_acedb_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw/canopus.caltech.edu/],
+    },
+    );
+
 has 'production_acedb_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw/wb-mining.oicr.on.ca
+	[qw/ec2-50-19-229-229.compute-1.amazonaws.com
+	    wb-mining.oicr.on.ca
             wb-web1.oicr.on.ca
             wb-web2.oicr.on.ca
 	    wb-web3.oicr.on.ca
@@ -431,7 +477,8 @@ has 'production_support_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw/wb-mining.oicr.on.ca
+	[qw/ec2-50-19-229-229.compute-1.amazonaws.com
+            wb-mining.oicr.on.ca
             wb-web1.oicr.on.ca
             wb-web2.oicr.on.ca
 	    wb-web3.oicr.on.ca
@@ -440,6 +487,8 @@ has 'production_support_nodes' => (
 /],
     },
     );
+
+
 
 ###############
 # MYSQL NODES
@@ -464,8 +513,8 @@ has 'production_mysql_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw/wb-gb1.oicr.on.ca
-            wb-gb2.oicr.on.ca   
+	[qw/ec2-50-19-229-229.compute-1.amazonaws.com
+            wb-gb1.oicr.on.ca
             wb-mining.oicr.on.ca
             wb-web1.oicr.on.ca
             wb-web2.oicr.on.ca

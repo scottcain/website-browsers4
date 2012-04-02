@@ -1,4 +1,4 @@
-package WormBase::Update::Staging::UpdateProductionFTPSymlinks;
+package WormBase::Update::Production::UpdateProductionFTPSymlinks;
 
 use Moose;
 extends qw/WormBase::Update/;
@@ -11,7 +11,7 @@ has 'step' => (
 
 sub run {
     my $self = shift;       
-    $self->update_ftp_site_symlinks('production');
+    $self->update_ftp_site_symlinks();
 }	    
 
 

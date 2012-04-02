@@ -5,7 +5,6 @@ package WormBase::Species;
 # Each species is associated with a release to 
 # make construction of these filenames possible.
 
-use lib "/usr/local/wormbase/website/tharris/extlib";
 use Moose;
 
 with 'WormBase::Roles::Config';

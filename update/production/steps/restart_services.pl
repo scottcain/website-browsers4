@@ -6,26 +6,29 @@ use strict;
 use WormBase::Update::Production::RestartServices;
 use Getopt::Long;
 
-my ($release,$help);
+my ($release,$help,$target);
 GetOptions('release=s' => \$release,
-	   'help=s'    => \$help);
+	   'help=s'    => \$help,
+	   'target=s'  => \$target);
 
-if ($help || (!$release)) {
+if ($help || !$target) {
     die <<END;
     
-Usage: $0 [--release] WSXXX
+Usage: $0 --target [development|production] [--release WSXXXX]
 
-Restart services on production machines.
+Restart services on [development|production] machines. If release is provided, select optional
+services release-specific services will be restarted.
 
 END
 ;
 }
 
-my $agent;
-if ($release) {
-    $agent = WormBase::Update::Production::RestartServices->new({ release => $release });
-} else {
-    $agent = WormBase::Update::Production::RestartServices->new();
-}
-$agent->execute();
+$release ||= 'non-release-specific-task';
+my $acedb  = WormBase::Update::Production::RestartServices->new({ release => $release, target => $target, service => 'sgifaceserver'});
+$acedb->execute();
 
+my $mysql  = WormBase::Update::Production::RestartServices->new({ release => $release, target => $target, service => 'mysql'});
+$mysql->execute();
+
+my $starman  = WormBase::Update::Production::RestartServices->new({ release => $release, target => $target, service => 'starman'});
+$starman->execute();

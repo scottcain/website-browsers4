@@ -22,14 +22,17 @@ sub run {
     my $release_id = $self->release_id;
 
     # Is this a mysqldump or just a bz2?
-    my $source = join('/',$self->ftp_releases_dir,$release,'COMPARATIVE_ANALYSIS',$self->clustal_sql . '.bz2');
+#    my $source = join('/',$self->ftp_releases_dir,$release,'COMPARATIVE_ANALYSIS',$self->clustal_sql . '.bz2');
+    my $source = join('/',$self->ftp_releases_dir,$release,'COMPARATIVE_ANALYSIS',$self->clustal_sql . '.gz');
     my $mysql_root = $self->mysql_data_dir;
 
     my $tmp_dir = $self->tmp_dir;    
     chdir($tmp_dir);
     
-    $self->system_call("bunzip2 -c $source > $tmp_dir/" . $self->clustal_sql,
-		       "bunzipping clustalw");
+    $self->system_call("gunzip -c $source > $tmp_dir/" . $self->clustal_sql,
+		       "gunzipping clustalw");
+#    $self->system_call("bunzip2 -c $source > $tmp_dir/" . $self->clustal_sql,
+#		       "bunzipping clustalw");
     
     $self->create_database;
 

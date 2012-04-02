@@ -9,34 +9,57 @@ has 'step' => (
     default => 'restarting services',
 );
 
+has 'service' => (
+    is => 'ro',
+    );
+
 ########################################################
 
 sub run {
     my $self = shift;           
-#    my $release = $self->release;
+    my $target  = $self->target;  # production, development, staging, mirror
+    my $release = $self->release;
 
     $self->log->info('restarting services');
-    my ($local_nodes)  = $self->local_app_nodes;
-#    my ($remote_nodes) = $self->remote_app_nodes;
-    
-#    foreach my $node (@$local_nodes,@$remote_nodes) {
-    foreach my $node (@$local_nodes) {
-	next if $node =~ /web1\./;
-	next if $node =~ /web2\./;
-	next if $node =~ /web3\./;
-	next if $node =~ /web4\./;
-	next if $node =~ /mining/;
-	next if $node =~ /gb1\./;
-	next if $node =~ /gb2\./;
-	my $ssh = $self->ssh($node);
-	$ssh->error && $self->log->logdie("Can't ssh to $node: " . $ssh->error);
 
-	$self->restart_acedb($node,$ssh);
-	$self->restart_mysql($node,$ssh);
-	$self->restart_starman($node,$ssh);
+    my $service = $self->service;
+    
+    if ($service eq 'sgifaceserver') {
+    ###################################
+	# Acedb
+	my ($acedb_nodes) = $self->target_nodes('acedb');	
+	foreach my $node (@$acedb_nodes) {
+	    my $ssh = $self->ssh($node);
+	    $ssh->error && $self->log->logdie("Can't ssh to $node: " . $ssh->error);
+	    
+	    $self->restart_acedb($node,$ssh);	    
+	}
+    }
+
+    if ($service eq 'mysql') {
+	###################################
+	# MySQL
+	my ($mysql_nodes) = $self->target_nodes('mysql');	
+	foreach my $node (@$mysql_nodes) {
+	    my $ssh = $self->ssh($node);
+	    $ssh->error && $self->log->logdie("Can't ssh to $node: " . $ssh->error);
+	    
+	    $self->restart_mysql($node,$ssh);
+	}    
+    }
+    
+    if ($service eq 'starman') {
+	# This should be local_app_nodes, remote_app_nodes;
+	my ($local_app_nodes) = $self->local_app_nodes();	
+	push @{$local_app_nodes},$self->remote_app_nodes();
+	foreach my $node (@$local_app_nodes) {
+	    my $ssh = $self->ssh($node);
+	    $ssh->error && $self->log->logdie("Can't ssh to $node: " . $ssh->error);
+	    
+	    $self->restart_starman($node,$ssh);
+	}
     }
 }
-
 
 
 sub restart_starman {

@@ -1,6 +1,5 @@
 package WormBase::Update::Staging::LoadGenomicGFFDB;
 
-use lib "/usr/local/wormbase/website/tharris/extlib";
 use Moose;
 use DBI;
 extends qw/WormBase::Update/;
@@ -11,30 +10,26 @@ has 'step' => (
     default => 'load genomic gff databases',
     );
 
+has 'desired_species' => (
+    is => 'ro',
+    );
+    
 
 sub run {
     my $self = shift;
 
     # get a list of (symbolic g_species) names
-    my ($species) = $self->wormbase_managed_species;
+    my $desired_species = $self->desired_species;
+    my $species = [];
+    if ($desired_species) {
+	push @$species,$desired_species;
+    } else {
+	($species) = $self->wormbase_managed_species;
+    }
+    
     my $release = $self->release;
     foreach my $name (@$species) {
 	my $species = WormBase->create('Species',{ symbolic_name => $name, release => $release });
-
-	# Some conditionals used when debugging this module.
-	# This step should be parameterized to accept a species.
-#	next unless $name eq 'c_elegans';
-#	next if $name eq 'b_malayi';
-#	next if $name eq 'c_angaria';
-#	next if $name eq 'c_briggsae';
-#	next if $name eq 'c_brenneri';
-#	next if $name eq 'c_remanei';
-#	next if $name eq 'c_japonica';
-#	next if $name eq 'c_sp11';
-#	next if $name eq 'c_sp7';
-#	next if $name eq 'c_sp9';
-#	next if $name eq 'h_contortus';
-#	next if $name eq 'm_hapla';
 
 	$self->log->info(uc($name). ': start');	
 	$self->load_gffdb($species);
@@ -49,18 +44,19 @@ sub load_gffdb {
     
     my $release = $self->release;
     my $name    = $species->symbolic_name;
-    
+
     $self->create_database($species);
     
     my $gff     = $species->gff_file;       # this includes the full path.
-
-    # HACK HACK HACK HACK - We need to use a different input
-    # file until we have GFF3
-    # This needs to be c_elegans.WSXXX.GBrowse.gff2.gz NOT the core GFF file (c_elegans.WSXXX.annotations.gff2.gz)
-    $gff =~ s/annotations/GBrowse/;
-
     my $fasta   = join("/",$species->release_dir,$species->genomic_fasta);  # this does not.
+
     if ($name =~ /elegans/) {
+
+	# HACK HACK HACK HACK - We need to use a different input
+	# file until we have GFF3
+	# This needs to be c_elegans.WSXXX.GBrowse.gff2.gz NOT the core GFF file (c_elegans.WSXXX.annotations.gff2.gz)
+	$gff =~ s/annotations/GBrowse/;
+
 
 	# Create the ESTs file
 	# Now created by hinxton.
@@ -68,6 +64,7 @@ sub load_gffdb {
 	
 	# Need to do some small processing for some species.
 	$self->log->debug("processing $name GFF files");
+
 	
 	# WS226: Hinxton supplies us GBrowse GFF named g_species.release.GBrowse.gff2.gz
 	# We just need to drop the introns and assembly tag.
@@ -89,6 +86,8 @@ sub load_gffdb {
 	$species->gff_file("$output"); # Swap out the GFF files to load.
 	$gff = $species->gff_file;
 	$self->system_call($cmd,'processing C. elegans GFF');
+
+
 #    } elsif ($name =~ /briggsae/) {
 #
 #	# This really only needs to change =~ s/CHROMOSOME_// 
@@ -118,7 +117,8 @@ sub load_gffdb {
 	# $cmd = "bp_bulk_load_gff.pl --user $user --password $pass -c -d $db --fasta $fasta $gff 2> /dev/null";	    
 	$cmd = "bp_bulk_load_gff.pl --user $user --password $pass -c -d $db --fasta $fasta $gff";
     } else {
-	$cmd = "bp_seqfeature_load.pl --user $user --password $pass --fast --create -T $tmp --dsn $db $gff $fasta";       
+	$cmd = "bp_seqfeature_load.pl --summary --user $user --password $pass --fast --create -T $tmp --dsn $db $gff $fasta";       
+#	$cmd = "bp_seqfeature_load.pl --summary --user $user --password $pass --create -T $tmp --dsn $db $gff $fasta";       
     }
     
     # Load. Should expand error checking and reporting.
