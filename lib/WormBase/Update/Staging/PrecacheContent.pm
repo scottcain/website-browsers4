@@ -63,18 +63,7 @@ sub run {
 
     # Crawl the website and cache as we go.
     $self->crawl_website();
-
-#    foreach my $class (qw/clone interaction pcr protein rnai sage_tag sequence
-#                          antibody expr_pattern gene gene_class gene_regulation strain structure_data variation
-#                          laboratory life_stage paper person phenotype
-#                           gene_ontology
-#                          /) {
-    foreach my $class (qw/gene_class gene_regulation strain structure_data variation
-                          laboratory life_stage paper person phenotype
-                          gene_ontology
-                          /) {
-	$self->precache_classic_content($class);
-    }
+    $self->precache_classic_content();
 
 }
 
@@ -422,18 +411,16 @@ sub crawl_website {
 
 
 sub precache_classic_content {
-    my ($self,$class) = @_;
-    my $db = Ace->connect(-host=>'localhost',-port=>2005) || die "Couldn't open database";
-    
+    my ($self) = @_;
     my $base_url = $self->cache_query_host_classic;
 
     $|++;
     
     my %class2url = ( clone       => $base_url . '/db/seq/clone?class=Clone;name=',
 		      interaction => $base_url . '/db/seq/interaction?class=Interaction;name=',
-		      pcr         => $base_url . '/db/seq/pcr?class=PCR;name=',
+		      pcr_product => $base_url . '/db/seq/pcr?class=PCR;name=',
 		      protein     => $base_url . '/db/seq/protein?class=Protein;name=',	
-		      rnai        => $base_url . '/db/rnai/protein?class=RNAi;name=',
+		      rnai        => $base_url . '/db/seq/rnai?class=RNAi;name=',
 		      sage_tag    => $base_url . '/db/seq/sage?class=Sage_tag;name=',
 		      sequence    => $base_url . '/db/seq/sequence?class=Sequence;name=',
 		      antibody    => $base_url . '/db/gene/antibody?class=Antibody;name=',
@@ -450,20 +437,29 @@ sub precache_classic_content {
 		      phenotype => $base_url . '/db/misc/phenotype?class=Phenotype;name=',
 		      gene_ontology => $base_url . '/db/ontology/gene?class=Gene_ontology;name=',
 	);
-    my $version = $db->status->{database}{version};
-    my $cache = join("/",$self->support_databases_dir,$version,'cache',$class);
-    system("mkdir -p $cache");
-    
-    my $start = time();    
+
+    foreach my $class (qw/clone interaction pcr_product protein rnai sage_tag sequence
+                          antibody expr_pattern gene gene_class gene_regulation strain structure_data variation
+                          laboratory life_stage paper person phenotype
+                           gene_ontology
+                          /) {
+
+	my $db = Ace->connect(-host=>'localhost',-port=>2005) || die "Couldn't open database";
+	my $version = $db->status->{database}{version};
+	my $cache = join("/",$self->support_databases_dir,$version,'cache',$class);
+	system("mkdir -p $cache");
+	
+	my $start = time();    
         
-    my $log_file = join("/",$self->support_databases_dir,$version,'cache','logs',"$class-precached-pages.txt");
-    my %previous = _parse_cache_log($log_file); 
+	my $log_file = join("/",$self->support_databases_dir,$version,'cache','logs',"$class-precached-pages.txt");
+	my %previous = _parse_cache_log($log_file); 
 
-    open OUT,">>$log_file";
-    
-
-
-    my %status;
+        my $master_log_file = join("/",$self->support_databases_dir,$version,'cache','logs',"master_log.txt");
+        open MASTER,">>$master_log_file";
+	
+	open OUT,">>$log_file";
+		
+	my %status;
 #my $i     = $db->fetch_many(-query=>qq{find Gene Species="Caenorhabditis elegans"});
 #my $i     = $db->fetch_many(-query=>qq{find Gene Species="Caenorhabditis elegans" AND CGC_name AND Molecular_name});
 
@@ -471,78 +467,79 @@ sub precache_classic_content {
 #my $i     = $db->fetch_many(-query=>qq{find $query_class Species="Caenorhabditis elegans"});
 
     # Assume that classes in the config file match AceDB classes, which might not be true.
-    my $ace_class = ucfirst($class);
-    $ace_class = 'RNAi'    if $ace_class eq 'Rnai';
-    $ace_class = 'GO_term' if $ace_class eq 'Gene_ontology';
-    # Acedb is crapping out while using iterator?
+	my $ace_class = ucfirst($class);
+        $ace_class = 'PCR_product'    if $ace_class eq 'Pcr_product';
+	$ace_class = 'RNAi'    if $ace_class eq 'Rnai';
+	$ace_class = 'GO_term' if $ace_class eq 'Gene_ontology';
+	# Acedb is crapping out while using iterator?
 #	my $i = $db->fetch_many($ace_class => '*');
 #	while (my $obj = $i->next) {	
-
-    my @objects = map { $_->name } $db->fetch($ace_class => '*');
-    my @uris;
-    foreach my $obj (@objects) {
+	
+	my @objects = map { $_->name } $db->fetch($ace_class => '*');
+	my @uris;
+	foreach my $obj (@objects) {
 #	my $i = $db->fetch_many(ucfirst($class),'*');
 #    while (my $obj = $i->next) {
 #	next if $class eq 'protein' && $obj->name != /^WP:/;
 #	next unless $obj->Species eq 'Caenorhabditis elegans';
-		
-	if ($previous{$obj}) {
-	    print STDERR "Already seen $class $obj. Skipping...";
-	    print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
-	    next;
-	}
-	
-	my $url = $class2url{$class} . $obj;
-	push @uris,[$url,$obj];
-    }
-
-    # Max 5 processes for parallel download
-    my $pm = new Parallel::ForkManager(3); 
-    foreach my $entry (@uris) {	       		
-	my ($url,$obj) = @$entry;
-
-	print STDERR "Fetching and caching $class:$obj";
-	print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
-	
-	my $cache_start = time();
-	$pm->start and next; # do the fork
-	my $cache_stop = time();
-
-	my $content = get($url);
-	
-	if ($content) {
-	    open CACHE,">$cache/$obj.html";
-	    print CACHE $content;
-	    close CACHE;
-	    $status{$obj} = 'success';
-
-	    print OUT join("\t"
-			   ,$obj
-			   ,$url
-			   ,'success'
-			   ,$cache_stop - $cache_start)
-		,"\n";
 	    
-	} else {
-	    $status{$obj} = 'failed';
-	    print OUT join("\t"
-			   ,$obj
-			   ,$url
-			   ,'failed'
-			   ,$cache_stop - $cache_start)
-		,"\n";
+	    if ($previous{$obj}) {
+		print STDERR "Already seen $class $obj. Skipping...";
+		print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
+		next;
+	    }
+	    
+	    my $url = $class2url{$class} . $obj;
+	    push @uris,[$url,$obj];
 	}
-		    
-	$pm->finish; # do the exit in the child process
-    }
-    $pm->wait_all_children;
-
+	
+	# Max 5 processes for parallel download
+	my $pm = new Parallel::ForkManager(3); 
+	foreach my $entry (@uris) {	       		
+	    my ($url,$obj) = @$entry;
+	    
+	    print STDERR "Fetching and caching $class:$obj";
+	    print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
+	    
+	    my $cache_start = time();
+	    $pm->start and next; # do the fork
+	    my $cache_stop = time();
+	    
+	    my $content = get($url);
+	    
+	    if ($content) {
+		open CACHE,">$cache/$obj.html";
+		print CACHE $content;
+		close CACHE;
+		$status{$obj} = 'success';
+		
+		print OUT join("\t"
+			       ,$obj
+			       ,$url
+			       ,'success'
+			       ,$cache_stop - $cache_start)
+		    ,"\n";
+		
+	    } else {
+		$status{$obj} = 'failed';
+		print OUT join("\t"
+			       ,$obj
+			       ,$url
+			       ,'failed'
+			       ,$cache_stop - $cache_start)
+		    ,"\n";
+	    }
+	    
+	    $pm->finish; # do the exit in the child process
+	}
+	$pm->wait_all_children;
+	
 	# No need to watch state - create a new agent for each gene to keep memory usage low.
 #	my $mech = WWW::Mechanize->new(-agent => 'WormBase-PreCacher/1.0');
 #	$mech->get($url);
 #	my $success = ($mech->success) ? 'success' : 'failed';
 #	my $cache_stop = time();
-
+	
 	
 #	if ($mech->success) {
 #	    open CACHE,">$cache/$obj.html";
@@ -550,12 +547,14 @@ sub precache_classic_content {
 #	    close CACHE;
 #	}
 	
-    my $end = time();
-    my $seconds = $end - $start;
-    print OUT "\n\nTime required to cache " . (scalar keys %status) . "objects: ";
-    printf OUT "%d days, %d hours, %d minutes and %d seconds\n",(gmtime $seconds)[7,2,1,0];
+	my $end = time();
+	my $seconds = $end - $start;
+        print MASTER "$class complete!\n";
+        print MASTER "\nTime required to cache " . (scalar keys %status) . " objects: ";
+        printf MASTER "%d days, %d hours, %d minutes and %d seconds\n",(gmtime $seconds)[7,2,1,0];
+        print MASTER "\n\n";
+    }
 }
-
 
 
 # Has this entity already been stashed in couchdb?
