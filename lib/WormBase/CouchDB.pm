@@ -31,6 +31,7 @@ has 'couchdb_host' => (
     },
     );
 
+
 sub _build_ua {
     my $self = shift;
     
@@ -175,7 +176,7 @@ sub delete_document {
     my $uuid   = $params->{uuid};
 
     # Have to fetch the revision first. What a pain.
-    my $current_version = $self->get_document($uuid);
+    my $current_version = $self->get_document($uuid);   
     return unless $current_version;
     my $rev = $current_version->{_rev};
     my $msg  = $self->_prepare_request({method => 'DELETE',
@@ -378,12 +379,11 @@ sub _prepare_request {
     my $path    = $opts->{path};
     my $content = $opts->{content};
     my $host    = $self->couchdb_host || $self->couchdb_host_master;   
-        
     my $database  = $opts->{database} || lc($self->release);
 
     # Prepend the database unless this is just a database request.
     my $full_path = $path ? $database . "/$path" : $database;    
-    my $uri  = URI->new("http://" . $host . "/$full_path");
+    my $uri  = URI->new("http://" . $host . "/$full_path");    
 
     # We need to attach the revision if this is a delete.
     if ($method eq 'DELETE') {

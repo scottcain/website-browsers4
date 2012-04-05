@@ -62,7 +62,8 @@ sub run {
 #    $self->precache_content('bulk_load');
 
     # Crawl the website and cache as we go.
-    $self->crawl_website();
+#    $self->crawl_website();           # Crawls object by object. Slower, but uses less memory.
+    $self->crawl_website_by_class();   # Creates potentially huge arrays for big classes.
     $self->precache_classic_content();
 
 }
@@ -272,7 +273,7 @@ sub crawl_website {
 #    print Dumper($config);
     my @classes;
     if ($self->class) {
-	push @classes,$self->classes;
+	push @classes,$self->class;
     } else {
 	@classes = sort keys %{$config->{sections}->{species}};
     }
@@ -344,7 +345,7 @@ sub crawl_website {
 	    foreach my $widget (@widgets) {
 		# References and human diseases are actually searches and not cached by the app.
 		next if $widget eq 'references';
-		next if $widget eq 'human_diseases';
+#		next if $widget eq 'human_diseases';
 		# These two are broken at the moment.
 #		next if $widget eq 'interactions';
 #		next if $widget eq 'phenotype';
@@ -396,6 +397,177 @@ sub crawl_website {
 		print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n"; 
 	    }   
 	}
+	my $end = time();
+	my $seconds = $end - $start;
+	print OUT "=\n";
+	print OUT "Time required to cache " . $status{$class}{objects} . 'objects comprising ' . $status{$class}{uris} . 'uris: ';
+	printf OUT "%d days, %d hours, %d minutes and %d seconds\n",(gmtime $seconds)[7,2,1,0];    
+	print OUT "COMPLETE";
+	close OUT;
+    }
+}	
+
+
+
+
+
+sub crawl_website_by_class {
+    my $self = shift;
+
+    $|++;
+    
+    # Create a database corresponding to the current release,
+    # silently failing if it already exists.
+#    my $couch = $self->couchdb;
+#    $couch->create_database;
+
+    my $method = 'cache_query_host_' . $self->cache_query_host;
+    my $base_url = $self->$method . '/rest/widget/%s/%s/%s';
+
+    my $c = Config::JFDI->new(file => '/usr/local/wormbase/website/staging/wormbase.conf');
+    my $config = $c->get;
+
+    my $db      = Ace->connect(-host=>'localhost',-port=>2005);
+    my $version = $db->status->{database}{version};
+    my $cache_root = join("/",$self->support_databases_dir,$version,'cache');
+    system("mkdir -p $cache_root/logs");
+           
+#    # Turn off autocheck so that server errors don't kill us.
+#    my $mech = WWW::Mechanize->new(-agent     => 'WormBase-PreCacher/1.0',
+#				   -autocheck => 0 );
+#    
+#    # Set the stack depth to 0: no need to retain history;
+#    $mech->stack_depth(0);
+    
+#    print Dumper($config);
+    my @classes;
+    if ($self->class) {
+	push @classes,$self->class;
+    } else {
+	@classes = sort keys %{$config->{sections}->{species}};
+    }
+    
+    foreach my $class (@classes) {
+	next if $class eq 'title'; # Kludge.
+	
+	# Horribly broken classes, currently uncacheable.
+	# next if $class eq 'anatomy_term';
+
+	next unless $class eq 'gene';
+
+        # Class-level status and timers.
+	my $start = time();
+	my %status;
+		
+	# Allow class-level specification of precaching.
+	my $class_level_precache = eval { $config->{sections}->{species}->{$class}->{precache}; } || 0;
+
+	my $cache = join("/",$cache_root,$class);
+	system("mkdir -p $cache");
+		    
+	my $cache_log = join("/",$cache_root,'logs',"$version-$class.txt");
+	
+	$self->log->info("Precaching widgets for the $class class");
+	my %previous = $self->_parse_cached_classes_log($cache_log);
+	next if defined $previous{COMPLETE};   # eg this class is finished.
+
+	# Open cache log for writing.
+	open OUT,">>$cache_log";
+
+	# And set up the cache error file
+	my $cache_err = join("/",$cache_root,'logs',"errors.txt");
+	open ERROR,">>$cache_err";
+
+	# Assume that classes in the config file match AceDB classes, which might not be true.
+	my $ace_class = ucfirst($class);
+	# Acedb is crapping out while using iterator?
+#	my $i = $db->fetch_many($ace_class => '*');
+#	while (my $obj = $i->next) {	
+	my @objects = map { $_->name } $db->fetch($ace_class => '*');
+
+	my @uris;  # All uris for a class, fetched in parallel.
+	foreach my $obj (@objects) {
+
+	    # The code below checks for the presence of the document in couch.
+	    # Also: in the future we might want to selectively REPLACE documents.
+#		    if ($self->check_if_stashed_in_couchdb($class,$widget,$obj)) {
+#			print STDERR " --> $class:$widget:$obj ALREADY CACHED; SKIPPING\n";
+#			print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n"; 
+#			next;
+#		    }
+	    
+	    # Create a REST request of the following format:
+	    # curl -H content-type:application/json http://api.wormbase.org/rest/widget/gene/WBGene00006763/cloned_by
+	    
+	    # api delivers HTML by default.
+	    # $mech->add_header("Content-Type" => 'text/html');
+	    
+	    my @widgets;
+	    if ($self->widget) {
+		push @widgets,$self->widget;
+	    } else {
+		@widgets = sort keys %{$config->{sections}->{species}->{$class}->{widgets}};
+	    }
+	    
+	    foreach my $widget (@widgets) {
+		# References and human diseases are actually searches and not cached by the app.
+		next if $widget eq 'references';
+#		next if $widget eq 'human_diseases';
+		# These two are broken at the moment.
+#		next if $widget eq 'interactions';
+#		next if $widget eq 'phenotype';
+#		next if $widget eq 'sequences';
+#		next if $widget eq 'location';
+
+		my $precache = eval { $config->{sections}->{species}->{$class}->{widgets}->{$widget}->{precache}; };
+		$precache ||= 0;
+		$precache = 1 if $class_level_precache;
+#	    print join("-",keys %{$config->{sections}->{species}->{$class}->{widgets}->{$widget}}) . "\n";
+#	    print join("\t",$class,$widget,$precache) . "\n";
+
+		if ($precache) {
+		    my $url = sprintf($base_url,$class,$obj,$widget);
+#		    if ($previous{$url}) {	       
+		    if ($previous{"$class$obj$widget"}) {
+#			print STDERR "Already requested $url. Skipping...";
+#			print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
+			next;
+		    }
+		    push @uris,$url;
+		}
+	    }
+	}
+
+	# Max 5 processes for parallel download
+	my $pm = new Parallel::ForkManager(10); 
+	foreach my $uri (@uris) {	       		
+	    $status{$class}{uris}++;
+	    my ($protocol,$nothing,$host,$rest,$widget_path,$class,$object,$widget) = split("/",$uri);
+
+	    # Keep track of the number of objects we have seen.
+	    $status{$class}{objects}++;
+	    
+	    my $cache_start = time();
+	    $pm->start and next; # do the fork
+	    my $cache_stop = time();
+	    
+	    my $content = get($uri) or
+		print ERROR join("\t",$class,$object,$widget,$uri,'failed',$cache_stop - $cache_start),"\n";
+	    
+	    if ($content) {
+		my $cache_stop = time();
+		print OUT join("\t",$class,$object,$widget,$uri,'success',$cache_stop - $cache_start),"\n";
+	    }
+
+	    if ($status{$class}{objects} % 10 == 0) {
+		print STDERR "   cached $status{$class}{objects} $class objects and $status{$class}{uris} uris; last was $object";
+		print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n"; 
+	    }   
+	    
+	    $pm->finish; # do the exit in the child process
+	}
+	$pm->wait_all_children;       
+
 	my $end = time();
 	my $seconds = $end - $start;
 	print OUT "=\n";

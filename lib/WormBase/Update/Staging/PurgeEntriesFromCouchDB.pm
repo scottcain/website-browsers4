@@ -19,7 +19,7 @@ has 'widget' => (
     is       => 'rw',
     );
 
-has 'couchdbhost' => ( 
+has 'couchdb_host' => ( 
     is => 'rw',
     default => 'localhost:5984'
     );
@@ -30,7 +30,7 @@ has 'couchdb' => (
 
 sub _build_couchdb {
     my $self = shift;
-    my $couchdb = WormBase->create('CouchDB',{ release => $self->release, couchdbhost => $self->couchdbhost });
+    my $couchdb = WormBase->create('CouchDB',{ release => $self->release, couchdb_host => $self->couchdb_host });
     return $couchdb;
 }
 

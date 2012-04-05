@@ -18,7 +18,10 @@ if ($help || (!$release)) {
     
 Usage: $0 --release WSXXX --widget [WIDGET]  --class [CLASS] { --host [HOST] }
 
-Purge the specified class/widget UUIDs from couchdb.
+Purge the specified class/widget UUIDs from couchdb.  For example, to purge all gene:sequence widgets
+from the production couchdb:
+
+--release WSXXX --widget sequences --class gene --host couchdb.wormbase.org
 
 END
 ;
@@ -26,8 +29,8 @@ END
 
 $host ||= 'localhost:5984';
 
-my $agent = WormBase::Update::Staging::PurgeEntriesFromCouchDB->new({release => $release,
-								     class    => $class,
-								     widget   => $widget,
-								     host     => $host});
+my $agent = WormBase::Update::Staging::PurgeEntriesFromCouchDB->new({release      => $release,
+								     class        => $class,
+								     widget       => $widget,
+								     couchdb_host => $host});
 $agent->execute();
