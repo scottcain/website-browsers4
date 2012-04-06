@@ -10,6 +10,10 @@ if [ ! $RELEASE ]; then
    exit "Usage: $0 WSXXX"
 fi
 
+# Clear old releases:
+./steps/purge_old_releases.pl --release $RELEASE
+
+
 # 1. Mirror a new release from Sanger. (run under cron)
 # ./steps/mirror_new_release.sh  // The next newest version will be discovered automatically.
 #  OR
@@ -52,6 +56,8 @@ END : load genomic gff databases; in 0 days, 22 hours, 58 minutes and 28 seconds
 
 # 11. Create the xapian search database
 #     See xapian/README for more information
+# Need to remove the old directory first.
+rm -rf /usr/local/wormbase/tmp/acedmp
 mkdir /usr/local/wormbase/tmp/acedmp
 
 #    1) Dump AceDB (this needs to be run manually)

@@ -85,7 +85,7 @@ sub run {
     my $self = shift;
     #this step will takes a while: ~ 13 mins
 #    $self->log->info("building wormbase gene_id to omim_id corelation based on the ortholog human(Ensembl) protein");
-#    $self->compile_gene2omim();
+    $self->compile_gene2omim();
 
     $self->log->info("reading genelist file to get the related wormbase gene information"); 
     my $hash= $self->read_gene_file();
