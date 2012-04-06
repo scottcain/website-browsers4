@@ -64,7 +64,7 @@ sub run {
     # Crawl the website and cache as we go.
 #    $self->crawl_website();           # Crawls object by object. Slower, but uses less memory.
     $self->crawl_website_by_class();   # Creates potentially huge arrays for big classes.
-    $self->precache_classic_content();
+#    $self->precache_classic_content();
 
 }
 
@@ -485,6 +485,13 @@ sub crawl_website_by_class {
 #	while (my $obj = $i->next) {	
 	my @objects = map { $_->name } $db->fetch($ace_class => '*');
 
+	my @widgets;
+	if ($self->widget) {
+	    push @widgets,$self->widget;
+	} else {
+	    @widgets = sort keys %{$config->{sections}->{species}->{$class}->{widgets}};
+	}
+	
 	my @uris;  # All uris for a class, fetched in parallel.
 	foreach my $obj (@objects) {
 
@@ -500,24 +507,11 @@ sub crawl_website_by_class {
 	    # curl -H content-type:application/json http://api.wormbase.org/rest/widget/gene/WBGene00006763/cloned_by
 	    
 	    # api delivers HTML by default.
-	    # $mech->add_header("Content-Type" => 'text/html');
-	    
-	    my @widgets;
-	    if ($self->widget) {
-		push @widgets,$self->widget;
-	    } else {
-		@widgets = sort keys %{$config->{sections}->{species}->{$class}->{widgets}};
-	    }
+	    # $mech->add_header("Content-Type" => 'text/html');	   
 	    
 	    foreach my $widget (@widgets) {
 		# References and human diseases are actually searches and not cached by the app.
 		next if $widget eq 'references';
-#		next if $widget eq 'human_diseases';
-		# These two are broken at the moment.
-#		next if $widget eq 'interactions';
-#		next if $widget eq 'phenotype';
-#		next if $widget eq 'sequences';
-#		next if $widget eq 'location';
 
 		my $precache = eval { $config->{sections}->{species}->{$class}->{widgets}->{$widget}->{precache}; };
 		$precache ||= 0;
