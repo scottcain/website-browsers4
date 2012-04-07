@@ -46,6 +46,8 @@ sub run {
     my $ace_class = ucfirst($class);
     my $db        = Ace->connect(-host=>'localhost',-port=>2005);
 
+    $ace_class = 'CDS' if $ace_class eq 'Cds';
+
     my $i = $db->fetch_many($ace_class => '*');
     while (my $obj = $i->next) {
 	my $uuid = join('_',lc($class),lc($widget),$obj);
