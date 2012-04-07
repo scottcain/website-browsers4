@@ -67,6 +67,8 @@ Find Protein
 Write /usr/local/wormbase/tmp/acedmp/Protein.ace
 Find Pseudogene
 Write /usr/local/wormbase/tmp/acedmp/Pseudogene.ace
+Find Rearrangement
+Write /usr/local/wormbase/tmp/acedmp/Rearrangement.ace
 Find RNAi
 Write /usr/local/wormbase/tmp/acedmp/RNAi.ace
 Find Sequence

@@ -19,7 +19,7 @@ has 'widget' => (
     is       => 'rw',
     );
 
-has 'couchdbhost' => ( 
+has 'couchdb_host' => ( 
     is => 'rw',
     default => 'localhost:5984'
     );
@@ -30,7 +30,7 @@ has 'couchdb' => (
 
 sub _build_couchdb {
     my $self = shift;
-    my $couchdb = WormBase->create('CouchDB',{ release => $self->release, couchdbhost => $self->couchdbhost });
+    my $couchdb = WormBase->create('CouchDB',{ release => $self->release, couchdb_host => $self->couchdb_host });
     return $couchdb;
 }
 
@@ -45,6 +45,8 @@ sub run {
 
     my $ace_class = ucfirst($class);
     my $db        = Ace->connect(-host=>'localhost',-port=>2005);
+
+    $ace_class = 'CDS' if $ace_class eq 'Cds';
 
     my $i = $db->fetch_many($ace_class => '*');
     while (my $obj = $i->next) {
