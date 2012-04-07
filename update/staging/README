@@ -97,11 +97,6 @@ mkdir /usr/local/wormbase/tmp/acedmp
 ./steps/adjust_symlinks.pl --release $RELEASE --target development
 
 
-#13. Tag the software
-cd /usr/local/wormbase/website/staging
-git tag -a -m "${RELEASE}" ${RELEASE} HEAD
-
-
 # 14. Begin precaching content
 ./steps/precache_content.pl --release WSXXX
 
