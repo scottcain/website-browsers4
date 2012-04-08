@@ -39,7 +39,7 @@ sub ssh {
 # Prewarming the cache, we simply direct request to the app on localhost.
 # The precache script can set this as appropriate to allow caching
 # of the production site at a low level.
-has 'cache_query_host_staging'    => ( is => 'rw', default => 'http://localhost:5000');
+has 'cache_query_host_staging'    => ( is => 'rw', default => 'http://staging.wormbase.org');
 has 'cache_query_host_production' => ( is => 'rw', default => 'http://www.wormbase.org');
 has 'cache_query_host_classic'    => ( is => 'rw', default => 'http://localhost:8080');
 
@@ -420,7 +420,11 @@ has 'staging_acedb_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw/wb-web7.oicr.on.ca/]
+	[qw/wb-web7.oicr.on.ca
+            wb-web1.oicr.on.ca
+            wb-web2.oicr.on.ca
+	    wb-web3.oicr.on.ca
+	    wb-web4.oicr.on.ca/]
     },
     );
 
@@ -446,13 +450,15 @@ has 'production_acedb_nodes' => (
     default => sub {
 	[qw/ec2-50-19-229-229.compute-1.amazonaws.com
 	    wb-mining.oicr.on.ca
-            wb-web1.oicr.on.ca
-            wb-web2.oicr.on.ca
-	    wb-web3.oicr.on.ca
-	    wb-web4.oicr.on.ca
             canopus.caltech.edu/],
     },
     );
+
+#            wb-web1.oicr.on.ca
+#            wb-web2.oicr.on.ca
+#	    wb-web3.oicr.on.ca
+#	    wb-web4.oicr.on.ca
+
 
 ###############
 # SUPPORT NODES
@@ -461,7 +467,11 @@ has 'staging_support_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw/wb-web7.oicr.on.ca/]
+	[qw/wb-web7.oicr.on.ca
+            wb-web1.oicr.on.ca
+            wb-web2.oicr.on.ca
+	    wb-web3.oicr.on.ca
+	    wb-web4.oicr.on.ca/]
     },
     );
 
@@ -479,14 +489,15 @@ has 'production_support_nodes' => (
     default => sub {
 	[qw/ec2-50-19-229-229.compute-1.amazonaws.com
             wb-mining.oicr.on.ca
-            wb-web1.oicr.on.ca
-            wb-web2.oicr.on.ca
-	    wb-web3.oicr.on.ca
-	    wb-web4.oicr.on.ca
             canopus.caltech.edu
 /],
     },
     );
+
+#            wb-web1.oicr.on.ca
+#            wb-web2.oicr.on.ca
+#	    wb-web3.oicr.on.ca
+#	    wb-web4.oicr.on.ca
 
 
 
@@ -497,7 +508,11 @@ has 'staging_mysql_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw/wb-web7.oicr.on.ca/],
+	[qw/wb-web7.oicr.on.ca
+            wb-web1.oicr.on.ca
+            wb-web2.oicr.on.ca
+	    wb-web3.oicr.on.ca
+	    wb-web4.oicr.on.ca/],
     },
     );
 
@@ -516,14 +531,14 @@ has 'production_mysql_nodes' => (
 	[qw/ec2-50-19-229-229.compute-1.amazonaws.com
             wb-gb1.oicr.on.ca
             wb-mining.oicr.on.ca
-            wb-web1.oicr.on.ca
-            wb-web2.oicr.on.ca
-	    wb-web3.oicr.on.ca
-	    wb-web4.oicr.on.ca
             canopus.caltech.edu
 /],
     },
     );
+#            wb-web1.oicr.on.ca
+#            wb-web2.oicr.on.ca
+#	    wb-web3.oicr.on.ca
+#	    wb-web4.oicr.on.ca
 
 
 ####################################

@@ -84,6 +84,10 @@ mkdir /usr/local/wormbase/tmp/acedmp
 # 15. Push a newly staged version to development server(s).
 #    If ANYTHING is wrong with the staged release,
 #    this step will need to be repeated.
+
+# First to the other staging nodes
+./steps/push_staging_release_to_nodes.pl --release $RELEASE --target staging
+
 ./steps/push_staged_release_to_nodes.pl --release $RELEASE --target development
 
 # 16. Go live with the newly staged version on the staging server by adjusting symlinks!
