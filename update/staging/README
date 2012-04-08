@@ -10,6 +10,10 @@ if [ ! $RELEASE ]; then
    exit "Usage: $0 WSXXX"
 fi
 
+# Clear old releases:
+./steps/purge_old_releases.pl --release $RELEASE
+
+
 # 1. Mirror a new release from Sanger. (run under cron)
 # ./steps/mirror_new_release.sh  // The next newest version will be discovered automatically.
 #  OR
@@ -36,19 +40,15 @@ END : load genomic gff databases; in 0 days, 22 hours, 58 minutes and 28 seconds
 ./steps/unpack_clustal_databases.pl --release $RELEASE
 
 # 8. Compile Ontology Resources
-# (see the bottom of the file for the required state of ontology resources in the new site)
-# This step takes ~ 5 hours or more
-# ./steps/compile_ontology_resources.pl --release $RELEASE
+./steps/compile_ontology_resources.pl --release $RELEASE
 
 # 9. Compile Orthology Resources
 # END : compile orthology resources; in 0 days, 2 hours, 35 minutes and 12 seconds
-# (see the bottom of the file for the required state of ontology resources in the new site)
 ./steps/compile_orthology_resources.pl      --release $RELEASE
-./steps/compile_orthology_resources-beta.pl --release $RELEASE
 
-
+#  NOT REQUIRED FOR NEW SITE?
 # 10. Compile interaction data.
-./steps/compile_interaction_resources.pl --release $RELEASE
+#./steps/compile_interaction_resources.pl --release $RELEASE
 
 # 10. Convert GFF2 into GFF3
 # END : convert GFF2 annotations to GFF3; in 0 days, 2 hours, 45 minutes and 5 seconds
@@ -56,6 +56,8 @@ END : load genomic gff databases; in 0 days, 22 hours, 58 minutes and 28 seconds
 
 # 11. Create the xapian search database
 #     See xapian/README for more information
+# Need to remove the old directory first.
+rm -rf /usr/local/wormbase/tmp/acedmp
 mkdir /usr/local/wormbase/tmp/acedmp
 
 #    1) Dump AceDB (this needs to be run manually)
@@ -93,11 +95,6 @@ mkdir /usr/local/wormbase/tmp/acedmp
 ./steps/adjust_symlinks.pl --release $RELEASE --target staging
 # Development server(s)
 ./steps/adjust_symlinks.pl --release $RELEASE --target development
-
-
-#13. Tag the software
-cd /usr/local/wormbase/website/staging
-git tag -a -m "${RELEASE}" ${RELEASE} HEAD
 
 
 # 14. Begin precaching content

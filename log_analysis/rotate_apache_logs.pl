@@ -1,29 +1,44 @@
 #!/usr/bin/perl
-#this is appropriate for a typical redhat system
-#will need to be modified for others
+# Simple log rotation script for nginx
 
-$HOSTNAME=`hostname`;
-chomp $HOSTNAME;
+my $PIDFILE='/var/run/apache2.pid';
+my $logroot   = '/usr/local/wormbase/logs';
+my $maxcycle  = 7;
+my $gzip      = '/bin/gzip';
+my @logs      = qw/access.log error.log cache.log/;
 
-$PIDFILE='/var/run/apache2.pid';
-$LOGPATH    = '/usr/local/wormbase/logs/classic';
-
-$MAXCYCLE   = 7;
-$GZIP       = '/usr/bin/gzip';
-
-@LOGNAMES =("access.log","error.log");
-%ARCHIVE  =("access.log"=>1,
-	    "error.log"=>1);
-
-chdir $LOGPATH;  # Change to the log directory
-foreach $filename (@LOGNAMES) {
-    system "$GZIP -c $filename.$MAXCYCLE >> $filename.gz" 
-        if -e "$filename.$MAXCYCLE" and $ARCHIVE{$filename};
-    for (my $s=$MAXCYCLE; $s--; $s >= 0 ) {
-        $oldname = $s ? "$filename.$s" : $filename;
-        $newname = join(".",$filename,$s+1);
-        rename $oldname,$newname if -e $oldname;
+opendir (DIR, $logroot) or die $!;
+while (my $logdir = readdir(DIR)) {
+    next if ($logdir =~ m/^\./);
+    
+    # A file test to check that it is a directory    
+    next unless (-d "$logroot/$logdir");
+    
+    chdir "$logroot/$logdir";
+    
+    foreach my $filename (@logs) {
+	# Not all hosts have the cache log.
+	next unless -e "$logroot/$logdir/$filename";
+	
+	system "$gzip -c $filename.$maxcycle >> $filename.gz" 
+	    if -e "$filename.$maxcycle";# and $ARCHIVE{$filename};
+	for (my $s=$maxcycle; $s--; $s >= 0 ) {
+	    $oldname = $s ? "$filename.$s" : $filename;
+	    	    
+	    # This is the first entry, eg access_log -> access_log.1
+	    if ($filename eq $oldname) {
+		system("mv $filename $filename.1");
+		# print "NEW FILENAME IS SAME AS OLD $filename\n";	       
+	    } else {
+		# Dealing with other log files
+		$newname = join(".",$filename,$s+1);
+		rename $oldname,$newname if -e $oldname;
+		print "FILENAME IS NOT SAME AS OLD $filename; renaming $logdir/$oldname to $newname\n";
+	    }
+	}
     }
 }
-kill 'HUP',`cat $PIDFILE`;
 
+
+
+kill 'HUP',`cat $PIDFILE`;

@@ -186,7 +186,7 @@ sub make_blastdb {
     my $blastdb_dir = $species->blast_dir;
     chdir($blastdb_dir); 
     
-    $self->system_call($full_cmd,'making blast database');
+    $self->system_call($full_cmd,"making blast database via command $full_cmd");
     
     # Check the blast outputs.
     $self->check_blast_output($type,$species);

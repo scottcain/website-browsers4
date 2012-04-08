@@ -45,7 +45,7 @@ sub customize_acedb {
     $self->log->debug("customizing acedb");
     my $release      = $self->release;
     my $release_id   = $self->release_id;
-    my $source_wspec = $self->wormbase_root  . "/website/classic/wspec";
+    my $source_wspec = $self->wormbase_root  . "/website/staging/util/acedb/wspec";
     my $target_wspec = $self->acedb_root . "/wormbase_$release/wspec";
     
     system("chmod ug+rw $target_wspec/*.wrm") && $self->log->error("Problems encountered customizing acedb: $!");
