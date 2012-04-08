@@ -512,6 +512,7 @@ sub crawl_website_by_class {
 	    foreach my $widget (@widgets) {
 		# References and human diseases are actually searches and not cached by the app.
 		next if $widget eq 'references';
+		next if $widget eq 'human_diseases';
 
 		my $precache = eval { $config->{sections}->{species}->{$class}->{widgets}->{$widget}->{precache}; };
 		$precache ||= 0;
@@ -565,7 +566,7 @@ sub crawl_website_by_class {
 	my $end = time();
 	my $seconds = $end - $start;
 	print OUT "=\n";
-	print OUT "Time required to cache " . $status{$class}{objects} . 'objects comprising ' . $status{$class}{uris} . 'uris: ';
+	print OUT "Time required to cache " . $status{$class}{objects} . ' objects comprising ' . $status{$class}{uris} . 'uris: ';
 	printf OUT "%d days, %d hours, %d minutes and %d seconds\n",(gmtime $seconds)[7,2,1,0];    
 	print OUT "COMPLETE";
 	close OUT;
