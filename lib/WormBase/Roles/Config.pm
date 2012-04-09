@@ -215,8 +215,8 @@ around 'target_nodes' => sub {
     my $self = shift;
     my $type = shift;
 
-    die "Available target types should be one of: acedb, mysql, support\n" unless 
-	($type =~ /^(acedb|mysql|support)$/);
+    die "Available target types should be one of: acedb, mysql, support, app\n" unless 
+	($type =~ /^(acedb|mysql|support|app)$/);
     
     my $target = $self->target;
     my $method = join('_',$target,$type,'nodes');
@@ -368,6 +368,12 @@ sub _build_remote_ftp_releases_dir {
     return $self->remote_ftp_root . '/releases';
 }
 
+
+has 'staging_host' => (
+    is => 'ro',
+    default => 'wb-web7.oicr.on.ca' );
+
+
 ####################################
 #
 # Production related configuration
@@ -385,33 +391,35 @@ has 'local_nfs_root' => (
     default => '/usr/local/wormbase/shared',
     );
 
-has 'local_app_nodes' => (
+
+
+###############
+# APP NODES
+###############
+has 'staging_app_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw/wb-web1.oicr.on.ca
+            wb-web2.oicr.on.ca
+            wb-web3.oicr.on.ca
+            wb-web4.oicr.on.ca
+/]},
+    );
+
+# GBrowse node managed independently.
+#            wb-gb1.oicr.on.ca
+
+has 'production_app_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
 	[qw/50.19.112.56
             ec2-50-19-229-229.compute-1.amazonaws.com
-            wb-web1.oicr.on.ca
-            wb-web2.oicr.on.ca
-            wb-web3.oicr.on.ca
-            wb-web4.oicr.on.ca
             wb-mining.oicr.on.ca
-/]},
-    );
-# GBrowse node managed independently.
-#            wb-gb1.oicr.on.ca
-
-has 'remote_app_nodes' => (
-    is => 'ro',
-    isa => 'ArrayRef',
-    default => sub {
-	[qw/canopus.caltech.edu/]},
+	 canopus.caltech.edu/]},
     );
 
-
-has 'staging_host' => (
-    is => 'ro',
-    default => 'wb-web7.oicr.on.ca' );
 
 ###############
 # ACEDB NODES
