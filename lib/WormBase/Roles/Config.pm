@@ -91,7 +91,18 @@ has 'remote_couchdb_nodes' => (
 
 ####################################
 #
-# WormBase root, tmp dir, support dbs
+# WormBase user database config
+#
+####################################
+
+has 'wormbase_user_host'     => ( is => 'rw', default => '23.21.171.141' );
+has 'wormbase_user_username'     => ( is => 'rw', default => 'wormbase' );
+has 'wormbase_user_db'     => ( is => 'rw', default => 'wormbase_user' );
+
+
+####################################
+#
+# WormBase root, tmp dir, acedmp dir, support dbs
 #
 ####################################
 
@@ -106,6 +117,14 @@ has 'tmp_dir'       => ( is => 'ro', lazy_build => 1 );
 sub _build_tmp_dir {
     my $self = shift;
     my $dir = $self->wormbase_root . "/tmp/staging";
+    $self->_make_dir($dir);
+    return $dir;
+}
+
+has 'acedmp_dir'       => ( is => 'ro', lazy_build => 1 );          
+sub _build_acedmp_dir {
+    my $self = shift;
+    my $dir = $self->tmp_dir . "/acedmp";
     $self->_make_dir($dir);
     return $dir;
 }
