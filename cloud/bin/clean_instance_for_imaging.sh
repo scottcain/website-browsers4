@@ -22,3 +22,5 @@ rm /etc/ssh/ssh_host*
 #find /home -name "known_hosts" –exec rm –f {} \;
 
 
+# Remove server ssh host keys
+rm /etc/ssh/ssh_host*

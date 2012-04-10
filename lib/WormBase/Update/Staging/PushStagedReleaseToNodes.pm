@@ -21,6 +21,7 @@ sub run {
 	my ($acedb_nodes) = $self->target_nodes('acedb');
 	# $self->package_acedb() if ($self->method eq 'by_package');
 	foreach my $node (@$acedb_nodes) {
+	    next if $node eq $self->staging_host;  # No need to push a staged release back to ourselves.
 	    $self->rsync_acedb_to_target_node($node);
 	    # Other approaches
 	    # $self->rsync_acedb_database_dir($node);
@@ -34,6 +35,7 @@ sub run {
 	my ($mysql_nodes) = $self->target_nodes('mysql');
 	# $self->package_mysql() if ($self->method eq 'by_package');
 	foreach my $node (@$mysql_nodes) {
+	    next if $node eq $self->staging_host;  # No need to push a staged release back to ourselves.
 	    $self->rsync_mysql_to_target_node($node);
 	    # Other approaches
 	    # $self->rsync_mysql_database_dir($node);
@@ -46,6 +48,7 @@ sub run {
 	# Support
 	my ($db_nodes) = $self->target_nodes('support');
 	foreach my $node (@$db_nodes) {
+	    next if $node eq $self->staging_host;  # No need to push a staged release back to ourselves.
 	    # $self->package_support_databases() if ($self->method eq 'by_package');
 	    $self->rsync_support_dbs_to_target_node($node);
 	    # Other approaches
