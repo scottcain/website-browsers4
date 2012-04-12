@@ -76,8 +76,8 @@ has 'disease_ace_file' => (
 
 sub _build_disease_ace_file {
     my $self = shift;
-#    return $self->datadir . "/Disease.ace";
-    return "/usr/local/wormbase/tmp/acedmp/Disease.ace";
+#     return "/usr/local/wormbase/tmp/acedmp/Disease.ace";
+    return join("/", $self->acedmp_dir, "Disease.ace");
 }
 
 
