@@ -62,8 +62,8 @@ sub run {
 #    $self->precache_content('bulk_load');
 
     # Crawl the website and cache as we go.
-#    $self->crawl_website();           # Crawls object by object. Slower, but uses less memory.
-    $self->crawl_website_by_class();   # Creates potentially huge arrays for big classes.
+    $self->crawl_website();           # Crawls object by object. Slower, but uses less memory.
+#    $self->crawl_website_by_class();   # Creates potentially huge arrays for big classes.
 #    $self->precache_classic_content();
 
 }
@@ -95,7 +95,7 @@ sub precache_content {
 
     $|++;
 
-    my $c = Config::JFDI->new(file => '/usr/local/wormbase/website/staging/wormbase.conf');
+    my $c = Config::JFDI->new(file => '/usr/local/wormbase/website/production/wormbase.conf');
     my $config = $c->get;   
     
     my $method = 'cache_query_host_' . $self->cache_query_host;
@@ -255,11 +255,11 @@ sub crawl_website {
     my $method = 'cache_query_host_' . $self->cache_query_host;
     my $base_url = $self->$method . '/rest/widget/%s/%s/%s';
 
-    my $c = Config::JFDI->new(file => '/usr/local/wormbase/website/staging/wormbase.conf');
+    my $c = Config::JFDI->new(file => '/usr/local/wormbase/website/production/wormbase.conf');
     my $config = $c->get;
 
     my $db      = Ace->connect(-host=>'localhost',-port=>2005);
-    my $version = $db->status->{database}{version};
+    my $version = $self->release;
     my $cache_root = join("/",$self->support_databases_dir,$version,'cache');
     system("mkdir -p $cache_root/logs");
            
@@ -284,7 +284,7 @@ sub crawl_website {
 	# Horribly broken classes, currently uncacheable.
 	# next if $class eq 'anatomy_term';
 
-	next unless $class eq 'gene';
+#	next unless $class eq 'gene';
 
         # Class-level status and timers.
 	my $start = time();
@@ -309,15 +309,23 @@ sub crawl_website {
 	my $cache_err = join("/",$cache_root,'logs',"errors.txt");
 	open ERROR,">>$cache_err";
 
-	# Assume that classes in the config file match AceDB classes, which might not be true.
-	my $ace_class = ucfirst($class);
-	# Acedb is crapping out while using iterator?
-#	my $i = $db->fetch_many($ace_class => '*');
-#	while (my $obj = $i->next) {	
-	my @objects = map { $_->name } $db->fetch($ace_class => '*');
-	foreach my $obj (@objects) {
-	    my @uris;  # All uris for a single object, fetched in parallel.
+	$self->dump_list_of_objects($class);
 
+	my $object_list = join("/",$cache_root,'logs',"$version-$class-object_list.txt");
+	open OBJECTS,$object_list or $self->log->logdie("Could not open the object list file: $object_list");
+
+	# Which widgets will we be caching?
+	my @widgets;
+	if ($self->widget) {
+	    push @widgets,$self->widget;
+	} else {
+	    @widgets = sort keys %{$config->{sections}->{species}->{$class}->{widgets}};
+	}
+	
+	while (my $obj = <OBJECTS>) {
+	    chomp $obj;
+	    my @uris;  # All uris for a single object, fetched in parallel.
+	    
 	    # The code below checks for the presence of the document in couch.
 	    # Also: in the future we might want to selectively REPLACE documents.
 #		    if ($self->check_if_stashed_in_couchdb($class,$widget,$obj)) {
@@ -334,14 +342,7 @@ sub crawl_website {
 
 	    # Keep track of the number of objects we have seen.
 	    $status{$class}{objects}++;
-	    
-	    my @widgets;
-	    if ($self->widget) {
-		push @widgets,$self->widget;
-	    } else {
-		@widgets = sort keys %{$config->{sections}->{species}->{$class}->{widgets}};
-	    }
-	    
+	    	    
 	    foreach my $widget (@widgets) {
 		# References and human diseases are actually searches and not cached by the app.
 		next if $widget eq 'references';
@@ -424,11 +425,12 @@ sub crawl_website_by_class {
     my $method = 'cache_query_host_' . $self->cache_query_host;
     my $base_url = $self->$method . '/rest/widget/%s/%s/%s';
 
-    my $c = Config::JFDI->new(file => '/usr/local/wormbase/website/staging/wormbase.conf');
+    my $c = Config::JFDI->new(file => '/usr/local/wormbase/website/production/wormbase.conf');
     my $config = $c->get;
 
     my $db      = Ace->connect(-host=>'localhost',-port=>2005);
-    my $version = $db->status->{database}{version};
+    my $version = $self->release;
+#    my $version = $db->status->{database}{version};
     my $cache_root = join("/",$self->support_databases_dir,$version,'cache');
     system("mkdir -p $cache_root/logs");
            
@@ -453,7 +455,7 @@ sub crawl_website_by_class {
 	# Horribly broken classes, currently uncacheable.
 	# next if $class eq 'anatomy_term';
 
-	next unless $class eq 'gene';
+	next unless $class eq 'protein';
 
         # Class-level status and timers.
 	my $start = time();
@@ -534,7 +536,7 @@ sub crawl_website_by_class {
 	}
 
 	# Max 5 processes for parallel download
-	my $pm = new Parallel::ForkManager(10); 
+	my $pm = new Parallel::ForkManager(6); 
 	foreach my $uri (@uris) {	       		
 	    $status{$class}{uris}++;
 	    my ($protocol,$nothing,$host,$rest,$widget_path,$class,$object,$widget) = split("/",$uri);
@@ -573,6 +575,38 @@ sub crawl_website_by_class {
     }
 }	
 
+
+
+
+
+
+
+sub dump_list_of_objects {
+    my $self = shift;
+    my $class = shift;
+
+
+    my $db      = Ace->connect(-host=>'localhost',-port=>2005);
+    my $version = $self->release;
+    my $cache_root = join("/",$self->support_databases_dir,$version,'cache');
+    system("mkdir -p $cache_root/logs");
+
+    $self->log->info("   ...checking for the object list for $class");
+	           
+    my $object_list = join("/",$cache_root,'logs',"$version-$class-object_list.txt");
+    return if (-e $object_list);
+    open OUT,">$object_list";
+
+    $self->log->info("   ...dumping the object list for $class");
+
+    my $ace_class = ucfirst($class);
+    # Acedb is crapping out while using iterator?
+    my $i = $db->fetch_many($ace_class => '*');
+    while (my $obj = $i->next) {	
+#	my @objects = map { $_->name } $db->fetch($ace_class => '*');
+	print OUT $obj->name . "\n";
+    }
+}
 
 
 
@@ -818,7 +852,7 @@ sub _parse_cached_widgets_log {
 
 sub _parse_cached_classes_log {
     my ($self,$cache_log) = @_;
-    $self->log->info("  ---> parsing log of previously cached classes");
+    $self->log->info("  ---> parsing log of previously cached classe at $cache_log");
     my %previous;
     if (-e "$cache_log") {
 	# First off, just tail the file to see if we're finished.
