@@ -93,7 +93,8 @@ sub run {
     $self->pull_webapp;
 #    $self->create_environment_file;
     $self->create_software_release;
-    $self->save_production_reference;
+    # No longer necessary.
+#    $self->save_production_reference;
 }
 
 
@@ -278,7 +279,7 @@ sub create_software_release {
     my $wormbase_root = $self->wormbase_root;
     my $app_version   = $self->app_version;
     
-    $self->system_call("cp -r $wormbase_root/website/production /usr/local/ftp/pub/wormbase/software/$app_version",'creating software release');
+    $self->system_call("scp -r wb-web7.oicr.on.ca:$wormbase_root/website/production /usr/local/ftp/pub/wormbase/software/$app_version",'creating software release');
     chdir($self->ftp_root . "/software");
     $self->system_call("tar czf $app_version.tgz  --exclude 'logs' --exclude '.hg' --exclude 'extlib' --exclude 'wormbase_local.conf' $app_version",'tarring software release');
     $self->system_call("rm -rf $app_version",'removing app version');
