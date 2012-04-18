@@ -279,7 +279,7 @@ sub create_software_release {
     my $wormbase_root = $self->wormbase_root;
     my $app_version   = $self->app_version;
     
-    $self->system_call("cp -r $wormbase_root/website/staging /usr/local/ftp/pub/wormbase/software/$app_version",'creating software release');
+    $self->system_call("cp -r $wormbase_root/website/production /usr/local/ftp/pub/wormbase/software/$app_version",'creating software release');
     chdir($self->ftp_root . "/software");
     $self->system_call("tar czf $app_version.tgz  --exclude 'logs' --exclude '.hg' --exclude 'extlib' --exclude 'wormbase_local.conf' $app_version",'tarring software release');
     $self->system_call("rm -rf $app_version",'removing app version');
@@ -306,7 +306,7 @@ sub send_hup_to_starman {
     
     my $target  = $self->target;
     if ($target eq 'staging') {	
-	$ssh->system("source /usr/local/wormbase/website/staging/wormbase.env ; kill -HUP `head -1 /tmp/production.pid`");
+	$ssh->system("source /usr/local/wormbase/website/production/wormbase.env ; kill -HUP `head -1 /tmp/production.pid`");
     } else {
 	$ssh->system("kill -HUP `head -1 /tmp/production.pid`");
     }

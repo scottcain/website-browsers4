@@ -110,7 +110,7 @@ has 'wormbase_user_db'     => ( is => 'rw', default => 'wormbase_user' );
 has 'wormbase_root'   => ( is => 'ro', default => '/usr/local/wormbase');
 
 # The staging directory that serves staging.wormbase.org. Will be mirrored into production.
-has 'app_staging_dir' => ( is => 'ro', default => '/usr/local/wormbase/website/staging');
+has 'app_staging_dir' => ( is => 'ro', default => '/usr/local/wormbase/website/production');
 
 
 has 'tmp_dir'       => ( is => 'ro', lazy_build => 1 );			 
