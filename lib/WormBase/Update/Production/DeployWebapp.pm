@@ -70,9 +70,7 @@ has 'app_version' => (
 sub _build_app_version {
     my $self = shift;
 
-    # Getting the version from localhost doesn't work. It may be running a version > than production.
-    # Maybe get the current production version from rest instead?
-    # In THIS case, we are using the supplied release.
+    # Use the supplied release or feth via rest.
     my $release = $self->release;  
 
     my $software_version  = $self->pm_version;
@@ -81,7 +79,8 @@ sub _build_app_version {
     my $date = `date +%Y.%m.%d`;
     chomp $date;
     
-    my $dir = "$release-$date-v${software_version}r$software_revision";
+#    my $dir = "$release-$date-v${software_version}r$software_revision";
+    my $dir = "$date-v${software_version}r$software_revision";
     return $dir;
 }
 
@@ -262,11 +261,11 @@ sub pull_webapp {
 	my $ssh = $self->ssh($node);
 	$ssh->error && $self->log->logdie("Can't ssh to $node: " . $ssh->error);
 	
-	$ssh->system("cp -r /usr/local/wormbase/website/$target /usr/local/wormbase/website/archive/$app_version")
+	$ssh->system("cp -r /usr/local/wormbase/website/production /usr/local/wormbase/website/archive/$app_version")
 	    or $self->log->warn("Couldn't back up the current production directory to $node:website/archive/$app_version");
 
-	$ssh->system("cd /usr/local/wormbase/website/$target ; git pull")
-	    or $self->log->warn("Couldn't pull onto $node from the git repository");	
+	$ssh->system("cd /usr/local/wormbase/website/production ; git pull")
+	    or $self->log->warn("Couldn't pull onto $node from the git repository");
 
 	$self->send_hup_to_starman($ssh,$node);
     }

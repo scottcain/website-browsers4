@@ -415,11 +415,15 @@ has 'local_nfs_root' => (
 ###############
 # APP NODES
 ###############
+# wb-web7 is the canonical staging node; it's where staging
+# actually takes place.  The others are for parallel precaching
+# and testing load balanced environment.
 has 'staging_app_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw/wb-web1.oicr.on.ca
+	[qw/wb-web7.oicr.on.ca
+            wb-web1.oicr.on.ca
             wb-web2.oicr.on.ca
             wb-web3.oicr.on.ca
             wb-web4.oicr.on.ca
@@ -435,8 +439,9 @@ has 'production_app_nodes' => (
     default => sub {
 	[qw/50.19.112.56
             ec2-50-19-229-229.compute-1.amazonaws.com
+            ec2-23-20-4-185.compute-1.amazonaws.com
             wb-mining.oicr.on.ca
-	 canopus.caltech.edu/]},
+	    canopus.caltech.edu/]},
     );
 
 

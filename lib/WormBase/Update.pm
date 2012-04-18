@@ -216,10 +216,15 @@ before 'execute' => sub {
     # Maybe we didn't provide a release. This only
     # makes sense in the context of certain steps.
     if ($self->step eq 'deploying a new version of the webapp') {
-	# Get the current version of acedb in PRODUCTION
+	# Get the current version of acedb on either staging or production.
+	my $host = ($self->target eq 'production')
+	    ? 'www.wormbase.org'
+	    : 'staging.wormbase.org';
+
 	# This WON'T be correct for the first software push at a new release.
-	my $db = Ace->connect(-host=>'mining.wormbase.org',-port=>2005) || die "Couldn't open database";
-	my $version = $db->version;
+	my $json = `curl -X GET -H content-type:application/json http://$host/rest/version`;
+	$json =~ /.*(WS\d\d\d)"}/;
+	my $version = $1;
 	$self->release($version);
 	return $version;
     }
