@@ -7,7 +7,7 @@
 BACKUP_HOST=wb-dev.oicr.on.ca
 BACKUP_USER=tharris
 
-MYSQL_HOST=206.108.125.165
+WORMBASE_USER_DB_HOST=23.21.171.141
 
 # Which host are we running on?
 THIS_HOST=`hostname`
@@ -39,9 +39,9 @@ then
 
     # Dump the wormbase_user database    
 #    mkdir -p /usr/local/wormbase/backups/mysqldumps/user
-#    /usr/local/mysql/bin/mysqldump \
-#             -h ${MYSQL_HOST} -u wormbase wormbase_user \
-#	     | gzip -c > /usr/local/wormbase/backups/userdb/${DATE}-production-wormbase_user.sql.gz
+    /usr/local/mysql/bin/mysqldump \
+             -h ${WORMBASE_USER_DB_HOST} -u wormbase wormbase_user \
+	     | gzip -c > /usr/local/wormbase/backups/userdb/${DATE}-production-wormbase_user.sql.gz
 
     # Rsync the site directory for easy restoration
     # No reason to maintain daily backups; 1 copy is sufficient.
