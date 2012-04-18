@@ -39,7 +39,7 @@ sub ssh {
 # Prewarming the cache, we simply direct request to the app on localhost.
 # The precache script can set this as appropriate to allow caching
 # of the production site at a low level.
-has 'cache_query_host_staging'    => ( is => 'rw', default => 'http://localhost:5000');
+has 'cache_query_host_staging'    => ( is => 'rw', default => 'http://staging.wormbase.org');
 has 'cache_query_host_production' => ( is => 'rw', default => 'http://www.wormbase.org');
 has 'cache_query_host_classic'    => ( is => 'rw', default => 'http://localhost:8080');
 
@@ -91,7 +91,18 @@ has 'remote_couchdb_nodes' => (
 
 ####################################
 #
-# WormBase root, tmp dir, support dbs
+# WormBase user database config
+#
+####################################
+
+has 'wormbase_user_host'     => ( is => 'rw', default => '23.21.171.141' );
+has 'wormbase_user_username'     => ( is => 'rw', default => 'wormbase' );
+has 'wormbase_user_db'     => ( is => 'rw', default => 'wormbase_user' );
+
+
+####################################
+#
+# WormBase root, tmp dir, acedmp dir, support dbs
 #
 ####################################
 
@@ -106,6 +117,14 @@ has 'tmp_dir'       => ( is => 'ro', lazy_build => 1 );
 sub _build_tmp_dir {
     my $self = shift;
     my $dir = $self->wormbase_root . "/tmp/staging";
+    $self->_make_dir($dir);
+    return $dir;
+}
+
+has 'acedmp_dir'       => ( is => 'ro', lazy_build => 1 );          
+sub _build_acedmp_dir {
+    my $self = shift;
+    my $dir = $self->tmp_dir . "/acedmp";
     $self->_make_dir($dir);
     return $dir;
 }
@@ -215,8 +234,8 @@ around 'target_nodes' => sub {
     my $self = shift;
     my $type = shift;
 
-    die "Available target types should be one of: acedb, mysql, support\n" unless 
-	($type =~ /^(acedb|mysql|support)$/);
+    die "Available target types should be one of: acedb, mysql, support, app\n" unless 
+	($type =~ /^(acedb|mysql|support|app)$/);
     
     my $target = $self->target;
     my $method = join('_',$target,$type,'nodes');
@@ -368,6 +387,12 @@ sub _build_remote_ftp_releases_dir {
     return $self->remote_ftp_root . '/releases';
 }
 
+
+has 'staging_host' => (
+    is => 'ro',
+    default => 'wb-web7.oicr.on.ca' );
+
+
 ####################################
 #
 # Production related configuration
@@ -385,33 +410,35 @@ has 'local_nfs_root' => (
     default => '/usr/local/wormbase/shared',
     );
 
-has 'local_app_nodes' => (
+
+
+###############
+# APP NODES
+###############
+has 'staging_app_nodes' => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    default => sub {
+	[qw/wb-web1.oicr.on.ca
+            wb-web2.oicr.on.ca
+            wb-web3.oicr.on.ca
+            wb-web4.oicr.on.ca
+/]},
+    );
+
+# GBrowse node managed independently.
+#            wb-gb1.oicr.on.ca
+
+has 'production_app_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
 	[qw/50.19.112.56
             ec2-50-19-229-229.compute-1.amazonaws.com
-            wb-web1.oicr.on.ca
-            wb-web2.oicr.on.ca
-            wb-web3.oicr.on.ca
-            wb-web4.oicr.on.ca
             wb-mining.oicr.on.ca
-/]},
-    );
-# GBrowse node managed independently.
-#            wb-gb1.oicr.on.ca
-
-has 'remote_app_nodes' => (
-    is => 'ro',
-    isa => 'ArrayRef',
-    default => sub {
-	[qw/canopus.caltech.edu/]},
+	 canopus.caltech.edu/]},
     );
 
-
-has 'staging_host' => (
-    is => 'ro',
-    default => 'wb-web7.oicr.on.ca' );
 
 ###############
 # ACEDB NODES
@@ -420,7 +447,11 @@ has 'staging_acedb_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw/wb-web7.oicr.on.ca/]
+	[qw/wb-web7.oicr.on.ca
+            wb-web1.oicr.on.ca
+            wb-web2.oicr.on.ca
+	    wb-web3.oicr.on.ca
+	    wb-web4.oicr.on.ca/]
     },
     );
 
@@ -446,13 +477,15 @@ has 'production_acedb_nodes' => (
     default => sub {
 	[qw/ec2-50-19-229-229.compute-1.amazonaws.com
 	    wb-mining.oicr.on.ca
-            wb-web1.oicr.on.ca
-            wb-web2.oicr.on.ca
-	    wb-web3.oicr.on.ca
-	    wb-web4.oicr.on.ca
             canopus.caltech.edu/],
     },
     );
+
+#            wb-web1.oicr.on.ca
+#            wb-web2.oicr.on.ca
+#	    wb-web3.oicr.on.ca
+#	    wb-web4.oicr.on.ca
+
 
 ###############
 # SUPPORT NODES
@@ -461,7 +494,11 @@ has 'staging_support_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw/wb-web7.oicr.on.ca/]
+	[qw/wb-web7.oicr.on.ca
+            wb-web1.oicr.on.ca
+            wb-web2.oicr.on.ca
+	    wb-web3.oicr.on.ca
+	    wb-web4.oicr.on.ca/]
     },
     );
 
@@ -479,14 +516,15 @@ has 'production_support_nodes' => (
     default => sub {
 	[qw/ec2-50-19-229-229.compute-1.amazonaws.com
             wb-mining.oicr.on.ca
-            wb-web1.oicr.on.ca
-            wb-web2.oicr.on.ca
-	    wb-web3.oicr.on.ca
-	    wb-web4.oicr.on.ca
             canopus.caltech.edu
 /],
     },
     );
+
+#            wb-web1.oicr.on.ca
+#            wb-web2.oicr.on.ca
+#	    wb-web3.oicr.on.ca
+#	    wb-web4.oicr.on.ca
 
 
 
@@ -497,7 +535,11 @@ has 'staging_mysql_nodes' => (
     is => 'ro',
     isa => 'ArrayRef',
     default => sub {
-	[qw/wb-web7.oicr.on.ca/],
+	[qw/wb-web7.oicr.on.ca
+            wb-web1.oicr.on.ca
+            wb-web2.oicr.on.ca
+	    wb-web3.oicr.on.ca
+	    wb-web4.oicr.on.ca/],
     },
     );
 
@@ -516,14 +558,14 @@ has 'production_mysql_nodes' => (
 	[qw/ec2-50-19-229-229.compute-1.amazonaws.com
             wb-gb1.oicr.on.ca
             wb-mining.oicr.on.ca
-            wb-web1.oicr.on.ca
-            wb-web2.oicr.on.ca
-	    wb-web3.oicr.on.ca
-	    wb-web4.oicr.on.ca
             canopus.caltech.edu
 /],
     },
     );
+#            wb-web1.oicr.on.ca
+#            wb-web2.oicr.on.ca
+#	    wb-web3.oicr.on.ca
+#	    wb-web4.oicr.on.ca
 
 
 ####################################

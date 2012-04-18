@@ -13,6 +13,8 @@ fi
 # Clear old releases:
 ./steps/purge_old_releases.pl --release $RELEASE
 
+# 0.5. Remove the old acedmp directory
+rm -rf /usr/local/wormbase/tmp/staging/acedmp
 
 # 1. Mirror a new release from Sanger. (run under cron)
 # ./steps/mirror_new_release.sh  // The next newest version will be discovered automatically.
@@ -54,11 +56,13 @@ END : load genomic gff databases; in 0 days, 22 hours, 58 minutes and 28 seconds
 # END : convert GFF2 annotations to GFF3; in 0 days, 2 hours, 45 minutes and 5 seconds
 ./steps/convert_gff2_to_gff3.sh --release $RELEASE
 
+# 10. Create Widgets.ace file from wormbase_user database
+./steps/create_widget_acedmp.pl --release $RELEASE
+
 # 11. Create the xapian search database
 #     See xapian/README for more information
-# Need to remove the old directory first.
-rm -rf /usr/local/wormbase/tmp/acedmp
-mkdir /usr/local/wormbase/tmp/acedmp
+# First, need to copy over info on tools and links in WormBase for indexing
+cp ./xapian/Pages.ace /usr/local/wormbase/tmp/staging/acedmp/Pages.ace
 
 #    1) Dump AceDB (this needs to be run manually)
 # cd /usr/local/wormbase/acedb/bin
@@ -84,6 +88,10 @@ mkdir /usr/local/wormbase/tmp/acedmp
 # 15. Push a newly staged version to development server(s).
 #    If ANYTHING is wrong with the staged release,
 #    this step will need to be repeated.
+
+# First to the other staging nodes
+./steps/push_staging_release_to_nodes.pl --release $RELEASE --target staging
+
 ./steps/push_staged_release_to_nodes.pl --release $RELEASE --target development
 
 # 16. Go live with the newly staged version on the staging server by adjusting symlinks!

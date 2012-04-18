@@ -11,21 +11,22 @@ GetOptions('release=s' => \$release,
 	   'help=s'    => \$help,
 	   'class=s'   => \$class,
 	   'widget=s'  => \$widget,
-	   'cache_query_host=s' => \$host,
+	   'host=s'    => \$host,
     );
 
 if ($help || (!$release)) {
     die <<END;
     
-Usage: $0 --release WSXXX [--class CLASS --widget WIDGET --cache_query_host (staging|production) ]
+Usage: $0 --release WSXXX [--class CLASS --widget WIDGET --host (staging|production) ]
 
-Precache content on the classic site for a given release.
+    
+     Precache content on the classic site for the supplied release.
 
-To cache only a specific widget, also provide CLASS and WIDGET.
+     To send queries to the production host, provide the optional --cache_query_host parameter.
 
-To send queries to the production host, provide the optional --cache_query_host parameter.
+     The actual couchdb where content is cached is controlled by wormbase_*.conf and the app itself.
 
-Note that WHICH couchdb content will be cached to is controlled by the app itself.
+     To cache only a specific widget, also provide CLASS and WIDGET.
 
 END
 ;

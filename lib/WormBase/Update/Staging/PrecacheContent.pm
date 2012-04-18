@@ -422,6 +422,7 @@ sub crawl_website_by_class {
 #    my $couch = $self->couchdb;
 #    $couch->create_database;
 
+    # Where should we send queries?
     my $method = 'cache_query_host_' . $self->cache_query_host;
     my $base_url = $self->$method . '/rest/widget/%s/%s/%s';
 

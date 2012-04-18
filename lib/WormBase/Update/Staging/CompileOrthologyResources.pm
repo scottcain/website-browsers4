@@ -39,6 +39,51 @@ sub _build_datadir {
     return $datadir;
 }
 
+
+# Seriously annoying legacy flat files.
+has 'omim_id2disease_desc_txt_file' => (
+    is         => 'ro',
+    lazy_build => 1
+    );
+
+sub _build_omim_id2disease_desc_txt_file {
+    my $self    = shift;
+    return $self->datadir . "/omim_id2disease_desc.txt";
+}
+
+
+has 'omim_id2disease_name_txt_file' => (
+    is         => 'ro',
+    lazy_build => 1
+    );
+
+sub _build_omim_id2disease_name_txt_file {
+    my $self    = shift;
+    return $self->datadir . "/omim_id2disease_name.txt";
+}
+
+
+has 'omim_id2disease_notes_txt_file' => (
+    is         => 'ro',
+    lazy_build => 1
+    );
+
+sub _build_omim_id2disease_notes_txt_file {
+    my $self    = shift;
+    return $self->datadir . "/omim_id2disease_notes.txt";
+}
+
+has 'gene_id2omim_ids_txt_file' => (
+    is         => 'ro',
+    lazy_build => 1
+    );
+
+sub _build_gene_id2omim_ids_txt_file {
+    my $self    = shift;
+    return $self->datadir . "/gene_id2omim_ids.txt";
+}
+
+
 has 'gene2omim_file' => (
     is => 'ro',
     lazy_build => 1
@@ -76,8 +121,8 @@ has 'disease_ace_file' => (
 
 sub _build_disease_ace_file {
     my $self = shift;
-#    return $self->datadir . "/Disease.ace";
-    return "/usr/local/wormbase/tmp/acedmp/Disease.ace";
+#     return "/usr/local/wormbase/tmp/acedmp/Disease.ace";
+    return join("/", $self->acedmp_dir, "Disease.ace");
 }
 
 
@@ -152,6 +197,20 @@ sub read_omim_file{
     close(MORBIDMAP);
     return \%hash;
 }
+
+
+sub copy_files_from_repository {
+    my $self = shift;
+    my $omim_descriptions = $self->omim_id2disease_desc_txt_file;
+    system("cp /usr/local/wormbase/website/staging/util/omim/omim_id2disease_desc.txt $omim_descriptions") or die "Couldn't copy omim desc file";
+
+    my $omim_names = $self->omim_id2disease_name_txt_file;
+    system("cp /usr/local/wormbase/website/staging/util/omim/omim_id2disease_name.txt $omim_names") or die "Couldn't copy omim names file";
+
+    my $gene_ids = $self->gene_id2omim_ids_txt_file;
+    system("cp /usr/local/wormbase/website/staging/util/omim/gene_id2omim_ids.txt $gene_ids") or die "Couldn't copy gene ids file";
+}
+
 
 sub create_disease_file{
     my ($self,$hash,$mm_hash)    = @_;

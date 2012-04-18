@@ -90,7 +90,8 @@ sub _build_app_version {
 sub run {
     my $self = shift;
     $self->dump_version_file;
-    $self->rsync_staging_directory;    
+#    $self->rsync_staging_directory;    
+    $self->pull_webapp;
 #    $self->create_environment_file;
     $self->create_software_release;
     $self->save_production_reference;
@@ -242,6 +243,36 @@ sub rsync_staging_directory {
     }
 }
 
+
+
+sub pull_webapp {
+    my $self = shift;
+
+    $self->log->info('pulling code changes onto new nodes');
+
+    my $app_root = $self->wormbase_root;
+    my $app_version = $self->app_version;
+
+    my $target  = $self->target;
+
+    my ($app_nodes) = $self->target_nodes('app');
+    # $self->package_mysql() if ($self->method eq 'by_package');
+    foreach my $node (@$app_nodes) {
+	$self->log->info("   pulling new code onto $node");
+	my $ssh = $self->ssh($node);
+	$ssh->error && $self->log->logdie("Can't ssh to $node: " . $ssh->error);
+	
+	$ssh->system("cp -r /usr/local/wormbase/website/$target /usr/local/wormbase/website/archive/$app_version")
+	    or $self->log->warn("Couldn't back up the current production directory to $node:website/archive/$app_version");
+
+	$ssh->system("cd /usr/local/wormbase/website/$target ; git pull")
+	    or $self->log->warn("Couldn't pull onto $node from the git repository");	
+
+	$self->send_hup_to_starman($ssh,$node);
+    }
+}
+
+
 sub create_software_release {
     my $self = shift;
     $self->log->info('creating software release');
@@ -272,7 +303,13 @@ sub save_production_reference {
 sub send_hup_to_starman {
     my ($self,$ssh,$node) = @_;
     $self->log->info("   sending HUP to starman on $node");
-    $ssh->system("kill -HUP `head -1 /tmp/production.pid`");
+    
+    my $target  = $self->target;
+    if ($target eq 'staging') {	
+	$ssh->system("source /usr/local/wormbase/website/staging/wormbase.env ; kill -HUP `head -1 /tmp/production.pid`");
+    } else {
+	$ssh->system("kill -HUP `head -1 /tmp/production.pid`");
+    }
 }
 
 
