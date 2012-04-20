@@ -61,11 +61,11 @@ sub run {
     my $release = $self->release;
 #    $self->precache_content('bulk_load');
 
-    # Crawl the website and cache as we go.
-    $self->crawl_website();           # Crawls object by object. Slower, but uses less memory.
+#    $self->dump_object_lists();
+    $self->dump_object_lists_via_tace();
+    $self->crawl_website();             # Crawls object by object. Slower, but uses less memory.
 #    $self->crawl_website_by_class();   # Creates potentially huge arrays for big classes.
 #    $self->precache_classic_content();
-
 }
 
 
@@ -139,12 +139,12 @@ sub precache_content {
 		my $cache = join("/",$cache_root,$class,$widget);
 		system("mkdir -p $cache");
 		
-		my $cache_log = join("/",$cache_root,'logs',"$version-$class-$widget.txt");
+		my $cache_log = join("/",$cache_root,'logs',"$class-$widget.txt");
 
 		# 1. To find out what we've already cached, just use our cache log and an offset to fetch()
 		# 2. (or check against the actual %previous list)
 		my %previous = $self->_parse_cached_widgets_log($cache_log); 
-		next if defined $previous{COMPLETE};
+#		next if defined $previous{COMPLETE};
 		my $count = scalar keys %previous;
 		$count ||= 0;
 
@@ -152,7 +152,7 @@ sub precache_content {
 		open OUT,">>$cache_log";
 
 		# And set up the cache error file
-		my $cache_err = join("/",$cache_root,'logs',"errors.txt");
+		my $cache_err = join("/",$cache_root,'logs',"00-errors.txt");
 		open ERROR,">>$cache_err";
 		
 	    	my $start = time();
@@ -262,6 +262,9 @@ sub crawl_website {
     my $version = $self->release;
     my $cache_root = join("/",$self->support_databases_dir,$version,'cache');
     system("mkdir -p $cache_root/logs");
+
+    my $master_log_file = join("/",$self->support_databases_dir,$version,'cache','logs',"00-master_log.txt");
+    open MASTER,">>$master_log_file";
            
 #    # Turn off autocheck so that server errors don't kill us.
 #    my $mech = WWW::Mechanize->new(-agent     => 'WormBase-PreCacher/1.0',
@@ -283,8 +286,8 @@ sub crawl_website {
 	
 	# Horribly broken classes, currently uncacheable.
 	# next if $class eq 'anatomy_term';
-
-#	next unless $class eq 'gene';
+#	next if $class eq 'cds';
+#	next unless $class eq 'variation';
 
         # Class-level status and timers.
 	my $start = time();
@@ -296,23 +299,23 @@ sub crawl_website {
 	my $cache = join("/",$cache_root,$class);
 	system("mkdir -p $cache");
 		    
-	my $cache_log = join("/",$cache_root,'logs',"$version-$class.txt");
+	my $cache_log = join("/",$cache_root,'logs',"$class.txt");
 	
 	$self->log->info("Precaching widgets for the $class class");
 	my %previous = $self->_parse_cached_classes_log($cache_log);
-	next if defined $previous{COMPLETE};   # eg this class is finished.
+#	next if defined $previous{COMPLETE};   # eg this class is finished.
+
+
+	# And set up the cache error file
+	my $cache_err = join("/",$cache_root,'logs',"00-errors.txt");
+	open ERROR,">>$cache_err";
+
+	my $object_list = join("/",$cache_root,'logs',"$class-object_list.txt");
+	open OBJECTS,$object_list or $self->log->logdie("Could not open the object list file: $object_list");
 
 	# Open cache log for writing.
 	open OUT,">>$cache_log";
 
-	# And set up the cache error file
-	my $cache_err = join("/",$cache_root,'logs',"errors.txt");
-	open ERROR,">>$cache_err";
-
-	$self->dump_list_of_objects($class);
-
-	my $object_list = join("/",$cache_root,'logs',"$version-$class-object_list.txt");
-	open OBJECTS,$object_list or $self->log->logdie("Could not open the object list file: $object_list");
 
 	# Which widgets will we be caching?
 	my @widgets;
@@ -400,10 +403,11 @@ sub crawl_website {
 	}
 	my $end = time();
 	my $seconds = $end - $start;
-	print OUT "=\n";
-	print OUT "Time required to cache " . $status{$class}{objects} . 'objects comprising ' . $status{$class}{uris} . 'uris: ';
-	printf OUT "%d days, %d hours, %d minutes and %d seconds\n",(gmtime $seconds)[7,2,1,0];    
-	print OUT "COMPLETE";
+	print MASTER "=\n";
+	print MASTER "CLASS: $class\n";
+	print MASTER "Time required to cache " . $status{$class}{objects} . ' objects comprising ' . $status{$class}{uris} . 'uris: ';
+	printf MASTER "%d days, %d hours, %d minutes and %d seconds\n",(gmtime $seconds)[7,2,1,0];    
+	print MASTER "\n\n";
 	close OUT;
     }
 }	
@@ -449,6 +453,9 @@ sub crawl_website_by_class {
     } else {
 	@classes = sort keys %{$config->{sections}->{species}};
     }
+
+    my $master_log_file = join("/",$self->support_databases_dir,$version,'cache','logs',"00-master_log.txt");
+    open MASTER,">>$master_log_file";
     
     foreach my $class (@classes) {
 	next if $class eq 'title'; # Kludge.
@@ -468,7 +475,7 @@ sub crawl_website_by_class {
 	my $cache = join("/",$cache_root,$class);
 	system("mkdir -p $cache");
 		    
-	my $cache_log = join("/",$cache_root,'logs',"$version-$class.txt");
+	my $cache_log = join("/",$cache_root,'logs',"$class.txt");
 	
 	$self->log->info("Precaching widgets for the $class class");
 	my %previous = $self->_parse_cached_classes_log($cache_log);
@@ -478,7 +485,7 @@ sub crawl_website_by_class {
 	open OUT,">>$cache_log";
 
 	# And set up the cache error file
-	my $cache_err = join("/",$cache_root,'logs',"errors.txt");
+	my $cache_err = join("/",$cache_root,'logs',"00-errors.txt");
 	open ERROR,">>$cache_err";
 
 	# Assume that classes in the config file match AceDB classes, which might not be true.
@@ -568,10 +575,11 @@ sub crawl_website_by_class {
 
 	my $end = time();
 	my $seconds = $end - $start;
-	print OUT "=\n";
-	print OUT "Time required to cache " . $status{$class}{objects} . ' objects comprising ' . $status{$class}{uris} . 'uris: ';
-	printf OUT "%d days, %d hours, %d minutes and %d seconds\n",(gmtime $seconds)[7,2,1,0];    
-	print OUT "COMPLETE";
+	print MASTER "=\n";
+	print MASTER "CLASS: $class\n";
+	print MASTER "Time required to cache " . $status{$class}{objects} . ' objects comprising ' . $status{$class}{uris} . 'uris: ';
+	printf MASTER "%d days, %d hours, %d minutes and %d seconds\n",(gmtime $seconds)[7,2,1,0];    
+	print MASTER "\n\n";
 	close OUT;
     }
 }	
@@ -582,31 +590,176 @@ sub crawl_website_by_class {
 
 
 
-sub dump_list_of_objects {
+sub dump_object_lists {
     my $self = shift;
-    my $class = shift;
-
 
     my $db      = Ace->connect(-host=>'localhost',-port=>2005);
     my $version = $self->release;
     my $cache_root = join("/",$self->support_databases_dir,$version,'cache');
     system("mkdir -p $cache_root/logs");
 
-    $self->log->info("   ...checking for the object list for $class");
-	           
-    my $object_list = join("/",$cache_root,'logs',"$version-$class-object_list.txt");
-    return if (-e $object_list);
-    open OUT,">$object_list";
+    my @classes = $db->classes;
 
-    $self->log->info("   ...dumping the object list for $class");
-
-    my $ace_class = ucfirst($class);
-    # Acedb is crapping out while using iterator?
-    my $i = $db->fetch_many($ace_class => '*');
-    while (my $obj = $i->next) {	
+    # PCR_product
+    # Oligo_set
+    # Homol_data
+    # Oligo
+    # Feature
+    # SAGE_tag
+    # Feature_data
+    my %acceptable_classes = map { $_ => 1 } qw/ 
+                           Sequence
+                            Protein
+                              Paper
+                               Gene
+                              Clone
+                              Motif
+                     Homology_group
+                             Person
+                      Rearrangement
+                          Variation
+                          Transgene
+                         Gene_class
+                         Laboratory
+                             Strain
+                         Life_stage
+                            GO_term
+                             Operon
+                                CDS
+                         Transcript
+                         Pseudogene
+               Transcription_factor
+                               RNAi
+                       Expr_pattern
+                    Gene_regulation
+                 Expression_cluster
+                           Antibody
+                                 YH
+                        Interaction
+                    Position_Matrix
+                           Molecule
+                          Phenotype
+                           Analysis
+                       Anatomy_term
+                         Transposon
+/;
+    
+    foreach my $class (@classes) {
+	$self->log->info("dumping the object list for $class...");
+	next unless ($acceptable_classes{$class});
+	
+	my $lower = lc($class);
+	my $object_list = join("/",$cache_root,'logs',"$lower-object_list.txt");
+	next if (-e $object_list);
+	open OUT,">$object_list";
+	
+	# Acedb is crapping out while using iterator?
+	my $i = $db->fetch_many($class => '*');
+	while (my $obj = $i->next) {	
 #	my @objects = map { $_->name } $db->fetch($ace_class => '*');
-	print OUT $obj->name . "\n";
+	    print OUT $obj->name . "\n";
+	}
+	close OUT;
     }
+}
+
+sub dump_object_lists_via_tace {
+    my $self = shift;
+    my $version = $self->release;
+    my $cache_root = join("/",$self->support_databases_dir,$version,'cache','logs');
+    system("mkdir -p $cache_root");
+    open OUT,">$cache_root/00-class_dump_script.ace";
+    print OUT <<END;
+//tace script to dump database
+Find Analysis
+list -f $cache_root/analysis.ace
+Find Anatomy_term
+list -f $cache_root/anatomy_term.ace
+Find Antibody
+list -f $cache_root/antibody.ace
+Find CDS
+list -f $cache_root/cds.ace
+Find Clone
+list -f $cache_root/clone.ace
+Find Expr_pattern
+list -f $cache_root/expr_pattern.ace
+Find Expr_profile
+list -f $cache_root/expr_profile.ace
+Find Expression_cluster
+list -f $cache_root/expression_cluster.ace
+Find Feature
+list -f $cache_root/feature.ace
+Find Gene
+list -f $cache_root/gene.ace
+Find Gene_class
+list -f $cache_root/gene_class.ace
+Find Gene_cluster
+list -f $cache_root/gene_cluster.ace
+Find Gene_regulation
+list -f $cache_root/gene_regulation.ace
+Find GO_code
+list -f $cache_root/go_code.ace
+Find GO_term
+list -f $cache_root/go_term.ace
+Find Homology_group
+list -f $cache_root/homology_group.ace
+Find Interaction
+list -f $cache_root/interaction.ace
+Find Laboratory
+list -f $cache_root/laboratory.ace
+Find Life_stage
+list -f $cache_root/life_stage.ace
+Find LongText
+list -f $cache_root/longText.ace
+Find Microarray_results
+list -f $cache_root/microarray_results.ace
+Find Molecule
+list -f $cache_root/molecule.ace
+Find Motif
+list -f $cache_root/motif.ace
+Find Oligo
+list -f $cache_root/oligo.ace
+Find Oligo_set
+list -f $cache_root/oligo_set.ace
+Find Operon
+list -f $cache_root/operon.ace
+Find Paper
+list -f $cache_root/paper.ace
+Find PCR
+list -f $cache_root/pcr.ace
+Find Person
+list -f $cache_root/person.ace
+Find Phenotype
+list -f $cache_root/phenotype.ace
+Find Picture
+list -f $cache_root/picture.ace
+Find Position_matrix
+list -f $cache_root/position_matrix.ace
+Find Protein
+list -f $cache_root/protein.ace
+Find Pseudogene
+list -f $cache_root/pseudogene.ace
+Find Rearrangement
+list -f $cache_root/rearrangement.ace
+Find RNAi
+list -f $cache_root/rnai.ace
+Find Sequence
+list -f $cache_root/sequence.ace
+Find Strain
+list -f $cache_root/strain.ace
+Find Structure_data
+list -f $cache_root/structure_data.ace
+Find Transcript
+list -f $cache_root/transcript.ace
+Find Transgene
+list -f $cache_root/transgene.ace
+Find Variation
+list -f $cache_root/variation.ace
+END
+;
+
+    system("/usr/local/wormbase/acedb/bin/tace /usr/local/wormbase/acedb/wormbase < $cache_root/00-class_dump_script.ace");
+    die;
 }
 
 
@@ -656,7 +809,7 @@ sub precache_classic_content {
 	my $log_file = join("/",$self->support_databases_dir,$version,'cache','logs',"$class-precached-pages.txt");
 	my %previous = _parse_cache_log($log_file); 
 
-        my $master_log_file = join("/",$self->support_databases_dir,$version,'cache','logs',"master_log.txt");
+        my $master_log_file = join("/",$self->support_databases_dir,$version,'cache','logs',"00-master_log.txt");
         open MASTER,">>$master_log_file";
 	
 	open OUT,">>$log_file";
@@ -751,6 +904,7 @@ sub precache_classic_content {
 	
 	my $end = time();
 	my $seconds = $end - $start;
+	print MASTER "=\n";
         print MASTER "$class complete!\n";
         print MASTER "\nTime required to cache " . (scalar keys %status) . " objects: ";
         printf MASTER "%d days, %d hours, %d minutes and %d seconds\n",(gmtime $seconds)[7,2,1,0];
@@ -853,7 +1007,7 @@ sub _parse_cached_widgets_log {
 
 sub _parse_cached_classes_log {
     my ($self,$cache_log) = @_;
-    $self->log->info("  ---> parsing log of previously cached classe at $cache_log");
+    $self->log->info("  ---> parsing log of previously cached classes at $cache_log");
     my %previous;
     if (-e "$cache_log") {
 	# First off, just tail the file to see if we're finished.

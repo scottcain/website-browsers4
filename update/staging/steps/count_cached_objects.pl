@@ -5,11 +5,11 @@ my $version = shift;
 
 chdir("/usr/local/wormbase/databases/$version/cache/logs");
 
-my @classes = glob("*object_list.txt");
+my @classes = glob("*ace");
 foreach (@classes) {
-    $_ =~ /$version-(.*)-object_list.txt/;
+    $_ =~ /(.*).ace/;
     my $class = $1;
-    my $expected = `wc -l $class-object_list.txt`;
+    my $expected = `wc -l $class.ace`;
     chomp $expected;
     
     my $actual = `sort -u -k1,2 $class.txt | wc -l`;
