@@ -1,5 +1,95 @@
 # The acedmp script is now created by:
-staging/steps/build_xapian_db.pl --release [RELEASE]
+# staging/steps/build_xapian_db.pl --release [RELEASE]
+#
+# And, after running that script, can be found at:
+# /usr/local/wormbase/tmp/staging/RELEASE/acedmp/dump_ace_for_search.script
+#
+# PLEASE MAKE EDITS TO
+# website-admin/lib/WormBase/Update/Staging/BuildXapianDB.pm
 
-# And can be found at
-/usr/local/wormbase/tmp/staging/RELEASE/acedmp/dump_ace_for_search.script
+
+//tace script to dump database
+Find Analysis
+Write /usr/local/wormbase/tmp/staging/acedmp/Analysis.ace
+Find Anatomy_term
+Write /usr/local/wormbase/tmp/staging/acedmp/Anatomy_term.ace
+Find Antibody
+Write /usr/local/wormbase/tmp/staging/acedmp/Antibody.ace
+Find CDS
+Write /usr/local/wormbase/tmp/staging/acedmp/CDS.ace
+Find Clone
+Write /usr/local/wormbase/tmp/staging/acedmp/Clone.ace
+Find Expr_pattern
+Write /usr/local/wormbase/tmp/staging/acedmp/Expr_pattern.ace
+Find Expr_profile
+Write /usr/local/wormbase/tmp/staging/acedmp/Expr_profile.ace
+Find Expression_cluster
+Write /usr/local/wormbase/tmp/staging/acedmp/Expression_cluster.ace
+Find Feature
+Write /usr/local/wormbase/tmp/staging/acedmp/Feature.ace
+Find Gene
+Write /usr/local/wormbase/tmp/staging/acedmp/Gene.ace
+Find Gene_class
+Write /usr/local/wormbase/tmp/staging/acedmp/Gene_class.ace
+Find Gene_cluster
+Write /usr/local/wormbase/tmp/staging/acedmp/Gene_cluster.ace
+Find Gene_regulation
+Write /usr/local/wormbase/tmp/staging/acedmp/Gene_regulation.ace
+Find GO_code
+Write /usr/local/wormbase/tmp/staging/acedmp/GO_code.ace
+Find GO_term
+Write /usr/local/wormbase/tmp/staging/acedmp/GO_term.ace
+Find Homology_group
+Write /usr/local/wormbase/tmp/staging/acedmp/Homology_group.ace
+Find Interaction
+Write /usr/local/wormbase/tmp/staging/acedmp/Interaction.ace
+Find Laboratory
+Write /usr/local/wormbase/tmp/staging/acedmp/Laboratory.ace
+Find Life_stage
+Write /usr/local/wormbase/tmp/staging/acedmp/Life_stage.ace
+Find LongText
+Write /usr/local/wormbase/tmp/staging/acedmp/LongText.ace
+Find Microarray_results
+Write /usr/local/wormbase/tmp/staging/acedmp/Microarray_results.ace
+Find Molecule
+Write /usr/local/wormbase/tmp/staging/acedmp/Molecule.ace
+Find Motif
+Write /usr/local/wormbase/tmp/staging/acedmp/Motif.ace
+Find Oligo
+Write /usr/local/wormbase/tmp/staging/acedmp/Oligo.ace
+Find Oligo_set
+Write /usr/local/wormbase/tmp/staging/acedmp/Oligo_set.ace
+Find Operon
+Write /usr/local/wormbase/tmp/staging/acedmp/Operon.ace
+Find Paper
+Write /usr/local/wormbase/tmp/staging/acedmp/Paper.ace
+Find PCR
+Write /usr/local/wormbase/tmp/staging/acedmp/PCR.ace
+Find Person
+Write /usr/local/wormbase/tmp/staging/acedmp/Person.ace
+Find Phenotype
+Write /usr/local/wormbase/tmp/staging/acedmp/Phenotype.ace
+Find Picture
+Write /usr/local/wormbase/tmp/staging/acedmp/Picture.ace
+Find Position_matrix
+Write /usr/local/wormbase/tmp/staging/acedmp/Position_matrix.ace
+Find Protein
+Write /usr/local/wormbase/tmp/staging/acedmp/Protein.ace
+Find Pseudogene
+Write /usr/local/wormbase/tmp/staging/acedmp/Pseudogene.ace
+Find Rearrangement
+Write /usr/local/wormbase/tmp/staging/acedmp/Rearrangement.ace
+Find RNAi
+Write /usr/local/wormbase/tmp/staging/acedmp/RNAi.ace
+Find Sequence
+Write /usr/local/wormbase/tmp/staging/acedmp/Sequence.ace
+Find Strain
+Write /usr/local/wormbase/tmp/staging/acedmp/Strain.ace
+Find Structure_data
+Write /usr/local/wormbase/tmp/staging/acedmp/Structure_data.ace
+Find Transcript
+Write /usr/local/wormbase/tmp/staging/acedmp/Transcript.ace
+Find Transgene
+Write /usr/local/wormbase/tmp/staging/acedmp/Transgene.ace
+Find Variation
+Write /usr/local/wormbase/tmp/staging/acedmp/Variation.ace

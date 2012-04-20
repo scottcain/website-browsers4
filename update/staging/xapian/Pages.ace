@@ -1,5 +1,76 @@
 # The Pages.ace file is now created by:
-staging/steps/build_xapian_db.pl --release [RELEASE]
+# staging/steps/build_xapian_db.pl --release [RELEASE]
 
-# And can be found at
-/usr/local/wormbase/tmp/staging/RELEASE/acedmp/Pages.ace
+# And, after running that script, can be found at:
+# /usr/local/wormbase/tmp/staging/RELEASE/acedmp/Pages.ace
+
+# PLEASE MAKE EDITS TO
+# website-admin/lib/WormBase/Update/Staging/BuildXapianDB.pm
+
+Page : "/tools/blast_blat"
+Public_name	"Blast/Blat"
+Description	"Alignment tool"
+
+Page : "/tools/comments"
+Public_name	"Comments"
+Description	"View comments left on WormBase"
+
+Page : "/tools/genome/gbrowse/c_elegans"
+Public_name	"GBrowse"
+Description	"Browse the worm genome"
+
+Page : "/tools/support"
+Public_name	"Contact Help"
+Description	"Send a message to the WormBase helpdesk"
+
+Page : "/tools/nucleotide_aligner"
+Public_name	"Nucleotide Aligner"
+Description	"nucleotide aligner"
+
+Page : "/tools/ontology_browser"
+Public_name	"Ontologies"
+Description	"Browse anatomy, gene and phenotype ontologies"
+
+Page : "/tools/protein_aligner"
+Public_name	"Protein Aligner"
+Description	"protein aligner"
+
+Page : "/tools/queries"
+Public_name	"Queries"
+Description	"Make ACe Query Language(AQL) and WormBase Query Language(WQL) queries directly"
+
+Page : "http://www.textpresso.org/"
+Public_name	"Textpresso"
+Description	"Information extracting and processing (text mining) package for biological literature whose capabilities go far beyond that of a simple keyword search engine"
+
+Page : "/tools/tree"
+Public_name	"Tree Display"
+Description	"View the raw data for this object or explore the underlying data model."
+
+Page : "http://caprica.caltech.edu:9002/biomart/martview/"
+Public_name	"WormMart"
+Description	"Retrieve sequences and genome annotations using a variety of filters to constrain retrieved results"
+
+Page : "http://www.wormbook.org/"
+Public_name	"WormBook"
+Description	"Provides an open-access collection of original, peer-reviewed chapters covering topics related to the biology of Caenorhabditis elegans (C. elegans)"
+
+Page : "http://forums.wormbase.org"
+Public_name	"Forum"
+Description	"Worm Community Forum"
+
+Page : "http://blog.wormbase.org"
+Public_name	"Blog"
+Description	"The Official WormBase Blog"
+
+Page : "http://twitter.com/wormbase"
+Public_name	"Twitter"
+Description	"The Official WormBase Twitter Account"
+
+Page : "http://github.com/WormBase"
+Public_name	"Code Repositories (Github)"
+Description	"WormBase Github code respoitories and issue tracker"
+
+Page : "ftp://ftp.wormbase.org/pub/wormbase/"
+Public_name	"FTP site"
+Description	"Downloads - FTP site"

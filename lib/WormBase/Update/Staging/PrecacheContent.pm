@@ -310,7 +310,7 @@ sub crawl_website {
 	my $cache_err = join("/",$cache_root,'logs',"00-errors.txt");
 	open ERROR,">>$cache_err";
 
-	my $object_list = join("/",$cache_root,'logs',"$class-object_list.txt");
+	my $object_list = join("/",$cache_root,'logs',"$class.ace");
 	open OBJECTS,$object_list or $self->log->logdie("Could not open the object list file: $object_list");
 
 	# Open cache log for writing.
@@ -327,6 +327,11 @@ sub crawl_website {
 	
 	while (my $obj = <OBJECTS>) {
 	    chomp $obj;
+	    # Clean up ace files
+	    next if $obj =~ /^\w/;
+	    next if $obj eq "";
+	    $obj =~ s/^\s//;
+	    
 	    my @uris;  # All uris for a single object, fetched in parallel.
 	    
 	    # The code below checks for the presence of the document in couch.
@@ -649,7 +654,7 @@ sub dump_object_lists {
 	next unless ($acceptable_classes{$class});
 	
 	my $lower = lc($class);
-	my $object_list = join("/",$cache_root,'logs',"$lower-object_list.txt");
+	my $object_list = join("/",$cache_root,'logs',"$lower.ace");
 	next if (-e $object_list);
 	open OUT,">$object_list";
 	
@@ -672,89 +677,89 @@ sub dump_object_lists_via_tace {
     print OUT <<END;
 //tace script to dump database
 Find Analysis
-list -f $cache_root/analysis.ace
+List -h -f $cache_root/analysis.ace
 Find Anatomy_term
-list -f $cache_root/anatomy_term.ace
+List -h -f $cache_root/anatomy_term.ace
 Find Antibody
-list -f $cache_root/antibody.ace
+List -h -f $cache_root/antibody.ace
 Find CDS
-list -f $cache_root/cds.ace
+List -h -f $cache_root/cds.ace
 Find Clone
-list -f $cache_root/clone.ace
+List -h -f $cache_root/clone.ace
 Find Expr_pattern
-list -f $cache_root/expr_pattern.ace
+List -h -f $cache_root/expr_pattern.ace
 Find Expr_profile
-list -f $cache_root/expr_profile.ace
+List -h -f $cache_root/expr_profile.ace
 Find Expression_cluster
-list -f $cache_root/expression_cluster.ace
+List -h -f $cache_root/expression_cluster.ace
 Find Feature
-list -f $cache_root/feature.ace
+List -h -f $cache_root/feature.ace
 Find Gene
-list -f $cache_root/gene.ace
+List -h -f $cache_root/gene.ace
 Find Gene_class
-list -f $cache_root/gene_class.ace
+List -h -f $cache_root/gene_class.ace
 Find Gene_cluster
-list -f $cache_root/gene_cluster.ace
+List -h -f $cache_root/gene_cluster.ace
 Find Gene_regulation
-list -f $cache_root/gene_regulation.ace
+List -h -f $cache_root/gene_regulation.ace
 Find GO_code
-list -f $cache_root/go_code.ace
+List -h -f $cache_root/go_code.ace
 Find GO_term
-list -f $cache_root/go_term.ace
+List -h -f $cache_root/go_term.ace
 Find Homology_group
-list -f $cache_root/homology_group.ace
+List -h -f $cache_root/homology_group.ace
 Find Interaction
-list -f $cache_root/interaction.ace
+List -h -f $cache_root/interaction.ace
 Find Laboratory
-list -f $cache_root/laboratory.ace
+List -h -f $cache_root/laboratory.ace
 Find Life_stage
-list -f $cache_root/life_stage.ace
+List -h -f $cache_root/life_stage.ace
 Find LongText
-list -f $cache_root/longText.ace
+List -h -f $cache_root/longText.ace
 Find Microarray_results
-list -f $cache_root/microarray_results.ace
+List -h -f $cache_root/microarray_results.ace
 Find Molecule
-list -f $cache_root/molecule.ace
+List -h -f $cache_root/molecule.ace
 Find Motif
-list -f $cache_root/motif.ace
+List -h -f $cache_root/motif.ace
 Find Oligo
-list -f $cache_root/oligo.ace
+List -h -f $cache_root/oligo.ace
 Find Oligo_set
-list -f $cache_root/oligo_set.ace
+List -h -f $cache_root/oligo_set.ace
 Find Operon
-list -f $cache_root/operon.ace
+List -h -f $cache_root/operon.ace
 Find Paper
-list -f $cache_root/paper.ace
+List -h -f $cache_root/paper.ace
 Find PCR
-list -f $cache_root/pcr.ace
+List -h -f $cache_root/pcr.ace
 Find Person
-list -f $cache_root/person.ace
+List -h -f $cache_root/person.ace
 Find Phenotype
-list -f $cache_root/phenotype.ace
+List -h -f $cache_root/phenotype.ace
 Find Picture
-list -f $cache_root/picture.ace
+List -h -f $cache_root/picture.ace
 Find Position_matrix
-list -f $cache_root/position_matrix.ace
+List -h -f $cache_root/position_matrix.ace
 Find Protein
-list -f $cache_root/protein.ace
+List -h -f $cache_root/protein.ace
 Find Pseudogene
-list -f $cache_root/pseudogene.ace
+List -h -f $cache_root/pseudogene.ace
 Find Rearrangement
-list -f $cache_root/rearrangement.ace
+List -h -f $cache_root/rearrangement.ace
 Find RNAi
-list -f $cache_root/rnai.ace
+List -h -f $cache_root/rnai.ace
 Find Sequence
-list -f $cache_root/sequence.ace
+List -h -f $cache_root/sequence.ace
 Find Strain
-list -f $cache_root/strain.ace
+List -h -f $cache_root/strain.ace
 Find Structure_data
-list -f $cache_root/structure_data.ace
+List -h -f $cache_root/structure_data.ace
 Find Transcript
-list -f $cache_root/transcript.ace
+List -h -f $cache_root/transcript.ace
 Find Transgene
-list -f $cache_root/transgene.ace
+List -h -f $cache_root/transgene.ace
 Find Variation
-list -f $cache_root/variation.ace
+List -h -f $cache_root/variation.ace
 END
 ;
 
