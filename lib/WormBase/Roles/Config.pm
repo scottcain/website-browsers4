@@ -124,8 +124,13 @@ sub _build_tmp_dir {
 has 'acedmp_dir'       => ( is => 'ro', lazy_build => 1 );          
 sub _build_acedmp_dir {
     my $self = shift;
-    my $dir = $self->tmp_dir . "/acedmp";
+    my $release = $self->release;
+    my $release_dir = $self->tmp_dir . "/$release";
+    $self->_make_dir($release_dir);
+
+    my $dir = $self->tmp_dir . "/$release/acedmp";
     $self->_make_dir($dir);
+    
     return $dir;
 }
 
