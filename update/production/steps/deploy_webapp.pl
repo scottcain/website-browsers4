@@ -12,13 +12,13 @@ GetOptions('release=s' => \$release,
 	   'target=s'  => \$target,
     );
 
-if ($help) {
-#if ($help || (!$release)) {
+if ($help || (!$release)) {
     die <<END;
 
-Usage: $0 [--release] WSXXX --target [production|staging]
+Usage: $0 --release WSXXX --target [production|staging]
 
-Deploy web app for the current release to either the production or the staging cluster.
+Deploy web app to either the production or the staging cluster,
+pulling from the specified branch.
 
 END
 ;

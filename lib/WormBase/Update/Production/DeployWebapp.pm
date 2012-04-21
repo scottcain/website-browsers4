@@ -70,17 +70,18 @@ has 'app_version' => (
 sub _build_app_version {
     my $self = shift;
 
-    # Use the supplied release or feth via rest.
+    # Use the supplied release or fetch via rest.
     my $release = $self->release;  
 
     my $software_version  = $self->pm_version;
 #    my $software_revision = $self->git_cumulative_commits;
-    my $software_revision = $self->git_commits;
+#    my $software_revision = $self->git_commits;
     my $date = `date +%Y.%m.%d`;
     chomp $date;
     
+    my $dir = "$release-$date-v${software_version}";
 #    my $dir = "$release-$date-v${software_version}r$software_revision";
-    my $dir = "$date-v${software_version}r$software_revision";
+#    my $dir = "$date-v${software_version}r$software_revision";
     return $dir;
 }
 
@@ -248,12 +249,12 @@ sub rsync_staging_directory {
 sub pull_webapp {
     my $self = shift;
 
-    $self->log->info('pulling code changes onto new nodes');
+    my $release = $self->release;
+    my $target  = $self->target;
+    $self->log->info("pulling code changes onto $target nodes");
 
     my $app_root = $self->wormbase_root;
     my $app_version = $self->app_version;
-
-    my $target  = $self->target;
 
     my ($app_nodes) = $self->target_nodes('app');
     # $self->package_mysql() if ($self->method eq 'by_package');
@@ -265,7 +266,7 @@ sub pull_webapp {
 	$ssh->system("cp -r /usr/local/wormbase/website/production /usr/local/wormbase/website/archive/$app_version")
 	    or $self->log->warn("Couldn't back up the current production directory to $node:website/archive/$app_version");
 
-	$ssh->system("cd /usr/local/wormbase/website/production ; git pull")
+	$ssh->system("cd /usr/local/wormbase/website/production ; git checkout $release ; git pull")
 	    or $self->log->warn("Couldn't pull onto $node from the git repository");
 
 	$self->send_hup_to_starman($ssh,$node);
@@ -279,7 +280,7 @@ sub create_software_release {
     my $wormbase_root = $self->wormbase_root;
     my $app_version   = $self->app_version;
     
-    $self->system_call("scp -r wb-web7.oicr.on.ca:$wormbase_root/website/production /usr/local/ftp/pub/wormbase/software/$app_version",'creating software release');
+    $self->system_call("cp -r $wormbase_root/website/production /usr/local/ftp/pub/wormbase/software/$app_version",'creating software release');
     chdir($self->ftp_root . "/software");
     $self->system_call("tar czf $app_version.tgz  --exclude 'logs' --exclude '.hg' --exclude 'extlib' --exclude 'wormbase_local.conf' $app_version",'tarring software release');
     $self->system_call("rm -rf $app_version",'removing app version');
