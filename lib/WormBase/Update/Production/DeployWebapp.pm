@@ -266,7 +266,7 @@ sub pull_webapp {
 	$ssh->system("cp -r /usr/local/wormbase/website/production /usr/local/wormbase/website/archive/$app_version")
 	    or $self->log->warn("Couldn't back up the current production directory to $node:website/archive/$app_version");
 
-	$ssh->system("cd /usr/local/wormbase/website/production ; git checkout $release ; git pull")
+	$ssh->system("cd /usr/local/wormbase/website/production ; git checkout origin/$release ; git pull")
 	    or $self->log->warn("Couldn't pull onto $node from the git repository");
 
 	$self->send_hup_to_starman($ssh,$node);
