@@ -286,7 +286,7 @@ sub crawl_website {
 	
 	# Horribly broken classes, currently uncacheable.
 	# next if $class eq 'anatomy_term';
-#	next if $class eq 'cds';
+	next if $class eq 'cds';
 #	next unless $class eq 'variation';
 
         # Class-level status and timers.
@@ -331,7 +331,6 @@ sub crawl_website {
 	    next if $obj =~ /^\w/;
 	    next if $obj eq "";
 	    $obj =~ s/^\s//;
-	    
 	    my @uris;  # All uris for a single object, fetched in parallel.
 	    
 	    # The code below checks for the presence of the document in couch.
@@ -370,11 +369,14 @@ sub crawl_website {
 		if ($precache) {
 		    my $url = sprintf($base_url,$class,$obj,$widget);
 #		    if ($previous{$url}) {	       
+		    $obj =~ s/\#/\%23/g;
 		    if ($previous{"$class$obj$widget"}) {
 #			print STDERR "Already requested $url. Skipping...";
 #			print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
 			next;
 		    }
+		    # Remove hashes.
+		    $url =~ s/\#/\%23/g;
 		    push @uris,$url;
 		}
 	    }
@@ -484,7 +486,7 @@ sub crawl_website_by_class {
 	
 	$self->log->info("Precaching widgets for the $class class");
 	my %previous = $self->_parse_cached_classes_log($cache_log);
-	next if defined $previous{COMPLETE};   # eg this class is finished.
+#	next if defined $previous{COMPLETE};   # eg this class is finished.
 
 	# Open cache log for writing.
 	open OUT,">>$cache_log";
@@ -673,6 +675,9 @@ sub dump_object_lists_via_tace {
     my $version = $self->release;
     my $cache_root = join("/",$self->support_databases_dir,$version,'cache','logs');
     system("mkdir -p $cache_root");
+
+    return if (-e "$cache_root/dump_complete.txt");
+
     open OUT,">$cache_root/00-class_dump_script.ace";
     print OUT <<END;
 //tace script to dump database
@@ -762,9 +767,12 @@ Find Variation
 List -h -f $cache_root/variation.ace
 END
 ;
+    close OUT;
 
     system("/usr/local/wormbase/acedb/bin/tace /usr/local/wormbase/acedb/wormbase < $cache_root/00-class_dump_script.ace");
-    die;
+    open OUT,">$cache_root/dump_complete.txt";
+    print OUT "ACE DUMPING COMPLETE\n";
+    close OUT;
 }
 
 
@@ -951,12 +959,12 @@ sub _parse_cache_log {
 	my %previous;
 
 	# First off, just tail the file to see if we're finished.
-	my $complete_flag = `tail -1 $file`;
-	chomp $complete_flag;
-	if ($complete_flag eq 'COMPLETE') {
-	    $previous{$complete_flag}++;
-	    return %previous;
-	}
+#	my $complete_flag = `tail -1 $file`;
+#	chomp $complete_flag;
+#	if ($complete_flag eq 'COMPLETE') {
+#	    $previous{$complete_flag}++;
+#	    return %previous;
+#	}
 
 	open IN,"$file" or die "$!";
 
@@ -980,22 +988,22 @@ sub _parse_cached_widgets_log {
     $self->log->info("  ---> parsing log of previously cached widgets");
     my %previous;
     if (-e "$cache_log") {
-	# First off, just tail the file to see if we're finished.
-	my $complete_flag = `tail -1 $cache_log`;
-	chomp $complete_flag;
-	if ($complete_flag =~ /COMPLETE/) {
-	    $previous{COMPLETE}++;
-	    $self->log->info("  ---> all widgets already cached.");
-	    return %previous;
-	}
+#	# First off, just tail the file to see if we're finished.
+#	my $complete_flag = `tail -1 $cache_log`;
+#	chomp $complete_flag;
+#	if ($complete_flag =~ /COMPLETE/) {
+#	    $previous{COMPLETE}++;
+#	    $self->log->info("  ---> all widgets already cached.");
+#	    return %previous;
+#	}
 
 	open IN,"$cache_log" or die "$!";
 
 	while (<IN>) {
-	    if (/COMPLETE/) {
-		$previous{COMPLETE}++;
-		next;
-	    }
+#	    if (/COMPLETE/) {
+#		$previous{COMPLETE}++;
+#		next;
+#	    }
 	    chomp;
 	    my ($class,$obj,$name,$url,$status,$cache_stop) = split("\t");
 	    $previous{"$class$obj$name"}++ unless $status eq 'failed';
@@ -1015,22 +1023,22 @@ sub _parse_cached_classes_log {
     $self->log->info("  ---> parsing log of previously cached classes at $cache_log");
     my %previous;
     if (-e "$cache_log") {
-	# First off, just tail the file to see if we're finished.
-	my $complete_flag = `tail -1 $cache_log`;
-	chomp $complete_flag;
-	if ($complete_flag =~ /COMPLETE/) {
-	    $previous{COMPLETE}++;
-	    $self->log->info("  ---> all widgets already cached.");
-	    return %previous;
-	}
+#	# First off, just tail the file to see if we're finished.
+#	my $complete_flag = `tail -1 $cache_log`;
+#	chomp $complete_flag;
+#	if ($complete_flag =~ /COMPLETE/) {
+#	    $previous{COMPLETE}++;
+#	    $self->log->info("  ---> all widgets already cached.");
+#	    return %previous;
+#	}
 
 	open IN,"$cache_log" or die "$!";
 
 	while (<IN>) {
-	    if (/COMPLETE/) {
-		$previous{COMPLETE}++;
-		next;
-	    }
+#	    if (/COMPLETE/) {
+#		$previous{COMPLETE}++;
+#		next;
+#	    }
 	    chomp;
 	    my ($class,$obj,$name,$url,$status,$cache_stop) = split("\t");
 	    $previous{"$class$obj$name"}++ unless $status eq 'failed';
