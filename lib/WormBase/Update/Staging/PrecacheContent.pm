@@ -278,7 +278,7 @@ sub crawl_website {
     if ($self->class) {
 	push @classes,$self->class;
     } else {
-	@classes = sort keys %{$config->{sections}->{species}};
+	@classes = sort { $a cmp $b } (keys %{$config->{sections}->{species}}),(keys %{$config->{sections}->{resources}});
     }
     
     foreach my $class (@classes) {
@@ -294,7 +294,9 @@ sub crawl_website {
 	my %status;
 		
 	# Allow class-level specification of precaching.
-	my $class_level_precache = eval { $config->{sections}->{species}->{$class}->{precache}; } || 0;
+	my $class_level_precache = eval { $config->{sections}->{species}->{$class}->{precache}; }
+	|| eval { $config->{sections}->{resources}->{$class}->{precache}; }
+	|| 0;
 
 	my $cache = join("/",$cache_root,$class);
 	system("mkdir -p $cache");
@@ -303,15 +305,10 @@ sub crawl_website {
 	
 	$self->log->info("Precaching widgets for the $class class");
 	my %previous = $self->_parse_cached_classes_log($cache_log);
-#	next if defined $previous{COMPLETE};   # eg this class is finished.
-
 
 	# And set up the cache error file
 	my $cache_err = join("/",$cache_root,'logs',"00-errors.txt");
 	open ERROR,">>$cache_err";
-
-	my $object_list = join("/",$cache_root,'logs',"$class.ace");
-	open OBJECTS,$object_list or $self->log->logdie("Could not open the object list file: $object_list");
 
 	# Open cache log for writing.
 	open OUT,">>$cache_log";
@@ -322,8 +319,13 @@ sub crawl_website {
 	if ($self->widget) {
 	    push @widgets,$self->widget;
 	} else {
-	    @widgets = sort keys %{$config->{sections}->{species}->{$class}->{widgets}};
+	    @widgets = defined $config->{sections}->{species}->{$class}
+	    ? sort keys %{$config->{sections}->{species}->{$class}->{widgets}}
+	    : sort keys %{$config->{sections}->{resources}->{$class}->{widgets}};
 	}
+
+	my $object_list = join("/",$cache_root,'logs',"$class.ace");
+	open OBJECTS,$object_list or $self->log->logwarn("Could not open the object list file: $object_list");
 	
 	while (my $obj = <OBJECTS>) {
 	    chomp $obj;
@@ -360,12 +362,14 @@ sub crawl_website {
 #		next if $widget eq 'sequences';
 #		next if $widget eq 'location';
 
-		my $precache = eval { $config->{sections}->{species}->{$class}->{widgets}->{$widget}->{precache}; };
+		my $precache = defined $config->{sections}->{species}->{$class}
+		? eval { $config->{sections}->{species}->{$class}->{widgets}->{$widget}->{precache}; }
+		: eval { $config->{sections}->{resources}->{$class}->{widgets}->{$widget}->{precache}; };
 		$precache ||= 0;
 		$precache = 1 if $class_level_precache;
 #	    print join("-",keys %{$config->{sections}->{species}->{$class}->{widgets}->{$widget}}) . "\n";
 #	    print join("\t",$class,$widget,$precache) . "\n";
-
+		
 		if ($precache) {
 		    my $url = sprintf($base_url,$class,$obj,$widget);
 #		    if ($previous{$url}) {	       
@@ -394,7 +398,7 @@ sub crawl_website {
 		my $content = get($uri) or
 		    print ERROR join("\t",$class,$object,$widget,$uri,'failed',$cache_stop - $cache_start),"\n";
 		
-		if ($content) {
+	        if ($content) {
 		    my $cache_stop = time();
 		    print OUT join("\t",$class,$object,$widget,$uri,'success',$cache_stop - $cache_start),"\n";
 		}
@@ -403,18 +407,21 @@ sub crawl_website {
 	    }
 	    $pm->wait_all_children;
 	 
-	    if ($status{$class}{objects} % 10 == 0) {
+	    if ($status{$class}{objects} > 0 && $status{$class}{objects} % 10 == 0 && defined $status{$class}{uris}) {
 		print STDERR "   cached $status{$class}{objects} $class objects and $status{$class}{uris} uris; last was $obj";
 		print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n"; 
 	    }   
 	}
-	my $end = time();
-	my $seconds = $end - $start;
-	print MASTER "=\n";
-	print MASTER "CLASS: $class\n";
-	print MASTER "Time required to cache " . $status{$class}{objects} . ' objects comprising ' . $status{$class}{uris} . 'uris: ';
-	printf MASTER "%d days, %d hours, %d minutes and %d seconds\n",(gmtime $seconds)[7,2,1,0];    
-	print MASTER "\n\n";
+
+	if ($status{$class}{objects} > 0 && $status{$class}{objects} % 10 == 0 && defined $status{$class}{uris}) {
+	    my $end = time();
+	    my $seconds = $end - $start;
+	    print MASTER "=\n";
+	    print MASTER "CLASS: $class\n";
+	    print MASTER "Time required to cache " . $status{$class}{objects} . ' objects comprising ' . $status{$class}{uris} . 'uris: ';
+	    printf MASTER "%d days, %d hours, %d minutes and %d seconds\n",(gmtime $seconds)[7,2,1,0];    
+	    print MASTER "\n\n";
+	}
 	close OUT;
     }
 }	

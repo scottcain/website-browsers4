@@ -23,7 +23,7 @@ END
 ;
 
     # Get stats for the current class.
-    if ( -e "$class.txt") {
+    if ( -e "$class.txt" && -s "$class.txt") {
 	my $row = `tail -1 $class.txt`;
 	chomp $row;
 	my @fields = split("\t",$row);
