@@ -284,10 +284,11 @@ sub crawl_website {
     foreach my $class (@classes) {
 	next if $class eq 'title'; # Kludge.
 	
-	# Horribly broken classes, currently uncacheable.
 	# next if $class eq 'anatomy_term';
-	next if $class eq 'cds';
+#	next if $class eq 'cds';
+#	next if $class eq 'feature';
 #	next unless $class eq 'variation';
+#	next unless $class eq 'gene_class';
 
         # Class-level status and timers.
 	my $start = time();
@@ -319,9 +320,8 @@ sub crawl_website {
 	if ($self->widget) {
 	    push @widgets,$self->widget;
 	} else {
-	    @widgets = defined $config->{sections}->{species}->{$class}
-	    ? sort keys %{$config->{sections}->{species}->{$class}->{widgets}}
-	    : sort keys %{$config->{sections}->{resources}->{$class}->{widgets}};
+	    @widgets = sort keys %{$config->{sections}->{species}->{$class}->{widgets}};
+	    @widgets =  sort keys %{$config->{sections}->{resources}->{$class}->{widgets}} unless @widgets > 0;
 	}
 
 	my $object_list = join("/",$cache_root,'logs',"$class.ace");
@@ -355,12 +355,7 @@ sub crawl_website {
 	    foreach my $widget (@widgets) {
 		# References and human diseases are actually searches and not cached by the app.
 		next if $widget eq 'references';
-#		next if $widget eq 'human_diseases';
-		# These two are broken at the moment.
-#		next if $widget eq 'interactions';
-#		next if $widget eq 'phenotype';
-#		next if $widget eq 'sequences';
-#		next if $widget eq 'location';
+		next if $widget eq 'human_diseases';
 
 		my $precache = defined $config->{sections}->{species}->{$class}
 		? eval { $config->{sections}->{species}->{$class}->{widgets}->{$widget}->{precache}; }
@@ -694,7 +689,7 @@ Find Anatomy_term
 List -h -f $cache_root/anatomy_term.ace
 Find Antibody
 List -h -f $cache_root/antibody.ace
-Find CDS
+Find live_CDS
 List -h -f $cache_root/cds.ace
 Find Clone
 List -h -f $cache_root/clone.ace
