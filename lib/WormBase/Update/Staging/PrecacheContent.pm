@@ -285,7 +285,7 @@ sub crawl_website {
 	next if $class eq 'title'; # Kludge.
 	
 	# next if $class eq 'anatomy_term';
-#	next if $class eq 'cds';
+	next if $class eq 'cds';
 #	next if $class eq 'feature';
 #	next unless $class eq 'variation';
 #	next unless $class eq 'gene_class';
