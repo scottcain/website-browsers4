@@ -1,0 +1,13 @@
+To remove entries from the cache (eg the Location widget on the Clone page)
+
+1. staging/steps/purge_entries_from_couchdb.pl --release WS230 --widget Location --class Clone --host couchdb.wormbase.org
+
+2. Clear entries from the logs
+    To be able to recache these entries, they need to be removed from the logs.
+ 
+   cd /usr/local/wormbase/databases/WS230/cache/logs
+   mv clone.txt clone.txt.original
+   staging/steps/purge_entries_from_cache_logs.pl clone.txt.original > clone.txt
+
+3. Re-cache
+   staging/steps/precache_content.pl --release WS230 --host production
