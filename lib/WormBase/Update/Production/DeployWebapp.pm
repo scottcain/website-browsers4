@@ -93,7 +93,7 @@ sub run {
 #    $self->rsync_staging_directory;    
     $self->pull_webapp;
 #    $self->create_environment_file;
-    $self->create_software_release;
+    $self->create_software_release unless $self->target =~ /staging/;
     # No longer necessary.
 #    $self->save_production_reference;
 }
