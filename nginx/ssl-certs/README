@@ -1,0 +1,15 @@
+SSL Certificate
+
+Issued by Go Daddy 5/5/2012.
+Expires: 4/2015
+For: (www.)wormbase.org
+
+Also requires intermediate certificate which we need to bundle
+with our certificate.
+
+See:
+http://nginx.org/en/docs/http/configuring_https_servers.html#chains
+
+   cat wormbase.org.crt gd_bundle.crt > wormbase.org.chained.crt
+
+Update nginx configuration as appropriate.
