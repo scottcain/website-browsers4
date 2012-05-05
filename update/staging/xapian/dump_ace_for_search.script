@@ -1,3 +1,13 @@
+# The acedmp script is now created by:
+# staging/steps/build_xapian_db.pl --release [RELEASE]
+#
+# And, after running that script, can be found at:
+# /usr/local/wormbase/tmp/staging/RELEASE/acedmp/dump_ace_for_search.script
+#
+# PLEASE MAKE EDITS TO
+# website-admin/lib/WormBase/Update/Staging/BuildXapianDB.pm
+
+
 //tace script to dump database
 Find Analysis
 Write /usr/local/wormbase/tmp/staging/acedmp/Analysis.ace

@@ -60,17 +60,8 @@ END : load genomic gff databases; in 0 days, 22 hours, 58 minutes and 28 seconds
 ./steps/create_widget_acedmp.pl --release $RELEASE
 
 # 11. Create the xapian search database
-#     See xapian/README for more information
-# First, need to copy over info on tools and links in WormBase for indexing
-cp ./xapian/Pages.ace /usr/local/wormbase/tmp/staging/acedmp/Pages.ace
-
-#    1) Dump AceDB (this needs to be run manually)
-# cd /usr/local/wormbase/acedb/bin
-# ./tace ../wormbase
-# acedb> @/usr/local/wormbase/website-admin/update/staging/xapian/dump_ace_for_search.script
-
-#    2) Run Indexer
-#  ./xapian/aceindex.local settings.conf $RELEASE
+# See xapian/README for information on doing this outside of the pipeline
+./steps/build_xapian_db.pl --release $RELEASE
 
 # 12. Create commonly requested files
 # END : dump_annotations; in 0 days, 2 hours, 19 minutes and 59 seconds

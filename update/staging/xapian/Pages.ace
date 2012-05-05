@@ -1,3 +1,12 @@
+# The Pages.ace file is now created by:
+# staging/steps/build_xapian_db.pl --release [RELEASE]
+
+# And, after running that script, can be found at:
+# /usr/local/wormbase/tmp/staging/RELEASE/acedmp/Pages.ace
+
+# PLEASE MAKE EDITS TO
+# website-admin/lib/WormBase/Update/Staging/BuildXapianDB.pm
+
 Page : "/tools/blast_blat"
 Public_name	"Blast/Blat"
 Description	"Alignment tool"
