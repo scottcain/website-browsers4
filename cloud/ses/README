@@ -1,11 +1,9 @@
 We have to use Amazon's SES for sending email - to prevent our email
 from being tagged as spam.
 
-ses-smtp-user.wormbase
-SMTP Username: KIAJNUOT4VV4U3V36VA
-SMTP Password: Ao61ndk5foC588cIdweOk2LkbRrXlXwnzjvR6jNZNHAc
-
-Server Name:   email-smtp.us-east-1.amazonaws.com
-Port:  25, 465 or 587
-Use Transport Layer Security (TLS):	Yes
-Authentication:	    Your SMTP credentials - see below.
+1. Set up unstable package rep in apt/sources.list
+2. Update exim4
+   sudo apt-get install exim4 exim4-base
+3. Configure /etc/exim4/exim4.conf as described here:
+   http://docs.amazonwebservices.com/ses/latest/DeveloperGuide/SMTP.MTAs.Exim.html
+4. May need to hard code ETC_MAILNAME values as appropriate
