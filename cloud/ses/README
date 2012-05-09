@@ -1,0 +1,11 @@
+We have to use Amazon's SES for sending email - to prevent our email
+from being tagged as spam.
+
+ses-smtp-user.wormbase
+SMTP Username: KIAJNUOT4VV4U3V36VA
+SMTP Password: Ao61ndk5foC588cIdweOk2LkbRrXlXwnzjvR6jNZNHAc
+
+Server Name:   email-smtp.us-east-1.amazonaws.com
+Port:  25, 465 or 587
+Use Transport Layer Security (TLS):	Yes
+Authentication:	    Your SMTP credentials - see below.
