@@ -737,8 +737,8 @@ Find Operon
 List -h -f $cache_root/operon.ace
 Find Paper
 List -h -f $cache_root/paper.ace
-Find PCR
-List -h -f $cache_root/pcr.ace
+Find PCR_product
+List -h -f $cache_root/pcr_oligo.ace
 Find Person
 List -h -f $cache_root/person.ace
 Find Phenotype
