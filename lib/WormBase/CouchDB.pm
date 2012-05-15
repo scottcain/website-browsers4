@@ -174,11 +174,14 @@ sub delete_document {
     my $self   = shift;
     my $params = shift;
     my $uuid   = $params->{uuid};
-
-    # Have to fetch the revision first. What a pain.
-    my $current_version = $self->get_document($uuid);   
-    return unless $current_version;
-    my $rev = $current_version->{_rev};
+    my $rev    = $params->{rev};
+    
+    unless ($rev) {
+	# Have to fetch the revision first. What a pain.
+	my $current_version = $self->get_document($uuid);   
+	return unless $current_version;
+	$rev = $current_version->{_rev};
+    }
     my $msg  = $self->_prepare_request({method => 'DELETE',
 					path   => $uuid,
 					rev    => $rev,

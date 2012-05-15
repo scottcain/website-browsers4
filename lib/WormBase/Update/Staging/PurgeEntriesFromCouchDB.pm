@@ -51,12 +51,20 @@ sub run {
     my $i = $db->fetch_many($ace_class => '*');
     while (my $obj = $i->next) {
 	my $uuid = join('_',lc($class),lc($widget),$obj);
-	my $data  = $couch->delete_document({ uuid => $uuid });
-	if ($data->{reason}) {
-	    print STDERR "Deleting $uuid FAILED: " . $data->{reason} . "\n";
-	} else {
-	    print STDERR "Deleting $uuid: success";
-	    print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
+
+	# Some acedb errors are cropping up and breaking widgets,
+	# but they are still being cached.  Let's selectively delete them.
+	# The have "Template::Exception" listed in content.
+	my $content = $couch->get_document($uuid);
+	if ($content->{data} && $content->{data} =~ /Template::Exception/) {
+	    
+	    my $data  = $couch->delete_document({ uuid => $uuid, rev = $content->{_rev} });
+	    if ($data->{reason}) {
+		print STDERR "Deleting $uuid FAILED: " . $data->{reason} . "\n";
+	    } else {
+		print STDERR "Deleting $uuid: success";
+		print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
+	    }
 	}
     }
 }

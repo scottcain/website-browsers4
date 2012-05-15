@@ -689,7 +689,7 @@ Find Anatomy_term
 List -h -f $cache_root/anatomy_term.ace
 Find Antibody
 List -h -f $cache_root/antibody.ace
-Find live_CDS
+Find curated_CDS
 List -h -f $cache_root/cds.ace
 Find Clone
 List -h -f $cache_root/clone.ace
