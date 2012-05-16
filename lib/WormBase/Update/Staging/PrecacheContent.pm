@@ -286,6 +286,7 @@ sub crawl_website {
 	
 	# next if $class eq 'anatomy_term';
 	next if $class eq 'cds';
+	next if $class eq 'microarray_results';
 #	next if $class eq 'feature';
 #	next unless $class eq 'variation';
 #	next unless $class eq 'gene_class';
@@ -737,8 +738,8 @@ Find Operon
 List -h -f $cache_root/operon.ace
 Find Paper
 List -h -f $cache_root/paper.ace
-Find PCR
-List -h -f $cache_root/pcr.ace
+Find PCR_product
+List -h -f $cache_root/pcr_oligo.ace
 Find Person
 List -h -f $cache_root/person.ace
 Find Phenotype

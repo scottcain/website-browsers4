@@ -13,17 +13,13 @@ foreach (@classes) {
     my $expected = `wc -l $class.ace` - 5;  # three extra rows in ace files.
     chomp $expected;
     
-    my $actual = `sort -u -k1,2 $class.txt | wc -l`;
-    chomp $actual;
-
-    print <<END;
-$class
-expected: $expected
-END
-;
-
+    my ($status,$actual);
     # Get stats for the current class.
     if ( -e "$class.txt" && -s "$class.txt") {
+
+	$actual = `sort -u -k1,2 $class.txt | wc -l`;
+	chomp $actual;
+	
 	my $row = `tail -1 $class.txt`;
 	chomp $row;
 	my @fields = split("\t",$row);
@@ -31,18 +27,18 @@ END
 	my $found = `egrep -n $id $class.ace`;
 	$found =~ /(.*):.*/;
 	my $current_object = $1;
-	
-    print <<END;
-complete: $actual
-Currently on $current_object out of $expected
---
-END
-;
+
+	if ($actual == $expected) {
+	    $status = 'COMPLETE';
+	} else {	    
+	    $status = ($expected - $actual) . " objects remaining to process or broken";
+	}
     } else {
-	print <<END;
-Not yet processed
---
-END
-;
+	$status = "NOT YET PROCESSED";
     }
+    $actual ||= 0;
+    print "$class\n";
+    print "\tstatus  : $status\n";
+    print "\texpected: $expected\n";
+    print "\tcomplete: $actual\n";   
 }
