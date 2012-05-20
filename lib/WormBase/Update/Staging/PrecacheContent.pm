@@ -336,14 +336,6 @@ sub crawl_website {
 	    $obj =~ s/^\s//;
 	    my @uris;  # All uris for a single object, fetched in parallel.
 	    
-	    # The code below checks for the presence of the document in couch.
-	    # Also: in the future we might want to selectively REPLACE documents.
-#		    if ($self->check_if_stashed_in_couchdb($class,$widget,$obj)) {
-#			print STDERR " --> $class:$widget:$obj ALREADY CACHED; SKIPPING\n";
-#			print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n"; 
-#			next;
-#		    }
-	    
 	    # Create a REST request of the following format:
 	    # curl -H content-type:application/json http://api.wormbase.org/rest/widget/gene/WBGene00006763/cloned_by
 	    
@@ -357,6 +349,7 @@ sub crawl_website {
 		# References and human diseases are actually searches and not cached by the app.
 		next if $widget eq 'references';
 		next if $widget eq 'human_diseases';
+		next if $widget eq 'interactions';  # broken at the moment for WS231
 
 		my $precache = defined $config->{sections}->{species}->{$class}
 		? eval { $config->{sections}->{species}->{$class}->{widgets}->{$widget}->{precache}; }
@@ -368,14 +361,26 @@ sub crawl_website {
 		
 		if ($precache) {
 		    my $url = sprintf($base_url,$class,$obj,$widget);
-#		    if ($previous{$url}) {	       
-		    $obj =~ s/\#/\%23/g;
-		    if ($previous{"$class$obj$widget"}) {
-#			print STDERR "Already requested $url. Skipping...";
-#			print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
+
+
+
+		    # The code below checks for the presence of the document in couch.
+		    # Also: in the future we might want to selectively REPLACE documents.
+		    if ($self->check_if_stashed_in_couchdb($class,$widget,$obj)) {
+#		    # Or just check if the log says it has been cached...
+			# checking the cache log should do similar URL escaping as check_if_stashed...?
+			# Although right now, the cache_log only escapes hashes and nothing else.
+#		    if ($previous{"$class$obj$widget"}) {
+			print STDERR " --> $class:$widget:$obj ALREADY CACHED; SKIPPING";
+			print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n"; 
+			$status{$class}{widgets}{$widget}++;
 			next;
+		    } else {
+			print STDERR " --> $class:$widget:$obj NOT CACHED\n";
+#			print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n"; 
 		    }
-		    # Remove hashes.
+
+		    # Remove hashes.  Hashes break our app and couchdb queries.
 		    $url =~ s/\#/\%23/g;
 		    push @uris,$url;
 		}
@@ -396,6 +401,7 @@ sub crawl_website {
 		
 	        if ($content) {
 		    my $cache_stop = time();
+		    $status{$class}{widgets}{$widget}++;
 		    print OUT join("\t",$class,$object,$widget,$uri,'success',$cache_stop - $cache_start),"\n";
 		}
 		    
@@ -409,15 +415,20 @@ sub crawl_website {
 	    }   
 	}
 
-	if ($status{$class}{objects} > 0 && $status{$class}{objects} % 10 == 0 && defined $status{$class}{uris}) {
+#	if ($status{$class}{objects} > 0 && $status{$class}{objects} % 10 == 0 && defined $status{$class}{uris}) {
 	    my $end = time();
 	    my $seconds = $end - $start;
-	    print MASTER "=\n";
 	    print MASTER "CLASS: $class\n";
-	    print MASTER "Time required to cache " . $status{$class}{objects} . ' objects comprising ' . $status{$class}{uris} . 'uris: ';
+	    print MASTER "TOTAL OBJECTS: $status{$class}{objects}\n";
+	    print MASTER "Time required to cache " . $status{$class}{objects} . ' objects / ' . $status{$class}{uris} . ' uris: ';
 	    printf MASTER "%d days, %d hours, %d minutes and %d seconds\n",(gmtime $seconds)[7,2,1,0];    
+	    foreach my $widget (sort keys %{$status{$class}{widgets}} ) {
+		my $missing = $status{$class}{objects} - $status{$class}{widgets}{$widget};
+		my $percent = ($missing / $status{$class}{objects}) * 100;
+		print MASTER "\t$widget\t$status{$class}{widgets}{$widget}/$status{$class}{objects} -- $missing ($percent)\n";
+	    }
 	    print MASTER "\n\n";
-	}
+#	}
 	close OUT;
     }
 }	
@@ -933,6 +944,14 @@ sub precache_classic_content {
 sub check_if_stashed_in_couchdb {
     my ($self,$class,$widget,$name) = @_;
     
+    # URL-ify (specific escaping for couch lookups)
+    $name =~ s/\#/\%2523/g;
+    $name =~ s/\:/\%253A/g;
+    $name =~ s/\s/\%2520/g;
+    $name =~ s/\[/\%255B/g;
+    $name =~ s/\]/\%255D/g;
+
+
     my $couch = $self->couchdb;
     my $uuid  = join("_",$class,$widget,$name);
     my $data  = $couch->check_for_document($uuid);
