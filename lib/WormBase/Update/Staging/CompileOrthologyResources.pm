@@ -187,7 +187,7 @@ sub read_omim_file{
     my %hash;
 
     my $filename = $self->morbidmap_txt_file;    
-    system("cp /usr/local/wormbase/website/staging/util/omim/morbidmap.txt $filename");
+    system("cp /usr/local/wormbase/website/production/util/omim/morbidmap.txt $filename");
     open MORBIDMAP, "< $filename" or $self->log->logdie("Cannot open $filename");
 
     foreach my $line (<MORBIDMAP>){
@@ -202,13 +202,13 @@ sub read_omim_file{
 sub copy_files_from_repository {
     my $self = shift;
     my $omim_descriptions = $self->omim_id2disease_desc_txt_file;
-    system("cp /usr/local/wormbase/website/staging/util/omim/omim_id2disease_desc.txt $omim_descriptions") or die "Couldn't copy omim desc file";
+    system("cp /usr/local/wormbase/website/production/util/omim/omim_id2disease_desc.txt $omim_descriptions") or die "Couldn't copy omim desc file";
 
     my $omim_names = $self->omim_id2disease_name_txt_file;
-    system("cp /usr/local/wormbase/website/staging/util/omim/omim_id2disease_name.txt $omim_names") or die "Couldn't copy omim names file";
+    system("cp /usr/local/wormbase/website/production/util/omim/omim_id2disease_name.txt $omim_names") or die "Couldn't copy omim names file";
 
     my $gene_ids = $self->gene_id2omim_ids_txt_file;
-    system("cp /usr/local/wormbase/website/staging/util/omim/gene_id2omim_ids.txt $gene_ids") or die "Couldn't copy gene ids file";
+    system("cp /usr/local/wormbase/website/production/util/omim/gene_id2omim_ids.txt $gene_ids") or die "Couldn't copy gene ids file";
 }
 
 
@@ -219,7 +219,7 @@ sub create_disease_file{
     my $disease_ace_file = $self->disease_ace_file;
     
     my $filename = $self->omim_txt_file;    
-    system("cp /usr/local/wormbase/website/staging/util/omim/omim.txt.gz $filename.gz");
+    system("cp /usr/local/wormbase/website/production/util/omim/omim.txt.gz $filename.gz");
     system("gunzip $filename.gz");
 
     open OMIM, "<$omim_txt_file" or die "Cannot open $omim_txt_file";
