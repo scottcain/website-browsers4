@@ -35,28 +35,35 @@ my $ec2 = VM::EC2->new(-access_key => $access_key,
 # The core image ID is hard-coded here. But it will change from release to release.
 # Need to discover what it is.
 my $image       = $ec2->describe_images($ami_id);
-my $instance    = $ec2->run_instance({-instance_type => 'm1.large'});
+print "Found image $ami_id: " . $image->name . ' (' . $image->description . ")\n";
+my $instance    = $image->run_instances(-instance_type     => 'm1.large',
+					-availability_zone => 'us-east-1d'
+    );
 
 # wait for both instances to reach "running" or other terminal state
-$ec2->wait_for_instances([$instance]);
+$ec2->wait_for_instances($instance);
+
 my $instance_id = $instance->instanceId; 
-my $hostname    = $instance->publicDNS;
+my $hostname    = $instance->dnsName;
+
+print "We have launched a new instance!  It is at $hostname (instance ID: $instance_id)\n";
 
 
 # Get a list of all available volumes
-my @volumes = $ec2->describe_volumes;
-for my $vol (@volumes) {
-    
-    if ($vol->Version eq $release && $vol->status eq 'available') {	
-	my $a = $volume->attach($instanceId,'/dev/sdg');
+my @volumes = $ec2->describe_volumes({status => 'available'});
+for my $volume (@volumes) {
+    my $tags      = $volume->tags;
+    my $volume_id = $volume->volumeId;    
+    if ($tags->{Version} eq $release) {	
+	my $a = $volume->attach($instance_id,'/dev/sdg');
 	while ($a->current_status ne 'attached') {
 	    sleep 2;
 	}
-	print "volume is ready to go\n";
-	copy_data($vol,$hostname);
+	print "volume $volume_id is attached to $instance_id and ready to go\n";
+	copy_data($volume,$hostname);
 
 # Detach the volume from the instance
-	my $attachment = $vol->detach({-instance_id => $instance_id });
+	my $attachment = $volume->detach({-instance_id => $instance_id });
 	while ($attachment->current_status ne 'detached') {
 	    sleep 2;
 	}
@@ -64,17 +71,19 @@ for my $vol (@volumes) {
     }
 
     # Finally, start services on the machine
-    my $ssh = $self->ssh($hostname);
+    my $ssh = ssh($hostname);
     $ssh->system("saceclient localhost -port 2005");
     $ssh->system("cd /usr/local/wormbase/website/production ; ./script/wormbase-init.sh start");    
 }
 
 sub copy_data {
-    my ($vol,$hostname) = @_;
-    my $volume_id = $vol->volumeId;
+
+    my ($volume,$hostname) = @_;
+    print "Waiting 60 seconds before trying to connect...\n";
+    sleep 60;
     
 # Volume ready?  Log-in and start setting it up.
-    my $ssh = $self->ssh($hostname);
+    my $ssh = ssh($hostname);
     
 # Mount my EBS volume
     $ssh->system("sudo mount /dev/xvdg /mnt/ebs");
@@ -100,7 +109,7 @@ sub copy_data {
 }
 
 sub ssh {
-    my $node;
+    my $node = shift;
 #    my $manager = $self->production_manager;
     my $manager = 'tharris';
     my $ssh = Net::OpenSSH->new("$manager\@$node");
