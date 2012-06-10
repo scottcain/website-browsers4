@@ -29,7 +29,19 @@ sub _build_couchdb {
     # express purpose of creating a couchdb)
     my $couch_host;
     if ($self->cache_query_host eq 'production') {
-	$couch_host = $self->couchdb_host_master;
+
+	# When running precache on, say, wb-couch.
+	$couch_host = 'localhost:5984';
+
+	# When running precache from, say, oicr to production.
+#	$couch_host = $self->couchdb_host_master;
+
+
+	# For CRAWLING against production AND using queries against couchdb
+	# to see what we have already cached (instead of the log files)
+	# this needs to be set to couchdb.wormbase.org, not the IP
+	# which is firewalled by OICR.
+#	$couch_host = 'couchdb.wormbase.org';
     } else {
 	$couch_host = $self->couchdb_host_staging;
     }
@@ -38,7 +50,7 @@ sub _build_couchdb {
     return $couchdb;
 }
 
-# Attributed used to precache a specific widget
+# Attribute used to precache a specific widget
 has 'class' => (
     is => 'rw',
     );
@@ -285,10 +297,10 @@ sub crawl_website {
 	next if $class eq 'title'; # Kludge.
 	
 	# next if $class eq 'anatomy_term';
-	next if $class eq 'cds';
+#	next unless $class eq 'cds';
 	next if $class eq 'microarray_results';
 #	next if $class eq 'feature';
-#	next unless $class eq 'variation';
+#	next unless $class =~ /strain|transgene|variation/;
 #	next unless $class eq 'gene_class';
 
         # Class-level status and timers.
@@ -300,8 +312,6 @@ sub crawl_website {
 	|| eval { $config->{sections}->{resources}->{$class}->{precache}; }
 	|| 0;
 
-	my $cache = join("/",$cache_root,$class);
-	system("mkdir -p $cache");
 		    
 	my $cache_log = join("/",$cache_root,'logs',"$class.txt");
 	
@@ -351,6 +361,10 @@ sub crawl_website {
 		next if $widget eq 'human_diseases';
 		next if $widget eq 'interactions';  # broken at the moment for WS231
 
+		# Ignore class-level widgets.
+		next if $config->{sections}->{species}->{$class}->{widgets}->{$widget}->{display} eq 'index';
+		next if $config->{sections}->{resources}->{$class}->{widgets}->{$widget}->{display} eq 'index';
+
 		my $precache = defined $config->{sections}->{species}->{$class}
 		? eval { $config->{sections}->{species}->{$class}->{widgets}->{$widget}->{precache}; }
 		: eval { $config->{sections}->{resources}->{$class}->{widgets}->{$widget}->{precache}; };
@@ -362,15 +376,27 @@ sub crawl_website {
 		if ($precache) {
 		    my $url = sprintf($base_url,$class,$obj,$widget);
 
+		    my $already_cached;
+		    # It's to slow to query from OICR to the production couchdb.
+		    # Instead, we'll just check the cache logs.
+#		    if ($self->cache_query_host eq 'production') {
+#
+#			# Or just check if the log says it has been cached...
+#			# checking the cache log should do similar URL escaping as check_if_stashed...?
+#			# Although right now, the cache_log only escapes hashes and nothing else.
+#			if ($previous{"$class$obj$widget"}) {
+#			    $already_cached++;
+#			}
+#		    } else {
+			
+			# The code below checks for the presence of the document in couch.
+			# Also: in the future we might want to selectively REPLACE documents.
+			if ($self->check_if_stashed_in_couchdb($class,$widget,$obj)) {
+			    $already_cached++;
+			}
+#		    }
 
-
-		    # The code below checks for the presence of the document in couch.
-		    # Also: in the future we might want to selectively REPLACE documents.
-		    if ($self->check_if_stashed_in_couchdb($class,$widget,$obj)) {
-#		    # Or just check if the log says it has been cached...
-			# checking the cache log should do similar URL escaping as check_if_stashed...?
-			# Although right now, the cache_log only escapes hashes and nothing else.
-#		    if ($previous{"$class$obj$widget"}) {
+		    if ($already_cached) {			
 			print STDERR " --> $class:$widget:$obj ALREADY CACHED; SKIPPING";
 			print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n"; 
 			$status{$class}{widgets}{$widget}++;

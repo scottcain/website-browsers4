@@ -28,7 +28,7 @@ sub run_indexer {
     my ($self,$tmp_dir) = @_;
     my $release = $self->release;
     $self->log->info("   --> begin indexing xapian database");
-    $self->system_call("/usr/local/wormbase/website-admin/update/staging/xapian/aceindex-local $tmp_dir/settings.conf $release");
+    $self->system_call("/usr/local/wormbase/website-admin/update/staging/xapian/aceindex.local $tmp_dir/settings.conf $release");
     $self->log->info("   --> finished indexing xapian database");
 }
 
