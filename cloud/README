@@ -1,0 +1,78 @@
+= About Cloud Resources at WormBase =
+
+WormBase makes heavy use of the Amazon EC2 cloud.  It's fast, full-featured,
+and inexpensive.  This document describes how are cloud resources are configured
+and managed.
+
+== AMIs ==
+
+== WormBase Core ==
+
+AMI ID : 
+    Type : EBS-backed volume
+Instance : m1.large (for production)
+Contents : Core modules and libraries, OS.
+ Storage : 8GB root EBS; 2x450 GB ephemeral storage.
+
+We have a core WormBase AMI from which we launch new instances as needed. The Core
+AMI is also used to stage new data for an instance.
+
+/mnt/ephemeral0/wormbase contains wormbase files
+/mnt/ephemeral1/mysql    contains mysql databases
+
+
+== WormBase Support ==
+
+
+
+
+
+
+=== Appendix 1 ===
+
+Configuring the core AMI for ephemeral storage.
+
+
+See:
+http://serverfault.com/questions/266253/accessing-storage-on-an-ec2-instance
+
+
+1. Configure an AMI to have ephemeral storage by default.
+
+1.1 Launch the current core AMI adding ephemeral storage
+
+> ec2-run-instances ami-e8bf1e81 \
+ -k keypairs/wormbase-admin-keypair \
+ -t m1.large \
+ --availability-zone us-east-1d \
+ -b "/dev/sdb1=ephemeral0" -b "/dev/sdb2=ephemeral1"
+
+1.2 Format the ephemeral storage
+
+> ssh tharris@instance-address
+> sudo mkfs /dev/xvdb1
+> sudo mkfs /dev/xvdb2
+
+1.3 Create mount points
+> sudo mkdir -p /mnt/ephemeral0
+> sudo mkdir -p /mnt/ephemeral1
+
+1.4 Add entries to /etc/fstab so future instances will have this store available automatically
+
+    /dev/xvdb1   /mnt/ephemeral0 auto defaults 0 2
+    /dev/xvdb2   /mnt/ephemeral1 auto defaults 0 2
+
+1.5 Create a new AMI
+Create a NEW AMI from this.
+
+
+=== EMAIL CAVEATS ===
+
+
+Getting mail to work:
+
+if you get the "Mail to remote domains not allowed" error:
+
+Edit: sudo emacs /etc/exim4/update-exim4.conf.conf
+Change the line from local to:
+  dc_eximconfig_configtype='internet'

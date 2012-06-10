@@ -1,6 +1,7 @@
 package WormBase::Update::Staging::PushStagedReleaseToNodes;
 
 use Moose;
+use VM::EC2;
 extends qw/WormBase::Update/;
 
 # The symbolic name of this step
@@ -8,6 +9,23 @@ has 'step' => (
     is      => 'ro',
     default => 'push a staged release to specific nodes -- development OR production',
 );
+
+has 'ec2' => (
+    is => 'ro',
+    lazy_build => 1
+    );
+
+sub _build_ec2 {
+    my $self = shift;
+    my $access_key = $ENV{EC2_ACCESS_KEY};
+    my $secret_key = $ENV{EC2_SECRET_KEY};
+    
+# get new EC2 object
+    my $ec2 = VM::EC2->new(-access_key => $access_key,
+			   -secret_key => $secret_key,
+			   -endpoint   => 'http://ec2.amazonaws.com') or die "$!";
+    return $ec2;
+}
 
 sub run {
     my $self = shift;       
@@ -459,6 +477,173 @@ sub update_dev_site_symlinks {
     }  
 }
 
+
+
+
+				       
+
+
+=pod
+
+
+Creating a new AMI for the newest release.
+1. List all AMIs, and discover which is the newest Core
+2. Launch a new instance of the core AMI
+3. Provision a new EBS volume of 300 GB.
+4. Attach EBS volume to /dev/sdg 
+5. Attach the Core volume which has relatively static content (website, mysql, etc) to /dev/sdf (vol-53ae003d)
+--
+6. SSH to the new instance and execute the following commands
+    > sudo mkfs /dev/xdg             # format the volume
+    > sudo mount /dev/xdg /mnt/ebs   # Mount the volume
+
+    > sudo mount /dev/xdf            /mnt/temp   # Mount our core volume with all of our files.
+    > sudo mkdir /mnt/ebs/wormbase
+    > sudo chown tharris:wormbase /mnt/ebs/wormbase
+    > sudo chmod 2775 /mnt/ebs/wormbase
+        
+    > sudo mkdir /mnt/ebs/mysql    
+    > sudo chown tharris:wormbase /mnt/ebs/wormbase
+    > sudo chmod 2775 /mnt/ebs/wormbase
+
+    # Set up some symbolic mounts.
+    > sudo mount /usr/local/wormbase /mnt/ebs/wormbase   # symbolic volumes
+    > sudo mount /var/lib/mysql      /mnt/ebs/mysql
+
+7. Copy core information from /mnt/temp
+    > sudo cp -rp /mnt/temp/mysql/* /mnt/ebs/mysql/*
+    > sudo chown -R mysql:mysql /mnt/ebs/mysql
+    > cp -pr /mnt/temp/wormbase/* /mnt/ebs/wormbase/*
+8. Push data onto the instance as before
+9. Unmount all volumes
+   # The symbolic mounts
+   > sudo umount /usr/local/wormbase
+   > sudo umount /var/lib/mysql
+   # The actual EBS mounts
+   > sudo umount /mnt/ebs
+   > sudo umount /mnt/temp
+10. Detach volumes via the API
+11. Add tags to the new volume: date created, release, etc.
+12. From the instance, create a new core AMI
+13. Delete the old Core AMI; retain the volume
+14. Shut down the core AMI
+
+# Going live.
+1. Launch instances of the AMI.
+2. Attach the new EBS volume via the API.
+3. Mount the new EBS volume attached at /dev/sdg
+    > sudo mount /dev/xvdg /mnt/ebs
+
+4. Create symbolic mounts
+    > sudo mkdir /mnt/ephemeral0/wormbase
+    > sudo chown tharris:wormbase /mnt/ephemeral0/wormbase
+    > sudo chmod 2775 /mnt/ephemeral0/wormbase
+        
+    > sudo mkdir /mnt/ephemeral1/mysql    
+    > sudo chown mysql:mysql /mnt/ephemeral1/mysql
+    > sudo chmod 2775 /mnt/ephemeral1/mysql
+
+    > sudo mount /usr/local/wormbase /mnt/ephemeral0/wormbase   # symbolic volumes
+    > sudo mount /var/lib/mysql      /mnt/ephemeral1/mysql 
+
+5. Copy EBS contents to ephemeral storage
+    > sudo cp -rp /mnt/ebs/wormbase /mnt/ephemeral0/wormbase/. 
+    > sudo cp -rp /mnt/ebs/mysql    /mnt/ephemeral1/mysql/. 
+
+6. Update software
+    > cd /usr/local/wormbase/website/production ; git pull
+7. Unmount the EBS reference volume
+    > sudo umount /mnt/ebs
+8. Detach the volume via the API
+   -- repeat for all new instances --
+9. When finished, update the IPs to our static addresses.
+10. Kill instances running the old versions.
+11. Retain core AMIs and single EBS for each version.
+
+#!/usr/bin/perl
+
+use strict;
+use VM::EC2;
+
+my $access_key = $ENV{EC2_ACCESS_KEY};
+my $secret_key = $ENV{EC2_SECRET_KEY};
+
+# get new EC2 object
+my $ec2 = VM::EC2->new(-access_key => $access_key,
+		       -secret_key => $secret_key,
+		       -endpoint   => 'http://ec2.amazonaws.com') or die "$!";
+
+# find existing volumes that are available
+#my @volumes = $ec2->describe_volumes({status=>'available'});
+#print @volumes;
+
+# fetch the Core WormBase AMI.
+my $image = $ec2->describe_images('ami-e8bf1e81');
+my $name  = $image->name;
+my $state   = $image->imageState;
+my $owner   = $image->imageOwnerId;
+my $rootdev = $image->rootDeviceName;
+my @devices = $image->blockDeviceMapping;
+my $tags    = $image->tags;
+
+print "name\t$name\n";
+print "state\t$state\n";
+print "owner\t$owner\n";
+print "rootdev\t$rootdev\n";
+
+
+
+=cut
+
+sub build_new_core_ami {
+    my $self = shift;
+
+    # Create a new EBS volume for this release.
+    my $volume   = $self->provision_new_volume;
+
+    # Launch a new instance of the core AMI
+    my $instance = $self->launch_new_core_instance;
+
+    # Attach my new EBS volume so I can dump data onto it.
+    $self->attach_new_ebs_volume($volume,$instance);
+
+    # Attach the core MySQL volume ( vol-53ae003d)
+    $self->attach_core_mysql_volume('vol-53ae003d',$instance);
+    
+    # Connect and format, then mount volume.
+
+}
+
+sub provision_new_ebs_volume {
+    my $self = shift;
+    my $ec2  = $self->ec2;
+    
+    my $vol = $ec2->create_volume(-availability_zone => 'us-east-1d',
+                                   -size             =>  300);
+    $ec2->wait_for_volumes($vol);
+    $self->log->info("volume $vol is ready!\n" if $vol->current_status eq 'available');
+    return $vol;
+}
+
+
+sub launch_new_core_instance {
+    my $self = shift;
+    my $ec2   = $self->ec2;
+
+    # The core image ID is hard-coded here. But it will change from release to release.
+    # Need to discover what it is.
+    my $image = $ec2->describe_images('ami-e8bf1e81');
+    my $instance = $ec2->run_instance({-instance_type => 'm1.large'});
+    return $instance;  # Should check to make sure the instance has launched.
+}
+
+
+sub attach_new_ebs_volume {
+    my ($self,$volume,$instance) = @_;    
+    $instance->attach_volume($vol=>'/dev/sdg');    
+}
+
+    
 
 
 
