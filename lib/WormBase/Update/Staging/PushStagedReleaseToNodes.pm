@@ -1,7 +1,7 @@
 package WormBase::Update::Staging::PushStagedReleaseToNodes;
 
 use Moose;
-use VM::EC2;
+#use VM::EC2;
 extends qw/WormBase::Update/;
 
 # The symbolic name of this step
@@ -593,8 +593,6 @@ print "rootdev\t$rootdev\n";
 
 
 
-=cut
-
 sub build_new_core_ami {
     my $self = shift;
 
@@ -643,6 +641,7 @@ sub attach_new_ebs_volume {
     $instance->attach_volume($vol=>'/dev/sdg');    
 }
 
+=cut
     
 
 

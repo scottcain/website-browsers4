@@ -95,6 +95,12 @@ END : load genomic gff databases; in 0 days, 22 hours, 58 minutes and 28 seconds
 # Development server(s)
 ./steps/adjust_symlinks.pl --release $RELEASE --target development
 
+# Tag software:
+shell> cd /path/to/your/repository
+shell> git branch --track WSXXX origin/master
+shell> git checkout WSXXX
+shell> git push origin WSXXX
+
 
 # 14. Begin precaching content
 ./steps/precache_content.pl --release WSXXX
