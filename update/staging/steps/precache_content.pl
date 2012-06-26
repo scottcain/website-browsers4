@@ -41,6 +41,12 @@ if ($class && $widget) {
 							       widget           => $widget,
 							       cache_query_host => $host,
 							     });
+} elsif ($class) {
+    $agent = WormBase::Update::Staging::PrecacheContent->new({ release          => $release,
+							       class            => $class,
+							       cache_query_host => $host,
+							     });
+
 } else {
     $agent = WormBase::Update::Staging::PrecacheContent->new({ release          => $release,
 							       cache_query_host => $host,

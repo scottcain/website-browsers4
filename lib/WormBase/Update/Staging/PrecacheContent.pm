@@ -270,13 +270,16 @@ sub crawl_website {
     my $c = Config::JFDI->new(file => '/usr/local/wormbase/website/production/wormbase.conf');
     my $config = $c->get;
 
-    my $db      = Ace->connect(-host=>'localhost',-port=>2005);
+    my $db      = Ace->connect(-host=>'localhost',-port=>2005) or warn;
     my $version = $self->release;
     my $cache_root = join("/",$self->support_databases_dir,$version,'cache');
     system("mkdir -p $cache_root/logs");
 
-    my $master_log_file = join("/",$self->support_databases_dir,$version,'cache','logs',"00-master_log.txt");
+    my $master_log_file = join("/",$cache_root,'logs',"00-master.log");
     open MASTER,">>$master_log_file";
+
+    my $master_error_file= join("/",$cache_root,'logs',"00-master.err");
+    open ERROR,">>$master_error_file";
            
 #    # Turn off autocheck so that server errors don't kill us.
 #    my $mech = WWW::Mechanize->new(-agent     => 'WormBase-PreCacher/1.0',
@@ -298,10 +301,11 @@ sub crawl_website {
 	
 	# next if $class eq 'anatomy_term';
 #	next unless $class eq 'cds';
-	next if $class eq 'microarray_results';
+#	next if $class eq 'microarray_results';
 #	next if $class eq 'feature';
 #	next unless $class =~ /strain|transgene|variation/;
 #	next unless $class eq 'gene_class';
+
 
         # Class-level status and timers.
 	my $start = time();
@@ -313,18 +317,16 @@ sub crawl_website {
 	|| 0;
 
 		    
-	my $cache_log = join("/",$cache_root,'logs',"$class.txt");
+	my $cache_log = join("/",$cache_root,'logs',"$class.log");
 	
 	$self->log->info("Precaching widgets for the $class class");
 	my %previous = $self->_parse_cached_classes_log($cache_log);
 
-	# And set up the cache error file
-	my $cache_err = join("/",$cache_root,'logs',"00-errors.txt");
-	open ERROR,">>$cache_err";
-
 	# Open cache log for writing.
 	open OUT,">>$cache_log";
 
+	my $class_err = join("/",$cache_root,'logs',"$class.err");
+	open CLASS_ERROR,">>$class_err";
 
 	# Which widgets will we be caching?
 	my @widgets;
@@ -358,12 +360,13 @@ sub crawl_website {
 	    foreach my $widget (@widgets) {
 		# References and human diseases are actually searches and not cached by the app.
 		next if $widget eq 'references';
-		next if $widget eq 'human_diseases';
-		next if $widget eq 'interactions';  # broken at the moment for WS231
+		next if $widget eq 'human_diseases';		
 
 		# Ignore class-level widgets.
-		next if $config->{sections}->{species}->{$class}->{widgets}->{$widget}->{display} eq 'index';
-		next if $config->{sections}->{resources}->{$class}->{widgets}->{$widget}->{display} eq 'index';
+		next if $config->{sections}->{species}->{$class}->{widgets}->{$widget}->{display}
+		&& $config->{sections}->{species}->{$class}->{widgets}->{$widget}->{display} eq 'index';
+		next if $config->{sections}->{resources}->{$class}->{widgets}->{$widget}->{display}
+		&& $config->{sections}->{resources}->{$class}->{widgets}->{$widget}->{display} eq 'index';
 
 		my $precache = defined $config->{sections}->{species}->{$class}
 		? eval { $config->{sections}->{species}->{$class}->{widgets}->{$widget}->{precache}; }
@@ -393,6 +396,7 @@ sub crawl_website {
 			# Also: in the future we might want to selectively REPLACE documents.
 			if ($self->check_if_stashed_in_couchdb($class,$widget,$obj)) {
 			    $already_cached++;
+			    print OUT join("\t",$class,$obj,$widget,$url,'success',0,'cached_in_couch'),"\n";
 			}
 #		    }
 
@@ -425,10 +429,13 @@ sub crawl_website {
 		my $content = get($uri) or
 		    print ERROR join("\t",$class,$object,$widget,$uri,'failed',$cache_stop - $cache_start),"\n";
 		
+
 	        if ($content) {
 		    my $cache_stop = time();
 		    $status{$class}{widgets}{$widget}++;
 		    print OUT join("\t",$class,$object,$widget,$uri,'success',$cache_stop - $cache_start),"\n";
+		} else {
+		    print CLASS_ERROR join("\t",$class,$object,$widget,$uri,'failed',$cache_stop - $cache_start),"\n";
 		}
 		    
 		$pm->finish; # do the exit in the child process
@@ -451,7 +458,7 @@ sub crawl_website {
 	    foreach my $widget (sort keys %{$status{$class}{widgets}} ) {
 		my $missing = $status{$class}{objects} - $status{$class}{widgets}{$widget};
 		my $percent = ($missing / $status{$class}{objects}) * 100;
-		print MASTER "\t$widget\t$status{$class}{widgets}{$widget}/$status{$class}{objects} -- $missing ($percent)\n";
+		print MASTER "\t$widget\t$status{$class}{widgets}{$widget}/$status{$class}{objects} -- $missing widgets missing ($percent)\n";
 	    }
 	    print MASTER "\n\n";
 #	}
