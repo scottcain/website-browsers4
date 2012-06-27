@@ -28,22 +28,27 @@ sub _build_couchdb {
     # Discover where our target couchdb is (for the
     # express purpose of creating a couchdb)
     my $couch_host;
-    if ($self->cache_query_host eq 'production') {
-
-	# When running precache on, say, wb-couch.
+    
+    # When running precache on, say, wb-couch.
+    if ($self->caching_from eq 'production' && $self->cache_query_host eq 'production') {
 	$couch_host = 'localhost:5984';
+    } elsif ($self->caching_from eq 'staging' && $self->cache_query_host eq 'production') {
+	
+	# We will never actually do this - once a release is in production,
+	# we will run the precaching script from the couchdb node.
 
 	# When running precache from, say, oicr to production.
-#	$couch_host = $self->couchdb_host_master;
-
+	$couch_host = $self->couchdb_host_master;
 
 	# For CRAWLING against production AND using queries against couchdb
 	# to see what we have already cached (instead of the log files)
 	# this needs to be set to couchdb.wormbase.org, not the IP
 	# which is firewalled by OICR.
 #	$couch_host = 'couchdb.wormbase.org';
-    } else {
+	
+    } elsif ($self->caching_from eq 'staging' && $self->cache_query_host eq 'staging') {       
 	$couch_host = $self->couchdb_host_staging;
+    } else {
     }
     
     my $couchdb = WormBase->create('CouchDB',{ release => $self->release, couchdb_host => $couch_host });
@@ -63,6 +68,12 @@ has 'widget' => (
 # This lets me run the precaching script at a low-level even after
 # a data release.
 has 'cache_query_host' => (
+    is      => 'rw',
+    default => 'staging',
+    );
+
+# Where is the caching script running?
+has 'caching_from' => (
     is => 'rw',
     default => 'staging',
     );
@@ -379,18 +390,20 @@ sub crawl_website {
 		if ($precache) {
 		    my $url = sprintf($base_url,$class,$obj,$widget);
 
-		    my $already_cached;
-		    # It's to slow to query from OICR to the production couchdb.
-		    # Instead, we'll just check the cache logs.
-#		    if ($self->cache_query_host eq 'production') {
-#
-#			# Or just check if the log says it has been cached...
-#			# checking the cache log should do similar URL escaping as check_if_stashed...?
-#			# Although right now, the cache_log only escapes hashes and nothing else.
-#			if ($previous{"$class$obj$widget"}) {
-#			    $already_cached++;
-#			}
-#		    } else {
+		    my $already_cached;		    
+		    if ($self->caching_from eq 'staging' && $self->cache_query_host eq 'production') {
+			# If we are caching against PRODUCTION from STAGING (eg the script is NOT running
+			# on production, queries from OICR to our production couch are sloooow.
+
+			# Check the cache log to see if we have already been cached.
+			# checking the cache log should do similar URL escaping as check_if_stashed...?
+			# Although right now, the cache_log only escapes hashes and nothing else.
+			if ($previous{"$class$obj$widget"}) {
+			    $already_cached++;
+			}
+		    } elsif (($self->caching_from eq 'staging' && $self->cache_query_host eq 'staging')
+			     ||
+			     ($self->caching_from eq 'production' && $self->cache_query_host eq 'production')) {
 			
 			# The code below checks for the presence of the document in couch.
 			# Also: in the future we might want to selectively REPLACE documents.
@@ -398,7 +411,7 @@ sub crawl_website {
 			    $already_cached++;
 			    print OUT join("\t",$class,$obj,$widget,$url,'success',0,'cached_in_couch'),"\n";
 			}
-#		    }
+		    } else { }
 
 		    if ($already_cached) {			
 			print STDERR " --> $class:$widget:$obj ALREADY CACHED; SKIPPING";

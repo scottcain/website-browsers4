@@ -6,21 +6,23 @@ use strict;
 use WormBase::Update::Staging::PrecacheContent;
 use Getopt::Long;
 
-my ($release,$help,$class,$widget,$host);
+my ($release,$help,$class,$widget,$host,$from);
 GetOptions('release=s' => \$release,
 	   'help=s'    => \$help,
 	   'class=s'   => \$class,
 	   'widget=s'  => \$widget,
 	   'host=s'    => \$host,
+	   'from=s'    => \$from,
     );
 
-if ($help || (!$release)) {
+if ($help || (!$release || !$from)) {
     die <<END;
     
-Usage: $0 --release WSXXX [--class CLASS --widget WIDGET --host (staging|production) ]
+Usage: $0 --release WSXXX --from (staging|production)  [--class CLASS --widget WIDGET --host (staging|production) ] 
 
     
-     Precache content on the classic site for the supplied release.
+     Precache content on the classic site for the supplied release. You MUST specify WHERE the caching script is
+     being run.  This impacts how we determine what has already been cached.
 
      To send queries to the production host, provide the optional --cache_query_host parameter.
 
@@ -40,16 +42,19 @@ if ($class && $widget) {
 							       class            => $class,
 							       widget           => $widget,
 							       cache_query_host => $host,
+							       caching_from     => $from,
 							     });
 } elsif ($class) {
     $agent = WormBase::Update::Staging::PrecacheContent->new({ release          => $release,
 							       class            => $class,
 							       cache_query_host => $host,
+							       caching_from     => $from,
 							     });
 
 } else {
     $agent = WormBase::Update::Staging::PrecacheContent->new({ release          => $release,
 							       cache_query_host => $host,
+							       caching_from     => $from,
 							     });
 }
 $agent->execute();
