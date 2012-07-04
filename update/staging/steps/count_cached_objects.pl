@@ -15,12 +15,12 @@ foreach (@classes) {
     
     my ($status,$actual);
     # Get stats for the current class.
-    if ( -e "$class.txt" && -s "$class.txt") {
+    if ( -e "$class.log" && -s "$class.log") {
 
-	$actual = `sort -u -k1,2 $class.txt | wc -l`;
+	$actual = `sort -u -k1,2 $class.log | wc -l`;
 	chomp $actual;
 	
-	my $row = `tail -1 $class.txt`;
+	my $row = `tail -1 $class.log`;
 	chomp $row;
 	my @fields = split("\t",$row);
 	my $id = $fields[1];

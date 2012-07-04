@@ -419,8 +419,8 @@ sub crawl_website {
 			$status{$class}{widgets}{$widget}++;
 			next;
 		    } else {
-			print STDERR " --> $class:$widget:$obj NOT CACHED\n";
-#			print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n"; 
+			print STDERR " --> $class:$widget:$obj NOT CACHED";
+			print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n"; 
 		    }
 
 		    # Remove hashes.  Hashes break our app and couchdb queries.
