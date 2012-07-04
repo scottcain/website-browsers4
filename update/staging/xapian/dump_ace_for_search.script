@@ -63,8 +63,8 @@ Find Operon
 Write /usr/local/wormbase/tmp/staging/acedmp/Operon.ace
 Find Paper
 Write /usr/local/wormbase/tmp/staging/acedmp/Paper.ace
-Find PCR
-Write /usr/local/wormbase/tmp/staging/acedmp/PCR.ace
+Find PCR_product
+Write /usr/local/wormbase/tmp/staging/acedmp/PCR_product.ace
 Find Person
 Write /usr/local/wormbase/tmp/staging/acedmp/Person.ace
 Find Phenotype

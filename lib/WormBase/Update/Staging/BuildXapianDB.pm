@@ -94,8 +94,8 @@ Find Operon
 Write $tmp_dir/Operon.ace
 Find Paper
 Write $tmp_dir/Paper.ace
-Find PCR
-Write $tmp_dir/PCR.ace
+Find PCR_product
+Write $tmp_dir/PCR_product.ace
 Find Person
 Write $tmp_dir/Person.ace
 Find Phenotype
