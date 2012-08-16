@@ -172,7 +172,7 @@ classes = (   { filename = "Paper.ace";
               { filename = "Operon.ace"; 
                 desc = ("gene", "remark", "description"); },
               { filename = "Position_matrix.ace"; },
-              { filename = "PCR.ace"; },
+              { filename = "PCR_product.ace"; },
               { filename = "Oligo.ace"; },
               { filename = "Oligo_set.ace"; },
               { filename = "Phenotype.ace"; },
