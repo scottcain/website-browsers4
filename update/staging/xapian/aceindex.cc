@@ -15,6 +15,9 @@
  * value(6) = readable label
  * value(7) = paper type
  * value(8) = paper type id (for search, sortable number)
+ * value(9) = start
+ * value(10) = end
+ * value(11) = strand
  * 
  * all tags are added as terms, unless it is a 'not_' tag
  * all 'name' or 'synonym' tags are added as synonyms to the WBid
@@ -37,7 +40,8 @@
 #include <cstring>
 #include <dirent.h>
 
-
+/* MySQL Connector/C++ specific headers */
+#include <mysql.h>
 
 using namespace std;
 using namespace libconfig;
@@ -48,8 +52,15 @@ Xapian::TermGenerator indexer;
 Xapian::TermGenerator syn_indexer;
 Xapian::WritableDatabase db;
 Xapian::WritableDatabase syn_db;
-map<string, int>  species;
+map<string, int>  species_list;
 map<string, int>  paper_id;
+
+
+MYSQL *connection,mysql;
+MYSQL_RES *result;
+MYSQL_ROW row;
+int query_state;
+
 
 static void
 replaceChar(string &str, char old, char new_char){
@@ -139,9 +150,9 @@ indexLineBegin(string field_name, string line, string copy, string obj_name, Xap
     line = splitFields(line, true);
     indexer.index_text(line, 1);
     line = parseSpecies(line);
-    doc.add_value(3, Xapian::sortable_serialise(species[line]));
+    doc.add_value(3, Xapian::sortable_serialise(species_list[line]));
     doc.add_value(5, line);
-    syn_doc.add_value(3, Xapian::sortable_serialise(species[line]));
+    syn_doc.add_value(3, Xapian::sortable_serialise(species_list[line]));
     syn_doc.add_value(5, line);
     indexer.index_text(line, 1);
     return true;
@@ -330,6 +341,11 @@ indexLongText(char* filename, Setting &root){
     
     string line;
     getline(read, line);
+    
+    if(!read.is_open()){
+     cout << "File " << filename << " does not exist." << endl;
+     return; 
+    }
 
     while (!read.eof()) {
 
@@ -402,6 +418,145 @@ compactDB(string db_path){
 }
 
 
+void
+indexGFF3obj(MYSQL_ROW row, string species){
+      
+        string obj_class = "Gene";
+        string obj_name = row[0];
+        string start = row[1];
+        string end = row[2];
+        string strand = row[3];
+        string alias;
+        string search_desc;
+        if(row[4]){
+          alias = row[4];
+          search_desc = search_desc + "title=<i>" + alias + "</i>\n";
+        }
+
+        
+        //index the first line and set up the document
+        Xapian::Document doc;
+        Xapian::Document syn_doc;
+        indexer.set_document(doc);
+        
+                string note;
+        if(row[5]){
+          note = row[5];
+          indexer.index_text(note, 10);
+        }
+        
+        string description;
+        if(row[6]){
+          description = row[6];
+          indexer.index_text(description, 10);          
+          search_desc = search_desc + "description=" + description + "\n";
+        }
+
+        search_desc = search_desc + "remark=" + note + "\n";
+
+        doc.add_value(0, obj_class); // set value 0 to class
+        doc.add_value(1, obj_name); // set value 1 to WBID
+        syn_doc.add_value(0, obj_class); // set value 0 to class
+        syn_doc.add_value(1, obj_name); // set value 1 to WBID
+        doc.add_value(6, obj_name);
+        syn_doc.add_value(6, obj_name);
+        
+        doc.add_value(9, start); 
+        doc.add_value(10, end); 
+        doc.add_value(11, strand); 
+
+        syn_doc.add_value(9, start);
+        syn_doc.add_value(10, end);
+        syn_doc.add_value(11, strand); 
+        
+        obj_name = Xapian::Unicode::tolower(obj_name);
+        obj_class = Xapian::Unicode::tolower(obj_class);
+        doc.add_value(2, obj_class); // set value 2 to lowercase class
+        syn_doc.add_value(2, obj_class); // set value 2 to lowercase class
+        syn_doc.add_term(obj_name, 1);
+
+        
+        //add the class and wbid as terms
+        indexer.index_text(obj_name, 500); //EXTRA EXTRA count on the wbid
+        indexer.index_text(obj_class);
+        indexer.index_text(obj_class + obj_name);
+
+        replaceChar(obj_name, '-', '_');
+        //add the class and wbid as terms
+        indexer.index_text(obj_name, 500); //EXTRA EXTRA count on the wbid
+        indexer.index_text(obj_class);
+        indexer.index_text(obj_class + obj_name);
+        
+        doc.add_value(3, Xapian::sortable_serialise(species_list[species]));
+        doc.add_value(5, species);
+        syn_doc.add_value(3, Xapian::sortable_serialise(species_list[species]));
+        syn_doc.add_value(5, species);
+        indexer.index_text(species, 1);
+        
+        
+
+        if (!alias.empty()) {        
+          indexer.index_text(alias, 20);
+          replaceChar(alias, '-', '_');
+          if(alias.length() < 245){
+            db.add_synonym(alias, obj_name);
+            syn_doc.add_term(alias, 1);
+          }
+          indexer.index_text(alias, 40); //extra count on names
+        }
+        cout << obj_class << ": " << obj_name << "|" << alias << endl;
+                cout << search_desc << endl;
+                
+                replaceChar(species, '_', '-');
+                indexer.index_text(species, 10);
+
+        doc.set_data(search_desc);
+        db.add_document(doc);
+        syn_db.add_document(syn_doc);
+}
+
+
+void
+indexGFF3(string species){
+    cout << "indexing gff3 species " << species << endl;
+    
+    //connect to database
+    mysql_init(&mysql);
+    connection = mysql_real_connect(&mysql,"localhost","wormbase","",species.c_str(),0,0,0); //GET NONROOT USER!!
+    if(connection==NULL)
+    {
+        cout<<mysql_error(&mysql)<<endl;
+    }
+    else
+    {
+        cout<<"connected to " << species <<endl;
+    }
+    
+    //get query
+    query_state = mysql_query(connection, "SET @alias = (SELECT id FROM attributelist al WHERE al.tag = 'Alias')");
+    query_state = mysql_query(connection, "SET @note = (SELECT id FROM attributelist al WHERE al.tag = 'Note')");
+    query_state = mysql_query(connection, "SET @parent = (SELECT id FROM attributelist al WHERE al.tag = 'parent_id')");
+    query_state = mysql_query(connection, "SET @info = (SELECT id FROM attributelist al WHERE al.tag = 'info'); ");
+
+    query_state = mysql_query(connection, "SELECT n.name, f.start, f.end, f.strand, a.attribute_value as alias, note.attribute_value as note, GROUP_CONCAT(d.attribute_value) as info, f.id FROM typelist t, feature f LEFT JOIN attribute note ON f.id = note.id AND note.attribute_id = @note LEFT JOIN attribute a ON f.id = a.id AND note.attribute_id = @alias, name n LEFT JOIN attribute child ON CONCAT('gene:', n.name) = child.attribute_value AND child.attribute_id = @parent LEFT JOIN attribute d ON child.id = d.id AND d.attribute_id = @info WHERE f.typeid = t.id AND t.tag = 'gene:WormBase' AND f.id = n.id GROUP BY f.id, n.name, f.start, f.end, f.strand, alias, note");
+    if (query_state !=0) {
+      cout << mysql_error(connection) << endl;
+      return;
+    }
+    
+    //process query results
+    result = mysql_store_result(connection);
+    while ( ( row = mysql_fetch_row(result)) != NULL ) {
+      indexGFF3obj(row, species);
+    }
+    
+    //close mysql connection
+    mysql_free_result(result);
+    mysql_close(connection);
+    cout << "done indexing gff3 species " << species << endl;
+}
+
+
 int
 main(int argc, char **argv)
 try {
@@ -409,6 +564,8 @@ try {
       cout << "Usage: " << argv[0] << argc << " CONFIG_FILE WSXXX" << endl;
       exit(1);
     }
+    
+
 
     Config cfg;
     cfg.readFile(argv[1]);
@@ -428,6 +585,11 @@ try {
     mkdir(cstr, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     cout << db_path << endl;
     
+        // Open the database for update, creating a new database if necessary.
+    db = Xapian::WritableDatabase(db_path + "/main-full", Xapian::DB_CREATE_OR_OPEN);
+    syn_db = Xapian::WritableDatabase(db_path + "/syn-full", Xapian::DB_CREATE_OR_OPEN);
+
+    
     for(int i=0; i<species_settings.getLength(); i++){
       const Setting &spec = species_settings[i];
       string name;
@@ -435,7 +597,12 @@ try {
       
       spec.lookupValue("name", name);
       spec.lookupValue("id", id);
-      species[name] = id;
+      species_list[name] = id;
+      
+      if(spec.exists("gff3")){
+        indexGFF3(name);
+      }
+
     }
 
     map<string, string(*)[5]>  classes;
@@ -443,9 +610,6 @@ try {
     string desc[5];
 
 
-    // Open the database for update, creating a new database if necessary.
-    db = Xapian::WritableDatabase(db_path + "/main-full", Xapian::DB_CREATE_OR_OPEN);
-    syn_db = Xapian::WritableDatabase(db_path + "/syn-full", Xapian::DB_CREATE_OR_OPEN);
 
   
     for(int j=0; j < classes_settings.getLength() ; j++) {
@@ -476,26 +640,27 @@ try {
       }
       cout << "Indexing " << filename << endl;
       indexFile(filename, desc, desc_size, root);
-      free(filename);
+
 
       // Explicitly commit so that we get to see any errors.
       db.commit();
       syn_db.commit();
-      
+
       if(setting.exists("after")){
         const char* after;
         setting.lookupValue("after", after);
-        char* filename = (char *) malloc(strlen(acedmp_path) + 10 + strlen(after));
-        strcpy(filename, acedmp_path);
-        strcat(filename, "/");
-        strcat(filename, after);
-        indexLongText(filename, root);
-        free(filename);
+        char* f = (char *) malloc(strlen(acedmp_path) + 10 + strlen(after));
+        strcpy(f, acedmp_path);
+        strcat(f, "/");
+        strcat(f, after);
+        indexLongText(f, root);
+        free(f);
         // Explicitly commit so that we get to see any errors.
         db.commit();
         syn_db.commit();
       }
       cout << "Done indexing " << filename << endl;
+      free(filename);
       
     }
     compactDB(db_path + "/main");
