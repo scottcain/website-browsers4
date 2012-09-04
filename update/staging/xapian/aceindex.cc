@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <cstring>
 #include <dirent.h>
+#include <algorithm>
 
 /* MySQL Connector/C++ specific headers */
 #include <mysql.h>
@@ -430,6 +431,7 @@ indexGFF3obj(MYSQL_ROW row, string species){
         string search_desc;
         if(row[4]){
           alias = row[4];
+          alias.erase(remove(alias.begin(), alias.end(), '\n'), alias.end());
           search_desc = search_desc + "title=<i>" + alias + "</i>\n";
         }
 
@@ -439,20 +441,21 @@ indexGFF3obj(MYSQL_ROW row, string species){
         Xapian::Document syn_doc;
         indexer.set_document(doc);
         
-                string note;
+        string note;
         if(row[5]){
           note = row[5];
+          note.erase(remove(note.begin(), note.end(), '\n'), note.end());
           indexer.index_text(note, 10);
+          search_desc = search_desc + "remark=" + note + "\n";
         }
         
         string description;
         if(row[6]){
           description = row[6];
           indexer.index_text(description, 10);          
+          description.erase(remove(description.begin(), description.end(), '\n'), description.end());
           search_desc = search_desc + "description=" + description + "\n";
         }
-
-        search_desc = search_desc + "remark=" + note + "\n";
 
         doc.add_value(0, obj_class); // set value 0 to class
         doc.add_value(1, obj_name); // set value 1 to WBID
@@ -522,7 +525,7 @@ indexGFF3(string species){
     
     //connect to database
     mysql_init(&mysql);
-    connection = mysql_real_connect(&mysql,"localhost","wormbase","",species.c_str(),0,0,0); //GET NONROOT USER!!
+    connection = mysql_real_connect(&mysql,"localhost","root","3l3g@nz",species.c_str(),0,0,0); //GET NONROOT USER!!
     if(connection==NULL)
     {
         cout<<mysql_error(&mysql)<<endl;
@@ -538,7 +541,7 @@ indexGFF3(string species){
     query_state = mysql_query(connection, "SET @parent = (SELECT id FROM attributelist al WHERE al.tag = 'parent_id')");
     query_state = mysql_query(connection, "SET @info = (SELECT id FROM attributelist al WHERE al.tag = 'info'); ");
 
-    query_state = mysql_query(connection, "SELECT n.name, f.start, f.end, f.strand, a.attribute_value as alias, note.attribute_value as note, GROUP_CONCAT(d.attribute_value) as info, f.id FROM typelist t, feature f LEFT JOIN attribute note ON f.id = note.id AND note.attribute_id = @note LEFT JOIN attribute a ON f.id = a.id AND note.attribute_id = @alias, name n LEFT JOIN attribute child ON CONCAT('gene:', n.name) = child.attribute_value AND child.attribute_id = @parent LEFT JOIN attribute d ON child.id = d.id AND d.attribute_id = @info WHERE f.typeid = t.id AND t.tag = 'gene:WormBase' AND f.id = n.id GROUP BY f.id, n.name, f.start, f.end, f.strand, alias, note");
+    query_state = mysql_query(connection, "SELECT f.name, f.start, f.end, f.strand, a.attribute_value as alias, note.attribute_value as note, GROUP_CONCAT(d.attribute_value) as info, f.id FROM (SELECT f.id, f.start, f.end, f.strand, n.name FROM feature f, typelist t, name n WHERE f.typeid = t.id AND f.id = n.id AND t.tag = 'gene:WormBase') f LEFT JOIN attribute note ON f.id = note.id AND note.attribute_id = @note LEFT JOIN attribute a ON f.id = a.id AND note.attribute_id = @alias LEFT JOIN attribute child ON CONCAT('gene:', f.name) = child.attribute_value AND child.attribute_id = @parent LEFT JOIN attribute d ON child.id = d.id AND d.attribute_id = @info GROUP BY f.id, f.name, f.start, f.end, f.strand, alias, note");
     if (query_state !=0) {
       cout << mysql_error(connection) << endl;
       return;
@@ -594,12 +597,13 @@ try {
       const Setting &spec = species_settings[i];
       string name;
       int id;
+      int gff3;
       
       spec.lookupValue("name", name);
       spec.lookupValue("id", id);
       species_list[name] = id;
       
-      if(spec.exists("gff3")){
+      if(spec.lookupValue("gff3", gff3) && (gff3 == 1)){
         indexGFF3(name);
       }
 
