@@ -525,7 +525,7 @@ indexGFF3(string species){
     
     //connect to database
     mysql_init(&mysql);
-    connection = mysql_real_connect(&mysql,"localhost","root","3l3g@nz",species.c_str(),0,0,0); //GET NONROOT USER!!
+    connection = mysql_real_connect(&mysql,"localhost","wormbase","",species.c_str(),0,0,0); //GET NONROOT USER!!
     if(connection==NULL)
     {
         cout<<mysql_error(&mysql)<<endl;
