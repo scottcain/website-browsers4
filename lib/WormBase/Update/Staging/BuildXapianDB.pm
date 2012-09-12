@@ -124,6 +124,8 @@ Find Transgene
 Write $tmp_dir/Transgene.ace
 Find Variation
 Write $tmp_dir/Variation.ace
+Find WBProcess
+Write $tmp_dir/WBProcess.ace
 END
 ;
 
@@ -199,6 +201,7 @@ classes = (   { filename = "Paper.ace";
                 desc = ("description", "gene", "hsgene", "synonym"); },
               { filename = "Widgets.ace"; 
                 desc = ("widget_title", "editor", "wbid", "widget_order", "type"); },
+              { filename = "WBProcess.ace"; },
               { filename = "Pages.ace"; 
                 desc = ("description"); }        
 
