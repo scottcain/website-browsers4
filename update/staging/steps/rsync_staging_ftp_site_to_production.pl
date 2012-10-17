@@ -6,14 +6,13 @@ use strict;
 use WormBase::Update::Staging::RsyncFTPSite;
 use Getopt::Long;
 
-my ($release,$help);
-GetOptions('release=s' => \$release,
-	   'help=s'    => \$help);
+my ($help);
+GetOptions('help=s'    => \$help);
 
-if ($help || (!$release)) {
+if ($help) {
     die <<END;
-    
-Usage: $0 --release WSXXX
+
+Usage: $0
 
 Rsync staging FTP site to the production FTP site.
 
@@ -21,5 +20,5 @@ END
 ;
 }
 
-my $agent = WormBase::Update::Staging::RsyncFTPSite->new({ release => $release });
+my $agent = WormBase::Update::Staging::RsyncFTPSite->new({ release => 'release_independent_steps' });
 $agent->execute();

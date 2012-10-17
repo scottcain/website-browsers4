@@ -66,13 +66,15 @@ sub run {
 	# Support
 	my ($db_nodes) = $self->target_nodes('support');
 	foreach my $node (@$db_nodes) {
-	    next if $node eq $self->staging_host;  # No need to push a staged release back to ourselves.
-	    # $self->package_support_databases() if ($self->method eq 'by_package');
-	    $self->rsync_support_dbs_to_target_node($node);
-	    # Other approaches
-	    # $self->rsync_support_dbs_dir_to_nfs_mount($node);
-	    # $self->rsync_support_dbs_dir($node);
-	    # $self->rsync_support_dbs_package($node);
+	    if ($target eq 'production') {
+		next if $node eq $self->staging_host;  # No need to push a staged release back to ourselves.
+		# $self->package_support_databases() if ($self->method eq 'by_package');	    
+		$self->rsync_support_dbs_to_target_node($node);
+		# Other approaches
+		# $self->rsync_support_dbs_dir_to_nfs_mount($node);
+		# $self->rsync_support_dbs_dir($node);
+		# $self->rsync_support_dbs_package($node);
+	    }
 	}
 	
     }
