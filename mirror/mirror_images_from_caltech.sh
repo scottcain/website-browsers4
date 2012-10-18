@@ -4,4 +4,5 @@
 
 #rsync --rsh=ssh -Cav /usr/local/wormbase/pictures/virtualworm/ tharris@wb-dev.oicr.on.ca:/usr/local/wormbase/website-shared-files/html/img/virtualworm
 #rsync --rsh=ssh -Cav -L /usr/local/wormbase/pictures/ tharris@wb-dev.oicr.on.ca:/usr/local/wormbase/website-shared-files/html/img
-rsync --rsh=ssh -Cav -L tharris@canopus.caltech.edu:/home/daniela/OICR/ /usr/local/wormbase/website-shared-files/html/img-static/picture_object
+rsync --rsh=ssh -Cav -L tharris@canopus.caltech.edu:/usr/local/wormbase/OICR/Pictures/ /usr/local/wormbase/website-shared-files/html/img-static/pictures
+rsync --rsh=ssh -Cav -L tharris@canopus.caltech.edu:/usr/local/wormbase/OICR/Movies/ /usr/local/wormbase/website-shared-files/html/img-static/movies
