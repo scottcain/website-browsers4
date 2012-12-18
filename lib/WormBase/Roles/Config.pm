@@ -441,9 +441,9 @@ has 'production_app_nodes' => (
 	[qw/50.19.112.56
             ec2-50-19-229-229.compute-1.amazonaws.com            
             wb-mining.oicr.on.ca
-	    canopus.caltech.edu/]},
+/]},
     );
-
+#	    canopus.caltech.edu
 
 ###############
 # ACEDB NODES
@@ -454,10 +454,11 @@ has 'staging_acedb_nodes' => (
     isa => 'ArrayRef',
     default => sub {
 	[qw/wb-web7.oicr.on.ca
+            wb-web1.oicr.on.ca
 /]
     },
     );
-#            wb-web1.oicr.on.ca
+
 #            wb-web2.oicr.on.ca
 #	    wb-web3.oicr.on.ca
 #	    wb-web4.oicr.on.ca/]
@@ -517,11 +518,11 @@ has 'production_support_nodes' => (
     default => sub {
 	[qw/ec2-50-19-229-229.compute-1.amazonaws.com
             wb-mining.oicr.on.ca
-            canopus.caltech.edu
 /],
     },
     );
 
+#            canopus.caltech.edu
 
 ###############
 # MYSQL NODES
@@ -531,8 +532,9 @@ has 'staging_mysql_nodes' => (
     isa => 'ArrayRef',
     default => sub {
 	[qw/wb-web7.oicr.on.ca
+            wb-web1.oicr.on.ca
 /]});
-#            wb-web1.oicr.on.ca
+
 #            wb-web2.oicr.on.ca
 #	    wb-web3.oicr.on.ca
 #	    wb-web4.oicr.on.ca/]

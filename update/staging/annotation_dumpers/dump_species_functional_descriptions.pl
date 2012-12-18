@@ -75,7 +75,7 @@ while (my $gene = $i->next) {
     my $detailed = $gene->Detailed_description    || $no_entry;
 #  print "$gene" . ($name ? " ($name)\n" : "\n");
     if ($format eq 'record') {
-	print join("\t",$gene,$name,$molecular_name),"\n";
+	print join("\t",$gene,$name,$molecular_name) . "\n";
 	print rewrap("Concise description: $concise\n");
 	#  print rewrap("Brief description: $brief\n");
 	print rewrap("Provisional description: $prov\n");

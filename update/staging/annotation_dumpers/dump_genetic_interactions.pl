@@ -25,19 +25,19 @@ Gene2-Molecular_name Gene2-CGC_name Interaction_type Brief_citation/) . "\n";
 
 my @interactions = $DB->fetch(Interaction=>'*');
 foreach my $interaction (@interactions) {
-    print STDERR $interaction,"\n";
-   my $reference = eval { $interaction->Paper->Brief_citation };
-   
-   my $interaction_type;
-   my @cols = ($interaction);
-   foreach ($interaction->Interactor) {
-       my ($interactor,$type) = $_->row;
-      $interaction_type = $type if $type ne '';  # Ugh.
-      my $molecular_name = $interactor->Molecular_name || NA;
-      my $cgc_name       = $interactor->CGC_name       || NA;
-      push (@cols,$interactor,$molecular_name,$cgc_name)
-   }
-   push @cols,$interaction_type,$reference;
+    print STDERR $interaction,"\n";    
+    my @cols = ($interaction);
+    foreach ($interaction->Interactor) {
+	my ($interactor) = $_->col;
+#	$interaction_type  = $type if $type ne '';  # Ugh.
+	my $molecular_name = $interactor->Molecular_name || NA;
+	my $cgc_name       = $interactor->CGC_name       || NA;
+	push (@cols,$interactor,$molecular_name,$cgc_name)
+    }
+    
+    my $interaction_type = $interaction->Interaction_type;
+    my $reference = eval { $interaction->Paper->Brief_citation };
+    push @cols,$interaction_type,$reference;
    print join("\t",@cols) . "\n";
 }
 
