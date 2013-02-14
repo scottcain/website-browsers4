@@ -100,8 +100,8 @@ sub purge_entries_from_cache_log {
     my $cache_log = join("/",$cache_root,"$class.log");
     system("mv $cache_log $cache_root/$class.original.log");
         
-    open IN,"$cache_root/$class.original.txt" or die "$!";
-    open OUT,">>$cache_root/$class.txt";
+    open IN,"$cache_root/$class.original.log" or die "$!";
+    open OUT,">>$cache_root/$class.log";
     
     while (<IN>) {
 	chomp;

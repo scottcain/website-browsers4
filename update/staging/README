@@ -30,8 +30,7 @@ rm -rf /usr/local/wormbase/tmp/staging/acedmp
 # END : push acedb to caltech; in 0 days, 1 hours, 4 minutes and 33 seconds
 ./steps/rsync_acedb_to_caltech.pl --release $RELEASE --method by_directory
 
-# 3. Create BLAST databases (requires ~ 2 hours for 16 species)
-# END : build BLAST databases; in 0 days, 2 hours, 5 minutes and 6 seconds
+# 3. Create BLAST databases (requires ~ 5 minutes for 16 species)
 ./steps/create_blast_databases.pl --release $RELEASE
 
 # 5. Load Genomic GFF databases
@@ -70,11 +69,9 @@ END : load genomic gff databases; in 0 days, 22 hours, 58 minutes and 28 seconds
 # 13. Check out new software to the staging server.
 
 # 14. Rsync staging FTP site to the production FTP site.
-#     * Updates symlinks on the local staging FTP site; these are then synced
-# This is run by cron in the background, but needs to be run here with a version
-# in order to adjust symlinks on the FTP site.
-
-./steps/rsync_staging_ftp_site_to_production.pl --release $RELEASE
+#   Sync the staging FTP site (on isilon FTP site) to other NFS mount.
+#   run by cron on wb-dev currently.
+#   ./steps/rsync_staging_ftp_site_to_production.pl
 
 # 15. Push a newly staged version to development server(s).
 #    If ANYTHING is wrong with the staged release,
@@ -96,10 +93,11 @@ END : load genomic gff databases; in 0 days, 22 hours, 58 minutes and 28 seconds
 ./steps/adjust_symlinks.pl --release $RELEASE --target development
 
 # Tag software:
-shell> cd /path/to/your/repository
-shell> git branch --track WSXXX origin/master
-shell> git checkout WSXXX
-shell> git push origin WSXXX
+# No longer using
+#shell> cd /path/to/your/repository
+#shell> git branch --track WSXXX origin/master
+#shell> git checkout WSXXX
+#shell> git push origin WSXXX
 
 
 # 14. Begin precaching content

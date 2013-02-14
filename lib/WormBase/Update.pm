@@ -270,7 +270,7 @@ sub update_ftp_site_symlinks {
     chdir($releases_dir);
     if ($type eq 'development') {
 	$self->update_symlink({target => $release,
-			       symlink => 'current-dev.wormbase.org-release',
+			       symlink => 'current-development-release',
 			      });
     } elsif ($type eq 'production') {
 	$self->update_symlink({target => $release,
@@ -310,6 +310,7 @@ sub update_ftp_site_symlinks {
 		# Create some directories. Probably already exist.
 		system("mkdir -p $species_dir/$species");
 		chdir "$species_dir/$species";
+		mkdir("assemblies");
 		mkdir("gff");
 		mkdir("annotation");
 		mkdir("sequence");
@@ -323,6 +324,13 @@ sub update_ftp_site_symlinks {
 		chdir "$species_dir/$species";
 		if ($file =~ /gff/) {
 		    chdir("gff") or die "$!";
+		    $self->update_symlink({target => "../../../releases/$release/species/$species/$file",
+					   symlink => $file,
+					   release => $release,
+					   type    => $type,
+					  });
+		} elsif ($file =~ /assembly/) {
+		    chdir("assemblies") or die "$!";
 		    $self->update_symlink({target => "../../../releases/$release/species/$species/$file",
 					   symlink => $file,
 					   release => $release,

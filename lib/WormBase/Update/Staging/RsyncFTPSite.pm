@@ -13,7 +13,7 @@ sub run {
     my $self    = shift;       
     my $release = $self->release;
 #    $self->rsync_ftp_directory();   
-    $self->rsync_from_nfs_mount();
+    $self->rsync_from_nfs_mount;
 }
 
 
@@ -37,11 +37,11 @@ sub rsync_from_nfs_mount {
     my $self = shift;
     my $ftp_root         = $self->ftp_root;
     my $production_host  = $self->production_ftp_host;
-    $self->log->info("rsyncing to FTP site to $production_host");
+    $self->log->info("rsyncing staging FTP NFS mount to the prodution FTP site");
     
 #	$self->system_call("rsync -Cavv --exclude httpd.conf --exclude cache --exclude sessions --exclude databases --exclude tmp/ --exclude extlib --exclude ace_images/ --exclude html/rss/ $app_root/ ${node}:$wormbase_root/shared/website/classic",'rsyncing classic site staging directory into production');
-    $self->system_call("rsync -Cav /nfs/wormbase2/ftp/ /usr/local/wormbase/ftp/pub/wormbase",'rsyncing NFS mount staging FTP site to the production FTP site; once per day.');
+    $self->system_call("rsync -Cav /nfs/wormbase2/ftp/ /usr/local/ftp/pub/wormbase",'rsyncing NFS mount staging FTP site to the production FTP site; once per day.');
     
-
-
+}
+    
 1;
