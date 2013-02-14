@@ -73,6 +73,25 @@ replaceChar(string &str, char old, char new_char){
 }
 
 string
+uniquify(string q, string type){
+    string unique = type + q;
+    replaceChar(unique, ' ', '_');
+    replaceChar(unique, '.', '_');
+    replaceChar(unique, '(', '_');
+    replaceChar(unique, ')', '_');
+    replaceChar(unique, '-', '_');
+    replaceChar(unique, ':', '_');
+    replaceChar(unique, '/', '_');
+    replaceChar(unique, '\\', '_');
+    replaceChar(unique, '|', '_');
+    replaceChar(unique, '[', '_');
+    replaceChar(unique, ']', '_');
+    replaceChar(unique, '<', '_');
+    replaceChar(unique, '>', '_');
+    return unique;
+}
+
+string
 splitFields (string &fields, bool first = false){
   string ret;
   size_t quote = fields.find_first_of('"');
@@ -277,7 +296,8 @@ indexFile(char* filename, string desc[], int desc_size, Setting &root){
         //add the class and wbid as terms
         indexer.index_text(obj_name, 500); //EXTRA EXTRA count on the wbid
         indexer.index_text(obj_class);
-        indexer.index_text(obj_class + obj_name);
+        string unique = uniquify(obj_name, obj_class);
+        indexer.index_text(unique);
         cout << obj_class << ": " << obj_name;
         
         
@@ -482,7 +502,8 @@ indexGFF3obj(MYSQL_ROW row, string species){
         //add the class and wbid as terms
         indexer.index_text(obj_name, 500); //EXTRA EXTRA count on the wbid
         indexer.index_text(obj_class);
-        indexer.index_text(obj_class + obj_name);
+        string unique = uniquify(obj_name, obj_class);
+        indexer.index_text(unique);
 
         replaceChar(obj_name, '-', '_');
         //add the class and wbid as terms
@@ -525,14 +546,33 @@ indexGFF3(string species){
     
     //connect to database
     mysql_init(&mysql);
+    connection = mysql_real_connect(&mysql,"localhost","wormbase","",'\0',0,0,0); //GET NONROOT USER!!
+    if(connection==NULL)
+    {
+        cout<<mysql_error(&mysql)<<endl;
+        return;
+    }
+    else
+    {
+              cout<<"\tconnected to mysql" <<endl;
+    }
+    string q = "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = \'" + species + "\'";
+    query_state = mysql_query(connection, q.c_str());
+    result = mysql_store_result(connection);
+    if ( mysql_fetch_row(result) == NULL ){
+        cout << "\t" << species << " is not a database "  <<  endl;
+        return;
+    }
+    
     connection = mysql_real_connect(&mysql,"localhost","wormbase","",species.c_str(),0,0,0); //GET NONROOT USER!!
     if(connection==NULL)
     {
         cout<<mysql_error(&mysql)<<endl;
+        return;
     }
     else
     {
-        cout<<"connected to " << species <<endl;
+        cout<<"\tconnected to " << species <<endl;
     }
     
     //get query
@@ -556,7 +596,7 @@ indexGFF3(string species){
     //close mysql connection
     mysql_free_result(result);
     mysql_close(connection);
-    cout << "done indexing gff3 species " << species << endl;
+    cout << "\tdone indexing gff3 species " << species << endl;
 }
 
 
