@@ -210,7 +210,8 @@ classes = (   { filename = "Paper.ace";
 species = ( { name = "c_elegans";
               id = 6239; },
             { name = "c_angaria";
-              id = 96668; },
+              id = 96668;
+              gff3 = 1; },
             { name = "c_brenneri";
               id = 135651; },
             { name = "c_briggsae";
@@ -224,19 +225,33 @@ species = ( { name = "c_elegans";
             { name = "a_sum";
               id = 6253; },
             { name = "b_malayi";
-              id = 6279; },
+              id = 6279; 
+              gff3 = 1; },
+            { name = "c_sp11";
+              id = 886184; 
+              gff3 = 1; },
+            { name = "c_sp5";
+              id = 497871; 
+              gff3 = 1; },
+            { name = "b_xylophilus";
+              id = 6326; 
+              gff3 = 1; },
             { name = "c_drosophilae";
               id = 96641; },
             { name = "g_pallida";
               id = 36090; },
             { name = "h_bacteriophora";
-              id = 37862; },
+              id = 37862; 
+              gff3 = 1; },
             { name = "h_contortus";
-              id = 6289; },
+              id = 6289;
+              gff3 = 1;},
             { name = "m_hapla";
-              id = 6305; },
+              id = 6305; 
+              gff3 = 1;},
             { name = "m_incognita";
-              id = 6306; },
+              id = 6306; 
+              gff3 = 1;},
             { name = "n_brasiliensis";
               id = 36090; },
             { name = "o_volvulus";
@@ -244,7 +259,8 @@ species = ( { name = "c_elegans";
             { name = "s_ransomi";
               id = 554534; },
             { name = "s_ratti";
-              id = 34506; },
+              id = 34506; 
+              gff3 = 1;},
             { name = "t_circumcincta";
               id = 45464; },
             { name = "c_sp11";
@@ -252,7 +268,11 @@ species = ( { name = "c_elegans";
             { name = "t_muris";
               id = 70415; },
             { name = "t_spiralis";
-              id = 6334; }
+              id = 6334; 
+              gff3 = 1;},
+            { nmae = "l_loa";
+              id = 7209;
+              gff3 = 1; }
 ); 
 
 
