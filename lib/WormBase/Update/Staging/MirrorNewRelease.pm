@@ -85,17 +85,17 @@ END
     $self->log->info("mirroring $release from Hinxton: done");
 
 
-    # Update symlinks on the FTP site.
-    if ($release) {
-	my $releases_dir = $self->ftp_releases_dir;
-	chdir($releases_dir);
-	$self->update_symlink({target => $release,
-			       symlink => 'current-dev.wormbase.org-release',
-			      });
-	
-	# Update symlinks to the development version
-	$self->update_ftp_site_symlinks('development');
-    }
+#    # Update symlinks on the FTP site.
+#    if ($release) {
+#	my $releases_dir = $self->ftp_releases_dir;
+#	chdir($releases_dir);
+#	$self->update_symlink({target => $release,
+#			       symlink => 'current-development-release',
+#			      });
+#	
+#	# Update symlinks to the development version
+#	$self->update_ftp_site_symlinks({status => 'development'});
+#    }
 }
 
 

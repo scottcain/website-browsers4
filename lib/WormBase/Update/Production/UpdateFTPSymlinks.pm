@@ -12,7 +12,7 @@ has 'step' => (
 sub run {
     my $self = shift;       
     $self->update_ftp_site_symlinks();
-}	    
+}
 
 
 

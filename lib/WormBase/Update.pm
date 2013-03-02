@@ -140,6 +140,10 @@ has 'log_dir' => (
     default => '/usr/local/wormbase/logs/staging',
     );
 
+has 'status' => (
+    is => 'ro',
+    );
+
 
 # default step
 has 'step' => (
@@ -229,10 +233,14 @@ before 'execute' => sub {
 	return $version;
     }
 
-    unless ($self->step =~ /mirror/ 
+    if ($self->step =~ /mirror/ 
 	    || $self->step eq 'push acedb to production'
 	    || $self->step eq 'push support databases to production'
+	    || $self->step eq 'update symlinks on the production FTP site'
 	) {
+	$self->release('release_independent_step');
+	return;
+    } else {
 	$self->log->logdie("no release provided; discovering a new release only makes sense during the mirroring step.");
     }
     
@@ -258,35 +266,32 @@ before 'execute' => sub {
 # as appropriate.  Type should be set to production or development.
 sub update_ftp_site_symlinks {
     my $self = shift;
-    my $type = shift;
+    my $status       = $self->status;
     my $releases_dir = $self->ftp_releases_dir;
     my $species_dir  = $self->ftp_species_dir;
     
     # If provided, update symlinks on the FTP site
     # for that release.  Otherwise, walk through
-    # the releases directory.
+    # the releases directory to rebuild symbolic structure.
     my $release = $self->release;
 
     chdir($releases_dir);
-    if ($type eq 'development') {
-	$self->update_symlink({target => $release,
+    if ($status eq 'development') {
+	$self->update_symlink({target  => $release,
 			       symlink => 'current-development-release',
 			      });
-    } elsif ($type eq 'production') {
-	$self->update_symlink({target => $release,
-			       symlink => 'current-www.wormbase.org-release',
+    } elsif ($status eq 'production') {
+	$self->update_symlink({target  => $release,
+			       symlink => 'current-production-release',
 			      });
     } else {
-	$self->update_symlink({target => $release,
-			       symlink => 'current-www.wormbase.org-release',
-			      });
     }
 
     my @releases;
-    if ($release) {
-	@releases = glob("$releases_dir/$release") or die "$!";
-    } else {
+    if ($release eq 'release_independent_step') {
 	@releases = glob("$releases_dir/*") or die "$!";
+    } else {
+	@releases = glob("$releases_dir/$release") or die "$!";
     }
 
     foreach my $release_path (@releases) {
@@ -327,35 +332,35 @@ sub update_ftp_site_symlinks {
 		    $self->update_symlink({target => "../../../releases/$release/species/$species/$file",
 					   symlink => $file,
 					   release => $release,
-					   type    => $type,
+					   status    => $status,
 					  });
 		} elsif ($file =~ /assembly/) {
 		    chdir("assemblies") or die "$!";
 		    $self->update_symlink({target => "../../../releases/$release/species/$species/$file",
 					   symlink => $file,
 					   release => $release,
-					   type    => $type,
+					   status  => $status,
 					  });
 		} elsif ($file =~ /genomic|sequence/) {
 		    chdir "$species_dir/$species/sequence/genomic" or die "$!";
 		    $self->update_symlink({target  => "../../../../releases/$release/species/$species/$file",
 					   symlink => $file,
 					   release => $release,
-					   type    => $type,
+					   status  => $status,
 					  });
 		} elsif ($file =~ /transcripts/) {
 		    chdir "$species_dir/$species/sequence/transcripts" or die "$! $species";
 		    $self->update_symlink({target  => "../../../../releases/$release/species/$species/$file",
 					   symlink => $file,
 					   release => $release,
-					   type    => $type,
+					   status    => $status,
 					  });
 		} elsif ($file =~ /wormpep|protein/) {
 		    chdir "$species_dir/$species/sequence/protein" or die "$!";
 		    $self->update_symlink({target  => "../../../../releases/$release/species/$species/$file",
 					   symlink => $file,
 					   release => $release,
-					   type    => $type,
+					   status  => $status,
 					  });
 		    
 		    # best_blast_hits isn't in the annotation/ folder
@@ -368,7 +373,7 @@ sub update_ftp_site_symlinks {
 		    $self->update_symlink({target  => "../../../../releases/$release/species/$species/$file",
 					   symlink => $file,
 					   release => $release,
-					   type    => $type,
+					   status  => $status,
 					  });
 		} else { }
 	    }
@@ -389,7 +394,7 @@ sub update_ftp_site_symlinks {
 		$self->update_symlink({target  => "../../../../releases/$release/species/$species/annotation/$file",
 				       symlink => $file,
 				       release => $release,
-				       type    => $type,
+				       status  => $status,
 				      });
 	    }
 	}
@@ -406,14 +411,14 @@ sub update_symlink {
     my $target  = $params->{target};
     my $release = $params->{release};
     my $symlink = $params->{symlink};
-    my $type    = $params->{type};  # Set to development to provide links to current dev version.
-    $self->log->debug("updating $symlink -> $target");
+    my $status  = $params->{status};  # Set to development to provide links to current dev version.
+    $self->log->warn("updating $symlink -> $target");
     
     unlink($symlink)          or $self->log->warn("couldn't unlink $symlink; perhaps it didn't exist to begin with");
     symlink($target,$symlink) or $self->log->warn("couldn't create the $symlink");
     
     if ($release) {
-	if ($type eq 'development') {
+	if ($status eq 'development') {
 	    $symlink =~ s/$release/current_development/;
 	} else {
 	    $symlink =~ s/$release/current/;

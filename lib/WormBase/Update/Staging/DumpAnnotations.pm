@@ -50,7 +50,7 @@ sub run {
 		my $output = join("/",$output_root,'species',$name,'annotation');
 		$self->_make_dir($output);
 		
-		$self->log->info("dumping $description for $name");
+		$self->log->info("dumping $script $description for $name");
 		$self->system_call("$script --path $acedb_path --species $name | gzip -c > $output/$name.$release.$description.txt.gz",
 				   "dumping $description script");
 	    }
@@ -60,7 +60,7 @@ sub run {
 	    $self->_make_dir($output);
 	    $self->_make_dir("$output/$description");
 	    
-	    $self->log->info("dumping $description");
+	    $self->log->info("dumping $script $description");
 	    $self->system_call("$script --path $acedb_path | gzip -c > $output/$description/wormbase.$release.$description.txt.gz",
 			       "dumping $description script");
 	}
