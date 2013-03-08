@@ -122,6 +122,8 @@ Find Transcript
 Write $tmp_dir/Transcript.ace
 Find Transgene
 Write $tmp_dir/Transgene.ace
+Find Transposon
+Write $tmp_dir/Transposon.ace
 Find Variation
 Write $tmp_dir/Variation.ace
 Find WBProcess
@@ -189,6 +191,7 @@ classes = (   { filename = "Paper.ace";
               { filename = "Structure_data.ace"; },
               { filename = "Transgene.ace"; },
               { filename = "Transcript.ace"; },
+              { filename = "Transposon.ace"; },
               { filename = "Analysis.ace"; 
                 desc = ("title", "description"); },
               { filename = "Gene_class.ace"; },

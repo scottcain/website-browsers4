@@ -91,6 +91,8 @@ Find Transcript
 Write /usr/local/wormbase/tmp/staging/acedmp/Transcript.ace
 Find Transgene
 Write /usr/local/wormbase/tmp/staging/acedmp/Transgene.ace
+Find Transposon
+Write /usr/local/wormbase/tmp/staging/acedmp/Transposon.ace
 Find Variation
 Write /usr/local/wormbase/tmp/staging/acedmp/Variation.ace
 Find WBProcess
