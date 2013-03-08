@@ -7,6 +7,10 @@ See for an up-to-date description.
 http://wiki.wormbase.org/index.php/Software_Life_Cycle:_4._Updating_The_Production_Servers
 
 
+Final step is:
+# And update symlinks on the ftp site:
+./staging/steps/update_ftp_site_symlinks.pl --release $RELEASE --status production
+
 
 
 
