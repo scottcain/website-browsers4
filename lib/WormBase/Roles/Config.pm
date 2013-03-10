@@ -22,27 +22,6 @@ sub ssh {
     return $ssh;
 }
 
-# The precache_host is the host we will send queries to.
-# Typically, this would be the staging server as it will
-# have the newest version of the database.
-
-####################################
-#
-# Precaching
-# cache_query_host is where precache queries
-# are sent. The app configruration of that
-# host(s) controls in which couchdb the data
-# is stored.
-#
-####################################
-
-# Prewarming the cache, we simply direct request to the app on localhost.
-# The precache script can set this as appropriate to allow caching
-# of the production site at a low level.
-has 'cache_query_host_staging'    => ( is => 'rw', default => 'http://staging.wormbase.org');
-has 'cache_query_host_production' => ( is => 'rw', default => 'http://www.wormbase.org');
-has 'cache_query_host_classic'    => ( is => 'rw', default => 'http://localhost:8080');
-
 
 ####################################
 #
