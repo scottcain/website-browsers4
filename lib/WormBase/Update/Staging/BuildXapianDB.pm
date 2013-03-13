@@ -50,6 +50,8 @@ Find CDS
 Write $tmp_dir/CDS.ace
 Find Clone
 Write $tmp_dir/Clone.ace
+Find DO_term
+Write $tmp_dir/DO_term.ace
 Find Expr_pattern
 Write $tmp_dir/Expr_pattern.ace
 Find Expr_profile
@@ -157,6 +159,7 @@ classes = (   { filename = "Paper.ace";
                 desc = ("gene", "remark"); },
               { filename = "Clone.ace"; },
               { filename = "CDS.ace"; },
+              { filename = "DO_term.ace"; },
               { filename = "Expression_cluster.ace"; 
                 desc = ("description", "remark", "algorithm"); },
               { filename = "Expr_pattern.ace"; },
