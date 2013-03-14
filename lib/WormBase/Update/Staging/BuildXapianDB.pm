@@ -159,6 +159,7 @@ classes = (   { filename = "Paper.ace";
                 desc = ("gene", "remark"); },
               { filename = "Clone.ace"; },
               { filename = "CDS.ace"; },
+              { filename = "DO_term.ace"; },
               { filename = "Expression_cluster.ace"; 
                 desc = ("description", "remark", "algorithm"); },
               { filename = "Expr_pattern.ace"; },
