@@ -40,6 +40,7 @@ has 'couchdb_root'      => ( is => 'rw', default => '/usr/local/wormbase/couchdb
 # This works because the staging database is +1 that in production.
 # Meanwhile, production sites can continue to cache to production database.
 
+has 'couchdb_host_qaqc'        => ( is => 'rw', default => '206.108.125.175:5984' );
 has 'couchdb_host_staging'     => ( is => 'rw', default => '206.108.125.164:5984' );
 has 'couchdb_host_production'  => ( is => 'rw', default => '23.21.171.141:5984');
 
