@@ -16,7 +16,7 @@ sub run {
     my $tmp_dir = "/usr/local/wormbase/tmp/staging/$release/acedmp";
     system("mkdir -p $tmp_dir");
     system("chmod 777 $tmp_dir");
-    $self->dump_objects_via_tace($tmp_dir);    
+#    $self->dump_objects_via_tace($tmp_dir);    
     $self->dump_settings_file($tmp_dir);
     $self->dump_pages_pseudo_ace_file($tmp_dir);
 
@@ -50,6 +50,8 @@ Find CDS
 Write $tmp_dir/CDS.ace
 Find Clone
 Write $tmp_dir/Clone.ace
+Find DO_term
+Write $tmp_dir/DO_term.ace
 Find Expr_pattern
 Write $tmp_dir/Expr_pattern.ace
 Find Expr_profile
@@ -94,8 +96,8 @@ Find Operon
 Write $tmp_dir/Operon.ace
 Find Paper
 Write $tmp_dir/Paper.ace
-Find PCR
-Write $tmp_dir/PCR.ace
+Find PCR_product
+Write $tmp_dir/PCR_product.ace
 Find Person
 Write $tmp_dir/Person.ace
 Find Phenotype
@@ -122,8 +124,12 @@ Find Transcript
 Write $tmp_dir/Transcript.ace
 Find Transgene
 Write $tmp_dir/Transgene.ace
+Find Transposon
+Write $tmp_dir/Transposon.ace
 Find Variation
 Write $tmp_dir/Variation.ace
+Find WBProcess
+Write $tmp_dir/WBProcess.ace
 END
 ;
 
@@ -152,6 +158,8 @@ classes = (   { filename = "Paper.ace";
               { filename = "Antibody.ace";
                 desc = ("gene", "remark"); },
               { filename = "Clone.ace"; },
+              { filename = "CDS.ace"; },
+              { filename = "DO_term.ace"; },
               { filename = "Expression_cluster.ace"; 
                 desc = ("description", "remark", "algorithm"); },
               { filename = "Expr_pattern.ace"; },
@@ -171,7 +179,7 @@ classes = (   { filename = "Paper.ace";
               { filename = "Operon.ace"; 
                 desc = ("gene", "remark", "description"); },
               { filename = "Position_matrix.ace"; },
-              { filename = "PCR.ace"; },
+              { filename = "PCR_product.ace"; },
               { filename = "Oligo.ace"; },
               { filename = "Oligo_set.ace"; },
               { filename = "Phenotype.ace"; },
@@ -186,6 +194,7 @@ classes = (   { filename = "Paper.ace";
               { filename = "Structure_data.ace"; },
               { filename = "Transgene.ace"; },
               { filename = "Transcript.ace"; },
+              { filename = "Transposon.ace"; },
               { filename = "Analysis.ace"; 
                 desc = ("title", "description"); },
               { filename = "Gene_class.ace"; },
@@ -198,6 +207,7 @@ classes = (   { filename = "Paper.ace";
                 desc = ("description", "gene", "hsgene", "synonym"); },
               { filename = "Widgets.ace"; 
                 desc = ("widget_title", "editor", "wbid", "widget_order", "type"); },
+              { filename = "WBProcess.ace"; },
               { filename = "Pages.ace"; 
                 desc = ("description"); }        
 
@@ -206,7 +216,8 @@ classes = (   { filename = "Paper.ace";
 species = ( { name = "c_elegans";
               id = 6239; },
             { name = "c_angaria";
-              id = 96668; },
+              id = 96668;
+              gff3 = 1; },
             { name = "c_brenneri";
               id = 135651; },
             { name = "c_briggsae";
@@ -220,19 +231,33 @@ species = ( { name = "c_elegans";
             { name = "a_sum";
               id = 6253; },
             { name = "b_malayi";
-              id = 6279; },
+              id = 6279; 
+              gff3 = 1; },
+            { name = "c_sp11";
+              id = 886184; 
+              gff3 = 1; },
+            { name = "c_sp5";
+              id = 497871; 
+              gff3 = 1; },
+            { name = "b_xylophilus";
+              id = 6326; 
+              gff3 = 1; },
             { name = "c_drosophilae";
               id = 96641; },
             { name = "g_pallida";
               id = 36090; },
             { name = "h_bacteriophora";
-              id = 37862; },
+              id = 37862; 
+              gff3 = 1; },
             { name = "h_contortus";
-              id = 6289; },
+              id = 6289;
+              gff3 = 1;},
             { name = "m_hapla";
-              id = 6305; },
+              id = 6305; 
+              gff3 = 1;},
             { name = "m_incognita";
-              id = 6306; },
+              id = 6306; 
+              gff3 = 1;},
             { name = "n_brasiliensis";
               id = 36090; },
             { name = "o_volvulus";
@@ -240,7 +265,8 @@ species = ( { name = "c_elegans";
             { name = "s_ransomi";
               id = 554534; },
             { name = "s_ratti";
-              id = 34506; },
+              id = 34506; 
+              gff3 = 1;},
             { name = "t_circumcincta";
               id = 45464; },
             { name = "c_sp11";
@@ -248,7 +274,11 @@ species = ( { name = "c_elegans";
             { name = "t_muris";
               id = 70415; },
             { name = "t_spiralis";
-              id = 6334; }
+              id = 6334; 
+              gff3 = 1;},
+            { nmae = "l_loa";
+              id = 7209;
+              gff3 = 1; }
 ); 
 
 

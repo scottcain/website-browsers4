@@ -53,7 +53,7 @@ sub run {
     my $db        = Ace->connect(-host=>'localhost',-port=>2005);
 
     $ace_class = 'CDS' if $ace_class eq 'Cds';
-
+    $self->log->warn("Purging from " . $self->couchdb_host);
     my $i = $db->fetch_many($ace_class => '*');
     while (my $obj = $i->next) {
 	my $uuid = join('_',lc($class),lc($widget),$obj);
@@ -97,11 +97,11 @@ sub purge_entries_from_cache_log {
     my $version = $self->release;
     my $cache_root = join("/",$self->support_databases_dir,$version,'cache','logs');
     
-    my $cache_log = join("/",$cache_root,"$class.txt");
-    system("mv $cache_log $cache_root/$class.original.txt");
+    my $cache_log = join("/",$cache_root,"$class.log");
+    system("mv $cache_log $cache_root/$class.original.log");
         
-    open IN,"$cache_root/$class.original.txt" or die "$!";
-    open OUT,">>$cache_root/$class.txt";
+    open IN,"$cache_root/$class.original.log" or die "$!";
+    open OUT,">>$cache_root/$class.log";
     
     while (<IN>) {
 	chomp;

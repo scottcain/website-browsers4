@@ -10,22 +10,10 @@ has 'step' => (
 );
 
 sub run {
-    my $self = shift;       
+    my $self    = shift;       
     my $release = $self->release;
-
-    if ($release) {
-	my $releases_dir = $self->ftp_releases_dir;
-	chdir($releases_dir);
-	$self->update_symlink({target => $release,
-			       symlink => 'current-dev.wormbase.org-release',
-			      });
-	
-	# Update symlinks to the development version
-	$self->update_ftp_site_symlinks('development');
-	$self->rsync_ftp_directory();       
-    } else {
-	$self->rsync_ftp_directory();
-    }
+#    $self->rsync_ftp_directory();   
+    $self->rsync_from_nfs_mount;
 }
 
 
@@ -37,12 +25,23 @@ sub rsync_ftp_directory {
     
     my $production_host  = $self->production_ftp_host;
     my $ftp_root         = $self->ftp_root;
-    $self->log->info("rsyncing to FTP site to $production_host");
+    $self->log->info("rsyncing FTP site to $production_host");
     
 #	$self->system_call("rsync -Cavv --exclude httpd.conf --exclude cache --exclude sessions --exclude databases --exclude tmp/ --exclude extlib --exclude ace_images/ --exclude html/rss/ $app_root/ ${node}:$wormbase_root/shared/website/classic",'rsyncing classic site staging directory into production');
-    $self->system_call("rsync -Cav $ftp_root/ ${production_host}:$ftp_root",'rsyncing staging FTP site to the production host');
+    $self->system_call("rsync -Cav $ftp_root/ $production_host:$ftp_root",'rsyncing staging FTP site to the production host');
 }
 
 
-
+# Rsync from the NFS mount to (the other) FTP site NFS mount. Erm...
+sub rsync_from_nfs_mount {
+    my $self = shift;
+    my $ftp_root         = $self->ftp_root;
+    my $production_host  = $self->production_ftp_host;
+    $self->log->info("rsyncing staging FTP NFS mount to the prodution FTP site");
+    
+#	$self->system_call("rsync -Cavv --exclude httpd.conf --exclude cache --exclude sessions --exclude databases --exclude tmp/ --exclude extlib --exclude ace_images/ --exclude html/rss/ $app_root/ ${node}:$wormbase_root/shared/website/classic",'rsyncing classic site staging directory into production');
+    $self->system_call("rsync -Cav /nfs/wormbase2/ftp/ /usr/local/ftp/pub/wormbase",'rsyncing NFS mount staging FTP site to the production FTP site; once per day.');
+    
+}
+    
 1;

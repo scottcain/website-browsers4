@@ -26,7 +26,9 @@ has 'formatdb_strings' => (
 
 sub run {
     my $self = shift;
-    
+ 
+    $self->support_databases_dir;
+   
     # get a list of (symbolic g_species) names
     my ($species) = $self->wormbase_managed_species;
     my $release = $self->release;
