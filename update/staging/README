@@ -68,11 +68,6 @@ END : load genomic gff databases; in 0 days, 22 hours, 58 minutes and 28 seconds
 
 # 13. Check out new software to the staging server.
 
-# 14. Rsync staging FTP site to the production FTP site.
-#   Sync the staging FTP site (on isilon FTP site) to other NFS mount.
-#   run by cron on wb-dev currently.
-#   ./steps/rsync_staging_ftp_site_to_production.pl
-
 # 15. Push a newly staged version to development server(s).
 #    If ANYTHING is wrong with the staged release,
 #    this step will need to be repeated.
@@ -91,6 +86,9 @@ END : load genomic gff databases; in 0 days, 22 hours, 58 minutes and 28 seconds
 ./steps/adjust_symlinks.pl --release $RELEASE --target staging
 # Development server(s)
 ./steps/adjust_symlinks.pl --release $RELEASE --target development
+
+# And update symlinks on the ftp site:
+./steps/update_ftp_site_symlinks.pl --release $RELEASE --status development
 
 # Tag software:
 # No longer using

@@ -49,7 +49,7 @@ use constant NA => 'N/A';
 print "# $g. $species_alone gene interactions\n";
 print "# WormBase version: " . $dbh->version . "\n";
 print "# Generated: $date\n";
-print '# ' . join('\t',qw/WBInteractionID Interaction_type Citation Gene1-WBID Gene1-Molecular_name Gene1-CGC_name Gene2-WBID Gene2-Molecular_name Gene2-CGC_name .../),"\n";
+print '# ' . join("\t",qw/WBInteractionID Interaction_type Interaction_subtype Citation Gene1-WBID Gene1-Molecular_name Gene1-CGC_name Gene2-WBID Gene2-Molecular_name Gene2-CGC_name Citation/),"\n";
 
 my @interactions = $dbh->fetch(Interaction=>'*');
 foreach my $interaction (@interactions) {
@@ -58,21 +58,42 @@ foreach my $interaction (@interactions) {
     my ($brief_citation,$db_field,$db_acc) = eval { $interaction->Paper->Brief_citation,$interaction->Paper->Database(2),$interaction->Paper->Database(3) };
     my $reference = "[$db_field:$db_acc] $brief_citation";
     my $interaction_type = $interaction->Interaction_type;
-    my @cols;
-    push @cols,$interaction,$interaction_type,$reference;
-    foreach ($interaction->Interactor) {
-	my ($interactor,$type) = $_->row;
+    my $subtype = ($interaction_type =~ /Genetic|Regulatory/) ? $interaction_type->right : NA;
 
-#    if ($include_type eq "no_predicted") {
-#	if ($interaction_type eq "Predicted_interaction") {next}
-#    } elsif ($include_type eq "predicted") {
-#	if ($interaction_type ne "Predicted_interaction") {next}
-#    }
-	my $molecular_name = $interactor->Molecular_name || NA;
-	my $cgc_name = $interactor->CGC_name || NA;
-	push (@cols,$interactor,$molecular_name,$cgc_name)
+    my @cols;
+
+    foreach my $interactor_type ($interaction->Interactor) {		
+	my $count = 0;
+	my @cols = ($interaction,$interaction_type,$subtype,);
+	foreach my $interactor ($interactor_type->col) {
+	    my @interactors = $interactor_type->col;
+	 
+	    my @tags = eval { $interactors[$count++]->col };
+
+	    my %info;
+	    $info{obj} = $interactor;
+	    my (@effectors,@effected);
+	    if ( @tags ) {
+		map { $info{"$_"} = $_->at; } @tags;
+		if ("$interactor_type" eq 'Interactor_overlapping_gene') {
+		    $role = $info{Interactor_type};
+#		    if ($role && $role =~ /Effector|.*regulator/) {     push @effectors, $interactor }
+#		    elsif ($role && $role =~ /Effected|.*regulated/)  { push @effected, $interactor }
+#		    else { }
+#		    else { push @others, $interactor }
+		} 
+	    }
+	    my $molecular_name = $interactor->Molecular_name || NA;
+	    my $cgc_name       = $interactor->CGC_name       || NA;
+	    push (@cols,$interactor,$molecular_name,$cgc_name)
+	}
+	
+	my $reference = eval { $interaction->Paper->Brief_citation };
+	push @cols,$role,$reference;
+	print join("\t",@cols) . "\n";
     }
-    print join("\t",@cols) . "\n";
+
 }
+
 
 exit 1;

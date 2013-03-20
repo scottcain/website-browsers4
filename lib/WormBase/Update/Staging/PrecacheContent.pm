@@ -25,31 +25,13 @@ has 'couchdb' => (
 
 sub _build_couchdb {
     my $self = shift;
-    # Discover where our target couchdb is (for the
-    # express purpose of creating a couchdb)
-    my $couch_host;
-    
-    # When running precache on, say, wb-couch.
-    if ($self->caching_from eq 'production' && $self->cache_query_host eq 'production') {
-	$couch_host = 'localhost:5984';
-    } elsif ($self->caching_from eq 'staging' && $self->cache_query_host eq 'production') {
-	
-	# We will never actually do this - once a release is in production,
-	# we will run the precaching script from the couchdb node.
 
-	# When running precache from, say, oicr to production.
-	$couch_host = $self->couchdb_host_master;
-
-	# For CRAWLING against production AND using queries against couchdb
-	# to see what we have already cached (instead of the log files)
-	# this needs to be set to couchdb.wormbase.org, not the IP
-	# which is firewalled by OICR.
-#	$couch_host = 'couchdb.wormbase.org';
-	
-    } elsif ($self->caching_from eq 'staging' && $self->cache_query_host eq 'staging') {       
-	$couch_host = $self->couchdb_host_staging;
-    } else {
-    }
+    # Discover where our target couchdb is. This is used for 
+    #     1. creating a new couchdb
+    #     2. bulk operations against the couchdb
+    #     3. checking if a URL has already been cached.    
+    my $method     = 'couchdb_host_' . $self->couchdb_host;
+    my $couch_host = $method =~ 'localhost' ? $method : $self->$method;
     
     my $couchdb = WormBase->create('CouchDB',{ release => $self->release, couchdb_host => $couch_host });
     return $couchdb;
@@ -64,32 +46,127 @@ has 'widget' => (
     is => 'rw',
     );
 
+
 # Specify which environment to direct queries to: staging or production.
 # This lets me run the precaching script at a low-level even after
 # a data release.
-has 'cache_query_host' => (
+has 'queries_to' => (
     is      => 'rw',
-    default => 'staging',
+    default => 'http://staging.wormbase.org/',
     );
 
-# Where is the caching script running?
-has 'caching_from' => (
-    is => 'rw',
-    default => 'staging',
+has 'couchdb_host' => (
+    is      => 'rw',
+    default => 'localhost',
     );
+
+has 'already_cached_via' => (
+    is      => 'rw',
+    default => 'couchdb',
+    );
+
+
+# Where is the caching script running?
+#has 'caching_from' => (
+#    is => 'rw',
+#    default => 'staging',
+#    );
 
 
 sub run {
     my $self = shift;       
     my $release = $self->release;
-#    $self->precache_content('bulk_load');
-
-#    $self->dump_object_lists();
-    $self->dump_object_lists_via_tace();
+    $self->dump_object_lists();
+#    $self->cache_content_to_disk('bulk_load');
     $self->crawl_website();             # Crawls object by object. Slower, but uses less memory.
-#    $self->crawl_website_by_class();   # Creates potentially huge arrays for big classes.
 #    $self->precache_classic_content();
 }
+
+
+sub dump_object_lists {
+    my $self = shift;
+    my $version = $self->release;
+    my $cache_root = join("/",$self->support_databases_dir,$version,'cache','logs');
+    system("mkdir -p $cache_root");
+
+    return if (-e "$cache_root/dump_complete.txt");
+
+    # Create a tace script of all classes. Much faster for dumping than Ace.pm.
+    my $db      = Ace->connect(-host=>'localhost',-port=>2005);
+    my @classes = $db->classes;
+
+    # There are some classes we don't care about. Ignore them.
+    my %acceptable_classes = map { $_ => 1 } qw/ 
+                           Analysis
+                       Anatomy_term
+                           Antibody
+                                CDS
+                              Clone
+                 Expression_cluster
+                       Expr_pattern
+                            Feature
+                               Gene
+                         Gene_class
+                       Gene_cluster
+                    Gene_regulation
+                            GO_term
+                            GO_code
+                     Homology_group
+                        Interaction
+                         Laboratory
+                         Life_stage
+                Microarrary_results
+                           Molecule
+                              Motif
+                              Oligo
+                          Oligo_set
+                             Operon
+                              Paper
+                        PCR_product
+                             Person
+                          Phenotype
+                            Picture
+                    Position_Matrix
+                            Protein
+                         Pseudogene
+                      Rearrangement
+                               RNAi
+                           Sequence
+                             Strain
+                     Structure_data
+                         Transcript
+               Transcription_factor
+                          Transgene
+                         Transposon
+                          Variation
+                                 YH
+/;
+
+    my $release = $self->release;
+    open OUT,">$cache_root/00-class_dump_script.ace";
+    print OUT "//tace script to dump database for $release\n";
+
+    foreach my $class (@classes) {
+	next unless ($acceptable_classes{$class});
+
+	my $file = lc $class;
+
+	# hybrid classes have differnet names in the app.
+	if ($class eq 'PCR_product') { $file = 'pcr_oligo' }
+
+	print OUT "Find $class\n";
+	print OUT "List -h -f $cache_root/$file.ace\n";
+    }
+	
+    close OUT;
+
+    # Run the newly created tace dump script.
+    system("/usr/local/wormbase/acedb/bin/tace /usr/local/wormbase/acedb/wormbase < $cache_root/00-class_dump_script.ace");
+    open OUT,">$cache_root/dump_complete.txt";
+    print OUT "ACE DUMPING COMPLETE\n";
+    close OUT;
+}
+
 
 
 # Precache specific WormBase widgets.
@@ -104,181 +181,27 @@ sub run {
 # Returned HTML will be stored at:
 # /usr/local/wormbase/databases/cache/VERSION
 
-sub precache_content {
-    my $self = shift;
+sub crawl_website {
+    my $self      = shift;
     my $load_type = shift;
 
     $|++;
     
-    # Make sure that our couchdb exists.
     # Create a database corresponding to the current release,
     # silently failing if it already exists.
     my $couch = $self->couchdb;
     $couch->create_database;
 
-    $|++;
+    # Where to send requests
+    my $base_url = $self->queries_to . '/rest/widget/%s/%s/%s';
 
-    my $c = Config::JFDI->new(file => '/usr/local/wormbase/website/production/wormbase.conf');
-    my $config = $c->get;   
-    
-    my $method = 'cache_query_host_' . $self->cache_query_host;
-    my $base_url = $self->$method . '/rest/widget/%s/%s/%s';
-    
-    my $db      = Ace->connect(-host=>'localhost',-port=>2005);
-    my $version = $db->status->{database}{version};
-    my $cache_root = join("/",$self->support_databases_dir,$version,'cache');
-    system("mkdir -p $cache_root/logs");
-    	       
-    # Turn off autocheck so that server errors don't kill us.
-    #-agent     => 'WormBase-PreCacher/1.0',
-    my $mech = WWW::Mechanize->new(
-	-agent => 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.2 (KHTML, like Gecko) Ubuntu/11.04 Chromium/15.0.871.0 Chrome/15.0.871.0 Safari/535.2',
-	-autocheck => 0 );
-    
-    # Set the stack depth to 0: no need to retain history;
-    $mech->stack_depth(0);
-    
-#    print Dumper($config);
-    foreach my $class (sort keys %{$config->{sections}->{species}}) {
-	next if $class eq 'title'; # Kludge.
-
-	# Horribly broken classes, currently uncacheable.
-	next if $class eq 'anatomy_term';
-	next unless $class eq 'gene';
-
-	# Allow class-level specification of precaching.
-	my $class_level_precache = eval { $config->{sections}->{species}->{$class}->{precache}; } || 0;
-
-	foreach my $widget (sort keys %{$config->{sections}->{species}->{$class}->{widgets}}) {
-	    my $precache = eval { $config->{sections}->{species}->{$class}->{widgets}->{$widget}->{precache}; };
-	    $precache ||= 0;
-	    $precache = 1 if $class_level_precache;
-
-#	    print join("-",keys %{$config->{sections}->{species}->{$class}->{widgets}->{$widget}}) . "\n";
-#	    print join("\t",$class,$widget,$precache) . "\n";
-	    
-	    if ($precache) {
-		# Create the directory where we (may) store generated HTML.
-		my $cache = join("/",$cache_root,$class,$widget);
-		system("mkdir -p $cache");
-		
-		my $cache_log = join("/",$cache_root,'logs',"$class-$widget.txt");
-
-		# 1. To find out what we've already cached, just use our cache log and an offset to fetch()
-		# 2. (or check against the actual %previous list)
-		my %previous = $self->_parse_cached_widgets_log($cache_log); 
-#		next if defined $previous{COMPLETE};
-		my $count = scalar keys %previous;
-		$count ||= 0;
-
-		# Open cache log for writing.
-		open OUT,">>$cache_log";
-
-		# And set up the cache error file
-		my $cache_err = join("/",$cache_root,'logs',"00-errors.txt");
-		open ERROR,">>$cache_err";
-		
-	    	my $start = time();
-
-		my %status;
-		
-		# Assume that classes in the config file match AceDB classes.
-		my $ace_class = ucfirst($class);
-
-		# Via offset
-		if (0) {
-		    my @objects = $db->fetch(-class => $ace_class,
-					     -name  => '*',
-					     -offset => $count,
-					     -fill   => undef,
-			);
-		    
-		    foreach my $obj (@objects) {
-			# We're already selecting objects from a given offset,
-			# assuming that those who have come before are already cached.
-			# The code below checks for the presence of the document in couch.
-			# Also: in the future we might want to selectively REPLACE documents.
-#		    if ($self->check_if_stashed_in_couchdb($class,$widget,$obj)) {
-#			print STDERR " --> $class:$widget:$obj ALREADY CACHED; SKIPPING\n";
-#			print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n"; 
-#			next;
-#		    }
-		    }
-		}
-			
-		my $i = $db->fetch_many($ace_class => '*');
-		while (my $obj = $i->next) {
-
-#		    if ($previous{$obj}) {
-		    if ($previous{"$class$obj$widget"}) {
-			print STDERR "Already seen $class $obj. Skipping...";
-			print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
-			next;
-		    }
-		    		    
-		    my $cache_start = time();
-		    # Create a REST request of the following format:
-		    # curl -H content-type:application/json http://api.wormbase.org/rest/widget/gene/WBGene00006763/cloned_by
-
-		    # api delivers HTML by default.
-                    # $mech->add_header("Content-Type" => 'text/html');
-
-		    my $url = sprintf($base_url,$class,$obj,$widget);
-
-		    if ($status{$class} % 100 == 0) {
-			print STDERR "   cached $status{$class} ; last was $url";
-			print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n"; 
-		    }
-		    
-		    eval { $mech->get($url) };
-		    my $success = ($mech->success) ? 'success' : 'failed';
-		    my $cache_stop = time();
-		    print OUT join("\t",$class,$obj,$widget,$url,$success,$cache_stop - $cache_start),"\n";
-		    $status{$class}++;
-		    
-		    if ($mech->success) {
-			if ($load_type eq 'bulk_load') {
-			    #    1. save it to the filesystem and do a bulk insert (disable caching in the app)
-			    $mech->save_content("$cache/" . $class . '_' . $widget . '_' . "$obj.html");
-			} else {
-			    #    2. let the app cache it
-			    #   (nothing to do for this case)
-			}
-		    } else {
-			print ERROR join("\t",$class,$obj,$widget,$url,$success,$cache_stop - $cache_start),"\n";
-		    }		    	
-		}
-		my $end = time();
-		my $seconds = $end - $start;
-		print OUT "\n\nTime required to cache " . (scalar keys %status) . ": ";
-		printf OUT "%d days, %d hours, %d minutes and %d seconds\n",(gmtime $seconds)[7,2,1,0];    
-		close OUT;
-	    }
-	}
-
-	# Bulk load to couchdb.
-	if ($load_type eq 'bulk_load') {
-	    #
-	}
-    }
-}
-
-
-
-sub crawl_website {
-    my $self = shift;
-
-    $|++;
-    
-    # Create a database corresponding to the current release,
-    # silently failing if it already exists.
-#    my $couch = $self->couchdb;
-#    $couch->create_database;
-
-    my $method = 'cache_query_host_' . $self->cache_query_host;
-    my $base_url = $self->$method . '/rest/widget/%s/%s/%s';
-
-    my $c = Config::JFDI->new(file => '/usr/local/wormbase/website/production/wormbase.conf');
+    # There should be a symlink at:
+    # /usr/local/wormbase/wormbase.conf -> /usr/local/wormbase/website/WHATEVER/wormbase.conf
+    # (Doing it this way because of NFS mount but may want to use different configs)
+    my $local_config = -e '/usr/local/wormbase/wormbase.conf' 
+	? '/usr/local/wormbase/wormbase.conf' 
+	: '/usr/local/wormbase/website/production/website.conf';
+    my $c = Config::JFDI->new(file => $local_config);
     my $config = $c->get;
 
     my $db      = Ace->connect(-host=>'localhost',-port=>2005) or warn;
@@ -291,13 +214,15 @@ sub crawl_website {
 
     my $master_error_file= join("/",$cache_root,'logs',"00-master.err");
     open ERROR,">>$master_error_file";
-           
-#    # Turn off autocheck so that server errors don't kill us.
-#    my $mech = WWW::Mechanize->new(-agent     => 'WormBase-PreCacher/1.0',
-#				   -autocheck => 0 );
-#    
-#    # Set the stack depth to 0: no need to retain history;
-#    $mech->stack_depth(0);
+ 
+    # Using WWW::Mech
+    # Turn off autocheck so that server errors don't kill us.
+    #    my $mech = WWW::Mechanize->new(
+    #	                                -agent => 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.2 (KHTML, like Gecko) Ubuntu/11.04 Chromium/15.0.871.0 Chrome/15.0.871.0 Safari/535.2',
+    #	                                -autocheck => 0 );
+    #    
+    # Set the stack depth to 0: no need to retain history;
+    #    $mech->stack_depth(0);
     
 #    print Dumper($config);
     my @classes;
@@ -310,14 +235,6 @@ sub crawl_website {
     foreach my $class (@classes) {
 	next if $class eq 'title'; # Kludge.
 	
-	# next if $class eq 'anatomy_term';
-#	next unless $class eq 'cds';
-#	next if $class eq 'microarray_results';
-#	next if $class eq 'feature';
-#	next unless $class =~ /strain|transgene|variation/;
-#	next unless $class eq 'gene_class';
-
-
         # Class-level status and timers.
 	my $start = time();
 	my %status;
@@ -326,16 +243,16 @@ sub crawl_website {
 	my $class_level_precache = eval { $config->{sections}->{species}->{$class}->{precache}; }
 	|| eval { $config->{sections}->{resources}->{$class}->{precache}; }
 	|| 0;
-
-		    
+		  
 	my $cache_log = join("/",$cache_root,'logs',"$class.log");
 	
 	$self->log->info("Precaching widgets for the $class class");
 	my %previous = $self->_parse_cached_classes_log($cache_log);
 
-	# Open cache log for writing.
+	# (Re)open class level cache log for writing.
 	open OUT,">>$cache_log";
 
+	# Create a class-level error log.
 	my $class_err = join("/",$cache_root,'logs',"$class.err");
 	open CLASS_ERROR,">>$class_err";
 
@@ -379,32 +296,39 @@ sub crawl_website {
 		next if $config->{sections}->{resources}->{$class}->{widgets}->{$widget}->{display}
 		&& $config->{sections}->{resources}->{$class}->{widgets}->{$widget}->{display} eq 'index';
 
+		# Is the precache flag set for this widget?
 		my $precache = defined $config->{sections}->{species}->{$class}
 		? eval { $config->{sections}->{species}->{$class}->{widgets}->{$widget}->{precache}; }
 		: eval { $config->{sections}->{resources}->{$class}->{widgets}->{$widget}->{precache}; };
 		$precache ||= 0;
 		$precache = 1 if $class_level_precache;
+
 #	    print join("-",keys %{$config->{sections}->{species}->{$class}->{widgets}->{$widget}}) . "\n";
 #	    print join("\t",$class,$widget,$precache) . "\n";
 		
 		if ($precache) {
+
+		    # Create a REST request of the following format:
+		    # curl -H content-type:application/json http://api.wormbase.org/rest/widget/gene/WBGene00006763/cloned_by
+
+		    # api delivers HTML by default.
+                    # $mech->add_header("Content-Type" => 'text/html');
+
 		    my $url = sprintf($base_url,$class,$obj,$widget);
 
+		    # Have we already cached this class:obj:widget?
+		    # Two options: check either the log file OR check couch itself.
 		    my $already_cached;		    
-		    if ($self->caching_from eq 'staging' && $self->cache_query_host eq 'production') {
-			# If we are caching against PRODUCTION from STAGING (eg the script is NOT running
-			# on production, queries from OICR to our production couch are sloooow.
 
+		    # How should we check if we are already cached?		    
+		    if ($self->already_cached_via eq 'logs') {
 			# Check the cache log to see if we have already been cached.
 			# checking the cache log should do similar URL escaping as check_if_stashed...?
 			# Although right now, the cache_log only escapes hashes and nothing else.
 			if ($previous{"$class$obj$widget"}) {
 			    $already_cached++;
 			}
-		    } elsif (($self->caching_from eq 'staging' && $self->cache_query_host eq 'staging')
-			     ||
-			     ($self->caching_from eq 'production' && $self->cache_query_host eq 'production')) {
-			
+		    } elsif ($self->already_cached_via eq 'couchdb') {						
 			# The code below checks for the presence of the document in couch.
 			# Also: in the future we might want to selectively REPLACE documents.
 			if ($self->check_if_stashed_in_couchdb($class,$widget,$obj)) {
@@ -427,6 +351,25 @@ sub crawl_website {
 		    $url =~ s/\#/\%23/g;
 		    push @uris,$url;
 		}
+
+		# Using WWW::Mech one-by-one AND writing the output to disk.
+#		eval { $mech->get($url) };
+#		    my $success = ($mech->success) ? 'success' : 'failed';
+#		    my $cache_stop = time();
+#		    print OUT join("\t",$class,$obj,$widget,$url,$success,$cache_stop - $cache_start),"\n";
+#		    $status{$class}++;
+#		    
+#		    if ($mech->success) {
+#			if ($load_type eq 'bulk_load') {
+#			    #    1. save it to the filesystem and do a bulk insert (disable caching in the app)
+#			    $mech->save_content("$cache/" . $class . '_' . $widget . '_' . "$obj.html");
+#			} else {
+#			    #    2. let the app cache it
+#			    #   (nothing to do for this case)
+#			}
+#		    } else {
+#			print CLASS_ERROR join("\t",$class,$obj,$widget,$url,$success,$cache_stop - $cache_start),"\n";
+#		    }
 	    }
 	    
             # Max 5 processes for parallel download
@@ -442,7 +385,6 @@ sub crawl_website {
 		my $content = get($uri) or
 		    print ERROR join("\t",$class,$object,$widget,$uri,'failed',$cache_stop - $cache_start),"\n";
 		
-
 	        if ($content) {
 		    my $cache_stop = time();
 		    $status{$class}{widgets}{$widget}++;
@@ -476,178 +418,13 @@ sub crawl_website {
 	    print MASTER "\n\n";
 #	}
 	close OUT;
-    }
-}	
 
+#	# If we're generating HTML and then bulk-loading to couch...
+#	# Bulk load to couchdb. Not done.
+#	if ($load_type eq 'bulk_load') {
+#	    #
+#	}
 
-
-
-
-sub crawl_website_by_class {
-    my $self = shift;
-
-    $|++;
-    
-    # Create a database corresponding to the current release,
-    # silently failing if it already exists.
-#    my $couch = $self->couchdb;
-#    $couch->create_database;
-
-    # Where should we send queries?
-    my $method = 'cache_query_host_' . $self->cache_query_host;
-    my $base_url = $self->$method . '/rest/widget/%s/%s/%s';
-
-    my $c = Config::JFDI->new(file => '/usr/local/wormbase/website/production/wormbase.conf');
-    my $config = $c->get;
-
-    my $db      = Ace->connect(-host=>'localhost',-port=>2005);
-    my $version = $self->release;
-#    my $version = $db->status->{database}{version};
-    my $cache_root = join("/",$self->support_databases_dir,$version,'cache');
-    system("mkdir -p $cache_root/logs");
-           
-#    # Turn off autocheck so that server errors don't kill us.
-#    my $mech = WWW::Mechanize->new(-agent     => 'WormBase-PreCacher/1.0',
-#				   -autocheck => 0 );
-#    
-#    # Set the stack depth to 0: no need to retain history;
-#    $mech->stack_depth(0);
-    
-#    print Dumper($config);
-    my @classes;
-    if ($self->class) {
-	push @classes,$self->class;
-    } else {
-	@classes = sort keys %{$config->{sections}->{species}};
-    }
-
-    my $master_log_file = join("/",$self->support_databases_dir,$version,'cache','logs',"00-master_log.txt");
-    open MASTER,">>$master_log_file";
-    
-    foreach my $class (@classes) {
-	next if $class eq 'title'; # Kludge.
-	
-	# Horribly broken classes, currently uncacheable.
-	# next if $class eq 'anatomy_term';
-
-	next unless $class eq 'protein';
-
-        # Class-level status and timers.
-	my $start = time();
-	my %status;
-		
-	# Allow class-level specification of precaching.
-	my $class_level_precache = eval { $config->{sections}->{species}->{$class}->{precache}; } || 0;
-
-	my $cache = join("/",$cache_root,$class);
-	system("mkdir -p $cache");
-		    
-	my $cache_log = join("/",$cache_root,'logs',"$class.txt");
-	
-	$self->log->info("Precaching widgets for the $class class");
-	my %previous = $self->_parse_cached_classes_log($cache_log);
-#	next if defined $previous{COMPLETE};   # eg this class is finished.
-
-	# Open cache log for writing.
-	open OUT,">>$cache_log";
-
-	# And set up the cache error file
-	my $cache_err = join("/",$cache_root,'logs',"00-errors.txt");
-	open ERROR,">>$cache_err";
-
-	# Assume that classes in the config file match AceDB classes, which might not be true.
-	my $ace_class = ucfirst($class);
-	# Acedb is crapping out while using iterator?
-#	my $i = $db->fetch_many($ace_class => '*');
-#	while (my $obj = $i->next) {	
-	my @objects = map { $_->name } $db->fetch($ace_class => '*');
-
-	my @widgets;
-	if ($self->widget) {
-	    push @widgets,$self->widget;
-	} else {
-	    @widgets = sort keys %{$config->{sections}->{species}->{$class}->{widgets}};
-	}
-	
-	my @uris;  # All uris for a class, fetched in parallel.
-	foreach my $obj (@objects) {
-
-	    # The code below checks for the presence of the document in couch.
-	    # Also: in the future we might want to selectively REPLACE documents.
-#		    if ($self->check_if_stashed_in_couchdb($class,$widget,$obj)) {
-#			print STDERR " --> $class:$widget:$obj ALREADY CACHED; SKIPPING\n";
-#			print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n"; 
-#			next;
-#		    }
-	    
-	    # Create a REST request of the following format:
-	    # curl -H content-type:application/json http://api.wormbase.org/rest/widget/gene/WBGene00006763/cloned_by
-	    
-	    # api delivers HTML by default.
-	    # $mech->add_header("Content-Type" => 'text/html');	   
-	    
-	    foreach my $widget (@widgets) {
-		# References and human diseases are actually searches and not cached by the app.
-		next if $widget eq 'references';
-		next if $widget eq 'human_diseases';
-
-		my $precache = eval { $config->{sections}->{species}->{$class}->{widgets}->{$widget}->{precache}; };
-		$precache ||= 0;
-		$precache = 1 if $class_level_precache;
-#	    print join("-",keys %{$config->{sections}->{species}->{$class}->{widgets}->{$widget}}) . "\n";
-#	    print join("\t",$class,$widget,$precache) . "\n";
-
-		if ($precache) {
-		    my $url = sprintf($base_url,$class,$obj,$widget);
-#		    if ($previous{$url}) {	       
-		    if ($previous{"$class$obj$widget"}) {
-#			print STDERR "Already requested $url. Skipping...";
-#			print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
-			next;
-		    }
-		    push @uris,$url;
-		}
-	    }
-	}
-
-	# Max 5 processes for parallel download
-	my $pm = new Parallel::ForkManager(6); 
-	foreach my $uri (@uris) {	       		
-	    $status{$class}{uris}++;
-	    my ($protocol,$nothing,$host,$rest,$widget_path,$class,$object,$widget) = split("/",$uri);
-
-	    # Keep track of the number of objects we have seen.
-	    $status{$class}{objects}++;
-	    
-	    my $cache_start = time();
-	    $pm->start and next; # do the fork
-	    my $cache_stop = time();
-	    
-	    my $content = get($uri) or
-		print ERROR join("\t",$class,$object,$widget,$uri,'failed',$cache_stop - $cache_start),"\n";
-	    
-	    if ($content) {
-		my $cache_stop = time();
-		print OUT join("\t",$class,$object,$widget,$uri,'success',$cache_stop - $cache_start),"\n";
-	    }
-
-	    if ($status{$class}{objects} % 10 == 0) {
-		print STDERR "   cached $status{$class}{objects} $class objects and $status{$class}{uris} uris; last was $object";
-		print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n"; 
-	    }   
-	    
-	    $pm->finish; # do the exit in the child process
-	}
-	$pm->wait_all_children;       
-
-	my $end = time();
-	my $seconds = $end - $start;
-	print MASTER "=\n";
-	print MASTER "CLASS: $class\n";
-	print MASTER "Time required to cache " . $status{$class}{objects} . ' objects comprising ' . $status{$class}{uris} . 'uris: ';
-	printf MASTER "%d days, %d hours, %d minutes and %d seconds\n",(gmtime $seconds)[7,2,1,0];    
-	print MASTER "\n\n";
-	close OUT;
     }
 }	
 
@@ -657,190 +434,13 @@ sub crawl_website_by_class {
 
 
 
-sub dump_object_lists {
-    my $self = shift;
-
-    my $db      = Ace->connect(-host=>'localhost',-port=>2005);
-    my $version = $self->release;
-    my $cache_root = join("/",$self->support_databases_dir,$version,'cache');
-    system("mkdir -p $cache_root/logs");
-
-    my @classes = $db->classes;
-
-    # PCR_product
-    # Oligo_set
-    # Homol_data
-    # Oligo
-    # Feature
-    # SAGE_tag
-    # Feature_data
-    my %acceptable_classes = map { $_ => 1 } qw/ 
-                           Sequence
-                            Protein
-                              Paper
-                               Gene
-                              Clone
-                              Motif
-                     Homology_group
-                             Person
-                      Rearrangement
-                          Variation
-                          Transgene
-                         Gene_class
-                         Laboratory
-                             Strain
-                         Life_stage
-                            GO_term
-                             Operon
-                                CDS
-                         Transcript
-                         Pseudogene
-               Transcription_factor
-                               RNAi
-                       Expr_pattern
-                    Gene_regulation
-                 Expression_cluster
-                           Antibody
-                                 YH
-                        Interaction
-                    Position_Matrix
-                           Molecule
-                          Phenotype
-                           Analysis
-                       Anatomy_term
-                         Transposon
-/;
-    
-    foreach my $class (@classes) {
-	$self->log->info("dumping the object list for $class...");
-	next unless ($acceptable_classes{$class});
-	
-	my $lower = lc($class);
-	my $object_list = join("/",$cache_root,'logs',"$lower.ace");
-	next if (-e $object_list);
-	open OUT,">$object_list";
-	
-	# Acedb is crapping out while using iterator?
-	my $i = $db->fetch_many($class => '*');
-	while (my $obj = $i->next) {	
-#	my @objects = map { $_->name } $db->fetch($ace_class => '*');
-	    print OUT $obj->name . "\n";
-	}
-	close OUT;
-    }
-}
-
-sub dump_object_lists_via_tace {
-    my $self = shift;
-    my $version = $self->release;
-    my $cache_root = join("/",$self->support_databases_dir,$version,'cache','logs');
-    system("mkdir -p $cache_root");
-
-    return if (-e "$cache_root/dump_complete.txt");
-
-    open OUT,">$cache_root/00-class_dump_script.ace";
-    print OUT <<END;
-//tace script to dump database
-Find Analysis
-List -h -f $cache_root/analysis.ace
-Find Anatomy_term
-List -h -f $cache_root/anatomy_term.ace
-Find Antibody
-List -h -f $cache_root/antibody.ace
-Find curated_CDS
-List -h -f $cache_root/cds.ace
-Find Clone
-List -h -f $cache_root/clone.ace
-Find Expr_pattern
-List -h -f $cache_root/expr_pattern.ace
-Find Expr_profile
-List -h -f $cache_root/expr_profile.ace
-Find Expression_cluster
-List -h -f $cache_root/expression_cluster.ace
-Find Feature
-List -h -f $cache_root/feature.ace
-Find Gene
-List -h -f $cache_root/gene.ace
-Find Gene_class
-List -h -f $cache_root/gene_class.ace
-Find Gene_cluster
-List -h -f $cache_root/gene_cluster.ace
-Find Gene_regulation
-List -h -f $cache_root/gene_regulation.ace
-Find GO_code
-List -h -f $cache_root/go_code.ace
-Find GO_term
-List -h -f $cache_root/go_term.ace
-Find Homology_group
-List -h -f $cache_root/homology_group.ace
-Find Interaction
-List -h -f $cache_root/interaction.ace
-Find Laboratory
-List -h -f $cache_root/laboratory.ace
-Find Life_stage
-List -h -f $cache_root/life_stage.ace
-Find LongText
-List -h -f $cache_root/longText.ace
-Find Microarray_results
-List -h -f $cache_root/microarray_results.ace
-Find Molecule
-List -h -f $cache_root/molecule.ace
-Find Motif
-List -h -f $cache_root/motif.ace
-Find Oligo
-List -h -f $cache_root/oligo.ace
-Find Oligo_set
-List -h -f $cache_root/oligo_set.ace
-Find Operon
-List -h -f $cache_root/operon.ace
-Find Paper
-List -h -f $cache_root/paper.ace
-Find PCR_product
-List -h -f $cache_root/pcr_oligo.ace
-Find Person
-List -h -f $cache_root/person.ace
-Find Phenotype
-List -h -f $cache_root/phenotype.ace
-Find Picture
-List -h -f $cache_root/picture.ace
-Find Position_matrix
-List -h -f $cache_root/position_matrix.ace
-Find Protein
-List -h -f $cache_root/protein.ace
-Find Pseudogene
-List -h -f $cache_root/pseudogene.ace
-Find Rearrangement
-List -h -f $cache_root/rearrangement.ace
-Find RNAi
-List -h -f $cache_root/rnai.ace
-Find Sequence
-List -h -f $cache_root/sequence.ace
-Find Strain
-List -h -f $cache_root/strain.ace
-Find Structure_data
-List -h -f $cache_root/structure_data.ace
-Find Transcript
-List -h -f $cache_root/transcript.ace
-Find Transgene
-List -h -f $cache_root/transgene.ace
-Find Variation
-List -h -f $cache_root/variation.ace
-END
-;
-    close OUT;
-
-    system("/usr/local/wormbase/acedb/bin/tace /usr/local/wormbase/acedb/wormbase < $cache_root/00-class_dump_script.ace");
-    open OUT,">$cache_root/dump_complete.txt";
-    print OUT "ACE DUMPING COMPLETE\n";
-    close OUT;
-}
 
 
 
 
 sub precache_classic_content {
     my ($self) = @_;
-    my $base_url = $self->cache_query_host_classic;
+    my $base_url = $self->queries_to;  # typically: localhost:8080
 
     $|++;
     
@@ -1048,40 +648,6 @@ sub _parse_cache_log {
 	return %previous;
     }
     return undef;
-}
-
-
-sub _parse_cached_widgets_log {
-    my ($self,$cache_log) = @_;
-    $self->log->info("  ---> parsing log of previously cached widgets");
-    my %previous;
-    if (-e "$cache_log") {
-#	# First off, just tail the file to see if we're finished.
-#	my $complete_flag = `tail -1 $cache_log`;
-#	chomp $complete_flag;
-#	if ($complete_flag =~ /COMPLETE/) {
-#	    $previous{COMPLETE}++;
-#	    $self->log->info("  ---> all widgets already cached.");
-#	    return %previous;
-#	}
-
-	open IN,"$cache_log" or die "$!";
-
-	while (<IN>) {
-#	    if (/COMPLETE/) {
-#		$previous{COMPLETE}++;
-#		next;
-#	    }
-	    chomp;
-	    my ($class,$obj,$name,$url,$status,$cache_stop) = split("\t");
-	    $previous{"$class$obj$name"}++ unless $status eq 'failed';
-	    print STDERR "   Recording $obj as seen...";
-	    print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
-	}
-	print STDERR "\n";
-	close IN;
-    }
-    return %previous;
 }
 
 
