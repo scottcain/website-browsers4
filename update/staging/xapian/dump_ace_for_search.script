@@ -19,6 +19,8 @@ Find CDS
 Write /usr/local/wormbase/tmp/staging/acedmp/CDS.ace
 Find Clone
 Write /usr/local/wormbase/tmp/staging/acedmp/Clone.ace
+Find DO_term
+Write /usr/local/wormbase/tmp/staging/acedmp/DO_term.ace
 Find Expr_pattern
 Write /usr/local/wormbase/tmp/staging/acedmp/Expr_pattern.ace
 Find Expr_profile

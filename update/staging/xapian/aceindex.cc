@@ -143,6 +143,7 @@ bool
 indexLineBegin(string field_name, string line, string copy, string obj_name, Xapian::Document doc, Xapian::Document syn_doc){
   if((((field_name.find("name") != string::npos) || (int(field_name.find("term")) == 0))         && 
       (field_name.find("molecular") == string::npos)    &&
+      (field_name.find("other") == string::npos)    &&
       (field_name.find("middle") == string::npos)    &&
       (field_name.find("first") == string::npos))   || 
       (field_name.find("synonym") != string::npos)) {

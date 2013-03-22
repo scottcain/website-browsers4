@@ -139,7 +139,9 @@ sub run {
     my $mm_hash = $self->read_omim_file();
 
     $self->log->info("generating Disease.ace file for xapian");
-    $self->create_disease_file($hash,$mm_hash);  # create Disease.ace 
+    
+    # No longer required post-WS236
+#    $self->create_disease_file($hash,$mm_hash);  # create Disease.ace 
 }
 
 sub compile_gene2omim{
@@ -212,6 +214,7 @@ sub copy_files_from_repository {
 }
 
 
+# WS236: this is no longer necessary
 sub create_disease_file{
     my ($self,$hash,$mm_hash)    = @_;
 
