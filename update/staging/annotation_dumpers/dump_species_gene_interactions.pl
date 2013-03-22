@@ -29,10 +29,13 @@ Usage: $0 [options]
 USAGE
     ;
 
+
 # Establish a connection to the database.
+
 my $dbh = $path
     ? Ace->connect(-path => $path )
     : Ace->connect(-port => $port, -host => $host) or die $!;
+
 
 my $date = `date +%Y-%m-%d`;
 chomp $date;
@@ -49,50 +52,50 @@ use constant NA => 'N/A';
 print "# $g. $species_alone gene interactions\n";
 print "# WormBase version: " . $dbh->version . "\n";
 print "# Generated: $date\n";
-print '# ' . join("\t",qw/WBInteractionID Interaction_type Interaction_subtype Citation Gene1-WBID Gene1-Molecular_name Gene1-CGC_name Gene2-WBID Gene2-Molecular_name Gene2-CGC_name Citation/),"\n";
+print '# ' . join("\t",qw/WBInteractionID Interaction_type Interaction_subtype Summary Citation Interactor1 Common-name Role1 Interactor2 Common-name Role2 .../),"\n";
 
-my @interactions = $dbh->fetch(Interaction=>'*');
+# my @interactions = $dbh->fetch(Interaction=>'*');
+my @interactions = $dbh->fetch(-query=>'find Interaction WBInteraction????????? ! Interaction_type = Predicted');   #ignore objects with invalid name and Predicted
+
 foreach my $interaction (@interactions) {
-#    print STDERR $interaction,"\n";
-
     my ($brief_citation,$db_field,$db_acc) = eval { $interaction->Paper->Brief_citation,$interaction->Paper->Database(2),$interaction->Paper->Database(3) };
     my $reference = "[$db_field:$db_acc] $brief_citation";
     my $interaction_type = $interaction->Interaction_type;
     my $subtype = ($interaction_type =~ /Genetic|Regulatory/) ? $interaction_type->right : NA;
-
-    my @cols;
-
-    foreach my $interactor_type ($interaction->Interactor) {		
-	my $count = 0;
-	my @cols = ($interaction,$interaction_type,$subtype,);
-	foreach my $interactor ($interactor_type->col) {
-	    my @interactors = $interactor_type->col;
-	 
-	    my @tags = eval { $interactors[$count++]->col };
-
-	    my %info;
-	    $info{obj} = $interactor;
-	    my (@effectors,@effected);
-	    if ( @tags ) {
-		map { $info{"$_"} = $_->at; } @tags;
-		if ("$interactor_type" eq 'Interactor_overlapping_gene') {
-		    $role = $info{Interactor_type};
-#		    if ($role && $role =~ /Effector|.*regulator/) {     push @effectors, $interactor }
-#		    elsif ($role && $role =~ /Effected|.*regulated/)  { push @effected, $interactor }
-#		    else { }
-#		    else { push @others, $interactor }
-		} 
-	    }
-	    my $molecular_name = $interactor->Molecular_name || NA;
-	    my $cgc_name       = $interactor->CGC_name       || NA;
-	    push (@cols,$interactor,$molecular_name,$cgc_name)
-	}
+#    exclude negative results
+	if ($subtype =~ /No_interaction/) {next}
+	if ($interaction->Regulation_result =~ /Does_not_regulate/) {next}
 	
+    my @cols;
+	my @cols = ($interaction,$interaction_type,$subtype,);
+	my $summary = eval {$interaction->Interaction_summary};
+	push @cols,$summary;
 	my $reference = eval { $interaction->Paper->Brief_citation };
-	push @cols,$role,$reference;
-	print join("\t",@cols) . "\n";
-    }
+	push @cols,$reference;
 
+    foreach my $interactor_type ($interaction->Interactor) {		# e.g. PCR_inteactor, Interactor_overlapping_gene
+		my $role = '';
+		my $count = 0;
+		foreach my $interactor ($interactor_type->col) {
+			my @interactors = $interactor_type->col;
+			my @tags = eval { $interactors[$count++]->col };     # Interactor_info
+			my %info;
+			$info{obj} = $interactor;
+			if ( @tags ) {
+				map { $info{"$_"} = $_->at; } @tags;
+				if ($interactor_type =~ /Other_regulator|Interactor_overlapping_gene|Molecule_regulator|Other_regulated|Rearrangement/) {		# Exclude those that have been translated to Gene
+					$role = $info{Interactor_type};
+					my @interactor_names;
+					my $public_name = eval {$interactor->Public_name} || NA;
+					push (@interactor_names,$interactor,$public_name);
+					push (@cols,@interactor_names,$role);
+				}
+			}
+		}
+	}	
+
+	print join("\t",@cols) . "\n";
+	
 }
 
 
