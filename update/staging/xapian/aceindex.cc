@@ -61,6 +61,7 @@ MYSQL *connection,mysql;
 MYSQL_RES *result;
 MYSQL_ROW row;
 int query_state;
+int species_weight = 1;
 
 
 static void
@@ -133,7 +134,7 @@ string
 parseSpecies (string &species) {
  string ret;
  ret.push_back(species[0]);
- size_t space = species.find_first_of(' ') + 1;
+ size_t space = species.find_last_of(' ') + 1;
  ret += "_" + species.substr(space, species.length()-space);
  return ret;
 }
@@ -171,11 +172,16 @@ indexLineBegin(string field_name, string line, string copy, string obj_name, Xap
     line = splitFields(line, true);
     indexer.index_text(line, 1);
     line = parseSpecies(line);
+    if(line.find("elegans") != string::npos){
+      species_weight = 5;
+    }else{
+      species_weight = 1;
+    }
     doc.add_value(3, Xapian::sortable_serialise(species_list[line]));
     doc.add_value(5, line);
     syn_doc.add_value(3, Xapian::sortable_serialise(species_list[line]));
     syn_doc.add_value(5, line);
-    indexer.index_text(line, 1);
+    indexer.index_text(line, 1 * species_weight);
     return true;
   }
   return false;
@@ -203,7 +209,7 @@ indexLineEnd(string field_name, string line, string copy, string obj_name, Xapia
     }
 
     // do not add objects with a NOT tag
-    indexer.index_text(splitFields(line), 1); //lower count index
+    indexer.index_text(splitFields(line), 1 * species_weight); //lower count index
   }
   return ret;
 }
@@ -310,9 +316,9 @@ indexFile(char* filename, string desc[], int desc_size, Setting &root){
         
         //THIS IS A HACK
         bool do_not_index = false;
-        if(line.find("WBProcess") != string::npos){
-          do_not_index = true;
-        }
+        // if(line.find("WBProcess") != string::npos){
+        //   do_not_index = true;
+        // }
         
         while(!line.empty()) {
           string copy = line;
@@ -466,14 +472,14 @@ indexGFF3obj(MYSQL_ROW row, string species){
         if(row[5]){
           note = row[5];
           note.erase(remove(note.begin(), note.end(), '\n'), note.end());
-          indexer.index_text(note, 10);
+          indexer.index_text(note);
           search_desc = search_desc + "remark=" + note + "\n";
         }
         
         string description;
         if(row[6]){
           description = row[6];
-          indexer.index_text(description, 10);          
+          indexer.index_text(description);          
           description.erase(remove(description.begin(), description.end(), '\n'), description.end());
           search_desc = search_desc + "description=" + description + "\n";
         }
@@ -501,14 +507,14 @@ indexGFF3obj(MYSQL_ROW row, string species){
 
         
         //add the class and wbid as terms
-        indexer.index_text(obj_name, 500); //EXTRA EXTRA count on the wbid
+        indexer.index_text(obj_name, 20); //EXTRA EXTRA count on the wbid
         indexer.index_text(obj_class);
         string unique = uniquify(obj_name, obj_class);
         indexer.index_text(unique);
 
         replaceChar(obj_name, '-', '_');
         //add the class and wbid as terms
-        indexer.index_text(obj_name, 500); //EXTRA EXTRA count on the wbid
+        indexer.index_text(obj_name, 20); //EXTRA EXTRA count on the wbid
         indexer.index_text(obj_class);
         indexer.index_text(obj_class + obj_name);
         
@@ -516,24 +522,25 @@ indexGFF3obj(MYSQL_ROW row, string species){
         doc.add_value(5, species);
         syn_doc.add_value(3, Xapian::sortable_serialise(species_list[species]));
         syn_doc.add_value(5, species);
-        indexer.index_text(species, 1);
+        indexer.index_text(species);
         
         
 
         if (!alias.empty()) {        
-          indexer.index_text(alias, 20);
+          indexer.index_text(alias);
           replaceChar(alias, '-', '_');
           if(alias.length() < 245){
             db.add_synonym(alias, obj_name);
+                    cout << "ADDING SYN: " << alias << ", " << obj_name << endl;
             syn_doc.add_term(alias, 1);
           }
-          indexer.index_text(alias, 40); //extra count on names
+          indexer.index_text(alias); //extra count on names
         }
         cout << obj_class << ": " << obj_name << "|" << alias << endl;
                 cout << search_desc << endl;
                 
                 replaceChar(species, '_', '-');
-                indexer.index_text(species, 10);
+                indexer.index_text(species);
 
         doc.set_data(search_desc);
         db.add_document(doc);
