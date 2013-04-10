@@ -564,7 +564,7 @@ sub _build_all_available_species {
     return \@species;
 }
 
-# A dsicoverable list of species (symbolic) names.
+# A discoverable list of species (symbolic) names.
 # distributed in the latest release.
 has 'wormbase_managed_species' => (
     is => 'ro',

@@ -6,9 +6,27 @@ See for an up-to-date description.
 
 http://wiki.wormbase.org/index.php/Software_Life_Cycle:_4._Updating_The_Production_Servers
 
+1. Set up a screen
+
+ screen -S deploy
+
+
+1. Check disk space on local and remote nodes.
+
+2. Push databases to production
+
+   production/steps/push_staged_release_to_nodes.pl --release $RELEASE --target production
+
+3. Copy couch to cloud (for now)
+
+ (may need to rearrange EBS to accomodate)
+  23.21.171.141
+
+
 
 Final step is:
 # And update symlinks on the ftp site:
+# This should be tied in to release
 ./staging/steps/update_ftp_site_symlinks.pl --release $RELEASE --status production
 
 

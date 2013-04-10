@@ -26,6 +26,19 @@ sub _build_db_symbolic_name {
 
 
 
+has 'bioprojects' => ( is => 'ro',lazy_build => 1);
+sub _build_bioprojects {
+    my $self = shift;
+    my $name    = $self->symbolic_name;
+    my $release = $self->release;	
+    my $base = join("/",$self->ftp_releases_dir,$release,'species',$name);
+
+    opendir(DIR,"$base") or die "Couldn't open the species directory ($dir) on the FTP site.";
+    my @children = grep { !/^\./ && -d "$base/$_" } readdir(DIR);
+#    my $bioproject_id = $children[0];
+#    return $bioproject_id;
+    return \@children;
+}
 
 
 # The release directory for this species on the FTP site.
@@ -34,7 +47,10 @@ sub _build_release_dir {
     my $self    = shift;
     my $name    = $self->symbolic_name;
     my $release = $self->release;	
-    my $dir = join("/",$self->ftp_releases_dir,$release,'species',$name);
+
+    # This ALSO needs to take into account the bioproject ID
+    # my $dir = join("/",$self->ftp_releases_dir,$release,'species',$name)
+    my $dir = join("/",$self->ftp_releases_dir,$release,'species',$name,$self->bioproject_id);
     return $dir;
 }
 
