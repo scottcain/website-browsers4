@@ -15,4 +15,5 @@ chown acedb:acedb /usr/local/wormbase/acedb/wormbase/database/log.wrm
 sudo killall -9 sgifaceserver
 #sleep 5
 #/etc/init.d/xinetd restart
-sudo /usr/local/apache2/bin/apachectl graceful
+#sudo /usr/local/apache2/bin/apachectl graceful
+sudo /etc/init.d/apache2 restart

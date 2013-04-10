@@ -200,11 +200,10 @@ sub crawl_website {
     # (Doing it this way because of NFS mount but may want to use different configs)
     my $local_config = -e '/usr/local/wormbase/wormbase.conf' 
 	? '/usr/local/wormbase/wormbase.conf' 
-	: '/usr/local/wormbase/website/production/website.conf';
+	: '/usr/local/wormbase/website/production/wormbase.conf';
     my $c = Config::JFDI->new(file => $local_config);
     my $config = $c->get;
 
-    my $db      = Ace->connect(-host=>'localhost',-port=>2005) or warn;
     my $version = $self->release;
     my $cache_root = join("/",$self->support_databases_dir,$version,'cache');
     system("mkdir -p $cache_root/logs");
@@ -264,15 +263,17 @@ sub crawl_website {
 	    @widgets = sort keys %{$config->{sections}->{species}->{$class}->{widgets}};
 	    @widgets =  sort keys %{$config->{sections}->{resources}->{$class}->{widgets}} unless @widgets > 0;
 	}
+	print @widgets;
 
 	my $object_list = join("/",$cache_root,'logs',"$class.ace");
 	open OBJECTS,$object_list or $self->log->logwarn("Could not open the object list file: $object_list");
-	
+
 	while (my $obj = <OBJECTS>) {
 	    chomp $obj;
 	    # Clean up ace files
 	    next if $obj =~ /^\w/;
 	    next if $obj eq "";
+
 	    $obj =~ s/^\s//;
 	    my @uris;  # All uris for a single object, fetched in parallel.
 	    
@@ -307,7 +308,7 @@ sub crawl_website {
 #	    print join("\t",$class,$widget,$precache) . "\n";
 		
 		if ($precache) {
-
+		    print $obj;
 		    # Create a REST request of the following format:
 		    # curl -H content-type:application/json http://api.wormbase.org/rest/widget/gene/WBGene00006763/cloned_by
 
