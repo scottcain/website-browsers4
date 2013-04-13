@@ -1,13 +1,10 @@
-package WormBase::Species;
+package WormBase::Species::Bioproject;
 
-# A collection of one or possibly many bioproject IDs
-# and miscellaneous meta-information about the species.
+# Each species can have one or possibly many bioprojects.
+# These are instantiated by the Species class.
 
-
-# A simple species package that makes tracking
-# available resources for that species trivial.
-# Each species is associated with a release to 
-# make construction of these filenames possible.
+# Serves up file paths and file names for a given
+# species/bioproject combination
 
 use Moose;
 
@@ -21,6 +18,7 @@ has 'db_symbolic_name' => (
     is => 'rw',
     lazy_build => 1 );
 
+# PROBABLY makes sense to handle this here.
 sub _build_db_symbolic_name {
     my $self    = shift;
     my $name    = $self->symbolic_name;
@@ -30,25 +28,6 @@ sub _build_db_symbolic_name {
 
 
 
-has 'bioprojects' => ( is => 'ro',lazy_build => 1);
-sub _build_bioprojects {
-    my $self = shift;
-    my $name    = $self->symbolic_name;
-    my $release = $self->release;	
-    my $base = join("/",$self->ftp_releases_dir,$release,'species',$name);
-
-    opendir(DIR,"$base") or die "Couldn't open the species directory ($dir) on the FTP site.";
-    my @children = grep { !/^\./ && -d "$base/$_" } readdir(DIR);
-    
-    my @bioprojects;
-    foreach my $id (@children) {
-	my $bioproject = WormBase->create('Bioproject',{ bioproject_id => $id, symbolic_name => $name, release => $release });
-	push @bioprojects,$bioproject;
-    }
-
-    return \@bioprojects;
-}
-
 
 # The release directory for this species on the FTP site.
 has 'release_dir' => ( is => 'ro', lazy_build => 1);
@@ -56,10 +35,10 @@ sub _build_release_dir {
     my $self    = shift;
     my $name    = $self->symbolic_name;
     my $release = $self->release;	
+    my $id      = $self->bioproject_id;
 
-    # This ALSO needs to take into account the bioproject ID
     # my $dir = join("/",$self->ftp_releases_dir,$release,'species',$name)
-    my $dir = join("/",$self->ftp_releases_dir,$release,'species',$name,$self->bioproject_id);
+    my $dir = join("/",$self->ftp_releases_dir,$release,'species',$name,$id);
     return $dir;
 }
 
@@ -69,23 +48,27 @@ sub _build_blast_dir {
     my $self = shift;
     my $release = $self->release;
     my $name    = $self->symbolic_name;
+    my $id      = $self->bioproject_id;
     my $path = join('/',$self->support_databases_dir,$release);
     $self->_make_dir($path);
     $self->_make_dir("$path/blast");
     $self->_make_dir("$path/blast/$name");
-    return "$path/blast/$name";
+    $self->_make_dir("$path/blast/$name/$id");
+    return "$path/blast/$name/$id";
 }
 
-#has 'blat_dir' => ( is => 'ro', lazy_build => 1 );
+has 'blat_dir' => ( is => 'ro', lazy_build => 1 );
 sub _build_blat_dir { 
     my $self = shift;
     my $release = $self->release;
     my $name    = $self->symbolic_name;
+    my $id      = $self->bioproject_id;
     my $path = join('/',$self->support_databases_dir,$release);
     $self->_make_dir($path);
     $self->_make_dir("$path/blat");
     $self->_make_dir("$path/blat/$name");
-    return "$path/blat/$name";
+    $self->_make_dir("$path/blat/$name/$id");
+    return "$path/blat/$name/$id";
 }
 
 
@@ -95,11 +78,13 @@ sub _build_epcr_dir {
     my $self = shift;
     my $release = $self->release;
     my $name    = $self->symbolic_name;
-    my $path = join('/',$self->support_databases_dir,$release);
+    my $path    = join('/',$self->support_databases_dir,$release);
+    my $id      = $self->bioproject_id;
     $self->_make_dir($path);
     $self->_make_dir("$path/epcr");
     $self->_make_dir("$path/epcr/$name");
-    return "$path/epcr/$name";
+    $self->_make_dir("$path/epcr/$name/$id");
+    return "$path/epcr/$name/$id";
 }
 
 

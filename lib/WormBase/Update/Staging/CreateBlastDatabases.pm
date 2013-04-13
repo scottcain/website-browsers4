@@ -45,27 +45,29 @@ sub run {
 #	$self->system_call( $self->create_blastdb_script . " $release protein $name",
 #			    "creating protein blastdb for $name");
 
-	# Iterate over the bioproject IDs.
-
-		
-	$self->create_genomic_blast_db($species);
-	$self->create_protein_db($species);
-	$self->create_est_db($species);   # elegans only
-# No longer in use as of WS230
-#	$self->create_gene_db($species);  # elegans only
-	$self->log->info("$name: done");
+	# Now, for each species, iterate over the bioproject IDs.
+	# These are just strings.
+	my @bioprojects = $species->bioprojects;
+	foreach my $id (@bioprojects) {
+	    $self->create_genomic_blast_db($species,$id);
+	    $self->create_protein_db($species,$id);
+	    $self->create_est_db($species,$id);   # elegans only
+            # No longer in use as of WS230
+            #	$self->create_gene_db($species);  # elegans only
+	    $self->log->info("$name ($id): done");
+	}
     }
 }
 
 
 
 sub create_genomic_blast_db {
-    my ($self,$species) = @_;
+    my ($self,$species,$id) = @_;
 
     my $name = $species->symbolic_name;
 
     # Copy and unpack the genomic sequence, if it exists.
-    my $fasta_file = join("/",$species->release_dir,$species->genomic_fasta);
+    my $fasta_file = join("/",$species->release_dir,$id,$species->genomic_fasta);
 
     unless (-e $fasta_file && -s $fasta_file) {
 	$self->log->error(uc($name) . ": has no fasta sequence; not building genomic blast");
