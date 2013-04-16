@@ -50,16 +50,46 @@ sub update_mysql_symlinks {
     
     # Get a list of all species updated this release.
     my ($species) = $self->wormbase_managed_species;
-    push @$species,'clustal';   # clustal database, too.
     
     my $mysql_data_dir = $self->mysql_data_dir;
     my $release        = $self->release;
     my $manager        = $self->production_manager;
     
     foreach my $name (@$species) {
+
+	my $species = WormBase->create('Species',{ symbolic_name => $name, release => $release });
+
+	# Now, for each species, iterate over the bioproject IDs.
+	# These are just strings.
+	my $bioprojects = $species->bioprojects;
+	foreach my $bioproject (@$bioprojects) {
+
+	    unless ($bioproject->has_been_updated) {
+		$self->log->info(  "Skipping $name; it was not updated during this release cycle");
+		next;
+	    }
+	    
+	    my $id = $bioproject->bioproject_id;
+	    $self->log->info("   Adjusting the MySQL symlink for bioproject: $id");
+
+	    my $db_name = $bioproject_id->mysql_db_name;
+	    
+	    my $ssh = $self->ssh($node);
+	    $ssh->error && $self->log->logdie("Can't ssh to $manager\@$node: " . $ssh->error);
+	    $ssh->system("cd $mysql_data_dir ; rm $name ; ln -s ${db_name} $name") or
+		$self->log->logdie("remote command updating the mysql symlink failed " . $ssh->error);
+	}
+    }
+
+
+    # Update non-species related DBs
+    my %dbs = ( clustal => "clustal_$release" );
+    foreach my $name (keys %dbs) {
+	my $db_name = $dbs{$name};
+	$self->log->info("   Adjusting the MySQL symlink for the clustal database");
 	my $ssh = $self->ssh($node);
-	$ssh->error && $self->log->logdie("Can't ssh to $manager\@$node: " . $ssh->error);	
-	$ssh->system("cd $mysql_data_dir ; rm $name ; ln -s ${name}_$release $name") or
+	$ssh->error && $self->log->logdie("Can't ssh to $manager\@$node: " . $ssh->error);
+	$ssh->system("cd $mysql_data_dir ; rm $name ; ln -s ${db_name} $name") or
 	    $self->log->logdie("remote command updating the mysql symlink failed " . $ssh->error);
     }
 }

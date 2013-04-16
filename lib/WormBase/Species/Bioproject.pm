@@ -12,18 +12,19 @@ with 'WormBase::Roles::Config';
 
 has 'symbolic_name' => ( is => 'rw' );
 has 'release'       => ( is => 'rw' );
+has 'bioproject_id' => ( is => 'rw' );
 
 # Database symbolic name. Mostly for MySQL
-has 'db_symbolic_name' => (
+has 'mysql_db_name' => (
     is => 'rw',
     lazy_build => 1 );
 
-# PROBABLY makes sense to handle this here.
-sub _build_db_symbolic_name {
+sub _build_mysql_db_name {
     my $self    = shift;
     my $name    = $self->symbolic_name;
     my $release = $self->release;
-    return $name . '_' . $release;
+    my $id      = $self->bioproject_id;
+    return $name . '_' . $id . '_' . $release;
 }
 
 
@@ -89,6 +90,44 @@ sub _build_epcr_dir {
 
 
 
+
+has 'has_been_updated' => ( is => 'rw' , lazy_build => 1 );
+
+# Return a boolean value if the CURRENT
+# release for this bioproject has been
+# updated relative to the last
+# using checksums of the annotation file.
+# This won't be available until WS238
+sub _build_has_been_updated {
+    my $self = shift;
+    my $this_gff_file = $self->gff_file;
+    my $release       = $self->release;
+    my ($id)          = ($release =~ /WS(\d\d\d)/); 
+    $id--;
+    my $last_gff_file = $this_gff_file;
+    $last_gff_file    =~ s/$release/WS$id/g;
+
+# Until WS238, won't be able to tell what has been updated. 
+    # I need two releases with the same structure.
+    
+    return 1;   
+
+    # Do the checksum.
+    my $this_md5 = $self->create_md5($self->release_dir,$this_gff_file);
+    my $last_md5 = $self->create_md5($self->release_dir,$last_gff_file);
+
+    # The md5 for the annotation file is the same.
+    # Let's assume we haven't been updated.
+    if ($this_md5 eq $last_md5) {
+	return 0;
+    } else {
+	# Otherwise, the checksums are DIFFERENT.
+	# We have been updated. Do something.
+	return 1; # We've been updated.
+    }    
+}
+
+
 ######################################################
 #
 #   Filenames
@@ -105,7 +144,8 @@ sub _build_genomic_fasta {
     my $self    = shift;
     my $name    = $self->symbolic_name;
     my $release = $self->release;	
-    my $fasta   = "$name.$release.genomic.fa.gz";
+    my $id      = $self->bioproject_id;
+    my $fasta   = "$name.$id.$release.genomic.fa.gz";
     return $fasta;
 }
 
@@ -119,7 +159,8 @@ sub _build_protein_fasta {
     my $self    = shift;
     my $name    = $self->symbolic_name;
     my $release = $self->release;	
-    my $fasta   = "$name.$release.protein.fa.gz";
+    my $id      = $self->bioproject_id;
+    my $fasta   = "$name.$id.$release.protein.fa.gz";
     return $fasta;
 }
 
@@ -131,7 +172,8 @@ sub _build_ests_file {
     my $self    = shift;
     my $name    = $self->symbolic_name;
     my $release = $self->release;	
-    my $fasta   = "$name.$release.ests.fa.gz";
+    my $id      = $self->bioproject_id;
+    my $fasta   = "$name.$id.$release.ests.fa.gz";
     return $fasta;
 }
 
@@ -146,11 +188,12 @@ sub _build_gff_file {
     my $self    = shift;
     my $name    = $self->symbolic_name;
     my $release = $self->release;	
-    my $gff = join("/",$self->release_dir,"$name.$release.annotations.gff2.gz");
+    my $id      = $self->bioproject_id;
+    my $gff = join("/",$self->release_dir,"$name.$id.$release.annotations.gff2.gz");
     if (-e $gff) {
 	$self->gff_version('2');
     } else {
-	$gff = join("/",$self->release_dir,"$name.$release.annotations.gff3.gz");
+	$gff = join("/",$self->release_dir,"$name.$id.$release.annotations.gff3.gz");
 	if (-e $gff) {
 	    $self->gff_version('3');
 	}
@@ -163,10 +206,6 @@ has 'gff_version' => (
     isa     => 'Str',
     is      => 'rw',
     );
-
-
-
-
 
 
 1;
