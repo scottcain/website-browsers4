@@ -160,7 +160,7 @@ has 'create_blastdb_script' => (
     is => 'ro',     
     default => sub {
 	my $self = shift;
-	my $bin = $self->bin_path;
+	my $bin = $self->bin_path || '.';
 	my $script = "$bin/../helpers/create_blast_db.sh";
     });
 
@@ -255,7 +255,7 @@ before 'execute' => sub {
     # Increment and save.
     my $target_release_id = ++$last_release_id;
     $self->release("WS$target_release_id");
-    return;
+    return "WS$target_release_id";
 };
 
 

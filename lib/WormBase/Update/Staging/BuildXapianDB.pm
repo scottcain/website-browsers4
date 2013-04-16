@@ -16,7 +16,7 @@ sub run {
     my $tmp_dir = "/usr/local/wormbase/tmp/staging/$release/acedmp";
     system("mkdir -p $tmp_dir");
     system("chmod 777 $tmp_dir");
-#    $self->dump_objects_via_tace($tmp_dir);    
+    $self->dump_objects_via_tace($tmp_dir);    
     $self->dump_settings_file($tmp_dir);
     $self->dump_pages_pseudo_ace_file($tmp_dir);
 
