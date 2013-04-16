@@ -233,13 +233,13 @@ before 'execute' => sub {
 	return $version;
     }
 
-    if ($self->step =~ /mirror/ 
-	    || $self->step eq 'push acedb to production'
+    if ( $self->step eq 'push acedb to production'
 	    || $self->step eq 'push support databases to production'
 	    || $self->step eq 'update symlinks on the production FTP site'
 	) {
 	$self->release('release_independent_step');
 	return;
+    } elsif ($self->step =~ /mirror/) {
     } else {
 	$self->log->logdie("no release provided; discovering a new release only makes sense during the mirroring step.");
     }
@@ -475,16 +475,17 @@ sub create_md5 {
 
   $self->log->debug("creating md5 sum of $file");
   
-  open(FILE, "$base/$file.tgz") or die "Can't open '$base/$file.tgz': $!";
+  open(FILE, "$base/$file") or die "Can't open '$base/$file': $!";
   binmode(FILE);
   
   open OUT,">$base/$file.md5";
-  print OUT Digest::MD5->new->addfile(*FILE)->hexdigest, "  $file.tgz\n";
+  print OUT Digest::MD5->new->addfile(*FILE)->hexdigest, "  $file\n";
   
   # Verify the checksum...
   chdir($base);
   my $result = `md5sum -c $file.md5`;
-  die "Checksums do not match: packaging $file.tgz failed\n" if ($result =~ /failed/);
+  die "Checksum does not match: packaging $file.tgz failed\n" if ($result =~ /failed/);
+  return "$file.md5";
 }
 
 

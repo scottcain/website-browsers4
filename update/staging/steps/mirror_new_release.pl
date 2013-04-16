@@ -10,7 +10,7 @@ my ($release,$help);
 GetOptions('release=s' => \$release,
 	   'help=s'    => \$help);
 
-if ($help || (!$release)) {
+if ($help) {
     die <<END;
     
 Usage: $0 --release WSXXX

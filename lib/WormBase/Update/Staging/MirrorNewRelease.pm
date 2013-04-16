@@ -40,14 +40,13 @@ sub run {
 
     # This logic is handled upstream in the bin/mirror_new_release.pl.
     # That lets us establish the correct log files.
-
     my $release    = $self->release;
-    unless ($release) {
+    if ($release =~ /independent/) {   # hack.
 	$self->get_next_release();
 	$release = $self->release;
-    }
-    my $release_id = $self->release_id; 
+    } 
 
+    my $release_id = $self->release_id; 
     
     my $local_releases_path  = $self->ftp_releases_dir;
     my $remote_releases_path = $self->remote_ftp_releases_dir;
