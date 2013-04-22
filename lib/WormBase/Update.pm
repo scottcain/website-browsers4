@@ -7,6 +7,7 @@ use Log::Log4perl;
 use FindBin qw($Bin);
 
 use Moose;
+use JSON::Any qw/XS JSON/;
 extends qw/WormBase/;
 
 with qw/WormBase::Roles::Config/;
@@ -23,6 +24,31 @@ has 'bin_path' => (
 	return $Bin;
     },
     );
+
+
+
+has 'assemblies_metadata' => (
+    is => 'ro',
+    lazy_build => 1 );
+
+sub _build_assemblies_metadata {
+    my $self = shift;
+    my $release = $self->release;
+    my $releases_dir = $self->ftp_releases_dir;
+    my $assemblies_file = "$releases_dir/$release/species/ASSEMBLIES.$release.json";
+
+    my $j = JSON::Any->new;
+    
+    open( FILE, '<', $assemblies_file ) or $self->log->logdie("Could not open the file: $!");
+
+    undef $/;
+    my $json = <FILE>;
+    my $obj = $j->jsonToObj($json);
+    return $obj;
+}
+    
+	
+
 
 # I should break this into STDERR and STDOUT logs.
 has 'log' => (
@@ -173,6 +199,7 @@ has 'web_user' => (
     ); 
 
 
+ 
 
 
 sub execute {
@@ -239,7 +266,7 @@ before 'execute' => sub {
 	) {
 	$self->release('release_independent_step');
 	return;
-    } elsif ($self->step =~ /mirror/) {
+    } elsif ($self->step =~ /check/ || $self->step =~ /mirror/) {
     } else {
 	$self->log->logdie("no release provided; discovering a new release only makes sense during the mirroring step.");
     }
@@ -290,6 +317,7 @@ sub update_ftp_site_symlinks {
     my @releases;
     if ($release eq 'release_independent_step') {
 	@releases = glob("$releases_dir/*") or die "$!";
+	$self->log->logdie("\n\nBecause of the introduction of BioProject IDs in WS237, this script can no longer keep the entire FTP site organized. Releases prior to WS237 will need to be organized manually.\n\n");
     } else {
 	@releases = glob("$releases_dir/$release") or die "$!";
     }
@@ -302,100 +330,168 @@ sub update_ftp_site_symlinks {
 	
 	# Where should the release notes go?
 	# chdir "$FTP_SPECIES_ROOT";
+
+	my $metadata = $self->assemblies_metadata;
 	
 	foreach my $species_path (@species) {
 	    next if $species_path =~ /README/;
+	    next if $species_path =~ /ASSEMBLIES/;
 	    
 	    my ($species) = ($species_path =~ /.*\/(.*)/);
+
+	    my $species_obj = WormBase->create('Species',{ symbolic_name => $species, 
+							   release => $release });
+	    # Now, for each species, iterate over the bioproject IDs.
+	    # These are just strings.
 	    
-	    # Create a symlink to each file in /species
-	    opendir DIR,"$species_path" or die "Couldn't open the dir: $!";
-	    while (my $file = readdir(DIR)) {
+	    # NOTE: This can NO LONGER be used to organize the FTP site for
+	    # releases prior to WS237. Don't even try it.
+	    
+	    my $bioprojects = $species_obj->bioprojects;
+	    foreach my $bioproject (@$bioprojects) {
+
+		my $bioproject_id = $bioproject->bioproject_id;
+
+		# Is this the canonical bioproject?
+		# For species labeled as is_canonical in metadata, assume that it is.
+		# For species with a single bioproject, assume that it is.
+		# We will create both:	
+		# g_species.canonical_bioproject.current_development.gz and g_species.canonical_bioproject.current.gz
+		# g_species.BPID.current_development.gz and g_species.BPID.current.gz
+		# The species/*/* directories will themselves be flat with no
+		# hierarchy for the bioproject ID.
+
+		# This probably belongs in Species or Species/BioProject
+		my $is_canonical;
+		my @assemblies = @{$metadata->{$species}->{assemblies}};
 		
-		# Create some directories. Probably already exist.
-		system("mkdir -p $species_dir/$species");
-		chdir "$species_dir/$species";
-		mkdir("assemblies");
-		mkdir("gff");
-		mkdir("annotation");
-		mkdir("sequence");
-		
-		chdir "$species_dir/$species/sequence";
-		mkdir("genomic");
-		mkdir("transcripts");
-		mkdir("protein");
-		
-		# GFF?
-		chdir "$species_dir/$species";
-		if ($file =~ /gff/) {
-		    chdir("gff") or die "$!";
-		    $self->update_symlink({target => "../../../releases/$release/species/$species/$file",
-					   symlink => $file,
-					   release => $release,
-					   status    => $status,
-					  });
-		} elsif ($file =~ /assembly/) {
-		    chdir("assemblies") or die "$!";
-		    $self->update_symlink({target => "../../../releases/$release/species/$species/$file",
-					   symlink => $file,
-					   release => $release,
-					   status  => $status,
-					  });
-		} elsif ($file =~ /genomic|sequence/) {
-		    chdir "$species_dir/$species/sequence/genomic" or die "$!";
-		    $self->update_symlink({target  => "../../../../releases/$release/species/$species/$file",
-					   symlink => $file,
-					   release => $release,
-					   status  => $status,
-					  });
-		} elsif ($file =~ /transcripts/) {
-		    chdir "$species_dir/$species/sequence/transcripts" or die "$! $species";
-		    $self->update_symlink({target  => "../../../../releases/$release/species/$species/$file",
-					   symlink => $file,
-					   release => $release,
-					   status    => $status,
-					  });
-		} elsif ($file =~ /wormpep|protein/) {
-		    chdir "$species_dir/$species/sequence/protein" or die "$!";
-		    $self->update_symlink({target  => "../../../../releases/$release/species/$species/$file",
-					   symlink => $file,
-					   release => $release,
-					   status  => $status,
-					  });
-		    
-		    # best_blast_hits isn't in the annotation/ folder
-		} elsif ($file =~ /best_blast/) {
+		if (@assemblies == 1) {
+		    $is_canonical++;
+		} else {
+		    foreach (@assemblies) {
+			my $bioproject = $_->{bioproject};
+			# Is the canonical flag set for this assembly?
+			if ($bioproject eq $bioproject_id) {
+			    if ($_->{is_canonical}) {
+				$is_canonical++;
+			    } 
+			}
+		    }
+		}
+
+		# Create a symlink to each file in /species	       
+		opendir DIR,"$species_path/$bioproject_id" or die "Couldn't open the dir: $! $species_path/$bioproject_id";
+		while (my $file = readdir(DIR)) {
+
+		    # Uncomment this to use bioproject IDs in the
+		    # symbolically organized species/ paths
+#		my $species_source_path = "$species_path/$bioproject_id";
+		    my $species_source_path = $species_path;
+		    		
+		    # Create some directories. Probably already exist.
+		    system("mkdir -p $species_dir/$species");
 		    chdir "$species_dir/$species";
+		    mkdir("assemblies");
+		    mkdir("gff");
+		    mkdir("annotation");
+		    mkdir("sequence");
+		    
+		    chdir "$species_dir/$species/sequence";
+		    mkdir("genomic");
+		    mkdir("transcripts");
+		    mkdir("protein");
+		    
+		    
+		    # GFF?
+		    chdir "$species_dir/$species";
+		    if ($file =~ /gff/) {
+			chdir("gff") or die "$!";
+			$self->update_symlink({target => "../../../releases/$release/species/$species/$bioproject_id/$file",
+					       symlink => $file,
+					       release => $release,
+					       status  => $status,
+					       is_canonical => $is_canonical,
+					       bioproject_id => $bioproject_id,
+					      });
+			
+		    } elsif ($file =~ /assembly/) {
+			chdir("assemblies") or die "$!";
+			$self->update_symlink({target => "../../../releases/$release/species/$species/$bioproject_id/$file",
+					       symlink => $file,
+					       release => $release,
+					       status  => $status,
+					       is_canonical => $is_canonical,
+					       bioproject_id => $bioproject_id,
+					      });
+			
+		    } elsif ($file =~ /genomic|sequence/) {
+			chdir "$species_dir/$species/sequence/genomic" or die "$!";
+			$self->update_symlink({target  => "../../../../releases/$release/species/$species/$bioproject_id/$file",
+					       symlink => $file,
+					       release => $release,
+					       status  => $status,
+					       is_canonical => $is_canonical,
+					       bioproject_id => $bioproject_id,
+					      });
+			
+		    } elsif ($file =~ /transcripts/) {
+			chdir "$species_dir/$species/sequence/transcripts" or die "$! $species";
+			$self->update_symlink({target  => "../../../../releases/$release/species/$species/$bioproject_id/$file",
+					       symlink => $file,
+					       release => $release,
+					       status    => $status,
+					       is_canonical => $is_canonical,
+					       bioproject_id => $bioproject_id,
+					      });
+			
+		    } elsif ($file =~ /wormpep|protein/) {
+			chdir "$species_dir/$species/sequence/protein" or die "$!";
+			$self->update_symlink({target  => "../../../../releases/$release/species/$species/$bioproject_id/$file",
+					       symlink => $file,
+					       release => $release,
+					       status  => $status,
+					       is_canonical => $is_canonical,
+					       bioproject_id => $bioproject_id,
+					      });
+			
+			# best_blast_hits isn't in the annotation/ folder
+		    } elsif ($file =~ /best_blast/) {
+			chdir "$species_dir/$species";
+			mkdir("annotation");
+			chdir("annotation");
+			mkdir("best_blast_hits");
+			chdir("best_blast_hits");
+			$self->update_symlink({target  => "../../../../releases/$release/species/$species/$bioproject_id/$file",
+					       symlink => $file,
+					       release => $release,
+					       status  => $status,
+					       is_canonical => $is_canonical,
+					       bioproject_id => $bioproject_id,
+					      });
+		    } else { }
+		}
+		
+		# Annotations, but only those with the standard format.
+#	chdir "$FTP_SPECIES_ROOT/$species";
+		opendir DIR,"$species_path/$bioproject_id/annotation" or next;
+		while (my $file = readdir(DIR)) {
+		    next unless $file =~ /^$species/;
+		    chdir "$species_dir/$species";
+		    
 		    mkdir("annotation");
 		    chdir("annotation");
-		    mkdir("best_blast_hits");
-		    chdir("best_blast_hits");
-		    $self->update_symlink({target  => "../../../../releases/$release/species/$species/$file",
+		    
+		    my ($description) = ($file =~ /$species.*\.WS\d\d\d\.(.*?)\..*/);
+		    mkdir($description);
+		    chdir($description);
+		    $self->update_symlink({target  => "../../../../releases/$release/species/$species/$bioproject_id/annotation/$file",
 					   symlink => $file,
 					   release => $release,
 					   status  => $status,
+					   is_canonical => $is_canonical,
+					   bioproject_id => $bioproject_id,
 					  });
-		} else { }
-	    }
-	    
-	    # Annotations, but only those with the standard format.
-#	chdir "$FTP_SPECIES_ROOT/$species";
-	    opendir DIR,"$species_path/annotation" or next;
-	    while (my $file = readdir(DIR)) {
-		next unless $file =~ /^$species/;
-		chdir "$species_dir/$species";
-		
-		mkdir("annotation");
-		chdir("annotation");
-		
-		my ($description) = ($file =~ /$species\.WS\d\d\d\.(.*?)\..*/);
-		mkdir($description);
-		chdir($description);
-		$self->update_symlink({target  => "../../../../releases/$release/species/$species/annotation/$file",
-				       symlink => $file,
-				       release => $release,
-				       status  => $status,
-				      });
+		}
 	    }
 	}
     }
@@ -412,6 +508,9 @@ sub update_symlink {
     my $release = $params->{release};
     my $symlink = $params->{symlink};
     my $status  = $params->{status};  # Set to development to provide links to current dev version.
+
+    my $is_canonical = $params->{is_canonical};
+    my $bioproject_id       = $params->{bioproject_id};
     $self->log->warn("updating $symlink -> $target");
     
     unlink($symlink)          or $self->log->warn("couldn't unlink $symlink; perhaps it didn't exist to begin with");
@@ -425,7 +524,21 @@ sub update_symlink {
 	}
 	unlink($symlink)           or $self->log->warn("couldn't unlink $symlink; perhaps it didn't exist to begin with");
 	symlink($target,$symlink)  or $self->log->warn("couldn't create the current symlink");
+
+	# Temporary to remove old "current" links
+#	$symlink =~ s/$bioproject_id\.//;
+#	unlink($symlink)           or $self->log->warn("couldn't unlink $symlink; perhaps it didn't exist to begin with");	
+#	$symlink =~ s/_development//;	
+#	unlink($symlink)           or $self->log->warn("couldn't unlink $symlink; perhaps it didn't exist to begin with");
     }
+    return;
+    if ($is_canonical) {
+	$symlink =~ s/$bioproject_id/canonical_bioproject/;
+
+	unlink($symlink)           or $self->log->warn("couldn't unlink $symlink; perhaps it didn't exist to begin with");
+	symlink($target,$symlink)  or $self->log->warn("couldn't create the current symlink");
+    }
+
 }
 
 
@@ -543,6 +656,27 @@ END
     $self->log->info("  end: dumping ESTs for C. elegans");
 }
 
+
+
+has 'connect_to_ftp' => (
+    is         => 'ro',
+    lazy_build => 1,
+    );
+
+sub _build_connect_to_ftp {
+    my $self = shift;
+
+    my $contact_email = $self->contact_email;
+    my $ftp_server    = $self->remote_ftp_server;
+
+    my $ftp = Net::FTP::Recursive->new($ftp_server,
+				       Debug => 0,
+				       Passive => 1) or $self->log->logdie("can't instantiate Net::FTP object");
+
+    $ftp->login('anonymous', $contact_email) or $self->log->logdie("cannot login to remote FTP server: $!");
+    $ftp->binary()                           or $self->log->error("couldn't switch to binary mode for FTP");    
+    return $ftp;
+}
 
 
 

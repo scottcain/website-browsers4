@@ -1,0 +1,37 @@
+          Welcome to the Sanger Institute anonymous FTP site.
+          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   Sanger data
+   -----------
+   Users of the material provided here in advance of submission to
+   public databases should read the Sanger Institute's Data sharing policy
+   and Guidelines on the use of data in publications:
+   
+   These documents are available on the Sanger Institute web-site
+   at the following URLs:
+
+      ftp://ftp.sanger.ac.uk/pub/00-README.data-sharing-policy.txt
+      ftp://ftp.sanger.ac.uk/pub/00-README.use-of-data-in-publications.txt
+
+   Please report any unusual problems you may have with this server
+   via e-mail to ftpadmin@sanger.ac.uk
+   
+   Problems? Try using a dash (-) as the first character of your password 
+   to turn off continuation messages that may confuse your ftp client.
+
+   This ftp server can do dynamic compression and tar :
+   
+   Real Filename  'get' Filename      This server will 
+   -------------  ------------------  -----------------------------------
+   <filename>.Z   <filename>          Decompress file before transmitting
+   <filename>     <filename>.Z        Compress or <filename> before
+                                               transmitting
+   <filename>     <filename>.tar      Tar <filename> before transmitting
+   <filename>     <filename>.tar.Z    Tar and compress <filename> before
+                                              transmitting
+
+   Use .gz suffix instead of .Z to use gzip
+   Use .tar.gz suffix to create gzip'd tar archives of whole dirs.
+  -----------------------------------------------------------------------
+
+         All connections and transfers are logged.
+

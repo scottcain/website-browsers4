@@ -13,6 +13,9 @@ wget -m -nH --cut-dirs=3 ftp://caltech.wormbase.org/pub/OICR/Pictures
 cd /usr/local/wormbase/website-shared-files/html/img-static/movies
 wget -m -nH --cut-dirs=3 ftp://caltech.wormbase.org/pub/OICR/Movies
 
+# VirtualWorm
+cd /usr/local/wormbase/website-shared-files/html/img-static/virtualworm
+wget -m -nH --cut-dirs=3 ftp://caltech.wormbase.org/pub/virtualworm/Anatomy_Images
 
 # Grab images from Caltech via rsync over ssh
 #HOST=canopus.caltech.edu

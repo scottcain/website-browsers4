@@ -10,28 +10,6 @@ has 'step' => (
     );
 
   
-has 'connect_to_ftp' => (
-    is         => 'ro',
-    lazy_build => 1,
-    );
-
-sub _build_connect_to_ftp {
-    my $self = shift;
-
-    my $contact_email = $self->contact_email;
-    my $ftp_server    = $self->remote_ftp_server;
-
-    my $ftp = Net::FTP::Recursive->new($ftp_server,
-				       Debug => 0,
-				       Passive => 1) or $self->log->logdie("can't instantiate Net::FTP object");
-
-    $ftp->login('anonymous', $contact_email) or $self->log->logdie("cannot login to remote FTP server: $!");
-    $ftp->binary()                           or $self->log->error("couldn't switch to binary mode for FTP");    
-    return $ftp;
-}
-    
-
-
 sub run {
     my $self = shift;
     

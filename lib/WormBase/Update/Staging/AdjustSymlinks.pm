@@ -72,7 +72,7 @@ sub update_mysql_symlinks {
 	    my $id = $bioproject->bioproject_id;
 	    $self->log->info("   Adjusting the MySQL symlink for bioproject: $id");
 
-	    my $db_name = $bioproject_id->mysql_db_name;
+	    my $db_name = $bioproject->mysql_db_name;
 	    
 	    my $ssh = $self->ssh($node);
 	    $ssh->error && $self->log->logdie("Can't ssh to $manager\@$node: " . $ssh->error);
