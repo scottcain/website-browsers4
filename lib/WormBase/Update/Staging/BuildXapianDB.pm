@@ -252,6 +252,9 @@ species = ( { name = "c_elegans";
             { name = "h_contortus";
               id = 6289;
               gff3 = 1;},
+            { name = "l_loa";
+              id = 7209; 
+              gff3 = 1;},
             { name = "m_hapla";
               id = 6305; 
               gff3 = 1;},
