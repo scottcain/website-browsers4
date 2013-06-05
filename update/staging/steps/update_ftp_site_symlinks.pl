@@ -25,13 +25,8 @@ END
 ;
 }
 
-my $agent;
-if ($release && $status) {
-    $agent = WormBase::Update::Production::UpdateFTPSymlinks->new({ release => $release,
-								    status  => 'development',
-								  });
-} else {
-    $agent = WormBase::Update::Production::UpdateFTPSymlinks->new();
-}
+my $agent = WormBase::Update::Production::UpdateFTPSymlinks->new({ release => $release,
+								   status  => $status,
+								 });
 
 $agent->execute();

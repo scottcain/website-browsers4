@@ -22,7 +22,7 @@ sub run {
     my $desired_species = $self->desired_species;
     my $species = [];
     if ($desired_species) {
-	push @$species,$desired_species;
+	push @$species,$desired_species;      
     } else {
 	($species) = $self->wormbase_managed_species;
     }

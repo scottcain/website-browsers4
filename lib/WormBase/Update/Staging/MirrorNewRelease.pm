@@ -26,58 +26,56 @@ sub run {
 
     my $release_id = $self->release_id; 
     
-    my $local_releases_path  = $self->ftp_releases_dir;
-    my $remote_releases_path = $self->remote_ftp_releases_dir;
+    my $remote_releases_path = 
+
+
+    my ($local_path,$remote_path);
+    if ($release =~ /^WS.*/) {
+	$local_path  = $self->ftp_releases_dir . "/$release";
+	$remote_path = $self->remote_ftp_releases_dir . "/$release";
+    } else {
+	$local_path  = $self->ftp_releases_dir;
+	$remote_path = $self->remote_ftp_releases_dir;
+    }
+
 
     my $log = $self->log;    
-    $self->log->info("mirroring directory $remote_releases_path/$release to $local_releases_path/$release");
+    $self->log->info("mirroring directory $remote_path to $local_path");
 
     # Via system(wget...)
-    if (0) {
+#    if (0) {
 	my $command = <<END;
-cd $local_releases_path
+cd $local_path
 # -r     recursive
 # -N     don't download newer files
 # -l 10  maximum depth
 # -nH    omit the host from the local directory
 # --cut-dirs=3    Is this the right amount when mirroring from root?
-wget -r -N -nH -l 20 --cut-dirs=3 ftp://ftp.sanger.ac.uk/pub2/wormbase/releases/$release
+#wget -r -N -nH -l 20 --cut-dirs=3 ftp://ftp.sanger.ac.uk/pub2/wormbase/releases/$release
+wget -r -N -nH -l 20 --cut-dirs=3 ftp://ftp.sanger.ac.uk/pub2/wormbase/releases
 END
 ;
 	my $result = system($command);
 	if ($result != 0) { $self->log->logdie("mirroring $release from hinxton failed") };
 	
-    } else {
-	
-	# Via Net::FTP
-	my $ftp = $self->connect_to_ftp;
-
-	if ($ftp->cwd("$remote_releases_path/$release")) {
-	    # or $self->log->logwarn("cannot chdir to remote dir ($remote_releases_path/$release)") && return;	    
-	    $self->_make_dir("$local_releases_path/$release");
-
-	    chdir "$local_releases_path/$release"       or $self->log->logwarn("cannot chdir to local mirror directory: $local_releases_path/$release");
-
-	    # Recursively download the NEXT release.  This saves having to check all the others.
-	    my $r = $ftp->rget();  # MatchDirs => $release); 
-	    $ftp->quit;
-	}
-    }
+#    } else {
+#	
+#	# Via Net::FTP
+#	my $ftp = $self->connect_to_ftp;
+#
+#	if ($ftp->cwd("$remote_path")) {
+#	    # or $self->log->logwarn("cannot chdir to remote dir ($remote_releases_path/$release)") && return;	    
+#	    $self->_make_dir("$local_path");
+#
+#	    chdir "$local_path"       or $self->log->logwarn("cannot chdir to local mirror directory: $local_path");
+#
+#	    # Recursively download the NEXT release.  This saves having to check all the others.
+#	    my $r = $ftp->rget();  # MatchDirs => $release); 
+#	    $ftp->quit;
+#	}
+#    }
     
     $self->log->info("mirroring $release from Hinxton: done");
-
-
-#    # Update symlinks on the FTP site.
-#    if ($release) {
-#	my $releases_dir = $self->ftp_releases_dir;
-#	chdir($releases_dir);
-#	$self->update_symlink({target => $release,
-#			       symlink => 'current-development-release',
-#			      });
-#	
-#	# Update symlinks to the development version
-#	$self->update_ftp_site_symlinks({status => 'development'});
-#    }
 }
 
 

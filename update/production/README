@@ -23,12 +23,25 @@ http://wiki.wormbase.org/index.php/Software_Life_Cycle:_4._Updating_The_Producti
   23.21.171.141
 
 
+4. For new instances, make sure that they can access the mysql wormbase_user database. This is NOT
+   the internal amazon ID (oddly enough).
+   Instead, it is the ip part of the public DNS, eg
+   107.20.41.161 of
+    ec2-107-20-41-161.compute-1.amazonaws.com
+
+  If you DON"T do this, the app will start but silently fail!  Really annoying!
+
+
+
 
 Final step is:
 # And update symlinks on the ftp site:
 # This should be tied in to release
 ./staging/steps/update_ftp_site_symlinks.pl --release $RELEASE --status production
 
+
+
+SEND RELEASE LETTER
 
 
 

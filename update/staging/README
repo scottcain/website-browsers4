@@ -68,7 +68,7 @@ END : load genomic gff databases; in 0 days, 22 hours, 58 minutes and 28 seconds
 # First to the other staging nodes
 ./steps/push_staging_release_to_nodes.pl --release $RELEASE --target staging
 
-./steps/push_staged_release_to_nodes.pl --release $RELEASE --target development
+
 
 # 16. Go live with the newly staged version on the staging server by adjusting symlinks!
 #    * adjusts acedb and mysql symlinks on this (staging) server
@@ -77,6 +77,9 @@ END : load genomic gff databases; in 0 days, 22 hours, 58 minutes and 28 seconds
 #      this step will need to be repeated.
 # Staging
 ./steps/adjust_symlinks.pl --release $RELEASE --target staging
+
+./steps/push_staged_release_to_nodes.pl --release $RELEASE --target development
+
 # Development server(s)
 ./steps/adjust_symlinks.pl --release $RELEASE --target development
 

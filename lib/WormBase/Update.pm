@@ -259,10 +259,11 @@ before 'execute' => sub {
 	$self->release($version);
 	return $version;
     }
-
+    
     if ( $self->step eq 'push acedb to production'
-	    || $self->step eq 'push support databases to production'
-	    || $self->step eq 'update symlinks on the production FTP site'
+	 || $self->step eq 'push support databases to production'
+	 || $self->step eq 'update symlinks on the production FTP site'
+	 || $self->step =~ /mirror/   # mirror everything, not just next release.
 	) {
 	$self->release('release_independent_step');
 	return;

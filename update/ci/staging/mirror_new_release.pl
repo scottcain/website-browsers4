@@ -17,7 +17,7 @@ if ($help) {
     
 Usage: $0 --release WSXXX
 
-Mirror a specific release (or by omitting --release, the entire Hinxton FTP site.)
+Mirror a specific release (or by omitting --release, the entire Hinxton FTP site rooted at /pub2/wormbase/releases/.)
 
 END
 ;

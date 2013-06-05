@@ -100,7 +100,7 @@ sub dump_object_lists {
                            Analysis
                        Anatomy_term
                            Antibody
-                                CDS
+                        curated_CDS
                               Clone
                  Expression_cluster
                        Expr_pattern
@@ -153,7 +153,8 @@ sub dump_object_lists {
 
 	# hybrid classes have differnet names in the app.
 	if ($class eq 'PCR_product') { $file = 'pcr_oligo' }
-
+	if ($class eq 'curated_CDS') { $file = 'cds'       }
+	
 	print OUT "Find $class\n";
 	print OUT "List -h -f $cache_root/$file.ace\n";
     }
@@ -193,7 +194,12 @@ sub crawl_website {
     $couch->create_database;
 
     # Where to send requests
-    my $base_url = $self->queries_to . '/rest/widget/%s/%s/%s';
+    my $base_url = $self->queries_to;
+
+    # Kludge: strip trailing slash: breaks processing below.
+    $base_url =~ s/\/$//;
+
+    $base_url .= '/rest/widget/%s/%s/%s';
 
     # There should be a symlink at:
     # /usr/local/wormbase/wormbase.conf -> /usr/local/wormbase/website/WHATEVER/wormbase.conf
@@ -247,7 +253,11 @@ sub crawl_website {
 	my $cache_log = join("/",$cache_root,'logs',"$class.log");
 	
 	$self->log->info("Precaching widgets for the $class class");
-	my %previous = $self->_parse_cached_classes_log($cache_log);
+
+	my %previous;
+	if ($self->already_cached_via eq 'logs') {
+	    %previous = $self->_parse_cached_classes_log($cache_log);
+	}
 
 	# (Re)open class level cache log for writing.
 	open OUT,">>$cache_log";
@@ -376,9 +386,22 @@ sub crawl_website {
 	    my $pm = new Parallel::ForkManager(6); 
 	    foreach my $uri (@uris) {	       		
 		$status{$class}{uris}++;
+
 		my ($protocol,$nothing,$host,$rest,$widget_path,$class,$object,$widget) = split("/",$uri);
-		
-		my $cache_start = time();
+
+#		print STDERR "URI parsing is wrong and screws up logging; confirm the following entries and fix\n";
+#		print STDERR "uri : $uri\n";
+#		print STDERR "protocol is $protocol\n";
+#		print STDERR "Nothing  is $nothing\n";
+#		print STDERR "host     is $host\n";
+#		print STDERR "rest     is $rest\n";		
+#		print STDERR "widget_path is $widget_path\n";
+#		print STDERR "class   is $class\n";
+#		print STDERR "object is $object\n";
+#		print STDERR "widget is $widget\n";
+#		die;
+
+		my $cache_start = time();		
 		$pm->start and next; # do the fork
 		my $cache_stop = time();
 		
@@ -441,6 +464,9 @@ sub crawl_website {
 sub precache_classic_content {
     my ($self) = @_;
     my $base_url = $self->queries_to;  # typically: localhost:8080
+
+    # Kludge: strip trailing slash: breaks processing below.
+    $base_url =~ s/\/$//;
 
     $|++;
     
