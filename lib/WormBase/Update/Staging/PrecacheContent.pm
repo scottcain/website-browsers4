@@ -191,7 +191,7 @@ sub crawl_website {
     # Create a database corresponding to the current release,
     # silently failing if it already exists.
     my $couch = $self->couchdb;
-    $couch->create_database;
+#    $couch->create_database;
 
     # Where to send requests
     my $base_url = $self->queries_to;

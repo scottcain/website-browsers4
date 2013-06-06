@@ -42,10 +42,13 @@ has 'couchdb_root'      => ( is => 'rw', default => '/usr/local/wormbase/couchdb
 
 has 'couchdb_host_qaqc'        => ( is => 'rw', default => '206.108.125.175:5984' );
 has 'couchdb_host_staging'     => ( is => 'rw', default => '206.108.125.164:5984' );
-has 'couchdb_host_production'  => ( is => 'rw', default => '23.21.171.141:5984');
+#has 'couchdb_host_production'  => ( is => 'rw', default => '23.21.171.141:5984');
+has 'couchdb_host_production'  => ( is => 'rw', default => 'couchdb.wormbase.org');
 
 # Subtly different than production, the master host is that used for replication.
-has 'couchdb_host_master'     => ( is => 'rw', default => '23.21.171.141:5984' );
+#has 'couchdb_host_master'     => ( is => 'rw', default => '23.21.171.141:5984' );
+has 'couchdb_host_master'  => ( is => 'rw', default => 'couchdb.wormbase.org');
+
 
 # Each server gets its own couch.
 # See ReplicateCouchDB. If reads/writes to couch become a bottleneck
@@ -466,11 +469,11 @@ has 'production_acedb_nodes' => (
     isa => 'ArrayRef',
     default => sub {
 	[qw/ec2-50-19-229-229.compute-1.amazonaws.com
-	    wb-mining.oicr.on.ca
 /],
     },
     );
 
+#	    wb-mining.oicr.on.ca
 #            canopus.caltech.edu
 
 ###############
@@ -497,11 +500,12 @@ has 'production_support_nodes' => (
     isa => 'ArrayRef',
     default => sub {
 	[qw/ec2-50-19-229-229.compute-1.amazonaws.com
-            wb-mining.oicr.on.ca
+
 /],
     },
     );
 
+#            wb-mining.oicr.on.ca
 #            canopus.caltech.edu
 
 ###############
@@ -535,11 +539,12 @@ has 'production_mysql_nodes' => (
     default => sub {
 	[qw/ec2-50-19-229-229.compute-1.amazonaws.com
             wb-gb1.oicr.on.ca
-            wb-mining.oicr.on.ca            
+
 /],
     },
     );
 
+#            wb-mining.oicr.on.ca            
 # canopus.caltech.edu
 
 ####################################
