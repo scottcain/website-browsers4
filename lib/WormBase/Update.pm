@@ -510,19 +510,22 @@ sub update_symlink {
     my $symlink = $params->{symlink};
     my $status  = $params->{status};  # Set to development to provide links to current dev version.
 
-    my $is_canonical = $params->{is_canonical};
-    my $bioproject_id       = $params->{bioproject_id};
-    $self->log->warn("updating $symlink -> $target");
-    
+    my $is_canonical  = $params->{is_canonical};
+    my $bioproject_id = $params->{bioproject_id};
+ 
+    $self->log->warn("    creating basic symlinks\n\t\t $symlink -> $target");
     unlink($symlink)          or $self->log->warn("couldn't unlink $symlink; perhaps it didn't exist to begin with");
     symlink($target,$symlink) or $self->log->warn("couldn't create the $symlink");
     
+    # Now do the current/current-development symlinks
     if ($release) {
 	if ($status eq 'development') {
 	    $symlink =~ s/$release/current_development/;
 	} else {
 	    $symlink =~ s/$release/current/;
 	}
+
+	$self->log->warn("   creating status symlinks\n\t\t$symlink -> $target");
 	unlink($symlink)           or $self->log->warn("couldn't unlink $symlink; perhaps it didn't exist to begin with");
 	symlink($target,$symlink)  or $self->log->warn("couldn't create the current symlink");
 
@@ -532,10 +535,12 @@ sub update_symlink {
 #	$symlink =~ s/_development//;	
 #	unlink($symlink)           or $self->log->warn("couldn't unlink $symlink; perhaps it didn't exist to begin with");
     }
-    return;
+
+    # Finally, the canonical_bioproject symlinks
     if ($is_canonical) {
 	$symlink =~ s/$bioproject_id/canonical_bioproject/;
 
+	$self->log->warn("   creating canonical symlinks\n\t\t$symlink -> $target");
 	unlink($symlink)           or $self->log->warn("couldn't unlink $symlink; perhaps it didn't exist to begin with");
 	symlink($target,$symlink)  or $self->log->warn("couldn't create the current symlink");
     }

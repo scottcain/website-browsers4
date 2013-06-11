@@ -8,7 +8,8 @@ use URI::Escape;
 use Data::Dumper;
 use HTTP::Request;
 use WormBase::CouchDB;
-use LWP::Simple;
+#use LWP::Simple;
+use LWP::UserAgent;
 use Parallel::ForkManager;
 #use LWP::Parallel::UserAgent;
 extends qw/WormBase::Update/;
@@ -230,6 +231,9 @@ sub crawl_website {
     # Set the stack depth to 0: no need to retain history;
     #    $mech->stack_depth(0);
     
+    my $ua = LWP::UserAgent->new;
+    $ua->default_header('Content-Type' => 'application/json');
+
 #    print Dumper($config);
     my @classes;
     if ($self->class) {
@@ -405,10 +409,14 @@ sub crawl_website {
 		$pm->start and next; # do the fork
 		my $cache_stop = time();
 		
-		my $content = get($uri) or
+#		my $content = get($uri) or
+#		    print ERROR join("\t",$class,$object,$widget,$uri,'failed',$cache_stop - $cache_start),"\n";
+
+		my $response = $ua->get($uri) or
 		    print ERROR join("\t",$class,$object,$widget,$uri,'failed',$cache_stop - $cache_start),"\n";
 		
-	        if ($content) {
+#	        if ($content) {
+		if ($response->is_success) {
 		    my $cache_stop = time();
 		    $status{$class}{widgets}{$widget}++;
 		    print OUT join("\t",$class,$object,$widget,$uri,'success',$cache_stop - $cache_start),"\n";
