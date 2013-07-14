@@ -58,6 +58,8 @@ END : load genomic gff databases; in 0 days, 22 hours, 58 minutes and 28 seconds
 # See xapian/README for information on doing this outside of the pipeline
 ./steps/build_xapian_db.pl --release $RELEASE
 
+# mirror wikipathways images
+./steps/mirror_wikipathways_images.pl --release $RELEASE
 
 # 13. Check out new software to the staging server.
 

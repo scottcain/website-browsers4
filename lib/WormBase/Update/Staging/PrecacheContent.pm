@@ -393,18 +393,6 @@ sub crawl_website {
 
 		my ($protocol,$nothing,$host,$rest,$widget_path,$class,$object,$widget) = split("/",$uri);
 
-#		print STDERR "URI parsing is wrong and screws up logging; confirm the following entries and fix\n";
-#		print STDERR "uri : $uri\n";
-#		print STDERR "protocol is $protocol\n";
-#		print STDERR "Nothing  is $nothing\n";
-#		print STDERR "host     is $host\n";
-#		print STDERR "rest     is $rest\n";		
-#		print STDERR "widget_path is $widget_path\n";
-#		print STDERR "class   is $class\n";
-#		print STDERR "object is $object\n";
-#		print STDERR "widget is $widget\n";
-#		die;
-
 		my $cache_start = time();		
 		$pm->start and next; # do the fork
 		my $cache_stop = time();
@@ -414,8 +402,11 @@ sub crawl_website {
 
 		my $response = $ua->get($uri) or
 		    print ERROR join("\t",$class,$object,$widget,$uri,'failed',$cache_stop - $cache_start),"\n";
+
 		
+#		next unless $widget eq 'overview';
 #	        if ($content) {
+#		print STDERR $response->status_line,"\n";
 		if ($response->is_success) {
 		    my $cache_stop = time();
 		    $status{$class}{widgets}{$widget}++;
