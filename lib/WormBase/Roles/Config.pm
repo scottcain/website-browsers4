@@ -423,6 +423,8 @@ has 'production_app_nodes' => (
     default => sub {
 	[qw/50.19.112.56
             ec2-50-19-229-229.compute-1.amazonaws.com            
+            ec2-204-236-207-55.compute-1.amazonaws.com
+ec2-54-243-16-83.compute-1.amazonaws.com
             wb-mining.oicr.on.ca
 /]},
     );
@@ -469,6 +471,8 @@ has 'production_acedb_nodes' => (
     isa => 'ArrayRef',
     default => sub {
 	[qw/ec2-50-19-229-229.compute-1.amazonaws.com
+            ec2-204-236-207-55.compute-1.amazonaws.com
+            ec2-54-243-16-83.compute-1.amazonaws.com
 	    wb-mining.oicr.on.ca
 /],
     },
@@ -501,6 +505,8 @@ has 'production_support_nodes' => (
     isa => 'ArrayRef',
     default => sub {
 	[qw/ec2-50-19-229-229.compute-1.amazonaws.com
+            ec2-204-236-207-55.compute-1.amazonaws.com
+            ec2-54-243-16-83.compute-1.amazonaws.com
             wb-mining.oicr.on.ca
 /],
     },
@@ -539,6 +545,8 @@ has 'production_mysql_nodes' => (
     isa => 'ArrayRef',
     default => sub {
 	[qw/ec2-50-19-229-229.compute-1.amazonaws.com
+            ec2-204-236-207-55.compute-1.amazonaws.com
+            ec2-54-243-16-83.compute-1.amazonaws.com
             wb-gb1.oicr.on.ca
             wb-mining.oicr.on.ca
 /],

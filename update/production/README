@@ -17,13 +17,50 @@ http://wiki.wormbase.org/index.php/Software_Life_Cycle:_4._Updating_The_Producti
 
    production/steps/push_staged_release_to_nodes.pl --release $RELEASE --target production
 
-3. Copy couch to cloud (for now)
+3. NO LONGER NECESSARY - CACHING DIRECTLY TO AWS AT ALL TIMES.  Copy couch to cloud (for now)
 
  (may need to rearrange EBS to accomodate)
   23.21.171.141
 
 
-4. For new instances, make sure that they can access the mysql wormbase_user database. This is NOT
+4. adjust_symlinks.pl --release RELEASE --target production
+
+  This will leave the system in an inconsistent state for a short while.
+  The AWS and OICR resources will all be pointing at the new release but we still
+  need to create an AMI of the canonical AWS instance.  This will go away once we
+  move from converting staging instances directly to production.
+
+    staging -> create AMI -> launch production instances -> adjust LB -> shut down old instances
+
+
+
+
+3. Adjust proxy to temporarloty Redirect traffic away from core instance.
+   THIS STEP WILL GO AWAY ONCE WE COMPLETE MOVE TO CLOUD
+
+
+4. Create an AMI of the core instance
+
+
+5. Redirect proxy BACK to the core instance and AWAY from the secondary instance
+
+
+
+6. Restart services on wb-mining, gb1
+
+
+------ during this time we will only have one instance running
+
+
+
+4 Launch a new instance
+  call it wb-webapp-prod2
+  use keypair wormbase-admin-keypair
+  use security group: default
+
+*****************
+
+5. For new instances, make sure that they can access the mysql wormbase_user database. This is NOT
    the internal amazon ID (oddly enough).
    Instead, it is the ip part of the public DNS, eg
    107.20.41.161 of
@@ -31,17 +68,33 @@ http://wiki.wormbase.org/index.php/Software_Life_Cycle:_4._Updating_The_Producti
 
   If you DON"T do this, the app will start but silently fail!  Really annoying!
 
+  This should be handled programatically or by a security group
+  
+
+****************
+
+6. Adjust proxy to now point at second neew instance.
 
 
 
-Final step is:
-# And update symlinks on the ftp site:
-# This should be tied in to release
-./staging/steps/update_ftp_site_symlinks.pl --release $RELEASE --status production
+
+
+****************
+
+
+7.  And update symlinks on the ftp site:
+   # This should be tied in to release
+   ./staging/steps/update_ftp_site_symlinks.pl --release $RELEASE --status production
 
 
 
-SEND RELEASE LETTER
+8. SEND RELEASE LETTER
+
+
+
+
+
+
 
 
 

@@ -151,7 +151,7 @@ classes = (   { filename = "Paper.ace";
                 desc = ("author", "title", "journal", "page", "volume"); 
                 after = "LongText.ace"; }, 
               { filename = "Gene.ace";
-                desc = ("concise_description"); },
+                desc = ("concise_description", "dead", "merged_into"); },
               { filename = "Variation.ace";
                 desc = ("status", "gene", "remark"); },
               { filename = "Anatomy_term.ace";},
