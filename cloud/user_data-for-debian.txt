@@ -1,0 +1,125 @@
+#!/bin/bash
+set -x
+
+# This shell script will install all necessary components for an
+# entirely new WormBase instance.
+
+# This assumes that a suitable disk has been mounted where
+# all software and libraries will be installed.
+
+# When passed in as user-date to ec2-run-instances, it will be
+# executed as the root user.
+
+sudo yum update
+sudo yum install mysql mysql-server
+sudo yum install xinetd 
+sudo yum install sharutils
+sudo yum install gcc g++
+sudo yum install curl wget
+sudo yum install bzip2
+sudo yum install 
+sudo yum install gd gd-devel   
+#      sudo apt-get libgd2-xpm-dev libgd2-xpm
+sudo yum install 
+sudo yum install libdbi libdbi-dbd-mysql
+#      sudo apt-get install libdbd-mysql libdbd-mysql-perl
+#
+#          libapache2-mod-perl2 \
+#          libgtk2.0-0 \
+#          libgtk2.0-dev \
+sudo yum install emacs
+sudo yum install git
+sudo yum install byacc
+sudo yum install readline readline-devel
+sudo yum install flex
+sudo yum install
+sudo yum install db4 db4-devel
+sudo yum install libxml2 libxml2-devel
+#          libmysql++-dev \
+sudo yum install ncurses ncurses-devel
+sudo yum install libXmu libXmu-devel
+sudo yum install graphviz
+sudo yum install ssl libssl
+sudo yum install uuid uuid-dev
+sudo yum install libxslt libxslt-devel
+sudo yum install gdbm gdbm-devel
+sudo yum install libstdc++ libstdc++-devel
+
+
+
+#################################
+# Users, groups, directories
+#################################
+sudo adduser tharris
+sudo adduser acabunoc
+sudo adduser wb-admin
+sudo adduser acedb
+sudo usermod -d /usr/local/wormbase/acedb acedb
+sudo groupadd wormbase
+sudo usermod -a -G wb-admin,wormbase,acedb,mysql wb-admin
+sudo usermod -a -G wb-admin,wormbase,acedb,mysql acacbunoc
+sudo usermod -a -G wb-admin,wormbase,acedb,mysql tharris
+
+DONE TO HERE.
+
+
+# Create directories & mount targets
+sudo cd /usr/local
+sudo mkdir wormbase   // mounted at /mnt/ebs/wormbase
+sudo chmod 2775 wormbase
+sudo sudo chgrp wormbase
+
+# Create a new EBS (if necessary), attach to /dev/sdg, format, and mount it.
+# Note that the actual device name may be different (f, g, h, etc)
+sudo mkfs.xfs /dev/xvdg            # Skip if attaching a preprepared volume
+sudo cd /mnt
+sudo mkdir ebs             
+sudo chown wb-admin:wormbase ebs
+sudo chmod 2775 ebs
+sudo mount /dev/xvdg /mnt/ebs
+
+# Create targets. The /usr/local/wormbase directory will be a symbolic mount
+# at /mnt/ebs/wormbase
+sudo cd /mnt/ebs
+sudo mkdir wormbase
+sudo chown wb-admin:wormbase ebs
+# Skip this step if mounting a pre-prepared drive.
+sudo mkdir acedb services website tmp extlib logs shared ftp
+
+
+# Append entries to /etc/fstab
+  # Edit /etc/fstab. It should look something like this:
+       # Primary ebs mount
+      /dev/xvdf /mnt/ebs xfs noatime 0 0
+
+      # WormBase 
+      /mnt/ebs/wormbase /usr/local/wormbase none bind
+
+      # MySQL
+      /mnt/ebs/mysql /var/lib/mysql none bind
+
+      # FTP
+      /mnt/ebs/ftp /usr/local/ftp none bind
+
+   Attach via console (/dev/sdf for Ubuntu mounts at /dev/xvdf), then
+   > sudo mount /usr/local/wormbase   # directories must already exist
+   > sudo mount /usr/local/ftp
+   > sudo mount /var/lib/mysql
+
+
+
+  # To be able to log-in as wb-admin, we need to set up SSH keys.
+  > sudo su wb-admin
+  > cd ~
+  > ssh-keygen -b 1024 -t dsa
+  > cd .ssh
+  > cat id_dsa.pub > authorized_keys
+  > chmod 600 .ssh/authorized_keys
+
+  # scp .ssh/id_dsa to cloud/keypairs/USERNAME.key
+
+
+
+# ALSO NEED: user-data scripts for: 
+  * launching existing ami and building new EBS volume with data
+  * Launching instances and attaching existing volume data
