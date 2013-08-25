@@ -29,7 +29,7 @@ INDEXING ACEDB
 
 
   1) Compile Indexer (if not compiled already)
-      g++ -o aceindex -L/usr/local/lib -l xapian -lconfig++ aceindex.cc
+      g++ -o aceindex -L/usr/local/lib -l xapian -lconfig++ -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient_r aceindex.cc
 
      NOTE:  you may need to do this:
             export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib

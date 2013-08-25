@@ -1,11 +1,11 @@
 #!/usr/bin/perl
-# Simple log rotation script for nginx
+# Simple log rotation script for apache
 
 my $PIDFILE='/var/run/apache2.pid';
 my $logroot   = '/usr/local/wormbase/logs';
 my $maxcycle  = 7;
 my $gzip      = '/bin/gzip';
-my @logs      = qw/access.log error.log cache.log/;
+my @logs      = qw/access.log error.log/;
 
 opendir (DIR, $logroot) or die $!;
 while (my $logdir = readdir(DIR)) {

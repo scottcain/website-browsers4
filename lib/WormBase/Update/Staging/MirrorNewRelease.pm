@@ -10,28 +10,6 @@ has 'step' => (
     );
 
   
-has 'connect_to_ftp' => (
-    is         => 'ro',
-    lazy_build => 1,
-    );
-
-sub _build_connect_to_ftp {
-    my $self = shift;
-
-    my $contact_email = $self->contact_email;
-    my $ftp_server    = $self->remote_ftp_server;
-
-    my $ftp = Net::FTP::Recursive->new($ftp_server,
-				       Debug => 0,
-				       Passive => 1) or $self->log->logdie("can't instantiate Net::FTP object");
-
-    $ftp->login('anonymous', $contact_email) or $self->log->logdie("cannot login to remote FTP server: $!");
-    $ftp->binary()                           or $self->log->error("couldn't switch to binary mode for FTP");    
-    return $ftp;
-}
-    
-
-
 sub run {
     my $self = shift;
     
@@ -40,62 +18,64 @@ sub run {
 
     # This logic is handled upstream in the bin/mirror_new_release.pl.
     # That lets us establish the correct log files.
-
     my $release    = $self->release;
-    unless ($release) {
-	$self->get_next_release();
-	$release = $self->release;
-    }
-    my $release_id = $self->release_id; 
+#    if ($release =~ /independent/) {   # hack.
+#	$self->get_next_release();
+#	$release = $self->release;
+#    } 
 
+    my $release_id = $self->release_id; 
     
-    my $local_releases_path  = $self->ftp_releases_dir;
-    my $remote_releases_path = $self->remote_ftp_releases_dir;
-    
-    $self->log->info("mirroring directory $remote_releases_path/$release to $local_releases_path/$release");
+    my $remote_releases_path = 
+
+
+    my ($local_path,$remote_path);
+    if ($release =~ /^WS.*/) {
+	$local_path  = $self->ftp_releases_dir . "/$release";
+	$remote_path = $self->remote_ftp_releases_dir . "/$release";
+    } else {
+	$local_path  = $self->ftp_releases_dir;
+	$remote_path = $self->remote_ftp_releases_dir;
+    }
+
+
+    my $log = $self->log;    
+    $self->log->info("mirroring directory $remote_path to $local_path");
 
     # Via system(wget...)
-    if (0) {
+#    if (0) {
 	my $command = <<END;
-cd $local_releases_path
+cd $local_path
 # -r     recursive
 # -N     don't download newer files
 # -l 10  maximum depth
 # -nH    omit the host from the local directory
 # --cut-dirs=3    Is this the right amount when mirroring from root?
-wget -r -N -nH -l 20 --cut-dirs=3 ftp://ftp.sanger.ac.uk/pub2/wormbase/releases/$release
+#wget -r -N -nH -l 20 --cut-dirs=3 ftp://ftp.sanger.ac.uk/pub2/wormbase/releases/$release
+wget -r -N -nH -l 20 --cut-dirs=3 ftp://ftp.sanger.ac.uk/pub2/wormbase/releases
 END
 ;
 	my $result = system($command);
 	if ($result != 0) { $self->log->logdie("mirroring $release from hinxton failed") };
 	
-    } else {
-	
-	# Via Net::FTP
-	my $ftp = $self->connect_to_ftp;
-	$self->_make_dir("$local_releases_path/$release");
-	chdir "$local_releases_path/$release"       or $self->log->logdie("cannot chdir to local mirror directory: $local_releases_path/$release");
-	$ftp->cwd("$remote_releases_path/$release") or $self->log->logdie("cannot chdir to remote dir ($remote_releases_path/$release)") && return;
-	
-	# Recursively download the NEXT release.  This saves having to check all the others.
-	my $r = $ftp->rget();  # MatchDirs => $release); 
-	$ftp->quit;
-    }
+#    } else {
+#	
+#	# Via Net::FTP
+#	my $ftp = $self->connect_to_ftp;
+#
+#	if ($ftp->cwd("$remote_path")) {
+#	    # or $self->log->logwarn("cannot chdir to remote dir ($remote_releases_path/$release)") && return;	    
+#	    $self->_make_dir("$local_path");
+#
+#	    chdir "$local_path"       or $self->log->logwarn("cannot chdir to local mirror directory: $local_path");
+#
+#	    # Recursively download the NEXT release.  This saves having to check all the others.
+#	    my $r = $ftp->rget();  # MatchDirs => $release); 
+#	    $ftp->quit;
+#	}
+#    }
     
     $self->log->info("mirroring $release from Hinxton: done");
-
-
-    # Update symlinks on the FTP site.
-    if ($release) {
-	my $releases_dir = $self->ftp_releases_dir;
-	chdir($releases_dir);
-	$self->update_symlink({target => $release,
-			       symlink => 'current-dev.wormbase.org-release',
-			      });
-	
-	# Update symlinks to the development version
-	$self->update_ftp_site_symlinks('development');
-    }
 }
 
 

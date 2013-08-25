@@ -19,6 +19,8 @@ Find CDS
 Write /usr/local/wormbase/tmp/staging/acedmp/CDS.ace
 Find Clone
 Write /usr/local/wormbase/tmp/staging/acedmp/Clone.ace
+Find DO_term
+Write /usr/local/wormbase/tmp/staging/acedmp/DO_term.ace
 Find Expr_pattern
 Write /usr/local/wormbase/tmp/staging/acedmp/Expr_pattern.ace
 Find Expr_profile
@@ -91,6 +93,8 @@ Find Transcript
 Write /usr/local/wormbase/tmp/staging/acedmp/Transcript.ace
 Find Transgene
 Write /usr/local/wormbase/tmp/staging/acedmp/Transgene.ace
+Find Transposon
+Write /usr/local/wormbase/tmp/staging/acedmp/Transposon.ace
 Find Variation
 Write /usr/local/wormbase/tmp/staging/acedmp/Variation.ace
 Find WBProcess
