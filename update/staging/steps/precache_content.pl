@@ -50,6 +50,22 @@ Usage: $0 --release WSXXX [--class CLASS --widget WIDGET --queries_to (URI) --al
      Default: localhost:5984
 
      Recommended settings:
+
+     Run the precache script on a development host (qaqc.wormbase.org) with queries
+     to that same host, but cache to a production couch machine (saves having to copy big files around).          
+          * with queries to: qaqc.wormbase.org
+	  * to a couchdb on: production
+	  * verifying precache using: logs (it's faster)
+          * Note that by default, qaqc instance will use the PRODUCTION couchdb instance.
+         --queries_to http://qaqc.wormbase.org/ --already_cached_via logs --couchdb production
+
+     Run the precache script on a development host (qaqc.wormbase.org) with queries
+     to production:
+          * with queries to: www.wormbase.org
+	  * to a couchdb on: production
+	  * verifying precache using: logs
+         --queries_to http://www.wormbase.org/ --already_cached_via logs --couchdb production
+
      (Typical) Run the precache script on a development host (qaqc.wormbase.org):
           * with queries to: qaqc.wormbase.org
 	  * to a couchdb on: localhost
@@ -64,18 +80,11 @@ Usage: $0 --release WSXXX [--class CLASS --widget WIDGET --queries_to (URI) --al
           --queries_to http://staging.wormbase.org/ --already_cached_via couchdb --couchdb staging
 
      Run the precache script on a production host (couchdb.wormbase.org) with queries
-     to antother:
+     to another:
           * with queries to: www.wormbase.org
 	  * to a couchdb on: production
 	  * verifying precache using: couchdb
          --queries_to http://www.wormbase.org/ --already_cached_via couchdb --couchdb production
-
-     Run the precache script on a development host (qaqc.wormbase.org) with queries
-     to production:
-          * with queries to: www.wormbase.org
-	  * to a couchdb on: production
-	  * verifying precache using: logs
-         --queries_to http://www.wormbase.org/ --already_cached_via logs --couchdb production
 
 END
 ;

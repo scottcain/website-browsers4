@@ -8,7 +8,8 @@ use URI::Escape;
 use Data::Dumper;
 use HTTP::Request;
 use WormBase::CouchDB;
-use LWP::Simple;
+#use LWP::Simple;
+use LWP::UserAgent;
 use Parallel::ForkManager;
 #use LWP::Parallel::UserAgent;
 extends qw/WormBase::Update/;
@@ -100,7 +101,7 @@ sub dump_object_lists {
                            Analysis
                        Anatomy_term
                            Antibody
-                                CDS
+                        curated_CDS
                               Clone
                  Expression_cluster
                        Expr_pattern
@@ -153,7 +154,8 @@ sub dump_object_lists {
 
 	# hybrid classes have differnet names in the app.
 	if ($class eq 'PCR_product') { $file = 'pcr_oligo' }
-
+	if ($class eq 'curated_CDS') { $file = 'cds'       }
+	
 	print OUT "Find $class\n";
 	print OUT "List -h -f $cache_root/$file.ace\n";
     }
@@ -190,10 +192,15 @@ sub crawl_website {
     # Create a database corresponding to the current release,
     # silently failing if it already exists.
     my $couch = $self->couchdb;
-    $couch->create_database;
+#    $couch->create_database;
 
     # Where to send requests
-    my $base_url = $self->queries_to . '/rest/widget/%s/%s/%s';
+    my $base_url = $self->queries_to;
+
+    # Kludge: strip trailing slash: breaks processing below.
+    $base_url =~ s/\/$//;
+
+    $base_url .= '/rest/widget/%s/%s/%s';
 
     # There should be a symlink at:
     # /usr/local/wormbase/wormbase.conf -> /usr/local/wormbase/website/WHATEVER/wormbase.conf
@@ -223,6 +230,9 @@ sub crawl_website {
     # Set the stack depth to 0: no need to retain history;
     #    $mech->stack_depth(0);
     
+    my $ua = LWP::UserAgent->new;
+    $ua->default_header('Content-Type' => 'application/json');
+
 #    print Dumper($config);
     my @classes;
     if ($self->class) {
@@ -246,7 +256,11 @@ sub crawl_website {
 	my $cache_log = join("/",$cache_root,'logs',"$class.log");
 	
 	$self->log->info("Precaching widgets for the $class class");
-	my %previous = $self->_parse_cached_classes_log($cache_log);
+
+	my %previous;
+	if ($self->already_cached_via eq 'logs') {
+	    %previous = $self->_parse_cached_classes_log($cache_log);
+	}
 
 	# (Re)open class level cache log for writing.
 	open OUT,">>$cache_log";
@@ -377,16 +391,24 @@ sub crawl_website {
 	    my $pm = new Parallel::ForkManager(6); 
 	    foreach my $uri (@uris) {	       		
 		$status{$class}{uris}++;
+
 		my ($protocol,$nothing,$host,$rest,$widget_path,$class,$object,$widget) = split("/",$uri);
-		
-		my $cache_start = time();
+
+		my $cache_start = time();		
 		$pm->start and next; # do the fork
 		my $cache_stop = time();
 		
-		my $content = get($uri) or
+#		my $content = get($uri) or
+#		    print ERROR join("\t",$class,$object,$widget,$uri,'failed',$cache_stop - $cache_start),"\n";
+
+		my $response = $ua->get($uri) or
 		    print ERROR join("\t",$class,$object,$widget,$uri,'failed',$cache_stop - $cache_start),"\n";
+
 		
-	        if ($content) {
+#		next unless $widget eq 'overview';
+#	        if ($content) {
+#		print STDERR $response->status_line,"\n";
+		if ($response->is_success) {
 		    my $cache_stop = time();
 		    $status{$class}{widgets}{$widget}++;
 		    print OUT join("\t",$class,$object,$widget,$uri,'success',$cache_stop - $cache_start),"\n";
@@ -442,6 +464,9 @@ sub crawl_website {
 sub precache_classic_content {
     my ($self) = @_;
     my $base_url = $self->queries_to;  # typically: localhost:8080
+
+    # Kludge: strip trailing slash: breaks processing below.
+    $base_url =~ s/\/$//;
 
     $|++;
     

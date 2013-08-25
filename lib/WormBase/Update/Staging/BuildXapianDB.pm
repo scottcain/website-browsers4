@@ -16,7 +16,7 @@ sub run {
     my $tmp_dir = "/usr/local/wormbase/tmp/staging/$release/acedmp";
     system("mkdir -p $tmp_dir");
     system("chmod 777 $tmp_dir");
-#    $self->dump_objects_via_tace($tmp_dir);    
+    $self->dump_objects_via_tace($tmp_dir);    
     $self->dump_settings_file($tmp_dir);
     $self->dump_pages_pseudo_ace_file($tmp_dir);
 
@@ -151,7 +151,7 @@ classes = (   { filename = "Paper.ace";
                 desc = ("author", "title", "journal", "page", "volume"); 
                 after = "LongText.ace"; }, 
               { filename = "Gene.ace";
-                desc = ("concise_description"); },
+                desc = ("concise_description", "dead", "merged_into"); },
               { filename = "Variation.ace";
                 desc = ("status", "gene", "remark"); },
               { filename = "Anatomy_term.ace";},
@@ -251,6 +251,9 @@ species = ( { name = "c_elegans";
               gff3 = 1; },
             { name = "h_contortus";
               id = 6289;
+              gff3 = 1;},
+            { name = "l_loa";
+              id = 7209; 
               gff3 = 1;},
             { name = "m_hapla";
               id = 6305; 

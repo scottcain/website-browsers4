@@ -40,19 +40,29 @@ sub run {
 	$description    =~ s/dump_species_//;
 	$description    =~ s/dump_resource_//;
 	$description    =~ s/\.pl//;
-
+	
 	my $output_root = join("/",$self->ftp_releases_dir,$release); 
 	
 	# This is a species specific script. Try running it for each managed species.
 	if ($script =~ /dump_species/) {
 	    my ($species) = $self->wormbase_managed_species;  
 	    foreach my $name (@$species) {
-		my $output = join("/",$output_root,'species',$name,'annotation');
-		$self->_make_dir($output);
 		
-		$self->log->info("dumping $script $description for $name");
-		$self->system_call("$script --path $acedb_path --species $name | gzip -c > $output/$name.$release.$description.txt.gz",
-				   "dumping $description script");
+		my $species = WormBase->create('Species',{ symbolic_name => $name, release => $release });
+		# Now, for each species, iterate over the bioproject IDs.
+		# These are just strings.
+		my $bioprojects = $species->bioprojects;
+		foreach my $bioproject (@$bioprojects) {
+		    my $id = $bioproject->bioproject_id;
+		    $self->log->info("   Processing bioproject: $id");
+		    
+		    my $output = join("/",$output_root,'species',$name,$id,'annotation');
+		    $self->_make_dir($output);
+		    
+		    $self->log->info("dumping $script $description for $name");
+		    $self->system_call("$script --path $acedb_path --species $name | gzip -c > $output/$name.$id.$release.$description.txt.gz",
+				       "dumping $description script");
+		}
 	    }
 	} elsif ($script =~ /dump_resource_/) {
 	    # It's a resource. Only need to call the script once.
