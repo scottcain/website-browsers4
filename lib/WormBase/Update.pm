@@ -75,7 +75,7 @@ sub _build_log {
 
                 # MatchTRACE: lowest level for the STEPLOG
                 log4perl.filter.MatchTRACE = Log::Log4perl::Filter::LevelRange
-                log4perl.filter.MatchTRACE.LevelToMatch = TRACE
+                log4perl.filter.MatchTRACE.LevelMin = TRACE
                 log4perl.filter.MatchTRACE.AcceptOnMatch = true
 
                 # MatchWARN: Exact match for warnings
