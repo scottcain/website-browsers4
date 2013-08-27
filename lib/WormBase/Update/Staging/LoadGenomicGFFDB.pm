@@ -29,6 +29,10 @@ sub run {
     
     my $release = $self->release;
     foreach my $name (@$species) {
+
+	# Temporary: already built.
+#	next if $name =~ /suum|xylophilus|angaria|c_sp5|c_sp11/;
+#	next unless $name =~ /briggsae|brenneri|japonica|remanei|pacificus/;
 	my $species = WormBase->create('Species',{ symbolic_name => $name, release => $release });
 
 	$self->log->info(uc($name). ': start');	
@@ -60,100 +64,139 @@ sub load_gffdb {
     my $release = $self->release;
     my $name    = $bioproject->symbolic_name;
     
-    $self->create_database($bioproject);
     
     my $gff     = $bioproject->gff_file;       # this includes the full path.
+
     my $fasta   = join("/",$bioproject->release_dir,$bioproject->genomic_fasta);  # this does not.
 
     my $id = $bioproject->bioproject_id;
-    
-    if ($name =~ /elegans/) {
 
-	# HACK HACK HACK HACK - We need to use a different input
-	# file until we have GFF3
-	# This needs to be c_elegans.WSXXX.GBrowse.gff2.gz NOT the core GFF file (c_elegans.WSXXX.annotations.gff2.gz)
-	$gff =~ s/annotations/GBrowse/;
+    # Also need to load GFF2 for now.
+    my $temp_gff2;
+    if ($name =~ /elegans|briggsae|brenneri|japonica|remanei|pacificus|malayi/) {
+	$temp_gff2 = $gff;
+    }
 
-
-	# Create the ESTs file
-	# Now created by hinxton.
-	# $self->dump_elegans_ests;
-	
-	# Need to do some small processing for some species.
+    # WS239 ONLY: reorder GFF3
+    if ($name =~ /elegans|briggsae|brenneri|japonica|remanei|pacificus|malayi/) {
 	$self->log->debug("processing $name ($bioproject) GFF files");
+	
+	my $output = $bioproject->release_dir . "/$name.$id.$release.annotations-sorted.gff3.gz";
+	
+	my $bin_path = $self->bin_path;
+	my $cmd = "gunzip -c $gff | $bin_path/../helpers/sort_gff3.pl | gzip -cf > $output";
+	$bioproject->gff_file("$output"); # Swap out the GFF files to load.
+	$gff = $bioproject->gff_file;
+	$self->system_call($cmd,'sorting GFF3 files');	
+    }
 
-	# WS226: Hinxton supplies us GBrowse GFF named g_species.release.GBrowse.gff2.gz
-	# We just need to drop the introns and assembly tag.
-	my $output = $bioproject->release_dir . "/$name.$id.$release.GBrowse-processed.gff2.gz";
-	# process the GFF files	
-	# THIS STEP CAN BE SIMPLIFIED.
-	# It should only be necessary to:
-	#     strip CHROMOSOME_
-	#     drop introns
-	#     drop assembly_tag
-
+    # Need to strip some entries from C. elegans
+    # We'll process GFF3 (for now) below.
+    if ($name =~ /elegans/) {	
+	$self->log->debug("processing $name ($bioproject) GFF files");
+	
+	my $output = $bioproject->release_dir . "/$name.$id.$release.annotations-processed.gff3.gz";
+	
 	# Fix the FASTA file
 	my $tmp = $self->tmp_dir;
 	my $reformat = "gunzip -c $fasta | perl -p -i -e 's/CHROMOSOME_//g' | gzip -c > $tmp/$name.$id.$release.genomic-renamed.fa.gz";
 	$self->system_call($reformat,$reformat);
 	$fasta = "$tmp/$name.$id.$release.genomic-renamed.fa.gz";
-
+	
 	my $cmd = $self->bin_path . "/../helpers/process_gff.pl $gff | gzip -cf > $output";
 	$bioproject->gff_file("$output"); # Swap out the GFF files to load.
 	$gff = $bioproject->gff_file;
-	$self->system_call($cmd,'processing C. elegans GFF');
-
-
-#    } elsif ($name =~ /briggsae/) {
-#
-#	# This really only needs to change =~ s/CHROMOSOME_// 
-#	my $output = $species->release_dir . "/$species.$release.GBrowse.gff2.gz";
-#	my $cmd = $self->bin_path . "/helpers/process_gff.pl $gff | gzip -cf > $output";
-#	$species->gff_file("$output"); # Swap out the GFF files to load.
-#	$gff = $species->gff_file;
-#	$self->system_call($cmd,'processing C. briggsae GFF');
-    } else {
-	# Maybe we have a pre-prepped gff supplied by Sanger. Load that instead.
-	my $prepped_gff = $bioproject->release_dir . "/$name.$id.$release.GBrowse.gff2.gz";
-	if ( -e $prepped_gff) {
-	    $bioproject->gff_file($prepped_gff);
-	    $gff = $bioproject->gff_file;
-	}
-    }
+	$self->system_call($cmd,'processing C. elegans GFF');	
+    } 
     
     $ENV{TMP} = $self->tmp_dir;
     my $tmp   = $self->tmp_dir;
-
+    
     my $db   = $bioproject->mysql_db_name;
+
+    if ($name =~ /elegans|briggsae|brenneri|japonica|remanei|pacificus|malayi/) {
+	# For now, we are testing GFF3 databases for these species
+	$db = $db . '_gff3_test';
+    }
+    
+    # Passing $db here is temporary in order to create temp db names for testing
+    $self->create_database($bioproject,$db);
+
     my $user = $self->mysql_user;
     my $pass = $self->mysql_pass;
     
     my $cmd;
-    if ($bioproject->gff_version == 2) {
-	# $cmd = "bp_bulk_load_gff.pl --user $user --password $pass -c -d $db --fasta $fasta $gff 2> /dev/null";	    
-	$cmd = "bp_bulk_load_gff.pl --user $user --password $pass -c -d $db --fasta $fasta $gff";
-    } else {
-	$cmd = "bp_seqfeature_load.pl --summary --user $user --password $pass --fast --create -T $tmp --dsn $db $gff $fasta";       
-#	$cmd = "bp_seqfeature_load.pl --summary --user $user --password $pass --create -T $tmp --dsn $db $gff $fasta";       
-    }
+#    if ($bioproject->gff_version == 2) {
+#	# $cmd = "bp_bulk_load_gff.pl --user $user --password $pass -c -d $db --fasta $fasta $gff 2> /dev/null";	    
+#	$cmd = "bp_bulk_load_gff.pl --user $user --password $pass -c -d $db --fasta $fasta $gff";
+#	
+#    } else {	
+	$cmd = "bp_seqfeature_load.pl --summary --user $user --password $pass --fast --create -T $tmp --dsn $db $gff $fasta";	
+#    }
     
     # Load. Should expand error checking and reporting.
     $self->log->info("loading database via command: $cmd");
-    $self->system_call($cmd,"loading GFF mysql database: $cmd");
+    $self->system_call($cmd,"loading GFF mysql database: $cmd");    
+
+    # Temporarily: let's also load GFF2 for old species
+    if ($name =~ /elegans|briggsae|brenneri|japonica|remanei|pacificus|malayi/) {
+	my $db   = $bioproject->mysql_db_name;
+	$self->create_database($bioproject);
+	
+	# elegans requires some post-proccessing
+	if ($name =~ /elegans/) {
+	    $temp_gff2 =~ s/gff3/gff2/;  # we preferentially process GFF3 but we still need to load GFF2.
+	    $temp_gff2 =~ s/annotations/GBrowse/;
+	    
+	    # Need to do some small processing for some species.
+	    $self->log->debug("processing $name ($bioproject) GFF files");
+	    
+	    # WS226: Hinxton supplies us GBrowse GFF named g_species.release.GBrowse.gff2.gz
+	    # We just need to drop the introns and assembly tag.
+	    my $output = $bioproject->release_dir . "/$name.$id.$release.GBrowse-processed.gff2.gz";
+	    # process the GFF files	
+	    # THIS STEP CAN BE SIMPLIFIED.
+	    # It should only be necessary to:
+	    #     strip CHROMOSOME_
+	    #     drop introns
+	    #     drop assembly_tag
+	    
+	    my $cmd = $self->bin_path . "/../helpers/process_gff.pl $temp_gff2 | gzip -cf > $output";
+	    $bioproject->gff_file("$output"); # Swap out the GFF files to load.
+	    $gff = $bioproject->gff_file;
+	    $self->system_call($cmd,'processing C. elegans GFF2');
+	} else {
+	    
+	    # Maybe we have a pre-prepped gff supplied by Sanger. Load that instead.
+	    my $prepped_gff = $bioproject->release_dir . "/$name.$id.$release.GBrowse.gff2.gz";
+	    if ( -e $prepped_gff) {
+		$bioproject->gff_file($prepped_gff);
+		$gff = $bioproject->gff_file;
+	    } else {
+		$gff = $temp_gff2;
+	    }
+	}
+	$cmd = "bp_bulk_load_gff.pl --user $user --password $pass -c -d $db --fasta $fasta $gff";
+	$self->log->info("loading database via command: $cmd");
+	$self->system_call($cmd,"loading GFF mysql database: $cmd");
+    }
     
-    # Need to load FASTA sequence for GFF3
+# Need to load FASTA sequence for GFF3
 #    if ($species->gff_version == 3) {
 #	$self->system_call("bp_load_gff.pl -u $user -p $pass -d $db -fasta $fasta",
 #			   'loading fasta sequence');
 #    }    
     
     # For C. elegans, we also need to load our ESTs.
-    # Should probably also generate GFF patches here and load.
     if ($name =~ /elegans/) {
 	my $est = join("/",$bioproject->release_dir,$bioproject->ests_file);
 	my $pass  = $self->mysql_pass;
 	
 	$self->system_call("bp_load_gff.pl -d $db --user root -password $pass --fasta $est </dev/null",
+			   'loading EST fasta sequence');
+	my $db      = $bioproject->mysql_db_name;
+	my $gff3_db = $db . '_gff3_test';  # for now;
+	$self->system_call("bp_seqfeature_load.pl --summary --user $user --password $pass --fast --create -T $tmp --dsn $gff3_db $fasta",
 			   'loading EST fasta sequence');
     }
 }
@@ -161,10 +204,10 @@ sub load_gffdb {
 
 
 sub create_database {
-    my ($self,$bioproject) = @_;
-    my $database = $bioproject->mysql_db_name;
+    my ($self,$bioproject,$db) = @_;
+    my $database = $db ? $db : $bioproject->mysql_db_name;
     
-    $self->log->debug("creating a new mysql GFF database: $database");
+    $self->log->info("creating a new mysql GFF database: $database");
     
     my $drh  = $self->drh;
     my $user = $self->mysql_user;

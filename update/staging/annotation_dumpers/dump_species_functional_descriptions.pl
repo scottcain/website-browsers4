@@ -1,3 +1,4 @@
+
 #!/usr/bin/perl
 
 use FindBin qw/$Bin/;
@@ -48,7 +49,7 @@ my $count;
 
 my $separator = "=\n";
 $no_entry  ||= "none available";
-$format    ||= 'record';
+$format    ||= 'tab';
 
 my ($g,$species_alone) = split("_",$species);
 $g = uc($g);

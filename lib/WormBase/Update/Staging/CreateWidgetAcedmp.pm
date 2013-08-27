@@ -28,9 +28,10 @@ sub run {
 sub create_ace_file {
   my $self = shift;
 
-  my $db = $self->wormbase_user_db;
+  my $db   = $self->wormbase_user_db;
   my $user = $self->wormbase_user_username;
-  my $host=$self->wormbase_user_host;
+  my $host = $self->wormbase_user_host;
+  my $pass = $self->wormbase_user_pass;
 
   my $widgets_ace_file = $self->widgets_ace_file;
 
@@ -55,6 +56,7 @@ sub create_ace_file {
       AND wr.user_id = u.user_id;
   ";
   
+ # my $dbh = DBI->connect("DBI:mysql:$db:$host", $user, $pass);
   my $dbh = DBI->connect("DBI:mysql:$db:$host", $user);
   my $sqlQuery  = $dbh->prepare($query)
   or die "Can't prepare $query: $dbh->errstr\n";
