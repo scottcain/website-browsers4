@@ -101,7 +101,8 @@ has 'app_staging_dir' => ( is => 'ro', default => '/usr/local/wormbase/website/p
 has 'tmp_dir'       => ( is => 'ro', lazy_build => 1 );			 
 sub _build_tmp_dir {
     my $self = shift;
-    my $dir = $self->wormbase_root . "/tmp/staging";
+#    my $dir = $self->wormbase_root . "/tmp/staging";
+    my $dir = "/mnt/ephemeral0";
     $self->_make_dir($dir);
     return $dir;
 }

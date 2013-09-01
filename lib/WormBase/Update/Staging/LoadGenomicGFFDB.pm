@@ -31,6 +31,7 @@ sub run {
     foreach my $name (@$species) {
 
 	# Temporary: already built.
+#	next if $name =~ /suum/;
 #	next if $name =~ /suum|xylophilus|angaria|c_sp5|c_sp11/;
 #	next unless $name =~ /briggsae|brenneri|japonica|remanei|pacificus/;
 	my $species = WormBase->create('Species',{ symbolic_name => $name, release => $release });
@@ -179,6 +180,13 @@ sub load_gffdb {
 	$cmd = "bp_bulk_load_gff.pl --user $user --password $pass -c -d $db --fasta $fasta $gff";
 	$self->log->info("loading database via command: $cmd");
 	$self->system_call($cmd,"loading GFF mysql database: $cmd");
+
+	# We also need to load ESTs
+	if ($name =~ /elegans/) {
+	    my $est = join("/",$bioproject->release_dir,$bioproject->ests_file);	    
+	    $self->system_call("bp_load_gff.pl -d $db --user root -password $pass --fasta $est </dev/null",
+			       'loading EST fasta sequence');
+	}
     }
     
 # Need to load FASTA sequence for GFF3
@@ -188,15 +196,10 @@ sub load_gffdb {
 #    }    
     
     # For C. elegans, we also need to load our ESTs.
-    if ($name =~ /elegans/) {
-	my $est = join("/",$bioproject->release_dir,$bioproject->ests_file);
-	my $pass  = $self->mysql_pass;
-	
-	$self->system_call("bp_load_gff.pl -d $db --user root -password $pass --fasta $est </dev/null",
-			   'loading EST fasta sequence');
+    if ($name =~ /elegans/) {           	
 	my $db      = $bioproject->mysql_db_name;
 	my $gff3_db = $db . '_gff3_test';  # for now;
-	$self->system_call("bp_seqfeature_load.pl --summary --user $user --password $pass --fast --create -T $tmp --dsn $gff3_db $fasta",
+	$self->system_call("bp_seqfeature_load.pl --summary --user $user --password $pass --fast -T $tmp --dsn $gff3_db $fasta",
 			   'loading EST fasta sequence');
     }
 }
