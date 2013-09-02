@@ -17,18 +17,12 @@ if [ ! $VERSION]; then
 fi
 
 
-declare -a dbs=(c_elegans_PRJNA13758);
-
-#declare -a dbs=(a_suum_PRJNA80881
+#declare -a dbs=(c_elegans_PRJNA13758);
+#a_suum_PRJNA80881
+#declare -a dbs=(
 #    a_suum_PRJNA62057
-#    b_malayi_PRJNA10729
 #    b_xylophilus_PRJEA64437
 #    c_angaria_PRJNA51225
-#    c_brenneri_PRJNA20035
-#    c_briggsae_PRJNA10731
-#    c_elegans_PRJNA13758
-#    c_japonica_PRJNA12591
-#    c_remanei_PRJNA53967
 #    c_sp11_PRJNA53597
 #    c_sp5_PRJNA194557
 #    h_bacteriophora_PRJNA13977
@@ -36,13 +30,29 @@ declare -a dbs=(c_elegans_PRJNA13758);
 #    l_loa_PRJNA60051
 #    m_hapla_PRJNA29083
 #    m_incognita_PRJEA28837
-#    p_pacificus_PRJNA12644
 #    s_ratti_PRJEA62033
 #    t_spiralis_PRJNA12603)
 
+#declare -a dbs=(
+#    b_malayi_PRJNA10729
+#    c_brenneri_PRJNA20035
+#    c_briggsae_PRJNA10731
+#    c_elegans_PRJNA13758
+#    c_japonica_PRJNA12591
+#    c_remanei_PRJNA53967
+#    p_pacificus_PRJNA12644)
 
 
-# Your RDS endpoint
+declare -a dbs=(
+    c_elegans_PRJNA13758
+    c_japonica_PRJNA12591
+    c_remanei_PRJNA53967
+    p_pacificus_PRJNA12644)
+
+
+
+
+# RDS endpoint (CNAME)
 RDS_HOSTNAME=mysql.wormbase.org
 RDS_USER=wormbase
 RDS_PASSWORD=sea3l3ganz
@@ -56,7 +66,7 @@ mkdir -p $TMPDIR
 
 j=0
 # 1 is the number of dbs
-while [ $j -lt 1 ];
+while [ $j -lt 6 ];
 do
     this_db="${dbs[$j]}_${VERSION}_gff3_test"
 
@@ -81,7 +91,8 @@ do
     mysql --host=$RDS_ENDPOINT --user=$RDS_USER --password=$RDS_PASSWORD -e "create database ${this_db}"
 
     echo "Copy ${this_db} into RDS"
-    time mysql --host=$RDS_ENDPOINT --user=$RDS_USER --password=$RDS_PASSWORD `echo ${this_db}` < /$TMPDIR/`echo ${this_db}`.sql &
+#    time mysql --host=$RDS_ENDPOINT --user=$RDS_USER --password=$RDS_PASSWORD `echo ${this_db}` < /$TMPDIR/`echo ${this_db}`.sql &
+    time mysql --host=$RDS_ENDPOINT --user=$RDS_USER --password=$RDS_PASSWORD `echo ${this_db}` < /$TMPDIR/`echo ${this_db}`.sql
     
     j=$(($j+1))
 done
