@@ -338,7 +338,7 @@ sub _build_production_ftp_host {
     # We will use the INTERNAL IP of the FTP instance
     # to avoid data transfer charges.
     # This will ONLY work when run from within another EC2 instance!
-    my @addresses = split("\s",`dig +short $host`);
+    my @addresses = split(/\s/,`dig +short $host`);
     my $ip        = $addresses[2];
     return $ip;
 }
