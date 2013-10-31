@@ -662,13 +662,14 @@ sub _parse_cache_log {
 
 	open IN,"$file" or die "$!";
 
+	print STDERR "Building list of URIs already seen. This can take some time...\n";
 	while (<IN>) {
 	    chomp;
 	    my ($obj,$url,$status,$cache_stop) = split("\t");
 	    $previous{$obj}++ unless $status eq 'failed';
 	    next if $status eq 'failed';
-	    print STDERR "Recording $obj as seen...";
-	    print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
+#	    print STDERR "Recording $obj as seen...";
+#	    print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
 	}
 	close IN;
 	return %previous;
