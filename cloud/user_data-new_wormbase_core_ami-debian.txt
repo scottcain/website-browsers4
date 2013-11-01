@@ -8,7 +8,11 @@ set -x
 # all software and libraries will be installed.
 
 # When passed in as user-data to ec2-run-instances, it will be
-# executed as the root user.
+# executed as the root user!
+
+# First update the package manager
+sudo apt-get install
+
 
 sudo yum update
 sudo yum install mysql mysql-server
@@ -118,8 +122,3 @@ sudo mkdir acedb services website tmp extlib logs shared ftp
 
   # scp .ssh/id_dsa to cloud/keypairs/USERNAME.key
 
-
-
-# ALSO NEED: user-data scripts for: 
-  * launching existing ami and building new EBS volume with data
-  * Launching instances and attaching existing volume data

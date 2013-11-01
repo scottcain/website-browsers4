@@ -1,11 +1,5 @@
 #!/usr/bin/perl
 
-# NOTE!
-# The QAQC instance needs to have a tag of Status = 'qaqc';
-
-# This ALSO needs to tag snapshots of the resulting AMI
-
-
 use strict;
 use VM::EC2;
 use Getopt::Long;
@@ -28,14 +22,14 @@ Start a new build instance and prepopulate it with data.
 Options:
   --release     required. The WSXXX version of release to build.
   --instances   optional. Number of new prod instances to launch. Default: 1.
-  --type        optional. Size of new instances to launch. Default: m1.large
+  --type        optional. Size of new instances to launch. Default: m1.xlarge
 
 END
 
 }
 
 $instance_count ||= 1;
-$instance_type  ||= 'm1.large';
+$instance_type  ||= 'm1.xlarge';
 
 # Connect to EC2 ; access_key and secret_key provided by ENV
 my $ec2 = VM::EC2->new(-endpoint    => 'http://ec2.amazonaws.com',
@@ -57,10 +51,6 @@ umount /var/log/mysql
 umount /etc/mysql
 umount /usr/local/wormbase/
 
-# Mount up ephemeral storage.
-# NOT NECESSARY - WILL ALREADY BE MOUNTED.
-# mount /mnt/ephemeral0
-# mount /mnt/ephemeral1
 
 ################################################
 # Set up directories on ephemeral storage
@@ -91,11 +81,11 @@ mkdir -p /usr/local/ftp/pub/wormbase
 chown -R tharris:wormbase /usr/local/ftp/
 chmod -R 2775 /usr/local/ftp
 mount --bind /mnt/ephemeral1/usr/local/ftp/pub/wormbase /usr/local/ftp/pub/wormbase
-chown -R tharris:wormbase /mnt/ephemeral1/usr/local/ftp
-chmod -R 2775 /mnt/ephemeral1/usr/local/ftp
 cd /usr/local/ftp/pub/wormbase
 mkdir releases
 mkdir species
+chown -R tharris:wormbase /usr/local/ftp/pub/wormbase
+chmod -R 2775 /usr/local/ftp/pub/wormbase
 # Do I need to create other directories?
 
 # MySql databases/libs
@@ -108,6 +98,9 @@ cp -rp /etc/mysql/* /mnt/ephemeral1/etc/mysql/.
 mount --bind /mnt/ephemeral1/var/lib/mysql /var/lib/mysql
 mount --bind /mnt/ephemeral1/var/log/mysql /var/log/mysql
 mount --bind /mnt/ephemeral1/etc/mysql     /etc/mysql
+chown -R mysql:mysql /var/lib/mysql
+chown -R mysql:mysql /var/log/mysql
+chown -R mysql:mysql /etc/mysql
 /etc/init.d/mysql restart
 
 # Mirror files from dev.wormbase.org to ephemeral storage using it's private ip address
@@ -118,10 +111,20 @@ chown -R tharris:wormbase $release/
 # perllib - add to my .profile. Not very portable...
 cd /usr/local/wormbase/extlib
 perl -Mlocal::lib=./ >> /home/tharris/.bash_profile
+eval $(perl -Mlocal::lib=./)
 
 # Update website-admin
 cd /usr/local/wormbase/website-admin
 git pull
+
+# Unpack acedb
+cd update/staging
+./steps/unpack_acedb.pl --release $release
+chown -R tharris:wormbase /usr/local/wormbase/acedb/wormbase_$RELEASE
+
+./steps/create_blast_databases.pl --release $release
+chown -R tharris:wormbase /usr/local/wormbase/databases
+
 END
 ;
 
@@ -268,23 +271,6 @@ sub display_instance_metadata {
 
 
 
-
-
-# Can instances be configured via the Staging manager component of LibVM::EC2
-#sub configure_instances {
-#    print STDERR "Proceeding to configuration...\n";
-#    
-#    my $staging = $ec2->staging_manager(); 
-#    
-## Fetch a server named 'my_server'. Create it if it does not already exist.
-#    foreach my $instance (@instances) {
-#	my $server1 = $staging->get_server(-name              => 'my_server',
-#					   -availability_zone  => 'us-east-1a',
-#					   -architecture       => 'i386',
-#					   -instance_type      => 't1.micro');    
-#	
-#    }
-#}    
 
 
 
