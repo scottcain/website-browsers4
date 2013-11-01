@@ -103,8 +103,7 @@ has 'app_staging_dir' => ( is => 'ro', default => '/usr/local/wormbase/website/p
 has 'tmp_dir'       => ( is => 'ro', lazy_build => 1 );			 
 sub _build_tmp_dir {
     my $self = shift;
-#    my $dir = $self->wormbase_root . "/tmp/staging";
-    my $dir = "/mnt/ephemeral0";
+    my $dir = $self->wormbase_root . "/tmp/staging";
     $self->_make_dir($dir);
     return $dir;
 }
@@ -365,6 +364,28 @@ sub _build_ftp_species_dir {
     my $self = shift;    
     return $self->ftp_root . "/species";
 }
+
+
+####################################
+#
+# EC2
+#
+####################################
+
+has 'rds_host' => (
+    is => 'ro',
+    default => 'mysql.wormbase.org'
+    );
+
+has 'rds_pass' => (
+    is => 'ro',
+    default => 'sea3l3ganz'
+    );
+
+has 'rds_user' => (
+    is => 'ro',
+    default => 'wormbase'
+    );
 
 ####################################
 #
