@@ -185,6 +185,7 @@ classes = (   { filename = "Paper.ace";
               { filename = "Phenotype.ace"; },
               { filename = "Protein.ace"; 
                 desc = ("corresponding_cds", "remark", "description"); },
+              { filename = "Pseudogene.ace"; },
               { filename = "Rearrangement.ace"; 
                 desc = ("mutagen", "remark"); },
               { filename = "RNAi.ace"; },

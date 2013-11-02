@@ -189,13 +189,15 @@ sub _build_gff_file {
     my $name    = $self->symbolic_name;
     my $release = $self->release;	
     my $id      = $self->bioproject_id;
-    my $gff = join("/",$self->release_dir,"$name.$id.$release.annotations.gff2.gz");
+    my $gff = join("/",$self->release_dir,"$name.$id.$release.annotations.gff3.gz");
+
+    # Preferentially load GFF3
     if (-e $gff) {
-	$self->gff_version('2');
+	$self->gff_version('3');
     } else {
-	$gff = join("/",$self->release_dir,"$name.$id.$release.annotations.gff3.gz");
+	$gff = join("/",$self->release_dir,"$name.$id.$release.annotations.gff2.gz");
 	if (-e $gff) {
-	    $self->gff_version('3');
+	    $self->gff_version('2');
 	}
     }
     $self->log->logdie(uc($name) . ": couldn't find a suitable GFF file") unless $gff;

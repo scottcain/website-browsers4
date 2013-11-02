@@ -26,7 +26,6 @@ sub run {
 
     my $release_id = $self->release_id; 
     
-    my $remote_releases_path = 
 
 
     my ($local_path,$remote_path);

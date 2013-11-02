@@ -32,6 +32,8 @@ sub ssh {
 #
 ####################################
 
+# THIS NEEDS TO BE UPDATED TO USE dig/CNAME
+
 # Where our couchdb data directory lives.
 has 'couchdb_root'      => ( is => 'rw', default => '/usr/local/wormbase/couchdb' );
 
@@ -79,8 +81,10 @@ has 'remote_couchdb_nodes' => (
 ####################################
 
 has 'wormbase_user_host'     => ( is => 'rw', default => '23.21.171.141' );
+#has 'wormbase_user_host'     => ( is => 'rw', default => 'mysql.wormbase.org' );
 has 'wormbase_user_username'     => ( is => 'rw', default => 'wormbase' );
 has 'wormbase_user_db'     => ( is => 'rw', default => 'wormbase_user' );
+has 'wormbase_user_pass'     => ( is => 'rw', default => 'sea3l3ganz' );
 
 
 ####################################
@@ -306,21 +310,39 @@ has 'ftp_releases_dir' => (
     lazy_build => 1,
     );
 
-# Where the production FTP site lives.
-# Assumes that the user running the update script
-# has access and that the ftp_root is the 
-# same as above.
-has 'production_ftp_host' => (
-    is         => 'ro',
-    default    => 'wb-dev.oicr.on.ca',
-    );
 
 sub _build_ftp_releases_dir {
     my $self = shift;
     return $self->ftp_root . "/releases";
 }
 
-# The releases/ directory
+# Where the production FTP site lives.
+# Assumes that the user running the update script
+# has access and that the ftp_root is the 
+# same as above.
+#has 'production_ftp_host' => (
+#    is         => 'ro',
+#    default    => 'wb-dev.oicr.on.ca',
+#    );
+
+has 'production_ftp_host' => (
+    is         => 'ro',
+    lazy_build => 1,
+    );
+
+sub _build_production_ftp_host {
+    my $self = shift;
+    my $host = 'ftp.wormbase.org';  # The FTP host CNAME
+    
+    # We will use the INTERNAL IP of the FTP instance
+    # to avoid data transfer charges.
+    # This will ONLY work when run from within another EC2 instance!
+    my @addresses = split(/\s/,`dig +short $host`);
+    my $ip        = $addresses[2];
+    return $ip;
+}
+
+
 has 'ftp_database_tarballs_dir' => (
     is         => 'ro',
     lazy_build => 1,
@@ -342,6 +364,28 @@ sub _build_ftp_species_dir {
     my $self = shift;    
     return $self->ftp_root . "/species";
 }
+
+
+####################################
+#
+# EC2
+#
+####################################
+
+has 'rds_host' => (
+    is => 'ro',
+    default => 'mysql.wormbase.org'
+    );
+
+has 'rds_pass' => (
+    is => 'ro',
+    default => 'sea3l3ganz'
+    );
+
+has 'rds_user' => (
+    is => 'ro',
+    default => 'wormbase'
+    );
 
 ####################################
 #
@@ -376,6 +420,8 @@ sub _build_remote_ftp_releases_dir {
 }
 
 
+
+# THIS NEEDS TO BE UPDATED TO USE dig/CNAME
 has 'staging_host' => (
     is => 'ro',
     default => 'wb-web7.oicr.on.ca' );
@@ -388,6 +434,7 @@ has 'staging_host' => (
 ####################################
 
 # The WormBase NFS server.
+# THIS NEEDS TO BE UPDATED TO USE dig/CNAME
 has 'local_nfs_server' => (
     is => 'ro',
     default => 'wb-web1.oicr.on.ca'
