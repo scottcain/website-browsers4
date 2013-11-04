@@ -80,8 +80,8 @@ has 'remote_couchdb_nodes' => (
 #
 ####################################
 
-has 'wormbase_user_host'     => ( is => 'rw', default => '23.21.171.141' );
-#has 'wormbase_user_host'     => ( is => 'rw', default => 'mysql.wormbase.org' );
+#has 'wormbase_user_host'     => ( is => 'rw', default => '23.21.171.141' );
+has 'wormbase_user_host'     => ( is => 'rw', default => 'mysql.wormbase.org' );
 has 'wormbase_user_username'     => ( is => 'rw', default => 'wormbase' );
 has 'wormbase_user_db'     => ( is => 'rw', default => 'wormbase_user' );
 has 'wormbase_user_pass'     => ( is => 'rw', default => 'sea3l3ganz' );

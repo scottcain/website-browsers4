@@ -122,8 +122,18 @@ cd update/staging
 ./steps/unpack_acedb.pl --release $release
 chown -R tharris:wormbase /usr/local/wormbase/acedb/wormbase_$RELEASE
 
+# Create blast databases
 ./steps/create_blast_databases.pl --release $release
 chown -R tharris:wormbase /usr/local/wormbase/databases
+
+# Load up the clustal database
+./steps/unpack_clustal_database.pl --release $release
+
+# Mirror ontology files
+./steps/compile_ontology_resources.pl --release $release
+
+# Mirror orthology resources
+./steps/compile_orthology_resources.pl --release $release
 
 END
 ;
