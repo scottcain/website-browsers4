@@ -53,7 +53,8 @@ Xapian::TermGenerator indexer;
 Xapian::TermGenerator syn_indexer;
 Xapian::WritableDatabase db;
 Xapian::WritableDatabase syn_db;
-map<string, int>  species_list;
+map<string, string>  species_list;
+map<string, int>  species_id;
 map<string, int>  paper_id;
 
 
@@ -132,11 +133,13 @@ splitFields (string &fields, bool first = false){
 
 string
 parseSpecies (string &species) {
- string ret;
- ret.push_back(species[0]);
- size_t space = species.find_last_of(' ') + 1;
- ret += "_" + species.substr(space, species.length()-space);
- return ret;
+  string ret;
+  ret = species_list[species];
+  if(ret.empty()){
+    replaceChar(species,' ','_');
+    ret = species;
+  }
+  return ret;
 }
 
 
@@ -153,7 +156,7 @@ indexLineBegin(string field_name, string line, string copy, string obj_name, Xap
     indexer.index_text(line, 20); //index words separately
 
     if (line.length() > 2) {
-      if(((doc.get_value(6).length() < 1)  || (int(field_name.find("standard_name")) == 0) || (int(field_name.find("public_name")) == 0)) && (field_name.find("other") == string::npos)){
+      if(((doc.get_value(6).length() < 1) || (int(field_name.find("standard_name")) == 0) || (int(field_name.find("public_name")) == 0))){
         string text = splitFields(copy, true);
         doc.add_value(6, text);
         syn_doc.add_value(6, text);
@@ -176,9 +179,9 @@ indexLineBegin(string field_name, string line, string copy, string obj_name, Xap
     }else{
       species_weight = 1;
     }
-    doc.add_value(3, Xapian::sortable_serialise(species_list[line]));
+    doc.add_value(3, Xapian::sortable_serialise(species_id[line]));
     doc.add_value(5, line);
-    syn_doc.add_value(3, Xapian::sortable_serialise(species_list[line]));
+    syn_doc.add_value(3, Xapian::sortable_serialise(species_id[line]));
     syn_doc.add_value(5, line);
     indexer.index_text(line, 1 * species_weight);
     return true;
@@ -517,9 +520,9 @@ indexGFF3obj(MYSQL_ROW row, string species){
         indexer.index_text(obj_class);
         indexer.index_text(obj_class + obj_name);
         
-        doc.add_value(3, Xapian::sortable_serialise(species_list[species]));
+        doc.add_value(3, Xapian::sortable_serialise(species_id[species]));
         doc.add_value(5, species);
-        syn_doc.add_value(3, Xapian::sortable_serialise(species_list[species]));
+        syn_doc.add_value(3, Xapian::sortable_serialise(species_id[species]));
         syn_doc.add_value(5, species);
         indexer.index_text(species);
         
@@ -643,12 +646,15 @@ try {
     for(int i=0; i<species_settings.getLength(); i++){
       const Setting &spec = species_settings[i];
       string name;
+      string fullname;
       int id;
       int gff3;
       
       spec.lookupValue("name", name);
       spec.lookupValue("id", id);
-      species_list[name] = id;
+      spec.lookupValue("fullname", fullname);
+      species_list[fullname] = name;
+      species_id[name] = id;
       
       if(spec.lookupValue("gff3", gff3) && (gff3 == 1)){
         indexGFF3(name);
