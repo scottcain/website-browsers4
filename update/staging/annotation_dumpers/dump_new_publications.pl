@@ -5,6 +5,8 @@
 
 # Currently, I'm emailing this to Thomas and myself
 
+$ENV{PATH} = '/usr/local/wormbase/acedb/bin';
+
 use Ace;
 use strict;
 use lib '/usr/local/wormbase/cgi-perl/lib';

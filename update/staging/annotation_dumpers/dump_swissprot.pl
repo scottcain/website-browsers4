@@ -8,6 +8,7 @@ use Getopt::Long;
 use Ace;
 
 $SIG{CHLD} = sub {exit 0};
+$ENV{PATH} = '/usr/local/wormbase/acedb/bin';
 
 use constant ACEDB   => 'sace://www.wormbase.org:2005';
 
