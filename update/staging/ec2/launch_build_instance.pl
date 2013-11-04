@@ -132,8 +132,20 @@ chown -R tharris:wormbase /usr/local/wormbase/databases
 # Mirror ontology files
 ./steps/compile_ontology_resources.pl --release $release
 
-# Mirror orthology resources
-./steps/compile_orthology_resources.pl --release $release
+# Mirror wikipathways images
+./steps/mirror_wikipathways_images.pl --release $release
+
+# Create commonly requested files
+./steps/dump_annotations.pl --release $RELEASE
+
+# Xapian - widget ace dmp
+./steps/create_widget_acedmp.pl --release $RELEASE
+
+# Xapian - the actual data dump and indexing.
+cd /usr/local/wormbase/website-admin/update/staging/xapian
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+g++ -o aceindex -L/usr/local/lib -l xapian -lconfig++ -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient_r aceindex.cc
+./steps/build_xapian_db.pl --release $release
 
 END
 ;

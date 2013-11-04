@@ -131,7 +131,7 @@ sub _build_support_databases_dir {
     $self->_make_dir($dir);
 
     # Create support db dirs, too.
-    my @directories = qw/blast blat ontology tiling_array interaction orthology position_matrix gene/;
+    my @directories = qw/blast ontology tiling_array position_matrix/;
     my $release     = $self->release;    
     $self->_make_dir("$dir/$release");
     
@@ -316,15 +316,6 @@ sub _build_ftp_releases_dir {
     return $self->ftp_root . "/releases";
 }
 
-# Where the production FTP site lives.
-# Assumes that the user running the update script
-# has access and that the ftp_root is the 
-# same as above.
-#has 'production_ftp_host' => (
-#    is         => 'ro',
-#    default    => 'wb-dev.oicr.on.ca',
-#    );
-
 has 'production_ftp_host' => (
     is         => 'ro',
     lazy_build => 1,
@@ -342,16 +333,34 @@ sub _build_production_ftp_host {
     return $ip;
 }
 
-
-has 'ftp_database_tarballs_dir' => (
-    is         => 'ro',
+# Where builds are deposited when the pipeline is complete.
+has 'post_build_stable_host' => (
+    is => 'ro',
     lazy_build => 1,
-    );
+);    
 
-sub _build_ftp_database_tarballs_dir {
+sub _build_post_build_stable_host {
     my $self = shift;
-    return $self->ftp_root . "/releases";
+    my $host = 'dev.wormbase.org';  # The FTP host CNAME
+    
+    # We will use the INTERNAL IP of the FTP instance
+    # to avoid data transfer charges.
+    # This will ONLY work when run from within another EC2 instance!
+    my @addresses = split(/\s/,`dig +short $host`);
+    my $ip        = $addresses[2];
+    return $ip;
 }
+
+
+# DEPRECATED
+#has 'ftp_database_tarballs_dir' => (
+#    is         => 'ro',
+#    lazy_build => 1,
+#    );
+#sub _build_ftp_database_tarballs_dir {
+#    my $self = shift;
+#    return $self->ftp_root . "/releases";
+#}
 
 
 # This is the VIRTUAL species directory at /species

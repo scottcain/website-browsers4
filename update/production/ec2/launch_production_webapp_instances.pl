@@ -24,7 +24,7 @@ Launch new instances of the core webapp AMI.
 
 Options:
   --release     required. The WSXXX version of release to build.
-  --instances   optional. Number of new prod instances to launch. Default: 2.
+  --instances   optional. Number of new prod instances to launch. Default: 1.
   --type        optional. Size of new instances to launch. Default: m1.large
 
 END
@@ -106,7 +106,7 @@ mkdir -p /mnt/ephemeral0/usr/local/wormbase/databases
 chown -R tharris:wormbase /mnt/ephemeral0/usr/local/wormbase/databases
 chmod 2775 /mnt/ephemeral0/usr/local/wormbase/databases
 mount --bind /mnt/ephemeral0/usr/local/wormbase/databases /usr/local/wormbase/databases
-cp -rp /mnt/ebs0/usr/local/wormbase/databases/* /mnt/ephemeral0/usr/local/wormbase/databases/.
+cp -rp /mnt/ebs0/usr/local/wormbase/databases/$release /mnt/ephemeral0/usr/local/wormbase/databases/.
 
 # /usr/local/wormbase/website
 echo "setting up website/ ..."
@@ -119,7 +119,7 @@ cp -rp /mnt/ebs0/usr/local/wormbase/website/* /mnt/ephemeral0/usr/local/wormbase
 
 # /usr/local/wormbase/website-shared-files
 echo "setting up website-shared-files/ ..."
-mkdir /usr/local/wormbase/wormbase-shared-files
+mkdir /usr/local/wormbase/website-shared-files
 mkdir -p /mnt/ephemeral0/usr/local/wormbase/website-shared-files
 chown -R tharris:wormbase /mnt/ephemeral0/usr/local/wormbase/website-shared-files
 chmod 2775 /mnt/ephemeral0/usr/local/wormbase/website-shared-files
@@ -166,15 +166,22 @@ umount /mnt/ebs0
 
 # perllib - add to my .profile. Not very portable...
 cd /usr/local/wormbase/extlib
-perl -Mlocal::lib=./ >> /home/tharris/.bash_profile
-eval $(perl -Mlocal::lib=./)
+perl -Mlocal::lib=.\/ >> /home/tharris/.bash_profile
+eval $(perl -Mlocal::lib=.\/)
 
 echo "Preconfiguration is complete!"
-echo "You may now wish to :"
+echo "You should now :"
 echo "    > saceclient localhost -port 2005  -- to start sgifaceserver"
 echo "    > cd /usr/local/wormbase/website/production ; ./script/wormbase-daemons.sh -- to start webapp"
 
-echo "Be sure to update the reverse proxy config with new *internal* IP address of this host!"
+echo "Be sure to update the reverse proxy config with new *internal* IP address of this host! It is:"
+
+IP=`GET http://169.254.169.254/latest/meta-data/local-ipv4`
+echo "local private IP: \$IP"
+
+# TO DO: should send an email
+# with hostname, etc.
+
 
 END
 ;
@@ -216,8 +223,8 @@ sub tag_instances {
     foreach my $instance (@$instances) {
 	$c++;
 	$ec2->add_tags(-resource_id => [ $instance ],
-		       -tag         => { Name        => "$release-wb-production-webapp-$c",
-					 Description => "webapp instance from AMI: $instance",
+		       -tag         => { Name        => "wb-webapp-$release-$instance",
+					 Description => "webapp instance from AMI: $production_image",
 					 Status      => 'production',
 					 Role        => 'webapp',
 					 Release     => $release,				     

@@ -48,12 +48,17 @@ ${ANALOG}/analog -G +g${BINDIR}/analog.conf \
     ${LOGDIR}/with_hosts/access_log.2007.gz \
     ${LOGDIR}/with_hosts/access_log.2008.gz \
     ${LOGDIR}/with_hosts/access_log.2009.gz \
-    ${LOGDIR}/with_hosts/access_log.${YEAR}.01-06.gz \
-    ${LOGDIR}/with_hosts/access_log.${YEAR}.07-12.gz \
+    ${LOGDIR}/with_hosts/access_log.2010.01-06.gz \
+    ${LOGDIR}/with_hosts/access_log.2010.07-12.gz
+    ${LOGDIR}/with_hosts/access_log.2011.01-06.gz \
+    ${LOGDIR}/with_hosts/access_log.2011.07-12.gz 
     +C"OUTFILE ${HTMLSTATS}/total/access_log-parsed" \
     +C"HOSTNAME ${SITE}" \
     +C"HOSTURL http://${SITE}/" \
     +C"YEARLY ON"
+
+#    ${LOGDIR}/with_hosts/access_log.${YEAR}.01-06.gz \
+#    ${LOGDIR}/with_hosts/access_log.${YEAR}.07-12.gz \
 
 #    ${LOGDIR}/with_hosts/access_log.2010.gz \
 
@@ -85,13 +90,18 @@ ${ANALOG}/analog -G +g${BINDIR}/analog.conf \
     ${LOGDIR}/with_hosts/access_log.2007.gz \
     ${LOGDIR}/with_hosts/access_log.2008.gz \
     ${LOGDIR}/with_hosts/access_log.2009.gz \
-    ${LOGDIR}/with_hosts/access_log.${YEAR}.01-06.gz \
-    ${LOGDIR}/with_hosts/access_log.${YEAR}.07-12.gz \
+    ${LOGDIR}/with_hosts/access_log.2010.01-06.gz \
+    ${LOGDIR}/with_hosts/access_log.2010.07-12.gz \
+    ${LOGDIR}/with_hosts/access_log.2011.01-06.gz \
+    ${LOGDIR}/with_hosts/access_log.2011.07-12.gz \
     +C"OUTFILE ${HTMLSTATS}/total-nogoogle/access_log-parsed" \
     +C"HOSTNAME ${SITE}" \
     +C"HOSTURL http://${SITE}/" \
     +C"HOSTEXCLUDE *googlebot*" \
     +C"YEARLY ON"
+
+#    ${LOGDIR}/with_hosts/access_log.${YEAR}.01-06.gz \
+#    ${LOGDIR}/with_hosts/access_log.${YEAR}.07-12.gz \
 
 #    ${LOGDIR}/with_hosts/access_log.2010.gz \
 #    +C"REFEXCLUDE http://${SITE}/" \

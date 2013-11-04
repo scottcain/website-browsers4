@@ -29,6 +29,12 @@ fi
 
 YEAR=${LATEST_RELEASE:0:4}
 
+
+
+
+
+
+
 ################################
 # MOST RECENT RELEASE ANALYSIS
 ################################
@@ -125,6 +131,19 @@ mkdir ${HTMLSTATS}/${YEAR}
 # Tally referrers
 #${BINDIR}/tally_referers.pl ${HTMLSTATS}/${YEAR}/host_stats.txt > ${HTMLSTATS}/${YEAR}/referers.txt
 
+
+# Split log files 2010 and beyond. Analog chokes on > 2GB.
+# These will ONLY be used for analyses
+# Remove the old ones first.
+rm ${LOGDIR}/with_hosts/access_log.${YEAR}.01-06.gz
+rm ${LOGDIR}/with_hosts/access_log.${YEAR}.07-12.gz
+LASTYEAR=$((YEAR-1))
+NEXTYEAR=$((YEAR+1))
+
+gunzip -c ${LOGDIR}/with_hosts/access_log.${YEAR}.gz | ${BINDIR}/extract_daterange.pl 01/Jan/${YEAR} 01/Jul/${YEAR} - | gzip -c > ${LOGDIR}/with_hosts/access_log.${YEAR}.01-06.gz
+
+gunzip -c ${LOGDIR}/with_hosts/access_log.${YEAR}.gz | ${BINDIR}/extract_daterange.pl 01/Jul/${YEAR} 01/Jan/${NEXTYEAR} - | gzip -c > ${LOGDIR}/with_hosts/access_log.${YEAR}.07-12.gz
+
 # analog
 echo "Running analog for ${YEAR} to-date..."
 ${ANALOG}/analog -G +g${BINDIR}/analog.conf \
@@ -199,6 +218,8 @@ ${ANALOG}/analog -G +g${BINDIR}/analog.conf \
     ${LOGDIR}/with_hosts/access_log.2009.gz \
     ${LOGDIR}/with_hosts/access_log.2010.01-06.gz \
     ${LOGDIR}/with_hosts/access_log.2010.07-12.gz \
+    ${LOGDIR}/with_hosts/access_log.2011.01-06.gz \
+    ${LOGDIR}/with_hosts/access_log.2011.07-12.gz \
     ${LOGDIR}/with_hosts/access_log.${YEAR}.01-06.gz \
     ${LOGDIR}/with_hosts/access_log.${YEAR}.07-12.gz \
     +C"OUTFILE ${HTMLSTATS}/total/access_log-parsed" \
@@ -238,6 +259,8 @@ ${ANALOG}/analog -G +g${BINDIR}/analog.conf \
     ${LOGDIR}/with_hosts/access_log.2009.gz \
     ${LOGDIR}/with_hosts/access_log.2010.01-06.gz \
     ${LOGDIR}/with_hosts/access_log.2010.07-12.gz \
+    ${LOGDIR}/with_hosts/access_log.2011.01-06.gz \
+    ${LOGDIR}/with_hosts/access_log.2011.07-12.gz \
     ${LOGDIR}/with_hosts/access_log.${YEAR}.01-06.gz \
     ${LOGDIR}/with_hosts/access_log.${YEAR}.07-12.gz \
     +C"OUTFILE ${HTMLSTATS}/total-nogoogle/access_log-parsed" \

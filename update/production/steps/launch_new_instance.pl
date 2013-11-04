@@ -2,7 +2,6 @@
 
 use strict;
 use VM::EC2;
-use Net::OpenSSH;
 use Getopt::Long;
 
 my ($release,$ami_id,$help);
@@ -36,9 +35,15 @@ my $ec2 = VM::EC2->new(-access_key => $access_key,
 # Need to discover what it is.
 my $image       = $ec2->describe_images($ami_id);
 print "Found image $ami_id: " . $image->name . ' (' . $image->description . ")\n";
+
+my $user_data = write_user_data_file();
+print $user_data;
+
 my $instance    = $image->run_instances(-instance_type     => 'm1.large',
-					-availability_zone => 'us-east-1d'
+					-availability_zone => 'us-east-1d',
+					-user_data         => $user_data,
     );
+#					-user_data         => "/tmp/new_instance_$release.sh",
 
 # wait for both instances to reach "running" or other terminal state
 $ec2->wait_for_instances($instance);
@@ -60,60 +65,60 @@ for my $volume (@volumes) {
 	    sleep 2;
 	}
 	print "volume $volume_id is attached to $instance_id and ready to go\n";
-	copy_data($volume,$hostname);
+
+	print "Waiting 60 seconds before trying to connect...\n";
+	sleep 60;	
 
 # Detach the volume from the instance
-	my $attachment = $volume->detach({-instance_id => $instance_id });
-	while ($attachment->current_status ne 'detached') {
-	    sleep 2;
-	}
+#	my $attachment = $volume->detach({-instance_id => $instance_id });
+#	while ($attachment->current_status ne 'detached') {
+#	    sleep 2;
+#	}
 	
     }
-
-    # Finally, start services on the machine
-    my $ssh = ssh($hostname);
-    $ssh->system("saceclient localhost -port 2005");
-    $ssh->system("cd /usr/local/wormbase/website/production ; ./script/wormbase-init.sh start");    
 }
 
-sub copy_data {
 
-    my ($volume,$hostname) = @_;
-    print "Waiting 60 seconds before trying to connect...\n";
-    sleep 60;
-    
-# Volume ready?  Log-in and start setting it up.
-    my $ssh = ssh($hostname);
-    
+
+# Dump out the user_data_file for delivery to the new instance.
+# This will be executed at system launch.
+sub write_user_data_file {
+#    open OUT,">/tmp/new_instance_$release.sh" or die;
+#    print OUT <<END;
+    my $user_data = <<END;
+#!/bin/bash
+
+set -x
+
+# This init script is run when launching a new instance.
+# It will automatically be run as the root user.
+
 # Mount my EBS volume
-    $ssh->system("sudo mount /dev/xvdg /mnt/ebs");
+mount /dev/xvdg /mnt/ebs
     
 # Create some target directories on ephemeral storage.
-    $ssh->system("sudo mkdir /mnt/ephemeral0/wormbase");
-    $ssh->system("sudo chmod 2775 /mnt/ephemeral0/wormbase");
-    $ssh->system("sudo mkdir /mnt/ephemeral1/mysql");
-    $ssh->system("sudo chown mysql:mysql /mnt/ephemeral1/mysql");
-    $ssh->system("sudo chmod 2775 /mnt/ephemeral1/mysql");
+mkdir /mnt/ephemeral0/wormbase
+chmod 2775 /mnt/ephemeral0/wormbase
+mkdir /mnt/ephemeral1/mysql
+chown mysql:mysql /mnt/ephemeral1/mysql
+chmod 2775 /mnt/ephemeral1/mysql
     
 # Create some symbolic mounts
-    $ssh->system("sudo mount /usr/local/wormbase /mnt/ephemeral0/wormbase");
-    $ssh->system("sudo mount /var/lib/mysql /mnt/ephemeral1/mysql");
+mount /usr/local/wormbase /mnt/ephemeral0/wormbase
+mount /var/lib/mysql /mnt/ephemeral1/mysql
     
 # Copy EBS contents to ephemeral storage
-    $ssh->system("cp -rp /mnt/ebs/wormbase/* /mnt/ephemeral0/wormbase/.");
-    $ssh->system("cp -rp /mnt/ebs/mysql/* /mnt/ephemeral1/mysql/.");
+cp -rp /mnt/ebs/wormbase/* /mnt/ephemeral0/wormbase/.
+cp -rp /mnt/ebs/mysql/* /mnt/ephemeral1/mysql/.
     
 # Unmount the volume
-    $ssh->system("sudo umount /mnt/ebs");
-    
-}
+umount /mnt/ebs
 
-sub ssh {
-    my $node = shift;
-#    my $manager = $self->production_manager;
-    my $manager = 'tharris';
-    my $ssh = Net::OpenSSH->new("$manager\@$node");
-    $ssh->error and die "Can't ssh to $manager\@$node: " . $ssh->error;	
-    return $ssh;
+saceclient localhost -port 2005
+cd /usr/local/wormbase/website/production
+./script/wormbase-init.sh start
+END
+    ;
+#close OUT;
+return $user_data;
 }
-
