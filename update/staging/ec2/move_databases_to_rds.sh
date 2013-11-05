@@ -56,7 +56,7 @@ SOURCE_HOST=localhost
 SOURCE_USER=root
 SOURCE_PASS=3l3g@nz
 
-TMPDIR=/mnt/ephemeral1/database_dumps
+TMPDIR=/mnt/ephemeral0/usr/local/wormbase/tmp/database_dumps
 mkdir -p $TMPDIR
 
 # Number of databases
