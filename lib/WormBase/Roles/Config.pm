@@ -333,36 +333,6 @@ sub _build_production_ftp_host {
     return $ip;
 }
 
-# Where builds are deposited when the pipeline is complete.
-has 'post_build_stable_host' => (
-    is => 'ro',
-    lazy_build => 1,
-);    
-
-sub _build_post_build_stable_host {
-    my $self = shift;
-    my $host = 'dev.wormbase.org';  # The FTP host CNAME
-    
-    # We will use the INTERNAL IP of the FTP instance
-    # to avoid data transfer charges.
-    # This will ONLY work when run from within another EC2 instance!
-    my @addresses = split(/\s/,`dig +short $host`);
-    my $ip        = $addresses[2];
-    return $ip;
-}
-
-
-# DEPRECATED
-#has 'ftp_database_tarballs_dir' => (
-#    is         => 'ro',
-#    lazy_build => 1,
-#    );
-#sub _build_ftp_database_tarballs_dir {
-#    my $self = shift;
-#    return $self->ftp_root . "/releases";
-#}
-
-
 # This is the VIRTUAL species directory at /species
 has 'ftp_species_dir' => (
     is         => 'ro',
@@ -427,13 +397,6 @@ sub _build_remote_ftp_releases_dir {
 #    return $self->remote_ftp_root . "/releases.test";
     return $self->remote_ftp_root . '/releases';
 }
-
-
-
-# THIS NEEDS TO BE UPDATED TO USE dig/CNAME
-has 'staging_host' => (
-    is => 'ro',
-    default => 'wb-web7.oicr.on.ca' );
 
 
 ####################################
