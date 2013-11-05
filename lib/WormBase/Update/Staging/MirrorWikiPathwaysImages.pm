@@ -34,6 +34,7 @@ sub run {
     
     # Clear all previously downloaded images
     my $output_directory = $self->output_directory;
+    system("mkdir -p $output_directory");
     chdir $output_directory or $self->log->logdie("Cannot navigate to $output_directory: $!");
     unlink glob '*.png';
 
