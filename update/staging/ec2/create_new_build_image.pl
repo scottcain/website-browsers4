@@ -75,6 +75,9 @@ $image->add_tags( Name        => "wb-build"
 		  Client      => 'OICR',
     );
 
+
+# I should ALSO tag the snapshot.
+
 print STDERR <<END
 
 A new build image has been created with ID: $image.
