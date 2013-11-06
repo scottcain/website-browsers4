@@ -12,7 +12,7 @@
 
 VERSION=$1
 
-if [ ! $VERSION]; then
+if [ ! $VERSION ]; then
     exit "Usage: $0 WSXXX"
 fi
 
@@ -20,6 +20,7 @@ fi
 # Not built yet
 # c_angaria_PRJNA51225
 # c_japonica_PRJNA12591
+# t_spiralis_PRJNA12603
 #declare -a dbs=(
 #    a_suum_PRJNA80881
 #    a_suum_PRJNA62057
@@ -44,7 +45,9 @@ fi
 #    t_spiralis_PRJNA12603)
 
 declare -a dbs=(
-    c_elegans_PRJNA13758
+    p_redivivus_PRJNA186477
+    s_ratti_PRJEA62033
+    t_spiralis_PRJNA12603
     )
 
 # RDS endpoint (CNAME)
@@ -56,7 +59,7 @@ SOURCE_HOST=localhost
 SOURCE_USER=root
 SOURCE_PASS=3l3g@nz
 
-TMPDIR=/mnt/ephemeral1/database_dumps
+TMPDIR=/mnt/ephemeral0/usr/local/wormbase/tmp/database_dumps
 mkdir -p $TMPDIR
 
 # Number of databases
@@ -134,4 +137,4 @@ do
 done
 
 # Also copy over the clustal database
-do_sql_load "clustal_${VERSION}"
+#do_sql_load "clustal_${VERSION}"
