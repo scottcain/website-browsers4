@@ -23,10 +23,10 @@ sub run {
     
     ###################################
     # MySQL
-    my ($mysql_nodes) = $self->target_nodes('mysql');	
-    foreach my $node (@$mysql_nodes) {
-	$self->update_mysql_symlinks($node);
-    }
+#    my ($mysql_nodes) = $self->target_nodes('mysql');	
+#    foreach my $node (@$mysql_nodes) {
+#	$self->update_mysql_symlinks($node);
+#    }
 }	    
 
 
