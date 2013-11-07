@@ -21,8 +21,8 @@ sub run {
 	$self->update_acedb_symlink($node);
     }
     
-#    ###################################
-#    # MySQL
+    ###################################
+    # MySQL
 #    my ($mysql_nodes) = $self->target_nodes('mysql');	
 #    foreach my $node (@$mysql_nodes) {
 #	$self->update_mysql_symlinks($node);
