@@ -51,6 +51,9 @@ umount /var/log/mysql
 umount /etc/mysql
 umount /usr/local/wormbase/
 
+# Ensure that any future AMIs created from this instance 
+# can also use user_data
+insserv -d ec2-run-user-data
 
 ################################################
 # Set up directories on ephemeral storage
