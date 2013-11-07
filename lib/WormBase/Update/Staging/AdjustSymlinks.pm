@@ -12,14 +12,14 @@ has 'step' => (
 sub run {
     my $self = shift;       
     my $release = $self->release;    
-    my $target  = $self->target;  # production, development, staging, mirror, new
+#    my $target  = $self->target;  # production, development, staging, mirror, new
     
     ###################################
     # Acedb
-    my ($acedb_nodes) = $self->target_nodes('acedb');	
-    foreach my $node (@$acedb_nodes) {
-	$self->update_acedb_symlink($node);
-    }
+#    my ($acedb_nodes) = $self->target_nodes('acedb');	
+#    foreach my $node (@$acedb_nodes) {
+	$self->update_acedb_symlink();
+#    }
     
     ###################################
     # MySQL
@@ -31,11 +31,12 @@ sub run {
 
 
 sub update_acedb_symlink {
-    my ($self,$node) = @_;
+#    my ($self,$node) = @_;
+    my $self = shift;
     my $acedb_root = $self->acedb_root;
     my $release = $self->release;
     
-    $self->log->debug("adjusting acedb symlink on $node");
+    $self->log->debug("adjusting acedb symlink");
     
 #    my $ssh = $self->ssh($node);
 #    $ssh->error && $self->log->logdie("Can't ssh to $node: " . $ssh->error);
