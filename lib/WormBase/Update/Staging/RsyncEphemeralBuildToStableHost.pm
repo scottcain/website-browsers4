@@ -42,12 +42,15 @@ sub rsync_directory {
     # We will use the INTERNAL IP of the FTP instance
     # to avoid data transfer charges.
     # This will ONLY work when run from within another EC2 instance!
-    my @addresses = split(/\s/,`dig +short $host`);
+    # Moreover, this must be a CNAME.
+    my @addresses = split(/\s/,`dig +short $target_host`);
     my $ip        = $addresses[2];
+    $ip ||= $addresses[0];
 
     $self->log->info("rsyncing $directory to $target_host at internal ip: $ip");
     
 #	$self->system_call("rsync -Cavv --exclude httpd.conf --exclude cache --exclude sessions --exclude databases --exclude tmp/ --exclude extlib --exclude ace_images/ --exclude html/rss/ $app_root/ ${node}:$wormbase_root/shared/website/classic",'rsyncing classic site staging directory into production');
+#    $self->system_call("rsync --list-only -Cav $directory/ $ip:$directory","rsyncing $directory to $ip");
     $self->system_call("rsync -Cav $directory/ $ip:$directory","rsyncing $directory to $ip");
 }
 

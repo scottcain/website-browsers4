@@ -58,13 +58,13 @@ sub run {
 		    
 		    my $output = join("/",$output_root,'species',$name,$id,'annotation');
 		    $self->_make_dir($output);
-		    
 		    $self->log->info("dumping $script $description for $name");
 		    $self->system_call("$script --path $acedb_path --species $name | gzip -c > $output/$name.$id.$release.$description.txt.gz",
 				       "dumping $description script");
 		}
 	    }
 	} elsif ($script =~ /dump_resource_/) {
+	    next;
 	    # It's a resource. Only need to call the script once.
 	    my $output = join("/",$self->ftp_root,'datasets-wormbase');
 	    $self->_make_dir($output);

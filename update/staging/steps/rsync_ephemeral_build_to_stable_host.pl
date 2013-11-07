@@ -7,9 +7,9 @@ use WormBase::Update::Staging::RsyncEphemeralBuildToStableHost;
 use Getopt::Long;
 
 my ($release,$help,$target_host);
-GetOptions('release=s' => \$release,
-	   'help=s'    => \$help,
-	   'target-host=s' => $target_host);
+GetOptions('release=s'     => \$release,
+	   'help=s'        => \$help,
+	   'target-host=s' => \$target_host);
 
 if ($help || !$release) {
     die <<END;
@@ -28,6 +28,6 @@ END
 
 $target_host ||= 'dev.wormbase.org';
 
-my $agent = WormBase::Update::Staging::RsyncEphemeralBuildToStableHost>new({release => $release,
-									   target_host => $target_host});
+my $agent = WormBase::Update::Staging::RsyncEphemeralBuildToStableHost->new({release => $release,
+									     target_host => $target_host});
 $agent->execute();
