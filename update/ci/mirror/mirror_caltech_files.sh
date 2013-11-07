@@ -2,6 +2,9 @@
 
 # Mirror expression pattern images from Caltech.
 
+# A copy of this script is maintained under SCM at:
+#/usr/local/wormbase/website-admin/update/ci/mirror/mirror_caltech_files.sh
+
 # Run from Jenkins using the Build Periodically option.
 #    0 1 1 * *
 
