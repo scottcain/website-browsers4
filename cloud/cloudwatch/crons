@@ -1,0 +1,2 @@
+# Send disk space usage on 5 minute intervals to CloudWatch
+*/5 * * * * /usr/local/wormbase/website-admin/cloud/cloudwatch/mon-put-instance-data.pl --disk-space-avail --disk-path=/mnt/ebs0 --disk-path=/mnt/ebs1 --from-cron --aws-credential-file=/home/tharris/wb-cloudwatch-monitoring.credentials 
