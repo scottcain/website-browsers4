@@ -14,41 +14,19 @@ sub run {
     
     my $release = $self->release;
     my $target = $self->target;
+       
+    $self->log->info("purging acedb $release ...");
+    $self->system_call("rm -rf /usr/local/wormbase/acedb/wormbase_$release");
 
-    my $staging_host = $self->staging_host;
+    $self->log->info("purging support databases for $release ...");
+    $self->system_call("rm -rf /usr/local/wormbase/databases/$release");
 
-    # get a list of acedb nodes
-    my ($acedb_nodes) = $self->target_nodes('acedb');
-    foreach my $node (@$acedb_nodes) {
-	$self->log->info("purging acedb $release from $node");
-	$self->system_call("ssh $node rm -rf /usr/local/wormbase/acedb/wormbase_$release",
-			   "ssh $node rm -rf /usr/local/wormbase/acedb/wormbase_$release");
-	
-    }
+    # TO DO: This actually needs to be a list of databases to DROP
+    # We should also drop databases from RDS.
+    $self->log->info("purging mysql databases for $release from $node");
+    $self->system_call("");        
 
-    my ($local_nodes) = $self->target_nodes('support');
-    foreach my $node (@$local_nodes) {
-	$self->log->info("purging support databases for $release from $node");
-	$self->system_call("ssh $node rm -rf /usr/local/wormbase/databases/$release",
-			   "ssh $node rm -rf /usr/local/wormbase/databases/$release");
-    }
-    
-    # get a list of mysql nodes
-    my ($mysql_nodes) = $self->target_nodes('mysql');
-    push @$mysql_nodes,$staging_host;
-    foreach my $node (@$mysql_nodes) {    
-	$self->log->info("purging mysql databases for $release from $node");
-	$self->system_call("ssh $node rm -rf /usr/local/mysql/data/*$release",
-			   "ssh $node rm -rf /usr/local/mysql/data/*$release");
-    }
-    
-    
-# Finally, remove this release from the staging FTP site, too.    
-    $self->system_call("ssh $staging_host rm -rf /usr/local/ftp/pub/wormbase/releases/$release",
-		       "ssh $staging_host rm -rf /usr/local/ftp/pub/wormbase/releases/$release");    
-    
 }
-
 
 
 1;

@@ -12,35 +12,39 @@ has 'step' => (
 sub run {
     my $self = shift;       
     my $release = $self->release;    
-    my $target  = $self->target;  # production, development, staging, mirror, new
+#    my $target  = $self->target;  # production, development, staging, mirror, new
     
     ###################################
     # Acedb
-    my ($acedb_nodes) = $self->target_nodes('acedb');	
-    foreach my $node (@$acedb_nodes) {
-	$self->update_acedb_symlink($node);
-    }
+#    my ($acedb_nodes) = $self->target_nodes('acedb');	
+#    foreach my $node (@$acedb_nodes) {
+	$self->update_acedb_symlink();
+#    }
     
     ###################################
     # MySQL
-    my ($mysql_nodes) = $self->target_nodes('mysql');	
-    foreach my $node (@$mysql_nodes) {
-	$self->update_mysql_symlinks($node);
-    }
+#    my ($mysql_nodes) = $self->target_nodes('mysql');	
+#    foreach my $node (@$mysql_nodes) {
+#	$self->update_mysql_symlinks($node);
+#    }
 }	    
 
 
 sub update_acedb_symlink {
-    my ($self,$node) = @_;
+#    my ($self,$node) = @_;
+    my $self = shift;
     my $acedb_root = $self->acedb_root;
     my $release = $self->release;
     
-    $self->log->debug("adjusting acedb symlink on $node");
+    $self->log->debug("adjusting acedb symlink");
     
-    my $ssh = $self->ssh($node);
-    $ssh->error && $self->log->logdie("Can't ssh to $node: " . $ssh->error);
-    $ssh->system("cd $acedb_root ; rm wormbase ; ln -s wormbase_$release wormbase") or
-	$self->log->logdie("remote command updating the acedb symlink failed " . $ssh->error);
+#    my $ssh = $self->ssh($node);
+#    $ssh->error && $self->log->logdie("Can't ssh to $node: " . $ssh->error);
+#    $ssh->system("cd $acedb_root ; rm wormbase ; ln -s wormbase_$release wormbase") or
+#	$self->log->logdie("remote command updating the acedb symlink failed " . $ssh->error);
+
+    system("cd $acedb_root ; rm wormbase ; ln -s wormbase_$release wormbase") and
+	$self->log->logdie("remote command updating the acedb symlink failed.");
 }
 
 
@@ -74,10 +78,14 @@ sub update_mysql_symlinks {
 
 	    my $db_name = $bioproject->mysql_db_name;
 	    
-	    my $ssh = $self->ssh($node);
-	    $ssh->error && $self->log->logdie("Can't ssh to $manager\@$node: " . $ssh->error);
-	    $ssh->system("cd $mysql_data_dir ; rm $name ; ln -s ${db_name} $name") or
-		$self->log->logdie("remote command updating the mysql symlink failed " . $ssh->error);
+#	    my $ssh = $self->ssh($node);
+#	    $ssh->error && $self->log->logdie("Can't ssh to $manager\@$node: " . $ssh->error);
+#	    $ssh->system("cd $mysql_data_dir ; rm $name ; ln -s ${db_name} $name") or
+#		$self->log->logdie("remote command updating the mysql symlink failed " . $ssh->error);
+#	    my $ssh = $self->ssh($node);
+#	    $ssh->error && $self->log->logdie("Can't ssh to $manager\@$node: " . $ssh->error);
+	    system("cd $mysql_data_dir ; rm $name ; ln -s ${db_name} $name") and
+		$self->log->logdie("remote command updating the mysql symlink failed.");
 	}
     }
 
@@ -87,10 +95,12 @@ sub update_mysql_symlinks {
     foreach my $name (keys %dbs) {
 	my $db_name = $dbs{$name};
 	$self->log->info("   Adjusting the MySQL symlink for the clustal database");
-	my $ssh = $self->ssh($node);
-	$ssh->error && $self->log->logdie("Can't ssh to $manager\@$node: " . $ssh->error);
-	$ssh->system("cd $mysql_data_dir ; rm $name ; ln -s ${db_name} $name") or
-	    $self->log->logdie("remote command updating the mysql symlink failed " . $ssh->error);
+#	my $ssh = $self->ssh($node);
+#	$ssh->error && $self->log->logdie("Can't ssh to $manager\@$node: " . $ssh->error);
+#	$ssh->system("cd $mysql_data_dir ; rm $name ; ln -s ${db_name} $name") or
+#	    $self->log->logdie("remote command updating the mysql symlink failed " . $ssh->error);
+	system("cd $mysql_data_dir ; rm $name ; ln -s ${db_name} $name") and
+	    $self->log->logdie("remote command updating the mysql symlink failed.");
     }
 }
 

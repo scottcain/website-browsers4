@@ -4,6 +4,8 @@
 # This is broken for Gene objects due to split nature of loci/genes
 # Should simply look at genes and ignore polymorphisms
 
+$ENV{PATH} = '/usr/local/wormbase/acedb/bin';
+
 use strict;
 use Bio::DB::GFF;
 use Getopt::Long;

@@ -5,6 +5,8 @@ use Ace::Sequence;
 
 use constant UPSTREAM => 2_500;  # how many bases upstream to do
 
+$ENV{PATH} = '/usr/local/wormbase/acedb/bin';
+
 warn "connecting...\n";
 my $database = shift || 'sace://localhost:2005';
 my $db = Ace->connect($database) or die "Can't connect: ",Ace->error,"\n";

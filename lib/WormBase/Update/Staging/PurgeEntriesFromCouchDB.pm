@@ -11,6 +11,10 @@ has 'step' => (
     default => 'purging specified elements from couchdb',
 );
 
+has 'release' => (
+    is => 'rw',
+    );
+
 has 'class' => (
     is      => 'rw',
     );
@@ -49,40 +53,42 @@ sub run {
     my $couch = $self->couchdb;
     my %objects;
 
-    my $ace_class = ucfirst($class);
-    my $db        = Ace->connect(-host=>'localhost',-port=>2005);
 
-    $ace_class = 'CDS' if $ace_class eq 'Cds';
-    $self->log->warn("Purging from " . $self->couchdb_host);
-    my $i = $db->fetch_many($ace_class => '*');
-    while (my $obj = $i->next) {
-	my $uuid = join('_',lc($class),lc($widget),$obj);
-
-	my $data;
-
-	my $selective_delete = $self->selective_delete;
-	if ($selective_delete) {
-	    # Some acedb errors are cropping up and breaking widgets,
-	    # but they are still being cached.  Let's selectively delete them.
-	    # They have "Template::Exception" listed in content.
-	    my $content = $couch->get_document($uuid);		
-	    if ($content && $content->{data} && $content->{data} =~ /Template::Exception/) {
-		$data  = $couch->delete_document({ uuid => $uuid, rev => $content->{_rev} });
+    my $cache_root = join("/",$self->support_databases_dir,$release,'cache','logs');    
+    my $cache_log = join("/",$cache_root,"$class.ace");
+    if ( -e $cache_log) {
+	open IN,$cache_log;
+	while (my $obj = <IN>) {
+	    chomp $obj;
+	    $obj =~ s/^\s*//;
+	    my $uuid = join('_',lc($class),lc($widget),$obj);
+	    $self->log->warn("Purging from " . $self->couchdb_host . ": $uuid");
+	    
+	    my $data;
+	    
+	    my $selective_delete = $self->selective_delete;
+	    if ($selective_delete) {
+		# Some acedb errors are cropping up and breaking widgets,
+		# but they are still being cached.  Let's selectively delete them.
+		# They have "Template::Exception" listed in content.
+		my $content = $couch->get_document($uuid);		
+		if ($content && $content->{data} && $content->{data} =~ /Template::Exception/) {
+		    $data  = $couch->delete_document({ uuid => $uuid, rev => $content->{_rev} });
+		    $objects{$obj}++;
+		}
+	    } else {
+		$data  = $couch->delete_document({ uuid => $uuid });	    
 		$objects{$obj}++;
 	    }
-	} else {
-	    $data  = $couch->delete_document({ uuid => $uuid });	    
-	    $objects{$obj}++;
-        }
-	
-	if ($data->{reason}) {
-	    print STDERR "Deleting $uuid FAILED: " . $data->{reason} . "\n";
-	} else {
-	    print STDERR "Deleting $uuid: success";
-	    print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
-	}	
+	    
+	    if ($data->{reason}) {
+		print STDERR "Deleting $uuid FAILED: " . $data->{reason} . "\n";
+	    } else {
+	        print STDERR "Deleting $uuid: success";
+		print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
+	    }	
+	}
     }
-
     $self->purge_entries_from_cache_log(\%objects);
 }
 
@@ -94,8 +100,8 @@ sub purge_entries_from_cache_log {
 
     my $class   = $self->class;
     my $widget  = $self->widget;
-    my $version = $self->release;
-    my $cache_root = join("/",$self->support_databases_dir,$version,'cache','logs');
+    my $release = $self->release;
+    my $cache_root = join("/",$self->support_databases_dir,$release,'cache','logs');
     
     my $cache_log = join("/",$cache_root,"$class.log");
     system("mv $cache_log $cache_root/$class.original.log");

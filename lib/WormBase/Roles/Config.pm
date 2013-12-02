@@ -80,8 +80,8 @@ has 'remote_couchdb_nodes' => (
 #
 ####################################
 
-has 'wormbase_user_host'     => ( is => 'rw', default => '23.21.171.141' );
-#has 'wormbase_user_host'     => ( is => 'rw', default => 'mysql.wormbase.org' );
+#has 'wormbase_user_host'     => ( is => 'rw', default => '23.21.171.141' );
+has 'wormbase_user_host'     => ( is => 'rw', default => 'mysql.wormbase.org' );
 has 'wormbase_user_username'     => ( is => 'rw', default => 'wormbase' );
 has 'wormbase_user_db'     => ( is => 'rw', default => 'wormbase_user' );
 has 'wormbase_user_pass'     => ( is => 'rw', default => 'sea3l3ganz' );
@@ -103,8 +103,7 @@ has 'app_staging_dir' => ( is => 'ro', default => '/usr/local/wormbase/website/p
 has 'tmp_dir'       => ( is => 'ro', lazy_build => 1 );			 
 sub _build_tmp_dir {
     my $self = shift;
-#    my $dir = $self->wormbase_root . "/tmp/staging";
-    my $dir = "/mnt/ephemeral0";
+    my $dir = $self->wormbase_root . "/tmp/staging";
     $self->_make_dir($dir);
     return $dir;
 }
@@ -132,7 +131,7 @@ sub _build_support_databases_dir {
     $self->_make_dir($dir);
 
     # Create support db dirs, too.
-    my @directories = qw/blast blat ontology tiling_array interaction orthology position_matrix gene/;
+    my @directories = qw/blast ontology tiling_array position_matrix/;
     my $release     = $self->release;    
     $self->_make_dir("$dir/$release");
     
@@ -317,15 +316,6 @@ sub _build_ftp_releases_dir {
     return $self->ftp_root . "/releases";
 }
 
-# Where the production FTP site lives.
-# Assumes that the user running the update script
-# has access and that the ftp_root is the 
-# same as above.
-#has 'production_ftp_host' => (
-#    is         => 'ro',
-#    default    => 'wb-dev.oicr.on.ca',
-#    );
-
 has 'production_ftp_host' => (
     is         => 'ro',
     lazy_build => 1,
@@ -338,22 +328,10 @@ sub _build_production_ftp_host {
     # We will use the INTERNAL IP of the FTP instance
     # to avoid data transfer charges.
     # This will ONLY work when run from within another EC2 instance!
-    my @addresses = split("\s",`dig +short $host`);
+    my @addresses = split(/\s/,`dig +short $host`);
     my $ip        = $addresses[2];
     return $ip;
 }
-
-
-has 'ftp_database_tarballs_dir' => (
-    is         => 'ro',
-    lazy_build => 1,
-    );
-
-sub _build_ftp_database_tarballs_dir {
-    my $self = shift;
-    return $self->ftp_root . "/releases";
-}
-
 
 # This is the VIRTUAL species directory at /species
 has 'ftp_species_dir' => (
@@ -365,6 +343,28 @@ sub _build_ftp_species_dir {
     my $self = shift;    
     return $self->ftp_root . "/species";
 }
+
+
+####################################
+#
+# EC2
+#
+####################################
+
+has 'rds_host' => (
+    is => 'ro',
+    default => 'mysql.wormbase.org'
+    );
+
+has 'rds_pass' => (
+    is => 'ro',
+    default => 'sea3l3ganz'
+    );
+
+has 'rds_user' => (
+    is => 'ro',
+    default => 'wormbase'
+    );
 
 ####################################
 #
@@ -397,13 +397,6 @@ sub _build_remote_ftp_releases_dir {
 #    return $self->remote_ftp_root . "/releases.test";
     return $self->remote_ftp_root . '/releases';
 }
-
-
-
-# THIS NEEDS TO BE UPDATED TO USE dig/CNAME
-has 'staging_host' => (
-    is => 'ro',
-    default => 'wb-web7.oicr.on.ca' );
 
 
 ####################################

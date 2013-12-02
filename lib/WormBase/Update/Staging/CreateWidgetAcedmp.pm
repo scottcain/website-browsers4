@@ -56,8 +56,8 @@ sub create_ace_file {
       AND wr.user_id = u.user_id;
   ";
   
- # my $dbh = DBI->connect("DBI:mysql:$db:$host", $user, $pass);
-  my $dbh = DBI->connect("DBI:mysql:$db:$host", $user);
+  my $dbh = DBI->connect("DBI:mysql:$db:$host", $user, $pass);
+  # my $dbh = DBI->connect("DBI:mysql:$db:$host", $user);
   my $sqlQuery  = $dbh->prepare($query)
   or die "Can't prepare $query: $dbh->errstr\n";
   

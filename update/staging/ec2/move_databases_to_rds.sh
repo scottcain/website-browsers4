@@ -12,25 +12,33 @@
 
 VERSION=$1
 
-if [ ! $VERSION]; then
+if [ ! $VERSION ]; then
     exit "Usage: $0 WSXXX"
 fi
 
+# Hard-coded. Uncool.
 declare -a dbs=(
     a_suum_PRJNA80881
     a_suum_PRJNA62057
+    b_malayi_PRJNA10729
     b_xylophilus_PRJEA64437
-    c_angaria_PRJNA51225
+    c_brenneri_PRJNA20035
+    c_briggsae_PRJNA10731
+    c_elegans_PRJNA13758
+    c_remanei_PRJNA53967
     c_sp11_PRJNA53597
     c_sp5_PRJNA194557
+    d_immitis_PRJEB1797
     h_bacteriophora_PRJNA13977
     h_contortus_PRJEB506
+    h_contortus_PRJNA205202
     l_loa_PRJNA60051
     m_hapla_PRJNA29083
     m_incognita_PRJEA28837
+    p_pacificus_PRJNA12644
+    p_redivivus_PRJNA186477
     s_ratti_PRJEA62033
     t_spiralis_PRJNA12603)
-
 
 # RDS endpoint (CNAME)
 RDS_HOSTNAME=mysql.wormbase.org
@@ -41,16 +49,12 @@ SOURCE_HOST=localhost
 SOURCE_USER=root
 SOURCE_PASS=3l3g@nz
 
-TMPDIR=/mnt/ephemeral1/database_dumps
+TMPDIR=/mnt/ephemeral0/usr/local/wormbase/tmp/database_dumps
 mkdir -p $TMPDIR
 
 # Number of databases
 COUNT=${#dbs[@]}
 
-
-
-
-# Potentially many files.                                                                                                                                                                                            
 function do_sql_load () {   
     this_db=$1;
     
@@ -114,15 +118,13 @@ function do_sql_load () {
 #    j=$(($j+1))
 #done
 
-
-
-#j=0
-#while [ $j -lt ${COUNT} ];
-#do
-#    this_db="${dbs[$j]}_${VERSION}"
-#    do_sql_load ${this_db}    
-#    j=$(($j+1))
-#done
+j=0
+while [ $j -lt ${COUNT} ];
+do
+    this_db="${dbs[$j]}_${VERSION}"
+    do_sql_load ${this_db}    
+    j=$(($j+1))
+done
 
 # Also copy over the clustal database
-do_sql_load "clustal_${VERSION}"
+#do_sql_load "clustal_${VERSION}"

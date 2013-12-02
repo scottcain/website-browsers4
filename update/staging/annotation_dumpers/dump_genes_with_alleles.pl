@@ -4,6 +4,8 @@ use strict;
 use Getopt::Long;
 use Ace;
 
+$ENV{PATH} = '/usr/local/wormbase/acedb/bin';
+
 $|++;
 
 my ($acedb,$help,$file,$exclude);

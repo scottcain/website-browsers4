@@ -7,6 +7,8 @@
 use Ace;
 use strict;
 
+$ENV{PATH} = '/usr/local/wormbase/acedb/bin';
+
 my $path = shift || 'sace://brie3.cshl.org:2005';
 
 # connect to database

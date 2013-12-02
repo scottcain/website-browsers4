@@ -1,4 +1,3 @@
-
 #!/usr/bin/perl
 
 use FindBin qw/$Bin/;
@@ -6,6 +5,8 @@ use lib "$Bin/../../../lib";
 use Getopt::Long;
 use Ace;
 use strict;
+
+$ENV{PATH} = '/usr/local/wormbase/acedb/bin';
 
 my ($path,$host,$port,$species,$no_entry,$format);
 GetOptions(
@@ -56,7 +57,10 @@ $g = uc($g);
 
 
 # These really only exist for elegans at the moment.
-exit 0 unless $species =~ /elegans/;
+unless ($species =~ /elegans/) {
+    print "# No currated functional descriptions for $species yet exist in WormBase\n";
+    exit 0;
+}
 
 print "# $g. $species_alone functional descriptions\n";
 print "# WormBase version: " . $dbh->version . "\n";

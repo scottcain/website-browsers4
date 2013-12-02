@@ -5,6 +5,7 @@ use lib "$Bin/../../../lib";
 use Getopt::Long;
 use Ace;
 use strict;
+$ENV{PATH} = '/usr/local/wormbase/acedb/bin';
 
 my ($path,$host,$port,$species);
 GetOptions(

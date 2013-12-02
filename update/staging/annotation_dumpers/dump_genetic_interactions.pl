@@ -3,6 +3,8 @@
 use strict;
 use Ace;
 
+$ENV{PATH} = '/usr/local/wormbase/acedb/bin';
+
 my $usage = "$0 (<acedb_dir> | <acedb_host>:<port>) [gene_list_file]";
 
 my ($database, $file) = @ARGV;

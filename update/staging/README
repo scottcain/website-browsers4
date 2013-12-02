@@ -9,10 +9,6 @@ RELEASE=$1
 if [ ! $RELEASE ]; then
    exit "Usage: $0 WSXXX"
 fi
-
-# Clear old releases:
-./steps/purge_old_releases.pl --release $RELEASE
-
 # 0.5. Remove the old acedmp directory
 rm -rf /usr/local/wormbase/tmp/staging/acedmp
 
