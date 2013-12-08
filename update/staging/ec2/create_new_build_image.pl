@@ -65,7 +65,7 @@ while ($image->current_status eq 'pending') {
 }
 
 # Add some tags.
-$image->add_tags( Name        => "wb-build"
+$image->add_tags( Name        => "wb-build",
 		  Description => "wormbase build image autocreated from $instance",
 		  Status      => 'build',
 		  Role        => 'build',
