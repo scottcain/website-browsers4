@@ -76,7 +76,7 @@ $image->add_tags( Name        => "wb-build",
     );
 
 
-# I should ALSO tag the snapshot.
+# Tag snapshots: see production/create_new_development_image.pl
 
 print STDERR <<END
 

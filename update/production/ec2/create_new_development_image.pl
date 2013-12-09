@@ -77,11 +77,12 @@ while ($image->current_status eq 'pending') {
 $image->add_tags( Name        => "wb-development",
 		  Description => "wormbase development image autocreated from $instance",
 		  Status      => 'development',
-		  Role        => 'development',
+		  Role        => 'dev-server',
 		  Date        => $date,
 		  Release     => $release,
 		  Project     => 'WormBase',
 		  Client      => 'OICR',
+		  Image       => $image,
     );
 
 
@@ -140,10 +141,7 @@ sub tag_snapshots {
 					 Project     => 'WormBase',
 					 Client      => 'OICR',
 					 Date        => $date,
+					 Image       => $image,
 		       });	
     }
 }
-
-
-
-
