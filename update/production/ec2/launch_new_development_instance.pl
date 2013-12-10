@@ -1,5 +1,9 @@
 #!/usr/bin/perl
 
+# Instead of launching a new instance, maybe a better strategy is to 
+# simply UPDATE the tags on it.
+
+
 # Once a new development image has been created:
 # 1. Fetch the ID of the current development instance
 # 2. Get the ID of the desired development image (typically just created)
@@ -65,7 +69,9 @@ tag_instances(\@instances);
 tag_volumes(\@instances);
 
 print STDERR "New development instance(s) have been launched. They are:\n\n";
-display_instance_metadata(\@instances);
+
+#display_instance_metadata(\@instances);
+$agent->display_instance_metadata(\@instances);
 
 swap_ip_addresses($ec2,$instances[0],$old_instance);
 
@@ -193,43 +199,43 @@ sub tag_instances {
 
 
 
-
-sub display_instance_metadata {
-    my $i = shift;
-    
-    foreach my $i (@$i) {
-	
-	my $id         = $i->instanceId; 
-	my $type       = $i->instanceType;
-	my $state      = $i->instanceState;
-	my $status     = $i->current_status;
-	my $zone       = $i->availabilityZone;
-	my $launched   = $i->launchTime;
-	my @groups     = $i->groups;
-	my $tags       = $i->tags;
-	
-	# Network information
-	my $hostname   = $i->dnsName;
-	my $private_ip = $i->privateIpAddress;
-	my $public_ip  = $i->ipAddress;
-	
-	# EBS volumes
-	# my $block_dev  = $meta->blockDeviceMapping; # a hashref
-	
-	print "  Instance: $id ($hostname)\n";
-	print "\tprivate ip address: $private_ip\n";
-	print "\t public ip address: $public_ip\n";
-	print "\t    instance type : $type\n";
-	print "\t             zone : $zone\n";
-	print "\t            state : $state\n";
-	print "\t           status : $status\n";
-	print "\t              TAGS\n";
-	foreach (sort keys %$tags) { 
-	    print "\t                    $_ : $tags->{$_}\n";
-	}
-	print "\n\n";
-    }
-}
+# Moved to EC2.pm
+#sub display_instance_metadata {
+#    my $i = shift;
+#    
+#    foreach my $i (@$i) {
+#	
+#	my $id         = $i->instanceId; 
+#	my $type       = $i->instanceType;
+#	my $state      = $i->instanceState;
+#	my $status     = $i->current_status;
+#	my $zone       = $i->availabilityZone;
+#	my $launched   = $i->launchTime;
+#	my @groups     = $i->groups;
+#	my $tags       = $i->tags;
+#	
+#	# Network information
+#	my $hostname   = $i->dnsName;
+#	my $private_ip = $i->privateIpAddress;
+#	my $public_ip  = $i->ipAddress;
+#	
+#	# EBS volumes
+#	# my $block_dev  = $meta->blockDeviceMapping; # a hashref
+#	
+#	print "  Instance: $id ($hostname)\n";
+#	print "\tprivate ip address: $private_ip\n";
+#	print "\t public ip address: $public_ip\n";
+#	print "\t    instance type : $type\n";
+#	print "\t             zone : $zone\n";
+#	print "\t            state : $state\n";
+#	print "\t           status : $status\n";
+#	print "\t              TAGS\n";
+#	foreach (sort keys %$tags) { 
+#	    print "\t                    $_ : $tags->{$_}\n";
+#	}
+#	print "\n\n";
+#    }
+#}
 
 
 # Fetch the image for the provided relase.
@@ -292,15 +298,17 @@ sub get_current_development_instance {
 
 END
 ;
-    
-	display_instance_metadata(\@i);
+	
+	$agent->display_instance_metadata(\@i);
+	# display_instance_metadata(\@i);
 	die;
     }
 
 # Okay, we only have a single instance.
     my $instance = $i[0];
     print STDERR "\t found one. It's details are:\n";
-    display_instance_metadata([$instance]);
+#    display_instance_metadata([$instance]);
+    $agent->display_instance_metadata([$instance]);
     return $instance;
 }
 
