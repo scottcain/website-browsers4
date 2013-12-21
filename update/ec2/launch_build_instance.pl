@@ -30,10 +30,12 @@ END
 
 }
 
+$instance_count ||= 1;
+$instance_type  || 'm1.xlarge';
 
-my $agent = WormBase::Update::EC2::LaunchBuildInstance->new();
-if ($instance_count) { $agent->instance_count($instance_count); }
-if ($instance_type)  { $agent->instance_type($instance_type);   }
+my $agent = WormBase::Update::EC2::LaunchBuildInstance->new(instance_count => $instance_count,
+							    instance_type  => $instance_type,
+							    release        => $release,
 
 $agent->execute();
 

@@ -1,7 +1,11 @@
 #!/usr/bin/perl
 
+# Create a new core WormBase image (generated from the current development instance)
+
 # From the existing development instance:
 # 1. create a new image. 
+
+# Why?  Why not simply not STOP the instance on create?
 # 2. launch a new development instance
 # 3. reassign the elastic IP address to it.
 # 4. stop the old instance
@@ -74,10 +78,10 @@ while ($image->current_status eq 'pending') {
 }
 
 # Add some tags.
-$image->add_tags( Name        => "wb-development",
+$image->add_tags( Name        => "wb-core",
 		  Description => "wormbase development image autocreated from $instance",
-		  Status      => 'development',
-		  Role        => 'dev-server',
+		  Status      => 'cored',
+		  Role        => 'appserver',
 		  Date        => $date,
 		  Release     => $release,
 		  Project     => 'WormBase',
@@ -133,15 +137,15 @@ sub tag_snapshots {
 	}
 
 	$ec2->add_tags(-resource_id => [ $id ],
-		       -tag         => { Name        => "wb-development-$name",
-					 Description => "$name volume for development image $image",
-					 Status      => 'development',
-					 Role        => 'development',
+		       -tag         => { Name        => "wb-core-$name",
+					 Description => "$name volume for core image $image",
+					 Status      => 'core',
+					 Role        => 'appserver',
 					 Release     => $release,
 					 Project     => 'WormBase',
 					 Client      => 'OICR',
 					 Date        => $date,
-					 Image       => $image,
+					 Source_ami  => $image,
 		       });	
     }
 }

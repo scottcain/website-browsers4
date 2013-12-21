@@ -219,17 +219,16 @@ sub tag_instances {
     my $instances = shift;
 
     print STDERR "Tagging instances with some metadata...\n";
-    my $c = 0;
     foreach my $instance (@$instances) {
-	$c++;
 	$ec2->add_tags(-resource_id => [ $instance ],
-		       -tag         => { Name        => "wb-webapp-$release-$instance",
-					 Description => "webapp instance from AMI: $production_image",
-					 Status      => 'production',
-					 Role        => 'webapp',
-					 Release     => $release,				     
-					 Project     => 'WormBase',
-					 Client      => 'OICR',
+		       -tag         => { Name         => "wb-webapp-$release-$instance",
+					 Description  => "webapp instance from AMI: $production_image",
+					 Status       => 'production',
+					 Role         => 'webapp',
+					 Release      => $release,				     
+					 Project      => 'WormBase',
+					 Source_AMI   => $production_image, 
+					 Client       => 'OICR',
 		       });	
     }
 }
@@ -239,11 +238,9 @@ sub tag_volumes {
     my $instances = shift;
     
     print STDERR "Tagging volumes with metadata...\n";
-    my $c = 0;
     foreach my $instance (@$instances) {
 	# EBS volumes. There should only be one per instance.
 	my @devices  = $instance->blockDeviceMapping; # a hashref
-	$c++;
 
 	foreach  my $d (@devices) {
 	    my $virtual_device = $d->deviceName;
@@ -255,7 +252,7 @@ sub tag_volumes {
 	    my $volume_size = $volume->size;
 
 	    my $type = ($volume_size < 20) ? 'root' : 'data';
-	    my $name = "$release-wb-production-webapp-$c-$type";
+	    my $name = "wb-webapp-$type-$instance";
 
 	    # This is the reference data volume
 	    if ($volume_size > 250) {

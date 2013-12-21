@@ -3,8 +3,10 @@
 # Create a NEW build image from a currently running instance
 # tagged with Role:Build
 
+use FindBin qw/$Bin/;
+use lib "$Bin/../../../lib";
 use strict;
-use VM::EC2;
+use WormBase::Update::EC2;
 use Getopt::Long;
 
 my ($release,$help);
@@ -27,9 +29,21 @@ END
 
 }
 
+
+my $agent = WormBase::Update::EC2->new();
+
+my $ec2;
+
+
+
+
+
 # Connect to EC2 ; access_key and secret_key provided by ENV
-my $ec2 = VM::EC2->new(-endpoint    => 'http://ec2.amazonaws.com',
-		       -print_error => 1);
+#my $ec2 = VM::EC2->new(-endpoint    => 'http://ec2.amazonaws.com',
+#		       -print_error => 1);
+
+
+
 
 # Discover the current QAQC environment instance.
 # Hopefully it exists.

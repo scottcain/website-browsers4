@@ -1,15 +1,15 @@
 #!/usr/bin/perl
 
 use FindBin qw/$Bin/;
-use lib "$Bin/../../../lib";
+use lib "$Bin/../../lib";
 use strict;
 use WormBase::Update::EC2;
 use Getopt::Long;
 
 my ($format,$help,$status);
 GetOptions('format=s'     => \$format,
-	   'help=s'        => \$help,
-	   'status=s'      => \$status,
+	   'help=s'       => \$help,
+	   'status=s'     => \$status,
     );
 
 if ($help) {
@@ -20,8 +20,8 @@ Usage: $0
 Get information on all or specific sets of instances.
 
 Options:
-  --status      optional. One of [build|development|production]
-                          If not provided defaults to listing ALL instances.  
+  --status      optional. One of [build|development|production|qaqco]
+                          If not provided defaults to listing ALL images.
   --format      short || long. Defaults to short listing.
 
 END

@@ -25,8 +25,6 @@ has 'bin_path' => (
     },
     );
 
-
-
 has 'assemblies_metadata' => (
     is => 'ro',
     lazy_build => 1 );
@@ -268,7 +266,7 @@ before 'execute' => sub {
 	$self->release('release_independent_step');
 	return;
     } elsif ($self->step =~ /check/ || $self->step =~ /mirror/) {
-    } else {
+    } else {       
 	$self->log->logdie("no release provided; discovering a new release only makes sense during the mirroring step.");
     }
     
@@ -696,7 +694,6 @@ sub check_input_file {
     $self->log->logdie("The input file ($file) for $step does not exist. Please fix.");
     return 0;
 }
-
 
 
 
