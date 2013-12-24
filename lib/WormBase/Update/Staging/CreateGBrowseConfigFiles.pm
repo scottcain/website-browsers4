@@ -113,7 +113,7 @@ sub symlink {
     my $config_destination = $self->config_destination;
     
     chdir($path);
-    $self->update_symlink({target  => "$config_destination/$species.conf",
+    $self->update_symlink({target  => "releases/$release/$species.conf",
 			   symlink => "$species.conf"
 			  });
     return;
