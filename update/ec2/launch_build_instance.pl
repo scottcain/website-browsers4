@@ -35,7 +35,7 @@ $instance_type  || 'm1.xlarge';
 
 my $agent = WormBase::Update::EC2::LaunchBuildInstance->new(instance_count => $instance_count,
 							    instance_type  => $instance_type,
-							    release        => $release,
+							    release        => $release);
 
 $agent->execute();
 

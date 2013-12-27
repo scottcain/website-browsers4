@@ -1,11 +1,5 @@
 #!/usr/bin/perl
 
-# NOTE!
-# The QAQC instance needs to have a tag of Status = 'qaqc';
-
-# This ALSO needs to tag snapshots of the resulting AMI
-
-
 use strict;
 use VM::EC2;
 use Getopt::Long;
