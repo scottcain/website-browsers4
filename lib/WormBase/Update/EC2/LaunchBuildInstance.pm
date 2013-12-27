@@ -1,7 +1,7 @@
 package WormBase::Update::EC2::LaunchBuildInstance;
 
 use Moose;
-extends qw/WormBase::Update/;
+extends qw/WormBase::Update::EC2/;
 
 # The symbolic name of this step
 has 'step' => (
@@ -159,22 +159,6 @@ END
 sub run {
     my $self = shift;           
     my $instances = $self->_launch_instance();
-    
-    $self->tag_instances({ instances   => $instances,
-			   description => 'build instance from AMI: ' . $self->build_image,
-			   name        => 'wb-build',
-			   status      => 'build',
-			   role        => 'appserver',
-			   source_ami  => $self->build_image,
-			 });
-
-    $self->tag_volumes({ instances   => $instances,
-			 description => 'build instance from AMI: ' . $self->build_image,
-			 name        => 'wb-build',  # this is the name root
-			 status      => 'build',
-			 role        => 'appserver',
-		       });
-
     $self->log->info("The build instance has been launched and the build process launched on:");
     $self->display_instance_metadata($instances);
 }	    
@@ -207,12 +191,44 @@ sub _launch_instance  {
 #									       '/dev/sde=ephemeral0',
 #									       '/dev/sdf=ephemeral1'],
 	);
+  
+    $self->tag_instances({ instances   => $instances,
+			   description => 'qaqc instance from AMI: ' . $self->core_image,
+			   name        => 'wb-qaqc',
+			   status      => 'qaqc',
+			   role        => 'appserver',
+			   source_ami  => $self->core_image,
+			 });
     
+    $self->tag_volumes({ instances   => $instances,
+			 description => 'qaqc instance from AMI: ' . $self->core_image,
+			 name        => 'wb-qaqc',  # this is the name root, appended with qualifier
+			 status      => 'qaqc',
+			 role        => 'appserver',
+		       });
+
+
+    $self->tag_instances({ instances   => $instances,
+			   description => 'build instance from AMI: ' . $self->build_image,
+			   name        => 'wb-build',
+			   status      => 'build',
+			   role        => 'appserver',
+			   source_ami  => $self->build_image,
+			 });
+
+    $self->tag_volumes({ instances   => $instances,
+			 description => 'build instance from AMI: ' . $self->build_image,
+			 name        => 'wb-build',  # this is the name root
+			 status      => 'build',
+			 role        => 'appserver',
+		       });
+
+
     # Wait until the instances are up and running.
-    $self->log->info("Waiting for instances to launch");
+    $self->log->info("Waiting for instances to launch...");
     my $ec2 = $self->ec2;
     $ec2->wait_for_instances(@instances);
-    return \@instances;
+    return \@instances;   
 }
 
 
