@@ -61,7 +61,7 @@ sub _build_species_includes_directory {
 
 
 
-has 'f2c' = (
+has 'f2c' => (
     is => 'ro',
     lazy_build => 1,
     );
@@ -416,6 +416,15 @@ sub _build_f2c {
     # Subcategory: Assembly & Curation
     #
 
+    $f2c->{'deletion:Somatic_diminution'} = {
+	include  => 'somatic_diminutions',
+    };
+
+    $f2c->{'nucleotide_match:EXONERATE_BAC_END_BEST'} = {
+	children => ['nucleotide_match:EXONERATE_BAC_END_OTHER'],
+	include  => 'bac_ends',
+    };
+
     $f2c->{'possible_base_call_error:RNASeq'} = {
 	include => 'genome_sequence_errors',
     };
@@ -458,12 +467,11 @@ sub _build_f2c {
 	children   => ['tandem_repeat:tandem'],
     };
 
-
-################################################
-#
-# Category: Transcription
-#
-################################################
+    ################################################
+    #
+    # Category: Transcription
+    #
+    ################################################
 
     $f2c->{'expressed_sequence_match:BLAT_EST_BEST'} = {
 	include => 'est_best'
@@ -549,6 +557,15 @@ sub _build_f2c {
 	include => 'sequence_similarity_nematode_net_cdnas',
     };
 
+    $f2c->{'nucleotide_match:TIGR_BEST'} = {
+	include => 'sequence_similarity_tigr_gene_models',
+    };
+
+    $f2c->{'nucleotide_match:TIGR_OTHER'} = {
+	include => 'sequence_similarity_tigr_gene_models_other',
+    };
+    
+
     ################################################
     #
     # Reagents
@@ -601,7 +618,7 @@ sub run {
     my $features = { };
     foreach my $name (sort { $a cmp $b } @$species) {
 	my $species = WormBase->create('Species',{ symbolic_name => $name, release => $release });
-	next unless $name =~ /elegans/;
+#	next unless $name =~ /elegans/;
 	$self->log->info(uc($name). ': start');	
 
 	# Now, for each species, iterate over the bioproject IDs.
@@ -683,7 +700,8 @@ sub generate_config {
 	    if ($include) {
 
 		# This species has a feature that requires a new stanza. Merge it into the main config
-		$base_config = $self->merge_to_base_config($base_config,join('/',$self->includes_directory,$include. '.track'));
+		$base_config = $self->merge_to_base_config($base_config,
+							   join('/',$self->includes_directory,$include. '.track'));
 				
 		# Get the key (as a human readable name) for this track.
 		my $key = $base_config->setting(uc($include),'key');
@@ -740,6 +758,11 @@ sub generate_config {
 	    # This species has a feature that requires a new stanza. Merge it into the main config
 	    $base_config = $self->merge_to_base_config($base_config,$species_overrides);
 	}
+	
+	# Build the database stanza for this species. We do it programmatically
+	# to include the release number then merge to the base_config.
+	my $db_stanza = $self->_create_database_stanza($species);
+	$base_config = $self->merge_to_base_config($base_config,$db_stanza);
 
 	$self->dump_configuration($species,$base_config);
 	$self->symlink($species);
@@ -751,11 +774,15 @@ sub generate_config {
 
 
 sub merge_to_base_config {
-#    my ($self,$base_config,$raw_config) = @_;
-    my ($self,$base_config,$file) = @_;
-
-    my $new_config = WormBase::FeatureFile->new(-file => $file);
-#    my $new_config = WormBase::FeatureFile->new(-text => $raw_config);
+    my ($self,$base_config,$incoming_config) = @_;
+    
+    my $new_config;
+    # Is this an external file or a stanza we have built
+    if ($incoming_config =~ /[conf|track]$/) {
+	$new_config = WormBase::FeatureFile->new(-file => $incoming_config);
+    } else {
+	$new_config = WormBase::FeatureFile->new(-text => $incoming_config);
+    }
     foreach my $stanza ($new_config->setting()) {
 	foreach my $option ($new_config->setting($stanza)) {
 	    my $value = $new_config->setting($stanza => $option);
@@ -764,6 +791,7 @@ sub merge_to_base_config {
     }
     return $base_config;
 }    
+
 
 # Dump the complete config to a new file.
 sub dump_configuration {
@@ -831,8 +859,29 @@ sub print_global_stats {
 }
 
 
+# Programmatically create the database stanza
+# for this species.
+sub _create_database_stanza {
+    my ($self,$species) = @_;
+    my $release = $self->release;
+
+    my $stanza = <<END;
+[this_database:database]
+db_adaptor  = Bio::DB::SeqFeature::Store
+db_args     = -adaptor DBI::mysql
+              -dsn dbi:mysql:database=${species}_${release};host=mysql.wormbase.org
+	      -user wormbase
+	      -pass sea3l3ganz
+search options = default, +wildcard, -stem, +fulltext, +autocomplete
+END
+    return $stanza;
+}
 
 
+
+
+
+# This should probably just generate the configuration as well.
 sub _create_nucleotide_similarity_stanzas {
     my ($self,$data) = @_;
     
@@ -858,6 +907,14 @@ sub _create_nucleotide_similarity_stanzas {
 	
 	$data->{"expressed_sequence_match:${_}_mRNAs-BLAT"} = {
 	    include => "sequence_similarity_${_}_mrnas",
+	};
+
+	$data->{"expressed_sequence_match:${_}_OSTs-BLAT"} = {
+	    include => "sequence_similarity_${_}_osts",
+	};
+
+	$data->{"expressed_sequence_match:${_}_RSTs-BLAT"} = {
+	    include => "sequence_similarity_${_}_rsts",
 	};
     }
     return $data;
