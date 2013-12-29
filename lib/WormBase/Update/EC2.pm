@@ -273,15 +273,100 @@ sub tag_instances {
 }
 
 
+sub tag_images {
+    my $self    = shift;
+    my $params  = shift;
+    my $ec2 = $self->ec2;
+
+    my $image   = $params->{image};
+    my $name    = $params->{name};
+    my $release = $self->release;
+
+    my $date = `date +%Y-%m-%d`;
+    chomp $date;
+    
+    $self->log->info("tagging image with some metadata");
+    
+#			   Name        => "$name-$release-$instance",
+    $ec2->add_tags(-resource_id => [ $image ],
+		   -tag => {
+		       Name        => "$name",
+		       Description => $params->{description},
+		       Status      => $params->{status},
+		       Role        => $params->{role},
+		       Release     => $release,		     
+		       Project     => 'WormBase',
+		       Client      => 'OICR',
+		       Date        => $date,
+		   });
+    
+}
+
+# Tag snapshots associated with this image.
+# We fetch all snapshots, then look for those with a description
+# matching our current image_id. (This could also be via a filter)
+sub tag_snapshots {
+    my $self    = shift;
+    my $params  = shift;
+
+    my $date = `date +%Y-%m-%d`;
+    chomp $date;
+    
+    my $ec2 = $self->ec2;
+    
+    my @all_snaps = $ec2->describe_snapshots();
+    my @these_snapshots;
+    my $image = $params->{image};
+    
+    foreach my $snapshot (@all_snaps) {
+	if ($snapshot->description =~ /$image/) {  # taken here to be image_id.
+	    push @these_snapshots,$snapshot;
+	}
+    }
+    
+    # Got 'em. Tag 'em.
+    foreach my $snapshot (@these_snapshots) {
+	$self->log->info("tagging $snapshot...");
+	my $id = $snapshot->snapshotId;
+	
+	# Name and description are dynamic based on size of the snapshot.	
+	# This is hard-coded logic for now.
+	my $size = $snapshot->size;  # Units?
+	my ($name);
+	if ($size < 20) {
+	    # This is the root volume.
+	    $name = 'root';
+	} elsif ($size > 600) {
+	    # FTP
+	    $name = 'ftp';
+	} else {
+	    $name = 'data';
+	}
+	
+	$ec2->add_tags(-resource_id => [ $id ],
+		       -tag         => { Name        => $params->{name} . "-$name",
+					 Description => "$name volume for build image $image",
+					 Status      => $params->{status},
+					 Role        => $params->{role},
+					 Release     => $self->release,
+					 Project     => 'WormBase',
+					 Client      => 'OICR',
+					 Date        => $date,
+					 Source_ami  => $image,
+		       });	
+    }
+}
+
+
 
 sub tag_volumes {
     my $self    = shift;
     my $params  = shift;
-
+    
     $self->log->info("tagging volumes with some metadata");
-
+    
     my $ec2 = $self->ec2;
-
+    
     my $instances = $params->{instances};
     my $release   = $self->release;
 

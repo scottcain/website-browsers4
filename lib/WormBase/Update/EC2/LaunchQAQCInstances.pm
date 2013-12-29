@@ -57,7 +57,7 @@ printf "\n127.0.0.1   qaqc\n" >> /etc/hosts
 
 # Git the repo
 cd /usr/local/wormbase/website
-git clone git@github.com:WormBase/website.git
+git clone git\@github.com:WormBase/website.git
 mv website production
 mkdir production/logs
 cd production
@@ -73,6 +73,7 @@ END
 sub run {
     my $self = shift;           
     my $instances = $self->_launch_instances();    
+
     $self->tag_instances({ instances   => $instances,
 			   description => 'qaqc instance from AMI: ' . $self->core_image,
 			   name        => 'wb-qaqc',
@@ -94,13 +95,10 @@ sub run {
     # blech.
     $self->log->info("Deleting the data mount.");
 
-
-
     $self->associate_ip_address($instances->[0],$self->ip_address);
     
     $self->log->info("The qaqc instance has been launched.");
     $self->display_instance_metadata($instances);
-
 }	    
 
 

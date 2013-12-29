@@ -38,8 +38,6 @@ my $agent = WormBase::Update::EC2::LaunchQAQCInstances->new(instance_count => $i
 							    instance_type  => $instance_type,
 							    release        => $release,
     );
-
-
 $agent->execute();
 
 1;
