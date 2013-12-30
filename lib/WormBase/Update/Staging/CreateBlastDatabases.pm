@@ -79,6 +79,15 @@ sub create_genomic_blast_db {
     my $target     = join("/",$bioproject->blast_dir, "genomic.fa");
     $target        =~ s/\.gz//;
 
+    # Kludge for build problems renaming but not compressing files
+    # Is this a text file?
+    if ( -T $fasta_file ) {
+	my $file = $bioproject->genomic_fasta;
+	$file    =~ s/\.gz//;
+	system("mv $fasta_file " . join("/",$bioproject->release_dir,$file));
+	system("gzip " . join("/",$bioproject->release_dir,$file));
+    }
+    
     # Don't unpack if file already exists.
     unless ($self->check_output_file($target)) {
 	system("gunzip -c $fasta_file > $target") && $self->log->logdie(uc($name) . ": couldn't unpack fasta file to $target");
