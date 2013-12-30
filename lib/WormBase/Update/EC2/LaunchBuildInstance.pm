@@ -61,6 +61,7 @@ chmod 2775 /mnt/ephemeral0/usr/local/wormbase/databases
 mount --bind /mnt/ephemeral0/usr/local/wormbase/databases /usr/local/wormbase/databases
 
 # acedb
+# ACEDB SHOULD PROBABLY NOT BELONG ON EPHEMERAL STORAGE
 mkdir -p /mnt/ephemeral0/usr/local/wormbase/acedb
 chown -R tharris:wormbase /mnt/ephemeral0/usr/local/wormbase
 chmod 2775 /mnt/ephemeral0/usr/local/wormbase/acedb
@@ -89,6 +90,7 @@ chmod -R 2775 /usr/local/ftp/pub/wormbase
 # Do I need to create other directories?
 
 # MySql databases/libs
+# NOT SURE IF MySQL SHOULD BELONG ON EPHEMERAL STORAGE
 mkdir -p /mnt/ephemeral1/var/lib/mysql
 mkdir -p /mnt/ephemeral1/var/log/mysql
 mkdir -p /mnt/ephemeral1/etc/mysql
@@ -150,6 +152,16 @@ g++ -o aceindex -L/usr/local/lib -l xapian -lconfig++ -I/usr/include/mysql -L/us
 # Build new GBrowse configuration files
 # These will end up in website/tharris
 ./steps/create_gbrowse_configuration.pl --release $release
+
+# Load genomic GFF databases
+./steps/load_genomic_gff_databases.pl --release $release
+
+# Update Symlinks on the FTP site
+./steps/update_ftp_site_symlinks.pl --release $release --status development
+
+# Rsync back to the development server:
+./steps/rsync_ephemeral_build_to_stable_host.pl --release $release
+
 
 END
 ;
