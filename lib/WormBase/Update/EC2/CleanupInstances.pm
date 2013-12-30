@@ -1,4 +1,4 @@
-package WormBase::Update::EC2::CleanupBuildInstances;
+package WormBase::Update::EC2::CleanupInstances;
 
 use Moose;
 extends qw/WormBase::Update::EC2/;
@@ -6,14 +6,22 @@ extends qw/WormBase::Update::EC2/;
 # The symbolic name of this step
 has 'step' => (
     is      => 'ro',
-    default => 'cleanup build instances and associated volumes',
+    default => 'cleanup temporary instances and associated volumes',
     );
+
+has 'status' => (
+    is_required => 1,
+    is => 'rw');
 
 sub run {
     my $self = shift;           
-    
-    # Get all the current build instances
-    my $instances = $self->get_instances('build');
+
+    my $status = $self->status;
+
+    # Get all the current "status" instances
+    my $instances = $self->get_instances({'tag:Status'  => $status,
+					  'tag:Release' => $self->release});
+
     foreach my $instance (@$instances) {
 	$self->log->info("\tshutting down $instance");
 	my $ec2 = $self->ec2;
@@ -32,7 +40,7 @@ sub run {
 	    $self->log->info("\t$volume has been deleted");
 	}
     }    
-    $self->log->info("cleaning up build instances: complete");
+    $self->log->info("cleaning up $status instances: complete");
 }
 
 

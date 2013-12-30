@@ -16,8 +16,8 @@ sub run {
     my $self = shift;           
 
     # Discover the current qaqc environment instance.
-    # Hopefully it exists.
-    my $instances = $self->get_instances('qaqc');
+    my $instances = $self->get_instances('tag:Status'  => 'qaqc',					
+					 'tag:Release' => $self->release);
     
     if (@$instances > 1) { 
 	$self->log->warn("

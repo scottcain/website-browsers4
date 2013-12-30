@@ -1,4 +1,4 @@
-package WormBase::Update::EC2::LaunchBuildInstance;
+package WormBase::Update::EC2::LaunchDevelopmentInstance;
 
 use Moose;
 extends qw/WormBase::Update::EC2/;
@@ -6,7 +6,7 @@ extends qw/WormBase::Update::EC2/;
 # The symbolic name of this step
 has 'step' => (
     is      => 'ro',
-    default => 'launch a new instance of the build AMI; begin the build via user data',
+    default => 'launch a new instance of the core WormBase AMI; this will become the devleopment env',
 );
 
 # Number of instances to launch; optionally supplied to constructor.
@@ -158,24 +158,28 @@ END
 
 sub run {
     my $self = shift;           
+
+    # Get the CURRENT dvelopment instance.
+    my $old_instance = $self->get_current_development_instance();
+
     my $instances = $self->_launch_instance();
 
     $self->tag_instances({ instances   => $instances,
-			   description => 'build instance from AMI: ' . $self->build_image,
-			   name        => 'wb-build',
-			   status      => 'build',
+			   description => 'development instance from AMI: ' . $self->image,
+			   name        => 'wb-development',
+			   status      => 'development',
 			   role        => 'appserver',
-			   source_ami  => $self->build_image,
+			   source_ami  => $self->image,
 			 });
 
     $self->tag_volumes({ instances   => $instances,
-			 description => 'build instance from AMI: ' . $self->build_image,
-			 name        => 'wb-build',  # this is the name root
-			 status      => 'build',
+			 description => 'development instance from AMI: ' . $self->image,
+			 name        => 'wb-development',  # this is the name root
+			 status      => 'development',
 			 role        => 'appserver',
 		       });
 
-    $self->log->info("The build instance has been launched and the build process launched on:");
+    $self->log->info("A new development instance has been launched");
     $self->display_instance_metadata($instances);
 }	    
 
@@ -184,18 +188,18 @@ sub run {
 sub _launch_instance  {
     my $self = shift;
 
-    # Discover the build image. There should only be one.
-    my $build_image = $self->build_image();
+    # Get the core image.
+    my $image = $self->core_image();
     
     my $instance_count = $self->instance_count;
     my $instance_type  = $self->instance_type;
 
     my $release = $self->release;
     
-    $self->log->info("Using AMI ID $build_image for building $release");
-    $self->log->info("launching $instance_count $instance_type instances of $build_image");
+    $self->log->info("Using AMI ID $image for launching a new development instance");
+    $self->log->info("launching $instance_count $instance_type instances of $image");
     
-    my @instances = $build_image->run_instances(-min_count => $instance_count,
+    my @instances = $image->run_instances(-min_count => $instance_count,
 						-max_count => $instance_count,
 						-key_name  => 'wormbase-development',
 						-security_group => 'wormbase-development',
@@ -217,5 +221,40 @@ sub _launch_instance  {
 
 
 
+
+sub get_current_development_instance {
+    my $self = shift;
+    my $ec2 = $self->ec2;
+    
+    $self->log->info("Fetching current development instance.");
+    
+    # Discover the current development instance.
+    # Hopefully it exists. We assume there is only one.
+    my @i = $self->get_instances({'tag:Status'     => 'development',
+				  'instance-state-name' => 'running',
+				 });
+    
+    if (@i > 1) { 
+	print STDERR <<END;
+	
+        Um. 
+	    There seem to be multiple development instances running at the moment. 
+	    There should only be one. Please kill some of the extras and re-run.
+	    The running instances are:
+
+END
+;
+	
+	$self->display_instance_metadata(\@i);
+	die;
+    }
+
+    my $instance = $i[0];
+    $self->display_instance_metadata([$instance]);    
+    
+    $self->log->info("Found the development image for $release: $image");
+    return $instance;
+}
+    
 
 1;

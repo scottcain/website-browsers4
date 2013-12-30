@@ -34,7 +34,7 @@ my $i;
 if (!$status) {
     $i = $agent->get_instances();
 } else {
-    $i = $agent->get_instances($status);
+    $i = $agent->get_instances({'tag:Status' => $status });
 }
 
 $agent->display_instance_metadata($i);

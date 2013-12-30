@@ -23,9 +23,9 @@ has 'step' => (
 sub run {
     my $self = shift;           
 
-    # Discover the current build environment instance.
-    # Hopefully it exists.
-    my $instances = $self->get_instances('development');
+    # Get the current development instance
+    my $instances = $self->get_instances({'tag:Status'  => 'development',					
+					  'tag:Release' => $self->release});
     
     if (@$instances > 1) { 
 	$self->log->warn("
