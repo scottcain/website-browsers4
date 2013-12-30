@@ -43,9 +43,10 @@ my $user_data = <<END;
 killall -9 sgifaceserver
 
 # Remove old mounts
-umount /var/lib/mysql
-umount /var/log/mysql
-umount /etc/mysql
+# Formerly, these were mounts in fstab in the build AMI
+#umount /var/lib/mysql
+#umount /var/log/mysql
+#umount /etc/mysql
 umount /usr/local/wormbase/
 
 # Ensure that any future AMIs created from this instance 
@@ -61,13 +62,21 @@ chmod 2775 /mnt/ephemeral0/usr/local/wormbase/databases
 mount --bind /mnt/ephemeral0/usr/local/wormbase/databases /usr/local/wormbase/databases
 
 # acedb
-# ACEDB SHOULD PROBABLY NOT BELONG ON EPHEMERAL STORAGE
-mkdir -p /mnt/ephemeral0/usr/local/wormbase/acedb
-chown -R tharris:wormbase /mnt/ephemeral0/usr/local/wormbase
-chmod 2775 /mnt/ephemeral0/usr/local/wormbase/acedb
+# Relocating acedb to ephemeral storage
+#mkdir -p /mnt/ephemeral0/usr/local/wormbase/acedb
+#chown -R tharris:wormbase /mnt/ephemeral0/usr/local/wormbase
+#chmod 2775 /mnt/ephemeral0/usr/local/wormbase/acedb
 # Need to move binaries over first
-cp -rp /usr/local/wormbase/acedb/. /mnt/ephemeral0/usr/local/wormbase/acedb/.
-mount --bind /mnt/ephemeral0/usr/local/wormbase/acedb /usr/local/wormbase/acedb
+#cp -rp /usr/local/wormbase/acedb/. /mnt/ephemeral0/usr/local/wormbase/acedb/.
+#mount --bind /mnt/ephemeral0/usr/local/wormbase/acedb /usr/local/wormbase/acedb
+
+# Relocate acedb to ebs. Already configured by system.
+#mkdir -p /mnt/ebs1/usr/local/wormbase/acedb
+#chown -R tharris:wormbase /mnt/ebs1/usr/local/wormbase
+#chmod 2775 /mnt/ebs1/usr/local/wormbase/acedb
+## Need to move binaries over first
+#cp -rp /usr/local/wormbase/acedb/. /mnt/ebs1/usr/local/wormbase/acedb/.
+#mount --bind /mnt/ephemeral0/usr/local/wormbase/acedb /usr/local/wormbase/acedb
 
 # tmp directory
 mkdir /usr/local/wormbase/tmp
@@ -90,20 +99,21 @@ chmod -R 2775 /usr/local/ftp/pub/wormbase
 # Do I need to create other directories?
 
 # MySql databases/libs
-# NOT SURE IF MySQL SHOULD BELONG ON EPHEMERAL STORAGE
-mkdir -p /mnt/ephemeral1/var/lib/mysql
-mkdir -p /mnt/ephemeral1/var/log/mysql
-mkdir -p /mnt/ephemeral1/etc/mysql
-cp -rp /var/lib/mysql/* /mnt/ephemeral1/var/lib/mysql/.
-cp -rp /var/log/mysql/* /mnt/ephemeral1/var/log/mysql/.
-cp -rp /etc/mysql/* /mnt/ephemeral1/etc/mysql/.
-mount --bind /mnt/ephemeral1/var/lib/mysql /var/lib/mysql
-mount --bind /mnt/ephemeral1/var/log/mysql /var/log/mysql
-mount --bind /mnt/ephemeral1/etc/mysql     /etc/mysql
-chown -R mysql:mysql /var/lib/mysql
-chown -R mysql:mysql /var/log/mysql
-chown -R mysql:mysql /etc/mysql
-/etc/init.d/mysql restart
+# Relocating mysql to ephemeral storage (or any other mount point)
+# Duplicate and update paths to relocate mysql to an EBS mount
+#mkdir -p /mnt/ephemeral1/var/lib/mysql
+#mkdir -p /mnt/ephemeral1/var/log/mysql
+#mkdir -p /mnt/ephemeral1/etc/mysql
+#cp -rp /var/lib/mysql/* /mnt/ephemeral1/var/lib/mysql/.
+#cp -rp /var/log/mysql/* /mnt/ephemeral1/var/log/mysql/.
+#cp -rp /etc/mysql/* /mnt/ephemeral1/etc/mysql/.
+#mount --bind /mnt/ephemeral1/var/lib/mysql /var/lib/mysql
+#mount --bind /mnt/ephemeral1/var/log/mysql /var/log/mysql
+#mount --bind /mnt/ephemeral1/etc/mysql     /etc/mysql
+#chown -R mysql:mysql /var/lib/mysql
+#chown -R mysql:mysql /var/log/mysql
+#chown -R mysql:mysql /etc/mysql
+#/etc/init.d/mysql restart
 
 # Mirror files from dev.wormbase.org to ephemeral storage using it's private ip address
 cd /usr/local/ftp/pub/wormbase/releases

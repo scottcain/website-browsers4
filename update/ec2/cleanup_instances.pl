@@ -6,15 +6,16 @@ use strict;
 use WormBase::Update::EC2::CleanupInstances;
 use Getopt::Long;
 
-my ($release,$help);
+my ($release,$help,$status);
 GetOptions('release=s'     => \$release,
-	   'help=s'        => \$help,
+	   'hels'          => \$help,
+	   'status=s'      => \$status,
     );
 
-if ($help || (!$release)) {
+if ($help || (!$release && !$status)) {
     die <<END;
     
-Usage: $0 --release WSXXX
+Usage: $0 --release WSXXX --status [STATUS]
 
 Clean up instances/volumes for a specified release and status.
 

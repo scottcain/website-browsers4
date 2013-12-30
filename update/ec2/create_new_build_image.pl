@@ -11,7 +11,7 @@ use Getopt::Long;
 
 my ($release,$help);
 GetOptions('release=s'     => \$release,
-	   'help=s'        => \$help,
+	   'help'          => \$help,
     );
 
 

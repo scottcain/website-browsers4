@@ -8,7 +8,7 @@ use Getopt::Long;
 
 my ($format,$help,$status);
 GetOptions('format=s'     => \$format,
-	   'help=s'       => \$help,
+	   'help'         => \$help,
 	   'status=s'     => \$status,
     );
 
@@ -25,7 +25,7 @@ Options:
   --format      short || long. Defaults to short listing.
 
 END
-
+die;
 }
 
 my $agent = WormBase::Update::EC2->new({release => 'ec2'});
@@ -34,7 +34,7 @@ my $i;
 if (!$status) {
     $i = $agent->get_instances();
 } else {
-    $i = $agent->get_instances({'tag:Status' => $status });
+    $i = $agent->get_instances({'tag:Status' => $status});
 }
 
-$agent->display_instance_metadata($i);
+$agent->display_instance_metadata($i,$format);

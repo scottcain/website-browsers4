@@ -11,7 +11,7 @@ use Getopt::Long;
 
 my ($release,$help,$instance_count,$instance_type);
 GetOptions('release=s'     => \$release,
-	   'help=s'        => \$help,
+	   'help'          => \$help,
 	   'instances=i'   => \$instance_count,
 	   'type=s'        => \$instance_type,
     );

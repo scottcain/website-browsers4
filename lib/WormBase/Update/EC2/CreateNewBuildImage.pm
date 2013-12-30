@@ -14,7 +14,7 @@ sub run {
     
     # Discover the current build environment instance.
     my $instances = $self->get_instances({'tag:Status'  => 'build',
-					 'tag:Release' => $self->release});
+					  'tag:Release' => $self->release});
     
     # There should only be one.
     if (@$instances > 1) { 

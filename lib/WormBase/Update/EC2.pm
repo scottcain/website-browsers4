@@ -149,7 +149,8 @@ sub display_instance_metadata {
 	    my @devices = $i->blockDeviceMapping;
 	    foreach my $d (@devices) {
 		my $virtual_device = $d->deviceName;
-		print "\t                    $d : $virtual_device\n";
+		my $volume_id      = $d->volumeId;
+		print "\t                    $volume_id : $virtual_device\n";
 	    }
 	    
 	    print "\n\n";
@@ -181,23 +182,19 @@ sub display_image_metadata {
 # Status here is currently one of development|build|production.
 # It corresponds to the tag "Status".
 sub get_instances {
-    my ($self,$status) = @_;
-
+    my ($self,$params) = @_;
+    
     my $ec2 = $self->ec2;
     
-    my @i;
-    if ($status) {
-	$self->log->info("\tfetching $status instances");
-	@i = $ec2->describe_instances({'tag:Status'          => $status,
-				       'tag:Client'          => 'OICR',
-				       'tag:Project'         => 'WormBase',
-				       'instance-state-name' => 'running'});
-    } else {
-	$self->log->info("\tfetching all instances");
-	@i = $ec2->describe_instances({'tag:Client'          => 'OICR',
-				       'tag:Project'         => 'WormBase',
-				       'instance-state-name' => 'running'});              
-    }
+    # 'tag:Status'          => $status,
+    
+    $params->{'tag:Client'}          = 'OICR';
+    $params->{'tag:Project'}         = 'WormBase';
+    $params->{'instance-state-name'} = 'running';
+    
+    $self->log->info("\tfetching instances with the following parameters:\n"
+		     . join("\n",map { "\t\t$_ = $params->{$_}" } keys %$params));   
+    my @i = $ec2->describe_instances($params);
     return \@i;
 }
 
