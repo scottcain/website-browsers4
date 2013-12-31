@@ -48,13 +48,13 @@ sub run {
 			description => "wormbase production AMI autocreated from $instance",
 			name        => 'wb-production',
 			status      => 'production',
-			role        => 'appserver',
+			role        => 'webapp',
 		      });
     
     $self->tag_snapshots({ image  => $image,
 			   name   => 'wb-production',
 			   status => 'production',
-			   role   => 'appserver',
+			   role   => 'webapp',
 			 });
     
     $self->log->info("Creating a new production image: finished. Image id: $image");  

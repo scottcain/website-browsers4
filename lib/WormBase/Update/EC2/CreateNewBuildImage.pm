@@ -52,7 +52,7 @@ sub run {
     $self->tag_snapshots({ image  => $image,
 			   name   => 'wb-build',
 			   status => 'build',
-			   role   => 'appserver',
+			   role   => 'webapp',
 			 });
     
     $self->log->info("Creating a new build image: finished. Image id: $image");

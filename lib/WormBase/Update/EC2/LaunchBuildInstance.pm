@@ -198,7 +198,7 @@ sub run {
 			   description => 'build instance from AMI: ' . $self->build_image,
 			   name        => 'wb-build',
 			   status      => 'build',
-			   role        => 'appserver',
+			   role        => 'webapp',
 			   source_ami  => $self->build_image,
 			 });
 
@@ -206,7 +206,7 @@ sub run {
 			 description => 'build instance from AMI: ' . $self->build_image,
 			 name        => 'wb-build',  # this is the name root
 			 status      => 'build',
-			 role        => 'appserver',
+			 role        => 'webapp',
 		       });
 
     $self->log->info("The build instance has been launched and the build process launched on:");

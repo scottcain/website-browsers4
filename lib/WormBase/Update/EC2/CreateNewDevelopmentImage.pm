@@ -56,13 +56,13 @@ sub run {
 			description => "wormbase development image autocreated from $instance",
 			name        => 'wb-qaqc',
 			status      => 'qaqc',
-			role        => 'appserver',
+			role        => 'webapp',
 		      });
     
     $self->tag_snapshots({ images => $images,
 			   name   => 'wb-qaqc',
 			   status => 'qaqc',
-			   role   => 'appserver',
+			   role   => 'webapp',
 			 });
     
     $self->log->info("Creating a new image from development: finished. Image id: $image");  

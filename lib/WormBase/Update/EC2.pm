@@ -62,7 +62,7 @@ has 'build_image' => (
 sub _build_build_image {
     my $self = shift;
     
-    my $i = $self->get_images('build');
+    my $i = $self->get_images({'tag:Status' => 'build'});
     
     if (@$i > 1) { 
 	$self->log->warn("There seem to be multiple build AMIs. There can be only one. They are:");
@@ -77,16 +77,16 @@ sub _build_build_image {
 
 
 # Fetch the core image for the provided release
-has 'core_image' => (
+has 'qaqc_image' => (
     is => 'rw',
     lazy_build => 1,
     );
 
-sub _build_core_image {
+sub _build_qaqc_image {
     my $self = shift;
     my $ec2  = $self->ec2;
     
-    my $i = $self->get_images('core');
+    my $i = $self->get_images({'tag:Status' => 'qaqc'});
     
     if (@$i > 1) { 
 	my $release = $self->release;
@@ -100,6 +100,33 @@ sub _build_core_image {
     return $image;
 }
 
+
+# Fetch the core image for the provided release
+has 'production_image' => (
+    is => 'rw',
+    lazy_build => 1,
+    );
+
+sub _build_production_image {
+    my $self = shift;
+    my $ec2  = $self->ec2;
+    
+    my $i = $self->get_images({'tag:Status' => 'production',
+			       'tag:Role'   => 'webapp',
+			       'tag:Release' => $self->release,
+			      });
+    
+    if (@$i > 1) { 
+	my $release = $self->release;
+	$self->log->warn("There seem to be multiple production AMIs for $release. There can be only one. They are:");
+	$self->display_image_metadata($i);
+	die;
+    }
+    
+    # Okay, we only have a single instance.
+    my $image = $i->[0];
+    return $image;
+}
 
 
 
@@ -202,36 +229,18 @@ sub get_instances {
 
 
 # Fetch one (or many) images.
-# This works very similarly to get_instances()
-# using symbolic names to represent a series of filters.
 sub get_images {
     my $self   = shift;
-    my $status = shift; 
+    my $params = shift; 
     my $ec2    = $self->ec2;
     
-    # For now, we are only selecting based on status.
-    # Subject to change in the future.
-    my @i;
-    if ($status eq 'build') {
-	$self->log->info("\tfetching the current build image");
-	@i = $ec2->describe_images({'tag:Status'          => $status,
-				       'tag:Client'          => 'OICR',
-				       'tag:Project'         => 'WormBase',
-				      });
+    $params->{'tag:Client'}          = 'OICR';
+    $params->{'tag:Project'}         = 'WormBase';
 
-    } elsif ($status eq 'core') {
-	$self->log->info("\tfetching the core image for " . $self->release);
-	@i = $ec2->describe_images({'tag:Status'          => $status,
-				       'tag:Release'      => $self->release,
-				       'tag:Client'       => 'OICR',
-				       'tag:Project'      => 'WormBase',
-				      });
-    } else {
-	$self->log->info("\tfetching all images");
-	@i = $ec2->describe_images({'tag:Client'          => 'OICR',
-				    'tag:Project'         => 'WormBase',
-				    'instance-state-name' => 'running'});              
-    }
+    $self->log->info("\tfetching images with the following parameters:\n"
+		     . join("\n",map { "\t\t$_ = $params->{$_}" } keys %$params));   
+
+    my @i = $ec2->describe_images($params);
     return \@i;
 }
 

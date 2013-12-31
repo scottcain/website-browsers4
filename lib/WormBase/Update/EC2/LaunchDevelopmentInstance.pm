@@ -168,7 +168,7 @@ sub run {
 			   description => 'development instance from AMI: ' . $self->image,
 			   name        => 'wb-development',
 			   status      => 'development',
-			   role        => 'appserver',
+			   role        => 'webapp',
 			   source_ami  => $self->image,
 			 });
 
@@ -176,7 +176,7 @@ sub run {
 			 description => 'development instance from AMI: ' . $self->image,
 			 name        => 'wb-development',  # this is the name root
 			 status      => 'development',
-			 role        => 'appserver',
+			 role        => 'webapp',
 		       });
 
     $self->log->info("A new development instance has been launched");

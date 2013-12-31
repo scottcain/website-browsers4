@@ -39,23 +39,24 @@ my $user_data = <<END;
 #!/bin/bash
 
 # Ensure that any future AMIs created from this instance 
-# can also use user_data
+# can also use user_dat
+echo "ensuring that future AMIs created from this instance can use user-data..."
 insserv -d ec2-run-user-data
 
 # Disable some services
 # Is user-data executed AFTER services have launched?
+echo "stopping services..."
 /etc/init.d/jenkins stop
 
 # Set a sensible hostname
+echo "setting hostname..."
 hostname qaqc
-
-# Remove the configuration file for the app.
-rm -rf /usr/local/wormbase/wormbase.env
 
 # Make sure that sudo continues to work.
 printf "\n127.0.0.1   qaqc\n" >> /etc/hosts
 
-# Git the repo
+# "Git" the repo
+echo "Fetching the git repository..."
 cd /usr/local/wormbase/website
 git clone git\@github.com:WormBase/website.git
 mv website production
@@ -64,6 +65,20 @@ cd production
 git checkout production
 git submodule init
 git submodule update
+
+# Remove the configuration file for the app.
+echo "removing the wormbase.env file..."
+rm -rf /usr/local/wormbase/wormbase.env
+
+# What else do I need to do for qaqc? start precaching?
+
+echo "Preconfiguration is complete!"
+echo "You should now :"
+echo "    > saceclient localhost -port 2005  -- to start sgifaceserver"
+echo "    > cd /usr/local/wormbase/website/production ; ./script/wormbase-daemons.sh -- to start webapp"
+
+IP=`GET http://169.254.169.254/latest/meta-data/local-ipv4`
+echo "local private IP: \$IP"
 
 END
 ;
@@ -75,25 +90,22 @@ sub run {
     my $instances = $self->_launch_instances();    
 
     $self->tag_instances({ instances   => $instances,
-			   description => 'qaqc instance from AMI: ' . $self->core_image,
+			   description => 'qaqc instance from AMI: ' . $self->qaqc_image,
 			   name        => 'wb-qaqc',
 			   status      => 'qaqc',
-			   role        => 'appserver',
-			   source_ami  => $self->core_image,
+			   role        => 'webapp',
+			   source_ami  => $self->qaqc_image,
 			 });
     
     $self->tag_volumes({ instances   => $instances,
-			 description => 'qaqc instance from AMI: ' . $self->core_image,
+			 description => 'qaqc instance from AMI: ' . $self->qaqc_image,
 			 name        => 'wb-qaqc',  # this is the name root, appended with qualifier
 			 status      => 'qaqc',
-			 role        => 'appserver',
+			 role        => 'webapp',
 		       });
     
-
-    # TODO: 2013.12.16
-    # I should also delete the data mount. But I *can't* -- I need it for website-shared and databases
-    # blech.
-    $self->log->info("Deleting the data mount.");
+#    $self->log->info("Deleting the data mount.");
+#    $self->delete_data_volume();
 
     $self->associate_ip_address($instances->[0],$self->ip_address);
     
@@ -107,7 +119,7 @@ sub _launch_instances  {
     my $self = shift;
 
     # Discover the build image. There should only be one.
-    my $image   = $self->core_image();
+    my $image   = $self->qaqc_image();
     
     my $instance_count = $self->instance_count;
     my $instance_type  = $self->instance_type;
@@ -134,8 +146,6 @@ sub _launch_instances  {
     $ec2->wait_for_instances(@instances);
     return \@instances;   
 }
-
-
 
 
 1;
