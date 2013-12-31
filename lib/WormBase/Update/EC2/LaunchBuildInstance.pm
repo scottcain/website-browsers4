@@ -129,6 +129,13 @@ eval \$\(perl -Mlocal::lib=./\)
 cd /usr/local/wormbase/website-admin
 git pull
 
+# checkout source for gbrowse built files
+cd /usr/local/wormbase
+git clone git@github.com:WormBase/website.git
+mv website tharris
+cd tharris
+git checkout staging
+
 # Unpack acedb
 cd update/staging
 ./steps/unpack_acedb.pl --release $release
@@ -157,19 +164,24 @@ chown -R tharris:wormbase /usr/local/wormbase/databases
 cd /usr/local/wormbase/website-admin/update/staging/xapian
 export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/lib
 g++ -o aceindex -L/usr/local/lib -l xapian -lconfig++ -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient_r aceindex.cc
+cd /usr/local/wormbase/website-admin/update/staging
 ./steps/build_xapian_db.pl --release $release
 
 # Build new GBrowse configuration files
 # These will end up in website/tharris
+cd /usr/local/wormbase/website-admin/update/staging
 ./steps/create_gbrowse_configuration.pl --release $release
 
 # Load genomic GFF databases
+cd /usr/local/wormbase/website-admin/update/staging
 ./steps/load_genomic_gff_databases.pl --release $release
 
 # Update Symlinks on the FTP site
+cd /usr/local/wormbase/website-admin/update/staging
 ./steps/update_ftp_site_symlinks.pl --release $release --status development
 
 # Rsync back to the development server:
+cd /usr/local/wormbase/website-admin/update/staging
 ./steps/rsync_ephemeral_build_to_stable_host.pl --release $release
 
 

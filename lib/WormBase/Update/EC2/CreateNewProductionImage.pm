@@ -17,7 +17,7 @@ sub run {
 
     # Discover the current qaqc environment instance.
     my $instances = $self->get_instances({'tag:Status'  => 'qaqc',					
-					 'tag:Release' => $self->release});
+					  'tag:Release' => $self->release});
     
     if (@$instances > 1) { 
 	$self->log->warn("
@@ -52,7 +52,7 @@ sub run {
 		      });
     
     $self->tag_snapshots({ image  => $image,
-			   name   => 'wb-core',
+			   name   => 'wb-production',
 			   status => 'production',
 			   role   => 'appserver',
 			 });

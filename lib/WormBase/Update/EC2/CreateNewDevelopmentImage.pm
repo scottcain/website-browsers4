@@ -42,9 +42,9 @@ sub run {
     my $instance = $instances->[0];
     
     # Now that I have the instance, create a new AMI from it with appropriate tags.
-    my $images = $instance->create_image(-name        => 'wb-build',
-					-description => 'stripped down environment for building new WormBase releases',
-					 -no_reboot   => 1, );
+    my $images = $instance->create_image(-name         => 'wb-qaqc',
+					 -description  => 'image created from the WormBase dev environment',
+					 -no_reboot    => 1, );
     
     # Wait until the production image is complete.
     while ($image->current_status eq 'pending') {
@@ -54,18 +54,18 @@ sub run {
     # Add some tags to the AMI and its backing snapshots.
     $self->tag_images({ images => $images,
 			description => "wormbase development image autocreated from $instance",
-			name        => 'wb-core',
-			status      => 'core',
+			name        => 'wb-qaqc',
+			status      => 'qaqc',
 			role        => 'appserver',
 		      });
     
     $self->tag_snapshots({ images => $images,
-			   name   => 'wb-core',
-			   status => 'build',
+			   name   => 'wb-qaqc',
+			   status => 'qaqc',
 			   role   => 'appserver',
 			 });
     
-    $self->log->info("Creating a new development image: finished. Image id: $image");  
+    $self->log->info("Creating a new image from development: finished. Image id: $image");  
 }    
 
 1;
