@@ -91,12 +91,13 @@ sub _build_f2c {
     $f2c->{'gene:WormBase'} = { 
 	# Terrible name. Sorry, legacy for now, will fix with WS241:
 	# 1. update here
-	# 2. change name of include
+	# 2. change name of include file
 	# 3. update app
 	include => 'primary_gene_track',
 	children   => [ 'mRNA:WormBase',
 			'five_prime_UTR:WormBase',
 			'three_prime_UTR:WormBase',
+                        'gene:WormBase_imported',
 			'mRNA:WormBase_imported',                                 
 			'five_prime_UTR:WormBase_imported',
 			'three_prime_UTR:WormBase_imported' ],

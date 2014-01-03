@@ -1,4 +1,4 @@
-package WormBase::Update::EC2::LaunchDevelopmentInstance;
+package WormBase::Update::EC2::LaunchProductionInstances;
 
 use Moose;
 extends qw/WormBase::Update::EC2/;
@@ -6,8 +6,14 @@ extends qw/WormBase::Update::EC2/;
 # The symbolic name of this step
 has 'step' => (
     is      => 'ro',
-    default => 'launch a new instance of the core WormBase AMI; this will become the devleopment env',
+    default => 'launch new production instances',
 );
+
+# Size of the required data mount, in GB
+has 'data_volume_size' => (
+    is => 'ro',
+    default => 50
+    );
 
 # Number of instances to launch; optionally supplied to constructor.
 has 'instance_count' => (
@@ -36,9 +42,13 @@ sub _build_user_data {
 #!/bin/bash
 
 # Stop services
-echo "stopping services..."
+echo "stopping services that aren't required in production..."
+# Some instances MIGHT require mysql (GBrowse...)
+# but I'd still need to fetch the databases from somewhere.
 /etc/init.d/mysql stop
 killall -9 sgifaceserver
+sudo /etc/init.d/apache2 stop
+
 
 # Remove old mounts
 echo "removing old mounts..."
@@ -48,8 +58,6 @@ umount /var/log/mysql
 umount /etc/mysql
 umount /usr/local/wormbase/
 
-# Ensure that any future AMIs created from this instance 
-# can also use user_data
 echo "ensuring that future AMIs created from this instance can use user-data..."
 insserv -d ec2-run-user-data
 
@@ -80,8 +88,10 @@ chown -R tharris:wormbase /usr/local/wormbase/databases
 mkdir -p /mnt/ephemeral0/usr/local/wormbase/databases
 chown -R tharris:wormbase /mnt/ephemeral0/usr/local/wormbase/databases
 chmod 2775 /mnt/ephemeral0/usr/local/wormbase/databases
+cp -rp /mnt/ebs0/usr/local/wormbase/databases/* /mnt/ephemeral0/usr/local/wormbase/databases/.
 mount --bind /mnt/ephemeral0/usr/local/wormbase/databases /usr/local/wormbase/databases
-cp -rp /mnt/ebs0/usr/local/wormbase/databases/$release /mnt/ephemeral0/usr/local/wormbase/databases/.
+cd /usr/local/wormbase/databases
+tar xzf *
 
 # tmp directory
 echo "relocating temporary directory to ephemeral storage..."
@@ -127,6 +137,7 @@ chmod 2775 /mnt/ephemeral0/usr/local/wormbase/extlib
 mount --bind /mnt/ephemeral0/usr/local/wormbase/extlib /usr/local/wormbase/extlib
 cp -rp /mnt/ebs0/usr/local/wormbase/extlib/* /mnt/ephemeral0/usr/local/wormbase/extlib/.
 
+# WS240 on RDS
 # MySql databases. These are now on RDS.
 echo "setting up mysql/ ..."
 mkdir -p /mnt/ephemeral1/var/lib/mysql
@@ -208,6 +219,8 @@ sub _launch_instances  {
     
     $self->log->info("Found AMI ID $image built for " . $self->release . '.');
     $self->log->info("Launching $instance_count $instance_type instances...");
+
+    my $size = $self->data_volume_size;
     
     my @instances = $image->run_instances(-min_count         => $instance_count,
 					  -max_count         => $instance_count,
@@ -219,7 +232,7 @@ sub _launch_instances  {
 					  -user_data         => $self->user_data,
 					  -block_devices => [ '/dev/sde=ephemeral0',
 							      '/dev/sdf=ephemeral1',
-							      '/dev/sdg=:50:true'],
+							      '/dev/sdg=:$size:true'],
 	);
     
     # Wait until the instances are up and running.

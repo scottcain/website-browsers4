@@ -1,6 +1,6 @@
-package WormBase::Update::EC2::CreateNewDevelopmentImage;
+package WormBase::Update::EC2::CreateNewQAQCImage;
 
-# Create a new core WormBase image (generated from the current development instance)
+# Create a new qaqc WormBase image (generated from the current development instance)
 
 # From the existing development instance:
 # 1. create a new image. 

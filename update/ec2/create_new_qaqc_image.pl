@@ -6,7 +6,7 @@
 use FindBin qw/$Bin/;
 use lib "$Bin/../../lib";
 use strict;
-use WormBase::Update::EC2::CreateNewDevelopmentImage;
+use WormBase::Update::EC2::CreateNewQAQCImage;
 use Getopt::Long;
 
 my ($release,$help);
@@ -29,6 +29,6 @@ END
 
 }
 
-my $agent = WormBase::Update::EC2::CreateNewDevelopmentImage->new();
-#$agent->run();
+my $agent = WormBase::Update::EC2::CreateNewQAQCImage->new();
+$agent->run();
 

@@ -21,11 +21,6 @@ has 'instance_type' => (
     required => 1,
     );
 
-# The elastic IP address used for the qaqc instance.
-has 'ip_address' => (
-    is => 'ro',
-    default => '50.19.229.229',
-);
 
 has 'user_data' => (
     is => 'ro',
@@ -106,10 +101,8 @@ sub run {
     
 #    $self->log->info("Deleting the data mount.");
 #    $self->delete_data_volume();
-
-    $self->associate_ip_address($instances->[0],$self->ip_address);
     
-    $self->log->info("The qaqc instance has been launched.");
+    $self->log->info("A qa/qc instance has been launched.");
     $self->display_instance_metadata($instances);
 }	    
 

@@ -21,12 +21,12 @@ if ($help || (!$release)) {
     
 Usage: $0 --release WSXXX
 
-Launch a new qaqc instance from the development image.
+Launch a new qaqc instance from the qaqc image.
 
 Options:
-  --release     required. The WSXXX development release to launch.
-  --instances   optional. Number of new prod instances to launch. Default: 1.
-  --type        optional. Size of new instances to launch. Default: m1.xlarge
+  --release     required. The WSXXX release to launch.
+  --instances   optional. Number of instances to launch. Default: 1.
+  --type        optional. Size of instances to launch. Default: m1.xlarge
 
 END
 }
