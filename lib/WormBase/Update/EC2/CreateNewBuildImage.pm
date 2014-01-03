@@ -32,7 +32,8 @@ sub run {
     my $instance = $instances->[0];
         
     # Now that I have the instance, create a new AMI from it with appropriate tags.
-    my $image = $instance->create_image(-name        => 'wb-build',
+    # AMI Name must be unique
+    my $image = $instance->create_image(-name        => 'wb-build-' . $self->release,
 					-description => 'the wormbase build environment',
 	);
     
