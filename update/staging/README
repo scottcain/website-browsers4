@@ -76,7 +76,8 @@ END : load genomic gff databases; in 0 days, 22 hours, 58 minutes and 28 seconds
 # Staging
 ./steps/adjust_symlinks.pl --release $RELEASE --target staging
 
-./steps/push_staged_release_to_nodes.pl --release $RELEASE --target development
+# OBSOLETE
+###./steps/push_staged_release_to_nodes.pl --release $RELEASE --target development
 
 # Development server(s)
 ./steps/adjust_symlinks.pl --release $RELEASE --target development
@@ -88,9 +89,10 @@ END : load genomic gff databases; in 0 days, 22 hours, 58 minutes and 28 seconds
 # END : dump_annotations; in 0 days, 2 hours, 19 minutes and 59 seconds
 ./steps/dump_annotations.pl --release $RELEASE
 
+# WS240 : NO LONGER REQUIRED
 # 10. Convert GFF2 into GFF3
 # END : convert GFF2 annotations to GFF3; in 0 days, 2 hours, 45 minutes and 5 seconds
-./steps/convert_gff2_to_gff3.sh --release $RELEASE
+# ./steps/convert_gff2_to_gff3.sh --release $RELEASE
 
 
 

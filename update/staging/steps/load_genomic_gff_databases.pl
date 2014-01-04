@@ -24,5 +24,5 @@ END
 }
 
 my $agent = WormBase::Update::Staging::LoadGenomicGFFDB->new({ release => $release,
-							     confirm_only => $confirm_only});
+							       confirm_only => $confirm_only});
 $agent->execute();

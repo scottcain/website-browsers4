@@ -30,7 +30,8 @@ sub run {
     # The databases directory
     $self->rsync_directory("/usr/local/wormbase/databases");
 
-    # What else?    
+    # What else? The GBrowse configuration files
+    $self->rsync_directory("/usr/local/wormbase/website/tharris/conf/gbrowse");    
 }
 
 

@@ -6,21 +6,21 @@ use strict;
 use WormBase::Update::Staging::PrecacheContent;
 use Getopt::Long;
 
-my ($release,$help,$class,$widget,$queries_to,$already_cached,$couchdb_host);
+my ($release,$help,$class,$widget,$queries_to,$already_cached,$couchdb);
 GetOptions('release=s'     => \$release,
 	   'help=s'        => \$help,
 	   'class=s'       => \$class,
 	   'widget=s'      => \$widget,
 	   'queries_to=s'  => \$queries_to,
 	   'already_cached_via=s' => \$already_cached,
-	   'couchdb_host=s' => \$couchdb_host,
+	   'couchdb=s' => \$couchdb,
     );
 
 
 if ($help || (!$release)) {
     die <<END;
     
-Usage: $0 --release WSXXX [--class CLASS --widget WIDGET --queries_to (URI) --already_cached_via (logs|couchdb) --couchdb_host (HOST) ]
+Usage: $0 --release WSXXX [--class CLASS --widget WIDGET --queries_to (URI) --already_cached_via (logs|couchdb) --couchdb (HOST) ]
     
      Precache content for the supplied release.
 
@@ -28,7 +28,7 @@ Usage: $0 --release WSXXX [--class CLASS --widget WIDGET --queries_to (URI) --al
 
      --queries_to
      Fully qualified URI of where to send queries.
-     Default: http://staging.wormbase.org/
+     Default: http://localhost:5000/
 
      --already_cached_via
      Specified how we will check if a given URL has already been cached. 
@@ -37,7 +37,7 @@ Usage: $0 --release WSXXX [--class CLASS --widget WIDGET --queries_to (URI) --al
      Otherwise, the couchdb_host will be checked.
      Default: couchdb
 
-     --couchdb_host
+     --couchdb
      The location of the couchdb, one of staging, localhost, or production. You should
      be able to read/write to this URL. Port 5984 will be appended. This controls:
           1. creating a new couch
@@ -90,7 +90,9 @@ END
 ;
 }
 
-$queries_to ||= 'staging';
+$queries_to     ||= 'http://localhost:5000/';
+$couchdb        ||= 'production';
+$already_cached ||= 'couchdb';
 
 my $agent;
 if ($class && $widget) {
@@ -98,21 +100,21 @@ if ($class && $widget) {
 							       class            => $class,
 							       widget           => $widget,
 							       queries_to       => $queries_to,
-							       couchdb_host     => $couchdb_host,
+							       couchdb_host     => $couchdb,
 							       already_cached_via => $already_cached,
 							     });
 } elsif ($class) {
     $agent = WormBase::Update::Staging::PrecacheContent->new({ release          => $release,
 							       class            => $class,
 							       queries_to       => $queries_to,
-							       couchdb_host     => $couchdb_host,
+							       couchdb_host     => $couchdb,
 							       already_cached_via => $already_cached,
 							     });
 
 } else {
     $agent = WormBase::Update::Staging::PrecacheContent->new({ release          => $release,
 							       queries_to       => $queries_to,
-							       couchdb_host     => $couchdb_host,
+							       couchdb_host     => $couchdb,
 							       already_cached_via => $already_cached,
 							     });
 }

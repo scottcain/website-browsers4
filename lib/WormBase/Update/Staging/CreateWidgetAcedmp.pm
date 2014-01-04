@@ -69,7 +69,7 @@ sub create_ace_file {
     $content =~ s/\n|\t|\s{2,}|\"/ /g;
     print OUT "Page : \"$row[0]\"\n";
     print OUT "Public_name\t\"$row[1]\"\n";
-    print OUT "Widget_title\t\"$row[2]\"\n";
+    print OUT "Widget_title\t\"$row[2]\"\n" if $row[2];
     print OUT "Editor\t\"$row[3]\"\n";
     print OUT "WBID\t\"$row[4]\"\n" if $row[4];
     print OUT "Widget_order\t\"$row[5]\"\n";
