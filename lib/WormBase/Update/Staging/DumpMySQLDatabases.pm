@@ -21,8 +21,8 @@ sub run {
     my $self = shift;            
 
     my $release    = $self->release;
-    my $source_user = $self->target_user;
-    my $source_pass = $self->target_pass;
+    my $source_user = $self->source_user;
+    my $source_pass = $self->source_pass;
 
     my ($species) = $self->wormbase_managed_species;
     my @dbs;
