@@ -34,7 +34,8 @@ sub run {
     my $instance = $instances->[0];
     
     # Now that I have the instance, create a new AMI from it with appropriate tags.
-    my $image = $instance->create_image(-name        => 'wb-production',
+    # The AMI Name *must* be unique, but not the "Tag:Name"
+    my $image = $instance->create_image(-name        => 'wb-production-' . $self->release,
 					-description => 'wormbase production AMI',
 	);
     

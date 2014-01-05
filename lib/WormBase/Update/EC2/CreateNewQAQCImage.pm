@@ -42,7 +42,8 @@ sub run {
     my $instance = $instances->[0];
     
     # Now that I have the instance, create a new AMI from it with appropriate tags.
-    my $images = $instance->create_image(-name         => 'wb-qaqc',
+    # The AMI Name *must* be unique.
+    my $images = $instance->create_image(-name         => "wb-qaqc-" . $self->release,
 					 -description  => 'image created from the WormBase dev environment',
 					 -no_reboot    => 1, );
     
@@ -53,7 +54,7 @@ sub run {
     
     # Add some tags to the AMI and its backing snapshots.
     $self->tag_images({ images => $images,
-			description => "wormbase development image autocreated from $instance",
+			description => "wormbase qaqc image autocreated from $instance",
 			name        => 'wb-qaqc',
 			status      => 'qaqc',
 			role        => 'webapp',

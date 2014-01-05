@@ -6,7 +6,7 @@ extends qw/WormBase::Update::EC2/;
 # The symbolic name of this step
 has 'step' => (
     is      => 'ro',
-    default => 'launch QAQC instances from the current development image',
+    default => 'launch QAQC instances from the current qaqc image',
 );
 
 # Number of instances to launch; optionally supplied to constructor.
@@ -44,11 +44,11 @@ echo "stopping services..."
 /etc/init.d/jenkins stop
 
 # Set a sensible hostname
-echo "setting hostname..."
-hostname qaqc
+# echo "setting hostname..."
+# hostname qaqc
 
 # Make sure that sudo continues to work.
-printf "\n127.0.0.1   qaqc\n" >> /etc/hosts
+# printf "\127.0.0.1   qaqc\n" >> /etc/hosts
 
 # "Git" the repo
 echo "Fetching the git repository..."

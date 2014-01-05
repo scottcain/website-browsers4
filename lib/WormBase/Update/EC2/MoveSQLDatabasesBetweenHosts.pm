@@ -98,6 +98,7 @@ function do_sql_load () {
     
     echo "Copy \${this_db} into $target_host"
     time mysql --host=\$TARGET_HOST --user=$target_user --password=$target_pass `echo \${this_db}` < /\$TMPDIR/`echo \${this_db}`.sql    
+}
 
 j=0
 while [ \$j -lt \${COUNT} ];

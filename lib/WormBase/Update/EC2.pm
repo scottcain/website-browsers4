@@ -86,7 +86,8 @@ sub _build_qaqc_image {
     my $self = shift;
     my $ec2  = $self->ec2;
     
-    my $i = $self->get_images({'tag:Status' => 'qaqc'});
+    my $i = $self->get_images({'tag:Status' => 'qaqc',
+			       'tag:Release' => $self->release, });
     
     if (@$i > 1) { 
 	my $release = $self->release;

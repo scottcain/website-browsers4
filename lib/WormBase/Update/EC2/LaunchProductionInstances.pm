@@ -139,20 +139,20 @@ cp -rp /mnt/ebs0/usr/local/wormbase/extlib/* /mnt/ephemeral0/usr/local/wormbase/
 
 # WS240 on RDS
 # MySql databases. These are now on RDS.
-echo "setting up mysql/ ..."
-mkdir -p /mnt/ephemeral1/var/lib/mysql
-mkdir -p /mnt/ephemeral1/var/log/mysql
-mkdir -p /mnt/ephemeral1/etc/mysql
-cp -rp /mnt/ebs0/lib/mysql/* /mnt/ephemeral1/var/lib/mysql/.
-cp -rp /mnt/ebs0/log/mysql/* /mnt/ephemeral1/var/log/mysql/.
-cp -rp /mnt/ebs0/etc/mysql/* /mnt/ephemeral1/etc/mysql/.
-mount --bind /mnt/ephemeral1/var/lib/mysql /var/lib/mysql
-mount --bind /mnt/ephemeral1/var/log/mysql /var/log/mysql
-mount --bind /mnt/ephemeral1/etc/mysql     /etc/mysql
-chown -R mysql:mysql /var/lib/mysql
-chown -R mysql:mysql /var/log/mysql
-chown -R mysql:mysql /etc/mysql
-/etc/init.d/mysql restart
+#echo "setting up mysql/ ..."
+#mkdir -p /mnt/ephemeral1/var/lib/mysql
+#mkdir -p /mnt/ephemeral1/var/log/mysql
+#mkdir -p /mnt/ephemeral1/etc/mysql
+#cp -rp /mnt/ebs0/lib/mysql/* /mnt/ephemeral1/var/lib/mysql/.
+#cp -rp /mnt/ebs0/log/mysql/* /mnt/ephemeral1/var/log/mysql/.
+#cp -rp /mnt/ebs0/etc/mysql/* /mnt/ephemeral1/etc/mysql/.
+#mount --bind /mnt/ephemeral1/var/lib/mysql /var/lib/mysql
+#mount --bind /mnt/ephemeral1/var/log/mysql /var/log/mysql
+#mount --bind /mnt/ephemeral1/etc/mysql     /etc/mysql
+#chown -R mysql:mysql /var/lib/mysql
+#chown -R mysql:mysql /var/log/mysql
+#chown -R mysql:mysql /etc/mysql
+#/etc/init.d/mysql restart
 
 # Unmount /dev/sdb
 echo "unmounting the reference volume ..."
@@ -177,7 +177,7 @@ END
 ;
  
 # TO DO: should send an email
-# with hostname, etc. 
+# with hostname, etc that we're up and ready to go.
 }
 
 sub run {
@@ -187,11 +187,11 @@ sub run {
     my $image     = $self->production_image;
 
     $self->tag_instances({ instances   => $instances,
-			   description => "production instance from AMI: $production_image",
+			   description => "production instance from AMI: $image",
 			   name        => 'wb-webapp',
 			   status      => 'production',
 			   role        => 'webapp',
-			   source_ami  => $self->image,
+			   source_ami  => $self->production_image,
 			 });
 
     $self->tag_volumes({ instances   => $instances,
@@ -232,7 +232,7 @@ sub _launch_instances  {
 					  -user_data         => $self->user_data,
 					  -block_devices => [ '/dev/sde=ephemeral0',
 							      '/dev/sdf=ephemeral1',
-							      '/dev/sdg=:$size:true'],
+							      "/dev/sdg=:$size:true"],
 	);
     
     # Wait until the instances are up and running.
@@ -246,8 +246,9 @@ sub _launch_instances  {
 # Detach then delete the data volume.
 # It should *already* have been unmounted by the configuration script.
 sub delete_data_volume {
-    my $instances = shift;
+    my ($self,$instances) = @_;
     
+    my $ec2 = $self->ec2;
     foreach my $i (@$instances) {
 	print "Detaching and deleting reference data volume from $i...\n";
 	my @devices = $i->blockDeviceMapping;
@@ -259,9 +260,9 @@ sub delete_data_volume {
 		my $a = $ec2->detach_volume($volume);
 		$ec2->wait_for_attachments($a);
 		if ($a->current_status eq 'detached') {
-		    print "\t ... volume $d detached.\n";
+		    $self->log->info(" ... volume $d detached");
 		    my $status = $ec2->delete_volume($volume);
-		    print "\t ... volume $d deleted.\n";
+		    $self->log->info(" ... volume $d deleted");
 		}
 	    }
 	}

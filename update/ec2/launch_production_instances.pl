@@ -32,7 +32,7 @@ END
 }
 
 $instance_count ||= 1;
-$instance_type  ||= 'm1.large';
+$instance_type  ||= 'm1.xlarge';
 
 my $agent = WormBase::Update::EC2::LaunchProductionInstances->new(instance_count => $instance_count,
 								  instance_type  => $instance_type,

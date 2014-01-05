@@ -7,8 +7,8 @@ use WormBase::Update::EC2::CreateNewProductionImage;
 use Getopt::Long;
 
 my ($release,$help);
-GetOptions('release=s'     => \$release,
-	   'help=s'        => \$help,
+GetOptions('release=s' => \$release,
+	   'help'      => \$help,
     );
 
 
@@ -26,6 +26,6 @@ END
 
 }
 
-my $agent = WormBase::Update::EC2::CreateNewProductionImage->new();
+my $agent = WormBase::Update::EC2::CreateNewProductionImage->new(release => $release);
 $agent->run();
 

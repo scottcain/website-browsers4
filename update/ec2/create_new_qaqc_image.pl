@@ -29,6 +29,6 @@ END
 
 }
 
-my $agent = WormBase::Update::EC2::CreateNewQAQCImage->new();
+my $agent = WormBase::Update::EC2::CreateNewQAQCImage->new(release => $release);
 $agent->run();
 
