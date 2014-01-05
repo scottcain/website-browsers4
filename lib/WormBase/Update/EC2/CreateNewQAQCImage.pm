@@ -54,7 +54,7 @@ sub run {
     
     # Add some tags to the AMI and its backing snapshots.
     $self->tag_images({ images => $images,
-			description => "wormbase development image autocreated from $instance",
+			description => "wormbase qaqc image autocreated from $instance",
 			name        => 'wb-qaqc',
 			status      => 'qaqc',
 			role        => 'webapp',
