@@ -96,15 +96,23 @@ sub _build_f2c {
 	include => 'primary_gene_track',
 	children   => [ 'mRNA:WormBase',
 			'five_prime_UTR:WormBase',
-			'three_prime_UTR:WormBase',
-                        'gene:WormBase_imported',
-			'mRNA:WormBase_imported',                                 
-			'five_prime_UTR:WormBase_imported',
-			'three_prime_UTR:WormBase_imported' ],
+			'three_prime_UTR:WormBase'],
 	# These features are part of both WormBase:gene (all genes) and protein coding genes.
 	# We use them as the top level feature for protein coding genes (and to trigger insertion of the DNA/CODING_SEGMENTS tracks)
 	# 'WormBase_imported:CDS',
 	# 'WormBase:CDS',
+    };
+
+
+    $f2c->{'gene:WormBase_imported'} = { 
+	# Terrible name. Sorry, legacy for now, will fix with WS241:
+	# 1. update here
+	# 2. change name of include file
+	# 3. update app
+	include => 'primary_gene_track',
+	children   => [ 'mRNA:WormBase_imported',                                 
+			'five_prime_UTR:WormBase_imported',
+			'three_prime_UTR:WormBase_imported' ],
     };
     
     $f2c->{'ncRNA:WormBase'} = { 
