@@ -12,7 +12,7 @@ has 'step' => (
 # Size of the required data mount, in GB
 has 'data_volume_size' => (
     is => 'ro',
-    default => 50
+    default => 200,
     );
 
 # Number of instances to launch; optionally supplied to constructor.
@@ -38,7 +38,45 @@ sub _build_user_data {
     my $self    = shift;    
     my $release = $self->release;
 
+    # Just use the basic set up of the qaqc set ups
     my $user_data = <<END;
+#!/bin/bash
+
+# Stop services
+echo "stopping services that aren't required in production..."
+# Some instances MIGHT require mysql (GBrowse...)
+# but I'd still need to fetch the databases from somewhere.
+/etc/init.d/mysql stop
+killall -9 sgifaceserver
+/etc/init.d/apache2 stop
+/etc/init.d/jenkins stop
+
+echo "ensuring that future AMIs created from this instance can use user-data..."
+insserv -d ec2-run-user-data
+
+# perllib - add to my .profile. Not very portable...
+echo "configuring perllib..."
+cd /usr/local/wormbase/extlib
+perl -Mlocal::lib=.\/ >> /home/tharris/.bash_profile
+eval $(perl -Mlocal::lib=.\/)
+
+echo "Preconfiguration is complete!"
+echo "You should now :"
+echo "    > saceclient localhost -port 2005  -- to start sgifaceserver"
+echo "    > cd /usr/local/wormbase/website/production ; ./script/wormbase-daemons.sh -- to start webapp"
+
+echo "Be sure to update the reverse proxy config with new *internal* IP address of this host! It is:"
+
+IP=`GET http://169.254.169.254/latest/meta-data/local-ipv4`
+echo "local private IP: \$IP"
+END
+;
+
+
+
+
+    # user-data if we want to resize the data mount
+    my $user_data_small_data = <<END;
 #!/bin/bash
 
 # Stop services
@@ -82,14 +120,14 @@ mount --bind /mnt/ebs1/usr/local/wormbase/acedb /usr/local/wormbase/acedb
 # copy data over.
 ################################################
 # /usr/local/wormbase/databases
-echo "relocating databases to ephemeral storage..."
+echo "relocating databases to ebs storage..."
 mkdir /usr/local/wormbase/databases
 chown -R tharris:wormbase /usr/local/wormbase/databases
-mkdir -p /mnt/ephemeral0/usr/local/wormbase/databases
-chown -R tharris:wormbase /mnt/ephemeral0/usr/local/wormbase/databases
-chmod 2775 /mnt/ephemeral0/usr/local/wormbase/databases
-cp -rp /mnt/ebs0/usr/local/wormbase/databases/* /mnt/ephemeral0/usr/local/wormbase/databases/.
-mount --bind /mnt/ephemeral0/usr/local/wormbase/databases /usr/local/wormbase/databases
+mkdir -p /mnt/ebs1/usr/local/wormbase/databases
+chown -R tharris:wormbase /mnt/ebs1/usr/local/wormbase/databases
+chmod 2775 /mnt/ebs1/usr/local/wormbase/databases
+cp -rp /mnt/ebs0/usr/local/wormbase/databases/* /mnt/ebs1/usr/local/wormbase/databases/.
+mount --bind /mnt/ebs1/usr/local/wormbase/databases /usr/local/wormbase/databases
 cd /usr/local/wormbase/databases
 tar xzf *
 
@@ -102,13 +140,14 @@ chmod 2775 /mnt/ephemeral0/usr/local/wormbase/tmp
 mount --bind /mnt/ephemeral0/usr/local/wormbase/tmp /usr/local/wormbase/tmp
 
 # /usr/local/wormbase/website
-echo "relocating website/ to ephemeral storage..."
+echo "relocating website/ to ebs storage..."
 mkdir /usr/local/wormbase/website
-mkdir -p /mnt/ephemeral0/usr/local/wormbase/website
-chown -R tharris:wormbase /mnt/ephemeral0/usr/local/wormbase/website
-chmod 2775 /mnt/ephemeral0/usr/local/wormbase/website
-mount --bind /mnt/ephemeral0/usr/local/wormbase/website /usr/local/wormbase/website
-cp -rp /mnt/ebs0/usr/local/wormbase/website/* /mnt/ephemeral0/usr/local/wormbase/website/.
+mkdir -p /mnt/ebs1/usr/local/wormbase/website
+chown -R tharris:wormbase /mnt/ebs1/usr/local/wormbase/website
+chmod 2775 /mnt/ebs1/usr/local/wormbase/website
+cp -rp /mnt/ebs0/usr/local/wormbase/website/* /mnt/ebs1/usr/local/wormbase/website/.
+mount --bind /mnt/ebs1/usr/local/wormbase/website /usr/local/wormbase/website
+
 
 # /usr/local/wormbase/website-shared-files
 echo "setting up website-shared-files/ ..."
@@ -122,20 +161,20 @@ cp -rp /mnt/ebs0/usr/local/wormbase/website-shared-files/* /mnt/ephemeral0/usr/l
 # /usr/local/wormbase/website-admin
 echo "setting up website-admin/ ..."
 mkdir /usr/local/wormbase/website-admin
-mkdir -p /mnt/ephemeral0/usr/local/wormbase/website-admin
-chown -R tharris:wormbase /mnt/ephemeral0/usr/local/wormbase/website-admin
-chmod 2775 /mnt/ephemeral0/usr/local/wormbase/website-admin
-mount --bind /mnt/ephemeral0/usr/local/wormbase/website-admin /usr/local/wormbase/website-admin
-cp -rp /mnt/ebs0/usr/local/wormbase/website-admin/* /mnt/ephemeral0/usr/local/wormbase/website-admin/.
+mkdir -p /mnt/ebs1/usr/local/wormbase/website-admin
+chown -R tharris:wormbase /mnt/ebs1/usr/local/wormbase/website-admin
+chmod 2775 /mnt/ebs1/usr/local/wormbase/website-admin
+mount --bind /mnt/ebs1/usr/local/wormbase/website-admin /usr/local/wormbase/website-admin
+cp -rp /mnt/ebs0/usr/local/wormbase/website-admin/* /mnt/ebs1/usr/local/wormbase/website-admin/.
 
 # /usr/local/wormbase/extlib
 echo "setting up extlib/ ..."
 mkdir /usr/local/wormbase/extlib
-mkdir -p /mnt/ephemeral0/usr/local/wormbase/extlib
-chown -R tharris:wormbase /mnt/ephemeral0/usr/local/wormbase/extlib
-chmod 2775 /mnt/ephemeral0/usr/local/wormbase/extlib
-mount --bind /mnt/ephemeral0/usr/local/wormbase/extlib /usr/local/wormbase/extlib
-cp -rp /mnt/ebs0/usr/local/wormbase/extlib/* /mnt/ephemeral0/usr/local/wormbase/extlib/.
+mkdir -p /mnt/ebs1/usr/local/wormbase/extlib
+chown -R tharris:wormbase /mnt/ebs1/usr/local/wormbase/extlib
+chmod 2775 /mnt/ebs1/usr/local/wormbase/extlib
+mount --bind /mnt/ebs1/usr/local/wormbase/extlib /usr/local/wormbase/extlib
+cp -rp /mnt/ebs0/usr/local/wormbase/extlib/* /mnt/ebs1/usr/local/wormbase/extlib/.
 
 # WS240 on RDS
 # MySql databases. These are now on RDS.
@@ -200,7 +239,7 @@ sub run {
 			 status      => 'production',
 			 role        => 'webapp',
 		       });
-    $self->delete_data_volume($instances);
+#    $self->delete_data_volume($instances);
 
     $self->log->info("New production instances have been launched");
     $self->display_instance_metadata($instances);
@@ -221,7 +260,8 @@ sub _launch_instances  {
     $self->log->info("Launching $instance_count $instance_type instances...");
 
     my $size = $self->data_volume_size;
-    
+
+    # If we want to resize the data volume
     my @instances = $image->run_instances(-min_count         => $instance_count,
 					  -max_count         => $instance_count,
 					  -key_name          => 'wormbase-webapp',
@@ -231,9 +271,24 @@ sub _launch_instances  {
 					  -shutdown_behavior => 'terminate',
 					  -user_data         => $self->user_data,
 					  -block_devices => [ '/dev/sde=ephemeral0',
-							      '/dev/sdf=ephemeral1',
-							      "/dev/sdg=:$size:true"],
+							      '/dev/sdf=ephemeral1'],
 	);
+
+    # If we want to resize the data volume
+    if (0) {
+	my @instances = $image->run_instances(-min_count         => $instance_count,
+					      -max_count         => $instance_count,
+					      -key_name          => 'wormbase-webapp',
+					      -security_group    => 'wormbase-production-webapp',
+					      -instance_type     => $instance_type,
+					      -placement_zone    => 'us-east-1d',
+					      -shutdown_behavior => 'terminate',
+					      -user_data         => $self->user_data,
+					      -block_devices => [ '/dev/sde=ephemeral0',
+								  '/dev/sdf=ephemeral1',
+								  "/dev/sdg=:$size:true"],
+	    );
+    }
     
     # Wait until the instances are up and running.
     $self->log->info("Waiting for instances to launch...");
