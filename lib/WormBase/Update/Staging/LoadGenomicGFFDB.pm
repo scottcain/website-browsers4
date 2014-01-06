@@ -76,8 +76,7 @@ sub load_gffdb {
     
     my $release = $self->release;
     my $name    = $bioproject->symbolic_name;
-    
-    
+        
     my $gff     = $bioproject->gff_file;       # this includes the full path.
 
     my $fasta   = join("/",$bioproject->release_dir,$bioproject->genomic_fasta);  # this does not.
@@ -106,32 +105,25 @@ sub load_gffdb {
     # Need to strip some entries from C. elegans
     # We'll process GFF3 (for now) below.
     if ($name =~ /elegans/) {	
-	$self->log->debug("processing $name ($bioproject) GFF files");
-	
-	my $output = $bioproject->release_dir . "/$name.$id.$release.annotations-processed.gff3.gz";
-	
 	# Fix the FASTA file
 	my $tmp = $self->tmp_dir;
 	my $reformat = "gunzip -c $fasta | perl -p -i -e 's/CHROMOSOME_//g' | gzip -c > $tmp/$name.$id.$release.genomic-renamed.fa.gz";
 	$self->system_call($reformat,$reformat);
 	$fasta = "$tmp/$name.$id.$release.genomic-renamed.fa.gz";
-	
-	my $cmd = $self->bin_path . "/../helpers/process_gff.pl $gff | gzip -cf > $output";
-	$bioproject->gff_file("$output"); # Swap out the GFF files to load.
-	$gff = $bioproject->gff_file;
-	$self->system_call($cmd,'processing C. elegans GFF');	
-    } 
+    }
     
+    $self->log->debug("processing $name ($bioproject) GFF files");
+    my $output = $bioproject->release_dir . "/$name.$id.$release.annotations-processed.gff3.gz";
+    my $cmd = $self->bin_path . "/../helpers/process_gff.pl $gff | gzip -cf > $output";
+    $bioproject->gff_file("$output"); # Swap out the GFF files to load.
+    $gff = $bioproject->gff_file;
+    $self->system_call($cmd);	
+
     $ENV{TMP} = $self->tmp_dir;
     my $tmp   = $self->tmp_dir;
     
     my $db   = $bioproject->mysql_db_name;
 
-#    if ($name =~ /elegans|briggsae|brenneri|japonica|remanei|pacificus|malayi/) {
-#	# For now, we are testing GFF3 databases for these species
-#	$db = $db . '_gff3_test';
-#    }
-    
     # Passing $db here is temporary in order to create temp db names for testing
     $self->create_database($bioproject,$db);
 
