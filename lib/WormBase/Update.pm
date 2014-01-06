@@ -551,6 +551,7 @@ sub update_symlink {
 sub system_call {
     my ($self,$cmd,$msg) = @_;
     my $result = system($cmd);
+    $msg ||= $cmd;
     if ($result == 0) {
 	$self->log->debug("$msg: $cmd succeeded");
     } else {

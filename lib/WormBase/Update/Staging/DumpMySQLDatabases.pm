@@ -71,7 +71,7 @@ function do_sql_load () {
 j=0
 while [ \$j -lt \${COUNT} ];
 do
-    this_db="\${dbs[\$j]}_$release"
+    this_db="\${dbs[\$j]}"
     do_sql_load \${this_db}    
     j=\$((\$j+1))
 done
