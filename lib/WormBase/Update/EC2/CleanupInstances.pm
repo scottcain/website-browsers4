@@ -28,7 +28,7 @@ sub run {
 	# Get all volumes. Delete them.
 	# my @volumes = $ec2->describe_volumes(-filter=> { 'attachment.instance-id' => $instance } );	
 	my @devices   = $instance->blockDeviceMapping;
-	
+
 	# Terminate the instance.
 	$ec2->terminate_instances($instance);
 	$ec2->wait_for_instances([$instance]);
