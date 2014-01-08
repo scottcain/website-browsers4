@@ -605,7 +605,7 @@ sub _build_f2c {
     };
 
     # This might ALSO require special handling: overlaps with other tracks
-    $f2c->{'region:Vancouver_fosmid'} = {
+    $f2c->{'nucleotide_match:Vancouver_fosmid'} = {
 	children=> [qw/assembly_component:Genomic_canonical/],
 	include => 'clones',
     };
