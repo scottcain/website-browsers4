@@ -874,11 +874,13 @@ sub _create_database_stanza {
     my ($self,$species) = @_;
     my $release = $self->release;
 
+#  -dsn dbi:mysql:database=${species}_${release};host=mysql.wormbase.org
+
     my $stanza = <<END;
 [this_database:database]
 db_adaptor  = Bio::DB::SeqFeature::Store
-db_args     = -adaptor DBI::mysql
-              -dsn dbi:mysql:database=${species}_${release};host=mysql.wormbase.org
+db_args     = -adaptor DBI::mysql              
+              -dsn dbi:mysql:database=${species}_${release};host=localhost
 	      -user wormbase
 	      -pass sea3l3ganz
 search options = default, +wildcard, -stem, +fulltext, +autocomplete

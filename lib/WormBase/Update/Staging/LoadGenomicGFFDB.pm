@@ -36,8 +36,10 @@ sub run {
 
 	# Temporary: already built.
 #	next if $name =~ /suum/;
-#	next if $name =~ /malayi/;
-#	next unless $name =~ /pacificus|c_sp5|c_sp11|contortus|ratti|spiralis/;
+#	next if $name =~ /xylophilus/;
+#	next if $name =~ /angaria/;
+#	next if $name =~ /briggsae/;
+#	next unless $name =~ /malayi|brenneri/;
 #	next unless $name =~ /immitis|bacteriophora|loa|hapla|incognita|redivivus/;
 #	next if $name =~ /suum|xylophilus|angaria|c_sp5|c_sp11/;
 #	next unless $name =~ /briggsae|brenneri|japonica|remanei|pacificus/;
