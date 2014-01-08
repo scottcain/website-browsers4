@@ -589,18 +589,15 @@ sub _build_f2c {
 	include => 'microarray_oligo_probes',
     };
 
-    $f2c->{'PCR_product:promoterome'} = {
-	include => 'pcr_product_promoterome',
-    };
-
     $f2c->{'reagent:Oligo_set'} = {
 	include => 'microarray_oligo_probes',
     };
 
-
-    # This will require special handling - we've already seen this feature
-    # before
-    $f2c->{'PCR_product'} = {
+    # This MIGHT require special handling. The *intent*
+    # here is to present a track with all PCR products.
+    # We haven't yet broken out GenePairSTS to their own
+    # track so this kludge will work for now.
+    $f2c->{'PCR_product:GenePair_STS'} = {
 	include => 'pcr_products',
     };
 
@@ -703,7 +700,7 @@ sub generate_config {
 
 	    # Is there a suitable include for this feature?
 	    my $include = $f2c->{$feature}->{include};
-
+	    
 	    my ($method,$source) = split(":",$feature);
 	           
 	    if ($include) {
