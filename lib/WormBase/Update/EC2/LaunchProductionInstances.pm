@@ -33,6 +33,10 @@ has 'user_data' => (
     lazy_build => 1
     );
 
+has 'role' => (
+    is => 'rw',
+    );
+
 
 sub _build_user_data {
     my $self    = shift;    
@@ -46,7 +50,7 @@ sub _build_user_data {
 echo "stopping services that aren't required in production..."
 # Some instances MIGHT require mysql (GBrowse...)
 # but I'd still need to fetch the databases from somewhere.
-/etc/init.d/mysql stop
+#/etc/init.d/mysql stop
 killall -9 sgifaceserver
 /etc/init.d/apache2 stop
 /etc/init.d/jenkins stop
@@ -54,29 +58,36 @@ killall -9 sgifaceserver
 echo "ensuring that future AMIs created from this instance can use user-data..."
 insserv -d ec2-run-user-data
 
+# Set a sensible hostname
+# echo "setting hostname..."
+hostname prod
+
+# Make sure that sudo continues to work.
+printf "\127.0.0.1   prod\n" >> /etc/hosts
+
 # perllib - add to my .profile. Not very portable...
-echo "configuring perllib..."
-cd /usr/local/wormbase/extlib
-perl -Mlocal::lib=.\/ >> /home/tharris/.bash_profile
-eval $(perl -Mlocal::lib=.\/)
+#echo "configuring perllib..."
+#cd /usr/local/wormbase/extlib
+#perl -Mlocal::lib=.\/ >> /home/tharris/.bash_profile
+#eval $(perl -Mlocal::lib=.\/)
 
 echo "Preconfiguration is complete!"
 echo "You should now :"
 echo "    > saceclient localhost -port 2005  -- to start sgifaceserver"
-echo "    > cd /usr/local/wormbase/website/production ; ./script/wormbase-daemons.sh -- to start webapp"
+echo "    > cd /usr/local/wormbase/website/production ; ./script/wormbase-daemon.sh -- to start webapp"
 
 echo "Be sure to update the reverse proxy config with new *internal* IP address of this host! It is:"
 
 IP=`GET http://169.254.169.254/latest/meta-data/local-ipv4`
 echo "local private IP: \$IP"
 END
-;
+    ;
+}
 
+=pod
 
-
-
-    # user-data if we want to resize the data mount
-    my $user_data_small_data = <<END;
+# user-data if we want to resize the data mount
+my $user_data_small_data = <<END;
 #!/bin/bash
 
 # Stop services
@@ -148,7 +159,6 @@ chmod 2775 /mnt/ebs1/usr/local/wormbase/website
 cp -rp /mnt/ebs0/usr/local/wormbase/website/* /mnt/ebs1/usr/local/wormbase/website/.
 mount --bind /mnt/ebs1/usr/local/wormbase/website /usr/local/wormbase/website
 
-
 # /usr/local/wormbase/website-shared-files
 echo "setting up website-shared-files/ ..."
 mkdir /usr/local/wormbase/website-shared-files
@@ -217,19 +227,21 @@ END
  
 # TO DO: should send an email
 # with hostname, etc that we're up and ready to go.
-}
+
+=cut
 
 sub run {
     my $self = shift;           
     
     my $instances = $self->_launch_instances();
     my $image     = $self->production_image;
+    my $role      = $self->role;
 
     $self->tag_instances({ instances   => $instances,
 			   description => "production instance from AMI: $image",
 			   name        => 'wb-webapp',
 			   status      => 'production',
-			   role        => 'webapp',
+			   role        => $role,
 			   source_ami  => $self->production_image,
 			 });
 
@@ -237,7 +249,7 @@ sub run {
 			 description => "volume for production instance",
 			 name        => 'wb-webapp',  # this is the name root
 			 status      => 'production',
-			 role        => 'webapp',
+			 role        => $role,
 		       });
 #    $self->delete_data_volume($instances);
 

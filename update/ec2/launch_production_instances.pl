@@ -7,11 +7,12 @@ use strict;
 use WormBase::Update::EC2::LaunchProductionInstances;
 use Getopt::Long;
 
-my ($release,$help,$instance_count,$instance_type);
+my ($release,$help,$instance_count,$instance_type,$role);
 GetOptions('release=s'     => \$release,
 	   'help'          => \$help,
 	   'instances=i'   => \$instance_count,
 	   'type=s'        => \$instance_type,
+	   'role=s'        => \$role,
     );
 
 
@@ -26,6 +27,7 @@ Options:
   --release     required. The WSXXX version of release to build.
   --instances   optional. Number of new prod instances to launch. Default: 1.
   --type        optional. Size of new instances to launch. Default: m1.large
+  --role        the role of the instance. Default: webapp
 
 END
 
@@ -37,6 +39,7 @@ $instance_type  ||= 'm1.xlarge';
 my $agent = WormBase::Update::EC2::LaunchProductionInstances->new(instance_count => $instance_count,
 								  instance_type  => $instance_type,
 								  release        => $release,
+								  role           => $role || 'webapp',
     );
 $agent->execute();
 
