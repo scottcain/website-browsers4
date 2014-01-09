@@ -25,7 +25,7 @@ while (<>) {
   $group =~ s/locus=/Alias=/;
 
   # WS240 temp: fix gene landmarks
-  if ($source eq 'landmark' && $method eq 'gene') {
+  if ($method eq 'landmark' && $source eq 'gene') {
       $group =~ /Locus=(.*)/;
       $group = "ID=Locus:$1;Name=$1;Alias=$1";
   }
