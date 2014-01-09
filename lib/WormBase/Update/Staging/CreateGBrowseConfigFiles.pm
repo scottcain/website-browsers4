@@ -222,7 +222,8 @@ sub _build_f2c {
 		       'insertion_site:Allele',
 		       'substitution:Allele',
 		       'complex_substitution:Allele',
-		       'transposable_element_insertion_site:Allele'],
+		       'transposable_element_insertion_site:Allele',
+		       'point_mutation:Allele', ],
 	include => 'variations_classical_alleles',
     };
 		
@@ -245,6 +246,7 @@ sub _build_f2c {
 		       'deletion:PCoF_Allele',
 		       'insertion_site:PCoF_Allele',
 		       'substitution:PCoF_Allele',
+		       'point_mutation:PCoF_Allele',
 		       'transposable_element_insertion_site:PCoF_Allele',
 		       'deletion:PCoF_CGH_allele',
 		       'complex_substitution:PCoF_KO_consortium',
@@ -263,26 +265,26 @@ sub _build_f2c {
 	include => 'variations_change_of_function_alleles',
     };
 
-    $f2c->{'substitution:Variation_project_Polymorhpism'} = {
-	children   => ['deletion:CGH_allele_Polymorhpism',
-		       'substitution:Variation_project_Polymorhpism',
-		       'deletion:Variation_project_Polymorhpism',
-		       'SNP:Variation_project_Polymorhpism',
-		       'insertion_site:Variation_project_Polymorhpism',
-		       'complex_substitution:Variation_project_Polymorhpism',
-		       'sequence_alteration:Variation_project_Polymorhpism',
-		       'deletion:Allele_Polymorhpism'],
+    $f2c->{'substitution:Variation_project_Polymorphism'} = {
+	children   => ['deletion:CGH_allele_Polymorphism',
+		       'substitution:Variation_project_Polymorphism',
+		       'deletion:Variation_project_Polymorphism',
+		       'SNP:Variation_project_Polymorphism',
+		       'insertion_site:Variation_project_Polymorphism',
+		       'complex_substitution:Variation_project_Polymorphism',
+		       'sequence_alteration:Variation_project_Polymorphism',
+		       'deletion:Allele_Polymorphism'],
 	include => 'variations_polymorphisms',
     };
     
-    $f2c->{'deletion:PCoF_Variation_project_Polymorhpism'} = {
-	children   => ['deletion:PCoF_CGH_allele_Polymorhpism',
-		       'deletion:PCoF_Variation_project_Polymorhpism',
-		       'insertion_site:PCoF_Variation_project_Polymorhpism',
-		       'SNP:PCoF_Variation_project_Polymorhpism',
-		       'substitution:PCoF_Variation_project_Polymorhpism',
-		       'complex_substitution:PCoF_Variation_project_Polymorhpism',
-		       'sequence_alteration:PCoF_Variation_project_Polymorhpism'],
+    $f2c->{'deletion:PCoF_Variation_project_Polymorphism'} = {
+	children   => ['deletion:PCoF_CGH_allele_Polymorphism',
+		       'deletion:PCoF_Variation_project_Polymorphism',
+		       'insertion_site:PCoF_Variation_project_Polymorphism',
+		       'SNP:PCoF_Variation_project_Polymorphism',
+		       'substitution:PCoF_Variation_project_Polymorphism',
+		       'complex_substitution:PCoF_Variation_project_Polymorphism',
+		       'sequence_alteration:PCoF_Variation_project_Polymorphism'],
 	include  => 'variations_change_of_function_polymorphisms',
     };
 
