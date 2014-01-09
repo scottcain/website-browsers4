@@ -65,6 +65,10 @@ git submodule update
 echo "removing the wormbase.env file..."
 rm -rf /usr/local/wormbase/wormbase.env
 
+echo "copying over the rserve init script..."
+cp -r /usr/local/wormbase/website-admin/init/rserve-startup /etc/init.d/rserve-startup
+sudo -u jenkins /etc/init.d/rserve-startup start
+
 # What else do I need to do for qaqc? start precaching?
 
 echo "Preconfiguration is complete!"
