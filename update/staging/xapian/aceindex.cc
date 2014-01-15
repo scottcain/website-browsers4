@@ -145,10 +145,10 @@ parseSpecies (string &species) {
 
 bool 
 indexLineBegin(string field_name, string line, string copy, string obj_name, Xapian::Document doc, Xapian::Document syn_doc){
-  if((((field_name.find("name") != string::npos) || (int(field_name.find("term")) == 0))         && 
+  if((((field_name.find("name") != string::npos) || (int(field_name.find("term")) == 0))         &&
       (field_name.find("molecular") == string::npos)    &&
       (field_name.find("middle") == string::npos)    &&
-      (field_name.find("first") == string::npos))   || 
+      (field_name.find("first") == string::npos))   ||
       (field_name.find("synonym") != string::npos)) {
     //add any field with the word name or synonym in it as a synonym. do not add molecular_name
     
@@ -156,11 +156,11 @@ indexLineBegin(string field_name, string line, string copy, string obj_name, Xap
     indexer.index_text(line, 20); //index words separately
 
     if (line.length() > 2) {
-      if(((doc.get_value(6).length() < 1) || (int(field_name.find("standard_name")) == 0) || (int(field_name.find("public_name")) == 0))){
+      if(((doc.get_value(6).length() < 1) || (int(field_name.find("standard_name")) == 0) || (int(field_name.find("public_name")) == 0)) && (field_name.find("other") == string::npos)){
         string text = splitFields(copy, true);
         doc.add_value(6, text);
         syn_doc.add_value(6, text);
-      }              
+      }
       replaceChar(line, '-', '_');
       if(line.length() < 245){
         cout << "|" << line;
