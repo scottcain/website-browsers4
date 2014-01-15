@@ -126,6 +126,8 @@ Find Transgene
 Write $tmp_dir/Transgene.ace
 Find Transposon
 Write $tmp_dir/Transposon.ace
+Find Transposon_family
+Write $tmp_dir/Transposon_familiy.ace
 Find Variation
 Write $tmp_dir/Variation.ace
 Find WBProcess
@@ -154,7 +156,8 @@ classes = (   { filename = "Paper.ace";
                 desc = ("concise_description", "dead", "merged_into"); },
               { filename = "Variation.ace";
                 desc = ("status", "gene", "remark"); },
-              { filename = "Anatomy_term.ace";},
+              { filename = "Anatomy_term.ace";
+                desc = ("term");},
               { filename = "Antibody.ace";
                 desc = ("gene", "remark"); },
               { filename = "Clone.ace"; },
@@ -196,6 +199,7 @@ classes = (   { filename = "Paper.ace";
               { filename = "Structure_data.ace"; },
               { filename = "Transgene.ace"; },
               { filename = "Transposon.ace"; },
+              { filename = "Transposon_familiy.ace" },
               { filename = "Transcript.ace"; },
               { filename = "Analysis.ace"; 
                 desc = ("title", "description"); },
@@ -237,6 +241,9 @@ species = ( { name = "c_elegans";
             { name = "p_pacificus";
               fullname = "pristionchus pacificus"
               id = 54126; },
+            { name = "p_redivivus";
+              fullname = "panagrellus redivivus"
+              id = 6233; },
             { name = "a_suum";
               fullname = "ascaris suum"
               id = 6253; },
@@ -256,6 +263,9 @@ species = ( { name = "c_elegans";
               fullname = "bursaphelenchus xylophilus"
               id = 6326; 
               gff3 = 1; },
+            { name = "d_immitis";
+              fullname = "dirofilaria immitis";
+              id = 6297; },
             { name = "h_bacteriophora";
               fullname = "heterorhabditis bacteriophora"
               id = 37862; 
@@ -276,6 +286,9 @@ species = ( { name = "c_elegans";
               fullname = "meloidogyne incognita"
               id = 6306; 
               gff3 = 1;},
+            { name = "o_volvulus";
+              fullname = "onchocerca volvulus";
+              id = 6282;},
             { name = "s_ratti";
               fullname = "strongyloides ratti"
               id = 34506; 
@@ -284,8 +297,7 @@ species = ( { name = "c_elegans";
               fullname = "trichinella spiralis"
               id = 6334; 
               gff3 = 1;}
-); 
-
+);
 
 
 paper_types = (
