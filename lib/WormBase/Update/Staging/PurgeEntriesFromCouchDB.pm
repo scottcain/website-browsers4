@@ -72,10 +72,11 @@ sub run {
 		# but they are still being cached.  Let's selectively delete them.
 		# They have "Template::Exception" listed in content.
 		my $content = $couch->get_document($uuid);		
-		if ($content && $content->{data} && $content->{data} =~ /Template::Exception/) {
+		if ($content && $content->{data} && 
+		    ($content->{data} =~ /Template::Exception/ || $content->{data} =~ /fpkm_\.png/)) {
 		    $data  = $couch->delete_document({ uuid => $uuid, rev => $content->{_rev} });
 		    $objects{$obj}++;
-		}
+		}		
 	    } else {
 		$data  = $couch->delete_document({ uuid => $uuid });	    
 		$objects{$obj}++;
@@ -108,12 +109,14 @@ sub purge_entries_from_cache_log {
         
     open IN,"$cache_root/$class.original.log" or die "$!";
     open OUT,">>$cache_root/$class.log";
+    open PURGED,">>$cache_root/$class.purged";
     
     while (<IN>) {
 	chomp;
 	my ($class,$obj,$name,$url,$status,$cache_stop) = split("\t");
 	next if (($name eq $widget) && defined $objects->{$obj});
 	print OUT join("\t",$class,$obj,$name,$url,$status,$cache_stop),"\n";
+	print PURGED join("\t",$class,$obj,$name,$url),"\n";
     }
     close IN;
     close OUT;
