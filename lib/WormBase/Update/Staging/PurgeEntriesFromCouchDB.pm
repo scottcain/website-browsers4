@@ -62,7 +62,6 @@ sub run {
 	    chomp $obj;
 	    $obj =~ s/^\s*//;
 	    my $uuid = join('_',lc($class),lc($widget),$obj);
-	    $self->log->warn("Purging from " . $self->couchdb_host . ": $uuid");
 	    
 	    my $data;
 	    
@@ -74,20 +73,28 @@ sub run {
 		my $content = $couch->get_document($uuid);		
 		if ($content && $content->{data} && 
 		    ($content->{data} =~ /Template::Exception/ || $content->{data} =~ /fpkm_\.png/)) {
+		    $self->log->warn("Purging (selectively) from " . $self->couchdb_host . ": $uuid");
 		    $data  = $couch->delete_document({ uuid => $uuid, rev => $content->{_rev} });
 		    $objects{$obj}++;
+
+		    if ($data->{reason}) {
+			print STDERR "Deleting $uuid FAILED: " . $data->{reason} . "\n";
+		    } else {
+			print STDERR "Deleting $uuid: success";
+			print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
+		    }			    
 		}		
 	    } else {
+		$self->log->warn("Purging from " . $self->couchdb_host . ": $uuid");
 		$data  = $couch->delete_document({ uuid => $uuid });	    
 		$objects{$obj}++;
-	    }
-	    
-	    if ($data->{reason}) {
-		print STDERR "Deleting $uuid FAILED: " . $data->{reason} . "\n";
-	    } else {
-	        print STDERR "Deleting $uuid: success";
-		print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
-	    }	
+		if ($data->{reason}) {
+		    print STDERR "Deleting $uuid FAILED: " . $data->{reason} . "\n";
+		} else {
+		    print STDERR "Deleting $uuid: success";
+		    print STDERR -t STDOUT && !$ENV{EMACS} ? "\r" : "\n";
+		}			
+	    }	    
 	}
     }
     $self->purge_entries_from_cache_log(\%objects);
