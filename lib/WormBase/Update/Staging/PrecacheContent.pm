@@ -140,8 +140,8 @@ sub dump_object_lists {
                           Transgene
                          Transposon
                           Variation
-                                 YH
 /;
+
 
     my $release = $self->release;
     open OUT,">$cache_root/00-class_dump_script.ace";
@@ -282,8 +282,13 @@ sub crawl_website {
 	my $object_list = join("/",$cache_root,'logs',"$class.ace");
 	open OBJECTS,$object_list or $self->log->logwarn("Could not open the object list file: $object_list");
 
+#	my $this_start = 0;
 	while (my $obj = <OBJECTS>) {
 	    chomp $obj;
+#	    if ($obj =~ /WBGene00230562/) {
+#		$this_start++;
+#	    }
+#	    next if $this_start == 0;
 	    # Clean up ace files
 	    next if $obj =~ /^\w/;
 	    next if $obj eq "";
