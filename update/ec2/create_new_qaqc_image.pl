@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
-# Create a NEW build image from a currently running instance
-# tagged with Role:Build
+# Create a NEW QAQC image from a currently running instance
+# tagged with Role:development
 
 use FindBin qw/$Bin/;
 use lib "$Bin/../../lib";
