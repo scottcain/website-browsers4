@@ -123,8 +123,12 @@ sub purge_entries_from_cache_log {
 	my ($class,$obj,$name,$url,$status,$cache_stop) = split("\t");
 	next if (($name eq $widget) && defined $objects->{$obj});
 	print OUT join("\t",$class,$obj,$name,$url,$status,$cache_stop),"\n";
-	print PURGED join("\t",$class,$obj,$name,$url),"\n";
     }
+    
+    foreach (keys %$objects) {
+	print PURGED "$_\n";
+    }
+
     close IN;
     close OUT;
 }
