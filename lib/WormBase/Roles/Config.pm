@@ -384,7 +384,7 @@ has 'contact_email' => (
     
 has 'remote_ftp_root' => (
     is => 'ro',
-    default => 'pub2/wormbase'
+    default => 'consortia/wormbase'
     );
 
 has 'remote_ftp_releases_dir' => (

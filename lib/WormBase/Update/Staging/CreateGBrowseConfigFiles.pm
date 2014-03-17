@@ -93,7 +93,7 @@ sub _build_f2c {
 	# 1. update here
 	# 2. change name of include file
 	# 3. update app
-	include => 'primary_gene_track',
+	include => 'genes',
 	children   => [ 'mRNA:WormBase',
 			'five_prime_UTR:WormBase',
 			'three_prime_UTR:WormBase'],
@@ -109,7 +109,7 @@ sub _build_f2c {
 	# 1. update here
 	# 2. change name of include file
 	# 3. update app
-	include => 'primary_gene_track',
+	include => 'genes',
 	children   => [ 'mRNA:WormBase_imported',                                 
 			'five_prime_UTR:WormBase_imported',
 			'three_prime_UTR:WormBase_imported' ],
@@ -174,7 +174,7 @@ sub _build_f2c {
 	include    => 'prediction_rnaz',
     };
 	
-    $f2c->{'transposable_element:Transposon'} = { 
+    $f2c->{'transposable_element:WormBase_transposon'} = { 
 	include    => 'transposons',
     };
 	
@@ -527,7 +527,7 @@ sub _build_f2c {
     };
 
     $f2c->{'expressed_sequence_match:BLAT_OST_BEST'} = {
-	includes => 'orfeome_sequence_tags',
+	include => 'orfeome_sequence_tags',
     };
 
     $f2c->{'expressed_sequence_match:BLAT_RST_BEST'} = {
