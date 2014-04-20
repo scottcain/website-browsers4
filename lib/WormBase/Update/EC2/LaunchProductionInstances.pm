@@ -51,9 +51,10 @@ echo "stopping services that aren't required in production..."
 # Some instances MIGHT require mysql (GBrowse...)
 # but I'd still need to fetch the databases from somewhere.
 #/etc/init.d/mysql stop
-killall -9 sgifaceserver
-/etc/init.d/apache2 stop
-/etc/init.d/jenkins stop
+
+#killall -9 sgifaceserver
+#/etc/init.d/apache2 stop
+#/etc/init.d/jenkins stop
 
 echo "ensuring that future AMIs created from this instance can use user-data..."
 insserv -d ec2-run-user-data
@@ -64,6 +65,15 @@ hostname prod
 
 # Make sure that sudo continues to work.
 printf "\127.0.0.1   prod\n" >> /etc/hosts
+
+# Update the jenkins repository and switch to the production branch
+cd /var/lib/jenkins/jobs/staging_build/workspace
+sudo -u jenkins git pull
+git checkout production
+
+echo "APP=production" >> /tmp/wormbase.env
+echo 'PERL5LIB="
+source /tmp/wormbase.env
 
 # perllib - add to my .profile. Not very portable...
 #echo "configuring perllib..."
@@ -282,7 +292,8 @@ sub _launch_instances  {
 					  -placement_zone    => 'us-east-1d',
 					  -shutdown_behavior => 'terminate',
 					  -user_data         => $self->user_data,
-					  -block_devices => [ '/dev/sde=ephemeral0',
+					  -block_devices => [ '/dev/sdg=none',
+							      '/dev/sde=ephemeral0',
 							      '/dev/sdf=ephemeral1'],
 	);
 

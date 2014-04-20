@@ -325,6 +325,9 @@ sub tag_snapshots {
     my @these_snapshots;
     my $image = $params->{image};
     
+    # THIS IS BADLY BROKEN.
+    # IT ENDS UP TAGGING ALL SNAPSHOTS.
+    # Is image_id not defined?
     foreach my $snapshot (@all_snaps) {
 	if ($snapshot->description =~ /$image/) {  # taken here to be image_id.
 	    push @these_snapshots,$snapshot;
@@ -352,7 +355,7 @@ sub tag_snapshots {
 	
 	$ec2->add_tags(-resource_id => [ $id ],
 		       -tag         => { Name        => $params->{name} . "-$name",
-					 Description => "$name volume for build image $image",
+					 Description => "$name volume for image $image",
 					 Status      => $params->{status},
 					 Role        => $params->{role},
 					 Release     => $self->release,

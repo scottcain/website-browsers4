@@ -22,6 +22,11 @@ has 'instance_type' => (
     );
 
 
+has 'role' => (
+    is => 'rw',
+    default => 'webapp',
+    );
+
 has 'user_data' => (
     is => 'ro',
     lazy_build => 1
@@ -40,26 +45,26 @@ insserv -d ec2-run-user-data
 
 # Disable some services
 # Is user-data executed AFTER services have launched?
-echo "stopping services..."
-/etc/init.d/jenkins stop
+#echo "stopping services..."
+#/etc/init.d/jenkins stop
 
 # Set a sensible hostname
 # echo "setting hostname..."
 # hostname qaqc
 
 # Make sure that sudo continues to work.
-# printf "\127.0.0.1   qaqc\n" >> /etc/hosts
+# printf "127.0.0.1   qaqc\n" >> /etc/hosts
 
-# "Git" the repo
-echo "Fetching the git repository..."
-cd /usr/local/wormbase/website
-git clone git\@github.com:WormBase/website.git
-mv website production
-mkdir production/logs
-cd production
-git checkout production
-git submodule init
-git submodule update
+# Git the repo
+#echo "Fetching the git repository..."
+#cd /usr/local/wormbase/website
+#git clone git\@github.com:WormBase/website.git
+#mv website production
+#mkdir production/logs
+#cd production
+#git checkout production
+#git submodule init
+#git submodule update
 
 # Remove the configuration file for the app.
 echo "removing the wormbase.env file..."
@@ -67,17 +72,24 @@ rm -rf /usr/local/wormbase/wormbase.env
 
 echo "copying over the rserve init script..."
 cp -r /usr/local/wormbase/website-admin/init/rserve-startup /etc/init.d/rserve-startup
-sudo -u jenkins /etc/init.d/rserve-startup start
+sudo -u jenkins /etc/init.d/rserve-startup 
 
 # What else do I need to do for qaqc? start precaching?
 
-echo "Preconfiguration is complete!"
-echo "You should now :"
-echo "    > saceclient localhost -port 2005  -- to start sgifaceserver"
-echo "    > cd /usr/local/wormbase/website/production ; ./script/wormbase-daemons.sh -- to start webapp"
+# Remove an auotcreated my.cnf file that tends to break mysql
+rm -rf /etc/mysql/my.cnf
 
-IP=`GET http://169.254.169.254/latest/meta-data/local-ipv4`
-echo "local private IP: \$IP"
+# Minimize JS
+cd /var/lib/jenkins/jobs/staging_build/workspace
+sudo -u jenkins /usr/local/bin/uglifyjs root/js/wormbase.js -o root/js/wormbase.min.js
+
+echo "Preconfiguration is complete!"
+#echo "You should now :"
+#echo "    > saceclient localhost -port 2005  -- to start sgifaceserver"
+#echo "    > cd /usr/local/wormbase/website/production ; ./script/wormbase-daemon.sh -- to start webapp"
+
+#IP=`GET http://169.254.169.254/latest/meta-data/local-ipv4`
+#echo "local private IP: \$IP"
 
 END
 ;
@@ -123,7 +135,28 @@ sub _launch_instances  {
     
     $self->log->info("Found AMI ID $image built for " . $self->release . '.');
     $self->log->info("Launching $instance_count $instance_type instances...");
+
+    my $role = $self->role;
+    my @mounts = ('/dev/sdc=none');
     
+    # No FTP or modencode directory
+    if ($role eq 'webapp') {
+	push @mounts,'/dev/sdg=none';
+    }
+
+#	@instances = $image->run_instances(-min_count         => $instance_count,
+#					   -max_count         => $instance_count,
+#					   -key_name          => 'wormbase-development',
+#					   -security_group    => 'wormbase-development',
+#					   -instance_type     => $instance_type,
+#					   -placement_zone    => 'us-east-1d',
+#					   -shutdown_behavior => 'terminate',
+#					   -user_data         => $self->user_data,
+##					   -block_devices => [ '/dev/sdc=none' ],   # We don't want the FTP directory
+##									       '/dev/sde=ephemeral0',
+##									       '/dev/sdf=ephemeral1'],
+#	    );
+
     my @instances = $image->run_instances(-min_count         => $instance_count,
 					  -max_count         => $instance_count,
 					  -key_name          => 'wormbase-development',
@@ -132,11 +165,10 @@ sub _launch_instances  {
 					  -placement_zone    => 'us-east-1d',
 					  -shutdown_behavior => 'terminate',
 					  -user_data         => $self->user_data,
-					  -block_devices => [ '/dev/sdc=none' ],   # We don't want the FTP directory
-#									       '/dev/sde=ephemeral0',
-#									       '/dev/sdf=ephemeral1'],
+					  -block_devices     => \@mounts, 
+
 	);
-    
+        
     # Wait until the instances are up and running.
     $self->log->info("Waiting for instances to launch...");
     my $ec2 = $self->ec2;
