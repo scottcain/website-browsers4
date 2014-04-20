@@ -40,6 +40,7 @@ sub run {
     
     # Okay, we only have a single instance.
     my $instance = $instances->[0];
+    $self->log->logdie("no development instance found!") unless $instance;
     
     # Now that I have the instance, create a new AMI from it with appropriate tags.
     # The AMI Name *must* be unique.
@@ -53,7 +54,7 @@ sub run {
     }
     
     # Add some tags to the AMI and its backing snapshots.
-    $self->tag_images({ images => "$image",
+    $self->tag_images({ image       => "$image",
 			description => "wormbase qaqc image autocreated from $instance",
 			name        => 'wb-qaqc',
 			status      => 'qaqc',

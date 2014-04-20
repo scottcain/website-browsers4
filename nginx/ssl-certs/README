@@ -1,5 +1,33 @@
 SSL Certificate
 
+2014.04.08: Re-keying certificate due to Heartbleed leak
+
+-----BEGIN CERTIFICATE REQUEST-----
+MIICuDCCAaACAQAwczELMAkGA1UEBhMCVVMxEDAOBgNVBAgMB01vbnRhbmExEzAR
+BgNVBAcMCkxpdmluZ3N0b24xETAPBgNVBAoMCFdvcm1CYXNlMREwDwYDVQQLDAhX
+b3JtQmFzZTEXMBUGA1UEAwwOKi53b3JtYmFzZS5vcmcwggEiMA0GCSqGSIb3DQEB
+AQUAA4IBDwAwggEKAoIBAQC/5XUYyO4fQmJbz7ovRKhtXE2qS9qd89cmLKnZX8M7
+io6TH6nft7asRqt4PlTQ1NA8MF5Sw0UDBqF9O/2DodyLOSM52rPfsyA33LR4KWDx
+Sx2gRtMb5RfGyHw1Z+IV3Q94GlQYyJIwl5kWOOnMg9ZuyzooXFzSQZ1ciPwLXblO
+jXnOvbcPw7pzrny28f+I3k9fyZebf4YnWWD8mFAIZ8Trm2jaV86B82KT+LbbCxu+
+57u3Fb9mgY+kFgU9FuEMlYYwA3cH7YlnrNH9PEmlq3UGe3TUfiLOKU2mhmzyTEHv
+rrNHiY41CM724mQDl0wXpXz5od8crXQ7pVA+M5TBN+uZAgMBAAGgADANBgkqhkiG
+9w0BAQUFAAOCAQEAfGqj7M+x0Oevwy4GSv49Xeaxi7bNYF5M7bic/fPuNwkPSLzB
+6ce4XATdgc0BNzTC7CsIH7zA0aXX8MUe117ZJIEz6a6DzyTZto6tfT6YYnNzRkVj
+qI2WoBW3GCBUCBoj/n6XJAihd9EyVUXnqEUuXjaE21zulcMdveYp0c3mGoi8Nfp7
+qxJwADnDrvZ/Np4dCkes5NTM4w5YngxlpzOQvqsyXH0vII+XhoIapU2YVBx9q/QC
+FrAfTHhWbMF3t0s+kaLe9lRKF835dXpjXnaDj9YpgNUt/6Y1O1uxxNZOH7IzNNLb
+rV8+jJoFO8gDK+i1bx8FdAMQHElv4Hy/HCdRPg==
+-----END CERTIFICATE REQUEST-----
+
+
+cat wormbase.org.crt gd_bundle.crt > wormbase.org.chained.crt
+
+Use the contents of wormbase.org.chained.crt to key (or re-key) the certificate.
+
+
+
+
 Issued by Go Daddy 5/5/2012.
 Expires: 4/2015
 For: (www.)wormbase.org
