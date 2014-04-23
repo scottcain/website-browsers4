@@ -16,7 +16,7 @@ sub run {
     my $self = shift;           
 
     # Discover the current qaqc environment instance.
-    my $instances = $self->get_instances({'tag:Status'  => 'qaqc',					
+    my $instances = $self->get_instances({'tag:Status'  => 'qaqc-real',					
 					  'tag:Release' => $self->release});
     
     if (@$instances > 1) { 
