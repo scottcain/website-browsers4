@@ -60,12 +60,13 @@ sub run {
 			status      => 'qaqc',
 			role        => 'webapp',
 		      });
-    
-    $self->tag_snapshots({ images => "$image",
-			   name   => 'wb-qaqc',
-			   status => 'qaqc',
-			   role   => 'webapp',
-			 });
+ 
+    # This does NOT work -- especially if I have created multiple AMIs from the same instance.
+#    $self->tag_snapshots({ images => "$image",
+#			   name   => 'wb-qaqc',
+#			   status => 'qaqc',
+#			   role   => 'webapp',
+#			 });
     
     $self->log->info("Creating a new image from development: finished. Image id: $image");  
 }    

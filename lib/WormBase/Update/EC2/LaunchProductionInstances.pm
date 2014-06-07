@@ -35,12 +35,14 @@ has 'user_data' => (
 
 has 'role' => (
     is => 'rw',
+    default => 'webapp',
     );
 
 
 sub _build_user_data {
     my $self    = shift;    
     my $release = $self->release;
+    my $role    = $self->role;
 
     # Just use the basic set up of the qaqc set ups
     my $user_data = <<END;
@@ -61,15 +63,23 @@ insserv -d ec2-run-user-data
 
 # Set a sensible hostname
 # echo "setting hostname..."
-hostname prod
+hostname $role$release
 
 # Make sure that sudo continues to work.
-printf "\127.0.0.1   prod\n" >> /etc/hosts
+printf "\127.0.0.1   $role$release\n" >> /etc/hosts
+
+# Remove an auotcreated my.cnf file that tends to break mysql
+rm -rf /etc/mysql/my.cnf
+
 
 # Update the jenkins repository and switch to the production branch
 cd /var/lib/jenkins/jobs/staging_build/workspace
 sudo -u jenkins git pull
 git checkout production
+
+# Minimize JS
+cd /var/lib/jenkins/jobs/staging_build/workspace
+sudo -u jenkins /usr/local/bin/uglifyjs root/js/wormbase.js -o root/js/wormbase.min.js
 
 echo "APP=production" >> /tmp/wormbase.env
 echo 'PERL5LIB="
@@ -80,6 +90,10 @@ source /tmp/wormbase.env
 #cd /usr/local/wormbase/extlib
 #perl -Mlocal::lib=.\/ >> /home/tharris/.bash_profile
 #eval $(perl -Mlocal::lib=.\/)
+
+# Remove the configuration file for the app.
+echo "removing the wormbase.env file..."
+rm -rf /usr/local/wormbase/wormbase.env
 
 echo "Preconfiguration is complete!"
 echo "You should now :"
@@ -283,6 +297,18 @@ sub _launch_instances  {
 
     my $size = $self->data_volume_size;
 
+    my $role = $self->role;
+
+    # No FTP mount, but enable ephemeral storage
+    my @mounts = ('/dev/sdc=none',
+		  '/dev/sde=ephemeral0',
+		  '/dev/sdf=ephemeral1');
+    
+    # ... or modencode directory for webapp instances    
+    if ($role eq 'webapp') {
+	push @mounts,'/dev/sdg=none',
+    }
+
     # If we want to resize the data volume
     my @instances = $image->run_instances(-min_count         => $instance_count,
 					  -max_count         => $instance_count,
@@ -292,9 +318,8 @@ sub _launch_instances  {
 					  -placement_zone    => 'us-east-1d',
 					  -shutdown_behavior => 'terminate',
 					  -user_data         => $self->user_data,
-					  -block_devices => [ '/dev/sdg=none',
-							      '/dev/sde=ephemeral0',
-							      '/dev/sdf=ephemeral1'],
+					  -block_devices     => \@mounts,
+
 	);
 
     # If we want to resize the data volume

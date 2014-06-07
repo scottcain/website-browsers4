@@ -38,6 +38,22 @@ sub _build_user_data {
 my $user_data = <<END;
 #!/bin/bash
 
+insserv -d ec2-run-user-data
+rm -rf /usr/local/wormbase/wormbase.env
+/etc/init.d/rserve-startup 
+rm -rf /etc/mysql/my.cnf
+cd /var/lib/jenkins/jobs/staging_build/workspace
+sudo -u jenkins /usr/local/bin/uglifyjs root/js/wormbase.js -o root/js/wormbase.min.js
+
+END
+;
+    return $user_data;
+
+=pod
+
+
+#!/bin/bash
+
 # Ensure that any future AMIs created from this instance 
 # can also use user_dat
 echo "ensuring that future AMIs created from this instance can use user-data..."
@@ -92,8 +108,9 @@ echo "Preconfiguration is complete!"
 #echo "local private IP: \$IP"
 
 END
-;
-    return $user_data;
+
+=cut
+
 }
 
 sub run {
@@ -137,11 +154,16 @@ sub _launch_instances  {
     $self->log->info("Launching $instance_count $instance_type instances...");
 
     my $role = $self->role;
-    my @mounts = ('/dev/sdc=none');
+
+    # No FTP mount but enable ephemeral storage
+    my @mounts = ('/dev/sdc=none',
+		  '/dev/sde=ephemeral0',
+		  '/dev/sdf=ephemeral1');
     
-    # No FTP or modencode directory
+
+    # ... or modencode directory for webapp instances    
     if ($role eq 'webapp') {
-	push @mounts,'/dev/sdg=none';
+	push @mounts,'/dev/sdg=none',
     }
 
 #	@instances = $image->run_instances(-min_count         => $instance_count,

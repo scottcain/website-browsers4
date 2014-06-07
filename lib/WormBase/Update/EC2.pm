@@ -323,7 +323,7 @@ sub tag_snapshots {
     
     my @all_snaps = $ec2->describe_snapshots();
     my @these_snapshots;
-    my $image = $params->{image};
+    my $image = $params->{images};
     
     # THIS IS BADLY BROKEN.
     # IT ENDS UP TAGGING ALL SNAPSHOTS.

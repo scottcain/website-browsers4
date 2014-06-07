@@ -26,20 +26,20 @@ Launch new instances of the core webapp AMI.
 Options:
   --release     required. The WSXXX version of release to build.
   --instances   optional. Number of new prod instances to launch. Default: 1.
-  --type        optional. Size of new instances to launch. Default: m1.large
-  --role        the role of the instance. Default: webapp
+  --type        optional. Size of new instances to launch. Default: m3.xlarge
+  --role        the role of the instance. Default: webapp; other options: gbrowse
 
 END
 
 }
 
 $instance_count ||= 1;
-$instance_type  ||= 'm1.xlarge';
-
+$instance_type  ||= 'm3.xlarge';
+$role           ||= 'webapp';
 my $agent = WormBase::Update::EC2::LaunchProductionInstances->new(instance_count => $instance_count,
 								  instance_type  => $instance_type,
 								  release        => $release,
-								  role           => $role || 'webapp',
+								  role           => $role,
     );
 $agent->execute();
 
