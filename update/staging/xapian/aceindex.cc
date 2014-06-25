@@ -18,7 +18,7 @@
  * value(9) = start
  * value(10) = end
  * value(11) = strand
- * 
+ *
  * all tags are added as terms, unless it is a 'not_' tag
  * all 'name' or 'synonym' tags are added as synonyms to the WBid
  *
@@ -102,30 +102,30 @@ splitFields (string &fields, bool first = false){
 
     quote = fields.find_first_of('"');
     string word;
-    
+
     if(quote==string::npos){
       quote = fields.length();
     }
-    
+
     if(quote>0){
       word = fields.substr(0, quote);
       if(fields[quote-1] == '\\'){
         quote--;
       }
     }else{
-      quote = 0; 
+      quote = 0;
     }
-    
+
     fields = fields.substr(quote+1);
     ret += word + " ";
 
     if(first){
-     return word; 
+     return word;
     }
     quote = fields.find_first_of('"');
   }
   if(ret.length()<1){
-    return ret; 
+    return ret;
   }else{
     return ret.substr(0, ret.length()-1);
   }
@@ -143,7 +143,7 @@ parseSpecies (string &species) {
 }
 
 
-bool 
+bool
 indexLineBegin(string field_name, string line, string copy, string obj_name, Xapian::Document doc, Xapian::Document syn_doc){
   if((((field_name.find("name") != string::npos) || (int(field_name.find("term")) == 0))         &&
       (field_name.find("molecular") == string::npos)    &&
@@ -151,12 +151,12 @@ indexLineBegin(string field_name, string line, string copy, string obj_name, Xap
       (field_name.find("first") == string::npos))   ||
       (field_name.find("synonym") != string::npos)) {
     //add any field with the word name or synonym in it as a synonym. do not add molecular_name
-    
+
     line = splitFields(line, true);
     indexer.index_text(line, 20); //index words separately
 
     if (line.length() > 2) {
-      if(((doc.get_value(6).length() < 1) || (int(field_name.find("standard_name")) == 0) || (int(field_name.find("public_name")) == 0)) && (field_name.find("other") == string::npos)){
+      if(((doc.get_value(6).length() < 1) || (int(field_name.find("standard_name")) == 0) || (int(field_name.find("public_name")) == 0) || (int(field_name.find("term") == 0))) && (field_name.find("other") == string::npos)){
         string text = splitFields(copy, true);
         doc.add_value(6, text);
         syn_doc.add_value(6, text);
@@ -190,21 +190,21 @@ indexLineBegin(string field_name, string line, string copy, string obj_name, Xap
 }
 
 
-string 
+string
 indexLineEnd(string field_name, string line, string copy, string obj_name, Xapian::Document doc, Xapian::Document syn_doc, string desc[], int desc_size){
   string ret;
   if((int(field_name.find("not_")) != 0) && (field_name.find("_not_") == string::npos)){
-    
+
     //add blurbs to data
     for(int j=0; j<desc_size; j++){
       string d = desc[j];
       bool first = true;
       if((field_name.find("author")) == 0){ first = false; }
-      
+
       if(field_name.find(d) != string::npos){
         ret = ret + field_name + "=" + splitFields(copy, first) + "\n";
         continue;
-      }else if((int(field_name.find("address")) == 0) && (line.find("institution") != string::npos)){ 
+      }else if((int(field_name.find("address")) == 0) && (line.find("institution") != string::npos)){
         ret = ret + "institution=" + splitFields(copy, true) + "\n";
         continue;
       }
@@ -253,7 +253,7 @@ indexLinePaper(string field_name, string line, string copy, string obj_name, Xap
 
 void
 indexFile(char* filename, string desc[], int desc_size, Setting &root){
-  
+
     string paper_types [24];
     string f_name = filename;
     bool paper = (f_name.find("Paper") != string::npos);
@@ -266,15 +266,15 @@ indexFile(char* filename, string desc[], int desc_size, Setting &root){
         paper_types[i] = paper_type;
       }
     }
-  
+
     ifstream read;
     read.open(filename);
-    
+
     if(!read.is_open()){
      cout << "File " << filename << " does not exist." << endl;
-     return; 
+     return;
     }
-    
+
     string line;
     getline(read, line);
     while (!read.eof()) {
@@ -294,34 +294,34 @@ indexFile(char* filename, string desc[], int desc_size, Setting &root){
         doc.add_value(1, obj_name); // set value 1 to WBID
         syn_doc.add_value(0, obj_class); // set value 0 to class
         syn_doc.add_value(1, obj_name); // set value 1 to WBID
-        
+
         obj_name = Xapian::Unicode::tolower(obj_name);
         obj_class = Xapian::Unicode::tolower(obj_class);
         doc.add_value(2, obj_class); // set value 2 to lowercase class
         syn_doc.add_value(2, obj_class); // set value 2 to lowercase class
         syn_doc.add_term(obj_name, 1);
 
-        
+
         //add the class and wbid as terms
         indexer.index_text(obj_name, 500); //EXTRA EXTRA count on the wbid
         indexer.index_text(obj_class);
         string unique = uniquify(obj_name, obj_class);
         indexer.index_text(unique);
         cout << obj_class << ": " << obj_name;
-        
-        
+
+
         string search_desc;
 
         //index the rest of the lines in the object
         getline(read, line);
-        
-        
+
+
         //THIS IS A HACK
         bool do_not_index = false;
         // if(line.find("WBProcess") != string::npos){
         //   do_not_index = true;
         // }
-        
+
         while(!line.empty()) {
           string copy = line;
           line = Xapian::Unicode::tolower(line);
@@ -333,18 +333,18 @@ indexFile(char* filename, string desc[], int desc_size, Setting &root){
           string field_name = line.substr(0, line.find_first_of('\t'));
 
           bool done = indexLineBegin(field_name, line, copy, obj_name, doc, syn_doc);
-          
+
           if(!done && paper){
               done = indexLinePaper(field_name, line, copy, obj_name, doc, syn_doc, desc, desc_size, paper_types);
-          } 
+          }
           if(!done){
             search_desc = search_desc + indexLineEnd(field_name, line, copy, obj_name, doc, syn_doc, desc, desc_size);
           }
-          
+
           getline(read, line);
         }
         cout << endl;
-        
+
         if(paper){
           int c = db.get_lastdocid() + 1;
           paper_id[obj_name] = c;
@@ -356,7 +356,7 @@ indexFile(char* filename, string desc[], int desc_size, Setting &root){
           syn_db.add_document(syn_doc);
         }
       }
-      
+
 
       getline(read,line);
     }
@@ -368,13 +368,13 @@ indexLongText(char* filename, Setting &root){
 
     ifstream read;
     read.open(filename);
-    
+
     string line;
     getline(read, line);
-    
+
     if(!read.is_open()){
      cout << "File " << filename << " does not exist." << endl;
-     return; 
+     return;
     }
 
     while (!read.eof()) {
@@ -396,8 +396,8 @@ indexLongText(char* filename, Setting &root){
           if(line != "")
             abstract = abstract + "abstract=" + line + "\n";
           getline(read, line);
-        }        
-        
+        }
+
         if(did > -1){
           cout << obj_name << "|" << did << endl;
 
@@ -407,7 +407,7 @@ indexLongText(char* filename, Setting &root){
           doc.set_data(doc.get_data() + abstract);
           db.replace_document(did, doc);
         }
-        
+
 
         getline(read, line);
 
@@ -419,18 +419,18 @@ indexLongText(char* filename, Setting &root){
     }
 }
 
-void 
+void
 compactDB(string db_path){
-  
+
     cout << "Begin compacting " << db_path << endl;
     Xapian::Compactor compact;
     compact.add_source(db_path + "-full");
     compact.set_destdir(db_path);
-    
+
     compact.set_renumber(false);
     compact.set_compaction_level(Xapian::Compactor::FULLER);
     compact.compact();
-    
+
     DIR *pDIR;
     struct dirent *entry;
     string pth = db_path + "-full";
@@ -450,7 +450,7 @@ compactDB(string db_path){
 
 void
 indexGFF3obj(MYSQL_ROW row, string species){
-      
+
         string obj_class = "Gene";
         string obj_name = row[0];
         string start = row[1];
@@ -464,12 +464,12 @@ indexGFF3obj(MYSQL_ROW row, string species){
           search_desc = search_desc + "title=<i>" + alias + "</i>\n";
         }
 
-        
+
         //index the first line and set up the document
         Xapian::Document doc;
         Xapian::Document syn_doc;
         indexer.set_document(doc);
-        
+
         string note;
         if(row[5]){
           note = row[5];
@@ -477,11 +477,11 @@ indexGFF3obj(MYSQL_ROW row, string species){
           indexer.index_text(note);
           search_desc = search_desc + "remark=" + note + "\n";
         }
-        
+
         string description;
         if(row[6]){
           description = row[6];
-          indexer.index_text(description);          
+          indexer.index_text(description);
           description.erase(remove(description.begin(), description.end(), '\n'), description.end());
           search_desc = search_desc + "description=" + description + "\n";
         }
@@ -492,22 +492,22 @@ indexGFF3obj(MYSQL_ROW row, string species){
         syn_doc.add_value(1, obj_name); // set value 1 to WBID
         doc.add_value(6, obj_name);
         syn_doc.add_value(6, obj_name);
-        
-        doc.add_value(9, start); 
-        doc.add_value(10, end); 
-        doc.add_value(11, strand); 
+
+        doc.add_value(9, start);
+        doc.add_value(10, end);
+        doc.add_value(11, strand);
 
         syn_doc.add_value(9, start);
         syn_doc.add_value(10, end);
-        syn_doc.add_value(11, strand); 
-        
+        syn_doc.add_value(11, strand);
+
         obj_name = Xapian::Unicode::tolower(obj_name);
         obj_class = Xapian::Unicode::tolower(obj_class);
         doc.add_value(2, obj_class); // set value 2 to lowercase class
         syn_doc.add_value(2, obj_class); // set value 2 to lowercase class
         syn_doc.add_term(obj_name, 1);
 
-        
+
         //add the class and wbid as terms
         indexer.index_text(obj_name, 20); //EXTRA EXTRA count on the wbid
         indexer.index_text(obj_class);
@@ -519,16 +519,16 @@ indexGFF3obj(MYSQL_ROW row, string species){
         indexer.index_text(obj_name, 20); //EXTRA EXTRA count on the wbid
         indexer.index_text(obj_class);
         indexer.index_text(obj_class + obj_name);
-        
+
         doc.add_value(3, Xapian::sortable_serialise(species_id[species]));
         doc.add_value(5, species);
         syn_doc.add_value(3, Xapian::sortable_serialise(species_id[species]));
         syn_doc.add_value(5, species);
         indexer.index_text(species);
-        
-        
 
-        if (!alias.empty()) {        
+
+
+        if (!alias.empty()) {
           indexer.index_text(alias);
           replaceChar(alias, '-', '_');
           if(alias.length() < 245){
@@ -540,7 +540,7 @@ indexGFF3obj(MYSQL_ROW row, string species){
         }
         cout << obj_class << ": " << obj_name << "|" << alias << endl;
                 cout << search_desc << endl;
-                
+
                 replaceChar(species, '_', '-');
                 indexer.index_text(species);
 
@@ -553,7 +553,7 @@ indexGFF3obj(MYSQL_ROW row, string species){
 void
 indexGFF3(string species){
     cout << "indexing gff3 species " << species << endl;
-    
+
     //connect to database
     mysql_init(&mysql);
     connection = mysql_real_connect(&mysql,"localhost","wormbase","",'\0',0,0,0); //GET NONROOT USER!!
@@ -573,7 +573,7 @@ indexGFF3(string species){
         cout << "\t" << species << " is not a database "  <<  endl;
         return;
     }
-    
+
     connection = mysql_real_connect(&mysql,"localhost","wormbase","",species.c_str(),0,0,0); //GET NONROOT USER!!
     if(connection==NULL)
     {
@@ -584,7 +584,7 @@ indexGFF3(string species){
     {
         cout<<"\tconnected to " << species <<endl;
     }
-    
+
     //get query
     query_state = mysql_query(connection, "SET @alias = (SELECT id FROM attributelist al WHERE al.tag = 'Alias')");
     query_state = mysql_query(connection, "SET @note = (SELECT id FROM attributelist al WHERE al.tag = 'Note')");
@@ -596,13 +596,13 @@ indexGFF3(string species){
       cout << mysql_error(connection) << endl;
       return;
     }
-    
+
     //process query results
     result = mysql_store_result(connection);
     while ( ( row = mysql_fetch_row(result)) != NULL ) {
       indexGFF3obj(row, species);
     }
-    
+
     //close mysql connection
     mysql_free_result(result);
     mysql_close(connection);
@@ -617,7 +617,7 @@ try {
       cout << "Usage: " << argv[0] << argc << " CONFIG_FILE WSXXX" << endl;
       exit(1);
     }
-    
+
 
 
     Config cfg;
@@ -625,37 +625,37 @@ try {
     Setting &root = cfg.getRoot();
     const Setting &species_settings = root["species"];
     const Setting &classes_settings = root["classes"];
-    
-    const char* acedmp_path; 
+
+    const char* acedmp_path;
     root.lookupValue("acedump", acedmp_path);
-    
+
     string db_path;
     root.lookupValue("search", db_path);
-    
+
     db_path = db_path + "/" + argv[2] + "/search";
     char * cstr = new char [db_path.size()+1];
     strcpy (cstr, db_path.c_str());
     mkdir(cstr, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     cout << db_path << endl;
-    
+
         // Open the database for update, creating a new database if necessary.
     db = Xapian::WritableDatabase(db_path + "/main-full", Xapian::DB_CREATE_OR_OPEN);
     syn_db = Xapian::WritableDatabase(db_path + "/syn-full", Xapian::DB_CREATE_OR_OPEN);
 
-    
+
     for(int i=0; i<species_settings.getLength(); i++){
       const Setting &spec = species_settings[i];
       string name;
       string fullname;
       int id;
       int gff3;
-      
+
       spec.lookupValue("name", name);
       spec.lookupValue("id", id);
       spec.lookupValue("fullname", fullname);
       species_list[fullname] = name;
       species_id[name] = id;
-      
+
       if(spec.lookupValue("gff3", gff3) && (gff3 == 1)){
         indexGFF3(name);
       }
@@ -668,12 +668,12 @@ try {
 
 
 
-  
+
     for(int j=0; j < classes_settings.getLength() ; j++) {
       Setting &setting = classes_settings[j];
-      const char* f_name; 
+      const char* f_name;
       setting.lookupValue("filename", f_name);
-      
+
       char* filename = (char *) malloc(strlen(acedmp_path) + 10 + strlen(f_name));
       strcpy(filename, acedmp_path);
       strcat(filename, "/");
@@ -689,7 +689,7 @@ try {
       }else{
         const Setting &c_settings = setting["desc"];
         desc_size = c_settings.getLength();
-        
+
         for(int i=0; i<desc_size; i++){
           string d = c_settings[i];
           desc[i] = d;
@@ -718,10 +718,10 @@ try {
       }
       cout << "Done indexing " << filename << endl;
       free(filename);
-      
+
     }
     compactDB(db_path + "/main");
-    compactDB(db_path + "/syn");  
+    compactDB(db_path + "/syn");
     cout << "Done indexing AceDB" << endl;
 } catch (const Xapian::Error &e) {
     cout << e.get_description() << endl;
