@@ -162,8 +162,8 @@ chown -R mysql:mysql /etc/mysql
 cd /usr/local/mysql
 ./scripts/mysql_install_db  --user=mysql --datadir=/var/lib/mysql
 /etc/init.d/mysql restart
-/usr/local/mysql/bin/mysqladmin -u root password '3l3g@nz'
-# /usr/local/mysql/bin/mysqladmin -u root -h ip-10-185-24-214 password '3l3g@nz'
+/usr/local/mysql/bin/mysqladmin -u root password '3l3g\@nz'
+# /usr/local/mysql/bin/mysqladmin -u root -h ip-10-185-24-214 password '3l3g\@nz'
 
 # echo "Relocating mysql to ephemeral storage..."
 #mkdir -p /mnt/ephemeral1/var/lib/mysql
@@ -200,7 +200,7 @@ git pull
 # checkout source for gbrowse built files
 echo "Checking out website source for building gbrowse config..."
 cd /usr/local/wormbase
-git clone git@github.com:WormBase/website.git
+git clone git\@github.com:WormBase/website.git
 mv website tharris
 cd tharris
 git checkout staging
@@ -253,12 +253,12 @@ cd /usr/local/wormbase/website-admin/update/staging
 # Load genomic GFF databases
 echo "Loading genomic GFF databases..."
 cd /usr/local/wormbase/website-admin/update/staging
-./steps/load_genomic_gff_databases.pl --release $release
+#./steps/load_genomic_gff_databases.pl --release $release
 
 # Dump mysql databases
 echo "dumping mysql databases for easy porting..."
 cd /usr/local/wormbase/website-admin/update/staging
-./steps/dump_mysql_databases.pl --release $release
+#./steps/dump_mysql_databases.pl --release $release
 
 # Update symlinks on the FTP site
 echo "Updating symlinks on the FTP site..."
