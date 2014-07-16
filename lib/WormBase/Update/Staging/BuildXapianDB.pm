@@ -157,7 +157,7 @@ classes = (   { filename = "Paper.ace";
               { filename = "Variation.ace";
                 desc = ("status", "gene", "remark"); },
               { filename = "Anatomy_term.ace";
-                desc = ("term");},
+                desc = ("term", "definition);},
               { filename = "Antibody.ace";
                 desc = ("gene", "remark"); },
               { filename = "Clone.ace"; },
@@ -199,7 +199,7 @@ classes = (   { filename = "Paper.ace";
               { filename = "Structure_data.ace"; },
               { filename = "Transgene.ace"; },
               { filename = "Transposon.ace"; },
-              { filename = "Transposon_familiy.ace" },
+              { filename = "Transposon_familiy.ace"; },
               { filename = "Transcript.ace"; },
               { filename = "Analysis.ace";
                 desc = ("title", "description"); },
