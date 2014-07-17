@@ -157,7 +157,7 @@ classes = (   { filename = "Paper.ace";
               { filename = "Variation.ace";
                 desc = ("status", "gene", "remark"); },
               { filename = "Anatomy_term.ace";
-                desc = ("term", "definition);},
+                desc = ("term", "definition");},
               { filename = "Antibody.ace";
                 desc = ("gene", "remark"); },
               { filename = "Clone.ace"; },
