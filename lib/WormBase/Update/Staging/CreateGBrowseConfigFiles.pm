@@ -123,7 +123,10 @@ sub _build_f2c {
 			'snoRNA:WormBase',
 			'tRNA:WormBase',
 			'exon:WormBase',
-			'intron:WormBase'
+			'intron:WormBase',
+			'piRNA:WormBase',
+			'lincRNA:WormBase',
+			'antisense_RNA:WormBase',
 	    ],
 			    include => 'genes_noncoding',
     };
@@ -178,8 +181,8 @@ sub _build_f2c {
 	include    => 'transposons',
     };
 	
-    $f2c->{'transposable_element_CDS:WormBase_transposon'} = { 
-	children   => qw[/transposable_element_Pseudogene:WormBase_transposon/],
+    $f2c->{'gene:WormBase_transposon'} = { 
+	children   => qw[/transposable_element_Pseudogene:WormBase_transposon exon:WormBase_transposon/],
 	include    => 'transposon_genes',
     };
 	
@@ -690,7 +693,11 @@ sub generate_config {
 
 	# Get the core config.
 	my $base_config = WormBase::FeatureFile->new(-file => join('/',$self->path,$self->core_config_file));
-	
+
+#	warn $base_config;
+#	warn $self->path;
+#	warn $self->core_config_file;
+
 	my $fh  = IO::File->new("> " . $self->config_destination . "/$species.stats")
 	    or $self->log->logdie("Couldn't open the species stats file: $!");
 	
