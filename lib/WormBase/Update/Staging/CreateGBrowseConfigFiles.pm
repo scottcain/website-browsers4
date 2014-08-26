@@ -315,6 +315,15 @@ sub _build_f2c {
     $f2c->{'RNAi_reagent:RNAi_secondary'} = { 
 	include    => 'variations_rnai_other',
     };
+
+    $f2c->{'biological_region:Balanced_by_balancer'} = {
+	include => 'variations_balancers',
+    };
+
+    $f2c->{'tandem_duplication:Allele'} = {
+	include => 'variations_duplications',
+    };
+
 		
     ################################################
     #
@@ -559,15 +568,15 @@ sub _build_f2c {
 	include => 'sequence_similarity_wormbase_core_ests_and_mrnas_other',
     };
 
-    $f2c->{'expressed_sequence_match:NEMBASE_cDNAs-BLAT'} = {
+    $f2c->{'expressed_sequence_match:NEMBASE_cDNAs-STAR'} = {
 	include => 'sequence_similarity_nembase_cdnas',
     };
     
-    $f2c->{'expressed_sequence_match:EMBL_nematode_cDNAs-BLAT'} = {
-	include => 'sequence_similarity_nematode_cdnas',
+    $f2c->{'expressed_sequence_match:EMBL_cDNAs-STAR'} = {
+	include => 'sequence_similarity_insdc_cdnas',
     };
 
-    $f2c->{'expressed_sequence_match:NEMATODE.NET_cDNAs-BLAT'} = {
+    $f2c->{'expressed_sequence_match:NEMATODE.NET_cDNAs-STAR'} = {
 	include => 'sequence_similarity_nematode_net_cdnas',
     };
 
