@@ -44,6 +44,7 @@ sub run {
     # Via system(wget...)
 #    if (0) {
 	my $command = <<END;
+mkdir -p $local_path
 cd $local_path
 # -r     recursive
 # -N     don't download newer files
@@ -51,7 +52,7 @@ cd $local_path
 # -nH    omit the host from the local directory
 # --cut-dirs=3    Is this the right amount when mirroring from root?
 #wget -r -N -nH -l 20 --cut-dirs=3 ftp://ftp.sanger.ac.uk/pub2/wormbase/releases/$release
-wget -r -N -nH -l 20 --cut-dirs=3 ftp://ftp.sanger.ac.uk/pub2/wormbase/releases
+wget -r -N -nH -l 20 --cut-dirs=3 ftp://ftp.sanger.ac.uk/$remote_path
 END
 ;
 	my $result = system($command);

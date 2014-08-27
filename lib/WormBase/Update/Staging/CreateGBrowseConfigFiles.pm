@@ -93,7 +93,7 @@ sub _build_f2c {
 	# 1. update here
 	# 2. change name of include file
 	# 3. update app
-	include => 'primary_gene_track',
+	include => 'genes',
 	children   => [ 'mRNA:WormBase',
 			'five_prime_UTR:WormBase',
 			'three_prime_UTR:WormBase'],
@@ -109,7 +109,7 @@ sub _build_f2c {
 	# 1. update here
 	# 2. change name of include file
 	# 3. update app
-	include => 'primary_gene_track',
+	include => 'genes',
 	children   => [ 'mRNA:WormBase_imported',                                 
 			'five_prime_UTR:WormBase_imported',
 			'three_prime_UTR:WormBase_imported' ],
@@ -123,7 +123,10 @@ sub _build_f2c {
 			'snoRNA:WormBase',
 			'tRNA:WormBase',
 			'exon:WormBase',
-			'intron:WormBase'
+			'intron:WormBase',
+			'piRNA:WormBase',
+			'lincRNA:WormBase',
+			'antisense_RNA:WormBase',
 	    ],
 			    include => 'genes_noncoding',
     };
@@ -174,12 +177,12 @@ sub _build_f2c {
 	include    => 'prediction_rnaz',
     };
 	
-    $f2c->{'transposable_element:Transposon'} = { 
+    $f2c->{'transposable_element:WormBase_transposon'} = { 
 	include    => 'transposons',
     };
 	
-    $f2c->{'transposable_element_CDS:WormBase_transposon'} = { 
-	children   => qw[/transposable_element_Pseudogene:WormBase_transposon/],
+    $f2c->{'gene:WormBase_transposon'} = { 
+	children   => qw[/transposable_element_Pseudogene:WormBase_transposon exon:WormBase_transposon/],
 	include    => 'transposon_genes',
     };
 	
@@ -312,6 +315,15 @@ sub _build_f2c {
     $f2c->{'RNAi_reagent:RNAi_secondary'} = { 
 	include    => 'variations_rnai_other',
     };
+
+    $f2c->{'biological_region:Balanced_by_balancer'} = {
+	include => 'variations_balancers',
+    };
+
+    $f2c->{'tandem_duplication:Allele'} = {
+	include => 'variations_duplications',
+    };
+
 		
     ################################################
     #
@@ -527,7 +539,7 @@ sub _build_f2c {
     };
 
     $f2c->{'expressed_sequence_match:BLAT_OST_BEST'} = {
-	includes => 'orfeome_sequence_tags',
+	include => 'orfeome_sequence_tags',
     };
 
     $f2c->{'expressed_sequence_match:BLAT_RST_BEST'} = {
@@ -556,15 +568,15 @@ sub _build_f2c {
 	include => 'sequence_similarity_wormbase_core_ests_and_mrnas_other',
     };
 
-    $f2c->{'expressed_sequence_match:NEMBASE_cDNAs-BLAT'} = {
+    $f2c->{'expressed_sequence_match:NEMBASE_cDNAs-STAR'} = {
 	include => 'sequence_similarity_nembase_cdnas',
     };
     
-    $f2c->{'expressed_sequence_match:EMBL_nematode_cDNAs-BLAT'} = {
-	include => 'sequence_similarity_nematode_cdnas',
+    $f2c->{'expressed_sequence_match:EMBL_cDNAs-STAR'} = {
+	include => 'sequence_similarity_insdc_cdnas',
     };
 
-    $f2c->{'expressed_sequence_match:NEMATODE.NET_cDNAs-BLAT'} = {
+    $f2c->{'expressed_sequence_match:NEMATODE.NET_cDNAs-STAR'} = {
 	include => 'sequence_similarity_nematode_net_cdnas',
     };
 
@@ -690,7 +702,11 @@ sub generate_config {
 
 	# Get the core config.
 	my $base_config = WormBase::FeatureFile->new(-file => join('/',$self->path,$self->core_config_file));
-	
+
+#	warn $base_config;
+#	warn $self->path;
+#	warn $self->core_config_file;
+
 	my $fh  = IO::File->new("> " . $self->config_destination . "/$species.stats")
 	    or $self->log->logdie("Couldn't open the species stats file: $!");
 	
