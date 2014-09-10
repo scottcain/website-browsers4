@@ -79,6 +79,7 @@ sub run {
     my $release = $self->release;
     $self->dump_object_lists();
 #    $self->cache_content_to_disk('bulk_load');
+#   exit;
     $self->crawl_website();             # Crawls object by object. Slower, but uses less memory.
 #    $self->precache_classic_content();
 }

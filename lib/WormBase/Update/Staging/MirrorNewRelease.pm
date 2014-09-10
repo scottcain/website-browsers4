@@ -31,7 +31,7 @@ sub run {
     my ($local_path,$remote_path);
     if ($release =~ /^WS.*/) {
 	$local_path  = $self->ftp_releases_dir . "/$release";
-	$remote_path = $self->remote_ftp_releases_dir . "/$release";
+	$remote_path = $self->remote_ftp_releases_dir . "/$release";	
     } else {
 	$local_path  = $self->ftp_releases_dir;
 	$remote_path = $self->remote_ftp_releases_dir;
@@ -52,7 +52,7 @@ cd $local_path
 # -nH    omit the host from the local directory
 # --cut-dirs=3    Is this the right amount when mirroring from root?
 #wget -r -N -nH -l 20 --cut-dirs=3 ftp://ftp.sanger.ac.uk/pub2/wormbase/releases/$release
-wget -r -N -nH -l 20 --cut-dirs=3 ftp://ftp.sanger.ac.uk/$remote_path
+wget -r -N -nH -l 20 --cut-dirs=4 ftp://ftp.sanger.ac.uk/$remote_path
 END
 ;
 	my $result = system($command);

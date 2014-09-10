@@ -182,7 +182,8 @@ sub _build_f2c {
     };
 	
     $f2c->{'gene:WormBase_transposon'} = { 
-	children   => qw[/transposable_element_Pseudogene:WormBase_transposon exon:WormBase_transposon/],
+#	children   => qw[/transposable_element_Pseudogene:WormBase_transposon exon:WormBase_transposon/],
+	children   => qw[/pseudogenic_transcript:WormBase_transposon mRNA:WormBase exon:WormBase_transposon/],
 	include    => 'transposon_genes',
     };
 	

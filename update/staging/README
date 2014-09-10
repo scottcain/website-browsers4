@@ -50,6 +50,9 @@ END : load genomic gff databases; in 0 days, 22 hours, 58 minutes and 28 seconds
 # 10. Create Widgets.ace file from wormbase_user database
 ./steps/create_widget_acedmp.pl --release $RELEASE
 
+# Create gbrowse configuration files
+./steps/create_gbrowse_configuration.pl --release $RELEASE
+
 # 11. Create the xapian search database
 # See xapian/README for information on doing this outside of the pipeline
 ./steps/build_xapian_db.pl --release $RELEASE
@@ -67,17 +70,6 @@ END : load genomic gff databases; in 0 days, 22 hours, 58 minutes and 28 seconds
 ./steps/push_staging_release_to_nodes.pl --release $RELEASE --target staging
 
 
-
-# 16. Go live with the newly staged version on the staging server by adjusting symlinks!
-#    * adjusts acedb and mysql symlinks on this (staging) server
-#
-#      If ANYTHING is wrong with the staged release,
-#      this step will need to be repeated.
-# Staging
-./steps/adjust_symlinks.pl --release $RELEASE --target staging
-
-# OBSOLETE
-###./steps/push_staged_release_to_nodes.pl --release $RELEASE --target development
 
 # Development server(s)
 ./steps/adjust_symlinks.pl --release $RELEASE --target development
