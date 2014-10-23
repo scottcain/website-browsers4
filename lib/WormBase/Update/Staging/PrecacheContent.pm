@@ -102,8 +102,9 @@ sub dump_object_lists {
                            Analysis
                        Anatomy_term
                            Antibody
-                        curated_CDS
+                        curated_CDS                       
                               Clone
+                          Construct
                  Expression_cluster
                        Expr_pattern
                             Feature
