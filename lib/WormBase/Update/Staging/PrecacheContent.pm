@@ -102,8 +102,9 @@ sub dump_object_lists {
                            Analysis
                        Anatomy_term
                            Antibody
-                        curated_CDS
+                        curated_CDS                       
                               Clone
+                          Construct
                  Expression_cluster
                        Expr_pattern
                             Feature
@@ -206,9 +207,9 @@ sub crawl_website {
     # There should be a symlink at:
     # /usr/local/wormbase/wormbase.conf -> /usr/local/wormbase/website/WHATEVER/wormbase.conf
     # (Doing it this way because of NFS mount but may want to use different configs)
-    my $local_config = -e '/usr/local/wormbase/wormbase.conf' 
-	? '/usr/local/wormbase/wormbase.conf' 
-	: '/usr/local/wormbase/website/production/wormbase.conf';
+    my $local_config = -e '/var/lib/jenkins/jobs/staging_build/workspace/wormbase.conf'
+	? '/var/lib/jenkins/jobs/staging_build/workspace/wormbase.conf'
+	: '/usr/local/wormbase/wormbase.conf';
     my $c = Config::JFDI->new(file => $local_config);
     my $config = $c->get;
 

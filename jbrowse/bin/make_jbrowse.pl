@@ -1,12 +1,14 @@
-#!perl
+#!/usr/bin/perl
 use strict;
 use warnings;
 
 use Getopt::Long;
 use Config::Tiny;
 use FindBin qw($Bin);
+use File::Copy;
 use Cwd;
 use FileHandle;
+use JSON;
 #use Data::Dumper;
 
 =head1 NAME
@@ -23,9 +25,13 @@ make_jbrowse.pl - Creates a JBrowse instance with input GFF and configuration
  --gfffile    Path to an input GFF file
  --fastafile  Path to an input FASTA file
  --datadir    Relative path (from jbrowse root) to jbrowse data dir
+ --jbrowsedir Path to jbrowse directory
  --nosplit    Don't split GFF file by reference sequence
  --usenice    Run formatting commands with Unix nice 
  --skipfilesplit Don't split files or use grep to make subfiles
+ --skipprepare Don't run prepare-refseqs.pl
+ --allstats   Path to the ALLSPECIES.stats file
+ --quiet      Limit output to errors
 
 =head1 DESCRIPTION
 
@@ -44,6 +50,10 @@ names) include:
  nosplit   - Don't split GFF file by reference sequence 
  usenice   - Run formatting commands with Unix nice
  skipfilesplit - Don't split files or use grep to make subfiles
+ skipprepare - Don't run prepare-refseqs.pl
+ allstats  - Path to the ALLSPECIES.stats file
+ includes  - Path to the json includes file
+ glyphs    - Path to custom JBrowse glyphs
 
 Note that the options in the config file can be overridden with the command
 line options.
@@ -77,6 +87,18 @@ label     - The jbrowse label and key for the track
 
 altfile   - The section name that contains the grep-created GFF file for this track (to allow a GFF file created for one track to be reused for another)
 
+=item
+
+postprocess - the name of a script that will perform some sort of post
+processing on the created GFF file.  It takes the name of the GFF file
+as input and creates a gff file with the same name as the input with
+".out" appended.  The script should be in the same directory as this
+script.
+
+=item
+
+index    - 0|1, whether or not to include this track when running generate_names to index the names for autocompletion.
+
 =back
  
 =head2 nosplit
@@ -107,7 +129,8 @@ it under the same terms as Perl itself.
 my $INITIALDIR = cwd();
 
 my ($GFFFILE, $FASTAFILE, $CONFIG, $DATADIR, $NOSPLITGFF, $USENICE,
-    $SKIPFILESPLIT, $JBROWSEDIR);
+    $SKIPFILESPLIT, $JBROWSEDIR, $SKIPPREPARE, $ALLSTATS,
+    $QUIET, $INCLUDES, $FUNCTIONS, $ORGANISMS, $GLYPHS);
 my %splitfiles;
 
 GetOptions(
@@ -118,7 +141,10 @@ GetOptions(
     'nosplitgff'  => \$NOSPLITGFF,
     'usenice'     => \$USENICE,
     'skipfilesplit'=>\$SKIPFILESPLIT,
-    'jbrowsedir'  => \$JBROWSEDIR,
+    'jbrowsedir=s'=> \$JBROWSEDIR,
+    'skipprepare' => \$SKIPPREPARE,
+    'allstats=s'  => \$ALLSTATS,
+    'quiet'       => \$QUIET,
 ) or ( system( 'pod2text', $0 ), exit -1 );
 
 system( 'pod2text', $0 ) unless $CONFIG;
@@ -133,21 +159,83 @@ $DATADIR  ||= $Config->{_}->{datadir};
 $SKIPFILESPLIT ||= $Config->{_}->{skipfilesplit};
 $NOSPLITGFF = $Config->{_}->{nosplitgff} unless defined $NOSPLITGFF;
 $USENICE    = $Config->{_}->{usenice}    unless defined $USENICE;
+$SKIPPREPARE= $Config->{_}->{skipprepare} unless defined $SKIPPREPARE;
+$INCLUDES   = $Config->{_}->{includes};
+$FUNCTIONS  = $Config->{_}->{functions};
+$ORGANISMS  = $Config->{_}->{organisms};
+$GLYPHS     = $Config->{_}->{glyphs};
+$ALLSTATS ||= $Config->{_}->{allstats};
 my $nice = $USENICE ? "nice" : '';
 $JBROWSEDIR ||= "/usr/local/wormbase/website/scain/jbrowse-dev";
+
+#this will be added to by every track
+my @include = ("../functions.conf");
+
+#parse all stats
+die "allstats must be defined" unless (-e $ALLSTATS);
+
+open AS, $ALLSTATS or die $!;
+my $firstline = <AS>;
+chomp $firstline;
+my @columnnames = split /\t/, $firstline;
+my %speciesdata;
+
+#parse the rest of the file
+while (my $line = <AS>) {
+    chomp $line;
+    my @la = split /\t/, $line;
+
+    my $track;
+    if($la[3] =~ /\((\S+?)\)$/ ) {
+        $track = $1;
+    }
+    else {
+        next;
+    }
+
+    for (my $i=0;$i<scalar(@la);$i++) {
+        next unless $la[$i];
+        $speciesdata{$columnnames[$i]}{$track} = $la[$i];
+    }
+}
+close AS;
+
+my $species = 'a_ceylanicum_PRJNA231479';
+    #print $key,"\t",$speciesdata{$species}{$key},"\n";
+
 
 #use grep to create type specific gff files
 unless ($SKIPFILESPLIT) {
   for my $section (@config_sections) {
 
+    next unless $speciesdata{$species}{$section};
+    #next unless $Config->{$section}->{prefix};
+
+    if ($Config->{$section}->{altfile}) {
+        my $realgfffile = $Config->{$section}->{altfile} . "_$GFFFILE";
+        if (-e $realgfffile) {
+            next;
+        }
+        else {
+            #naughty--changing the for loop variable in the loop!
+            $section = $Config->{$section}->{altfile};    
+        }
+    }
+
+
     my $gffout      = $Config->{$section}->{prefix} . "_$GFFFILE";
     my $greppattern = $Config->{$section}->{grep};
+    my $postprocess = $Config->{$section}->{postprocess};
 
     $greppattern or next;
 
     my $grepcommand = "grep -P \"$greppattern\" $GFFFILE > $gffout";
-    warn $grepcommand;
-    system ($grepcommand) == 0 or die $!;
+    warn $grepcommand unless $QUIET;
+    system ("$nice $grepcommand") == 0 or warn $!;
+
+    if ($postprocess) {
+        system("$nice $Bin/$postprocess $gffout") == 0 or warn $!;
+    }
   }
 }
 
@@ -186,49 +274,133 @@ else {
     $splitfiles{$GFFFILE} = 1;
 }
 
-chdir $JBROWSEDIR;
+chdir $JBROWSEDIR or die $!." $JBROWSEDIR\n";
 
 #check to see if the seq directory is present; if not prepare-refseqs
-if (!-e $DATADIR."/seq") {
+if (!-e $DATADIR."/seq" and !$SKIPPREPARE) {
     my $command = "bin/prepare-refseqs.pl --fasta $INITIALDIR"."/"."$FASTAFILE --out $DATADIR";
-    system($command) == 0 or die $!;
+    system("$nice $command") == 0 or warn $!;
+}
+push @include, "includes/DNA.json";
+
+#make a symlink to the organisms include file
+unless (-e "$DATADIR/../organisms.conf") {
+    symlink $ORGANISMS, "$DATADIR/../organisms.conf" or warn $!;
 }
 
 #use original or split gff for many tracks
 for my $section (@config_sections) {
     next unless $Config->{$section}->{origfile};
 
-    warn $section;
+    warn $section unless $QUIET;
     my $type   = $Config->{$section}->{type};
     my $label  = $Config->{$section}->{label};
 
     for my $file (keys %splitfiles) {
         my $gfffile = $INITIALDIR ."/". $file;
         my $command = "$nice bin/flatfile-to-json.pl --gff $gfffile --out $DATADIR --type \"$type\" --trackLabel \"$label\"  --trackType CanvasFeatures --key \"$label\" --maxLookback 1000000";
-        warn $command;
-        system($command) ==0 or die $!;
+        warn $command unless $QUIET;
+        system($command) ==0 or warn $!;
     }
+
+    push @include, "includes/$section.json";
 }
 
 
 #use grep-created files for specific tracks
+#first process tracks that will be name indexed
 for my $section (@config_sections) {
-    next if $Config->{$section}->{origfile};
+    next unless $Config->{$section}->{index} == 1;
+    next unless $speciesdata{$species}{$section};
+    process_grep_track($Config, $section);
+}
+
+#run indexing
+system("$nice bin/generate-names.pl --out $DATADIR --compress");
+
+#process the rest of the tracks
+for my $section (@config_sections) {
+    next if $Config->{$section}->{index} == 1;
+    next unless $speciesdata{$species}{$section};
+    process_grep_track($Config, $section);
+}
+
+
+#create trackList data structure:
+my $struct = {
+    "tracks" => [],
+    "names" => { "url" => "names/", "type" => "Hash" },
+    "include" => \@include,
+    "dataset_id" => "c_elegans",
+    "formatVersion" => 1
+};
+my $json = JSON->new->pretty(1)->encode($struct);
+
+#print out trackList.json
+if (-e "$DATADIR/trackList.json") {
+    move("$DATADIR/trackList.json","$DATADIR/trackList.json.old");
+}
+
+#make a symlink to the includes dir
+unless (-e "$DATADIR/includes") {
+    symlink $INCLUDES, "$DATADIR/includes" or warn $!;
+}
+#make a symlink to the functions
+unless (-e "$DATADIR/../functions.conf") {
+    symlink $FUNCTIONS, "$DATADIR/../functions.conf" or warn $!; 
+}
+
+
+
+open TL, ">$DATADIR/trackList.json" or die $!;
+print TL $json; 
+close TL;
+
+
+#make symlinks for custom glyphs
+chdir $GLYPHS;
+my @files = glob("*.js");
+foreach my $file (@files) {
+    unless (-e "$JBROWSEDIR/src/JBrowse/View/FeatureGlyph/$file") {
+        symlink "$GLYPHS/$file", "$JBROWSEDIR/src/JBrowse/View/FeatureGlyph/$file" or warn $!;
+    }
+}
+
+exit(0);
+
+
+sub process_grep_track {
+    my $config = shift;
+    my $section= shift;
+
+    my $postprocess = $config->{$section}->{postprocess};
+    next if $config->{$section}->{origfile};
+
     my $gffout;
-    if ($Config->{$section}->{altfile}) {
-        my $altsection = $Config->{$section}->{altfile};
-        $gffout = $INITIALDIR ."/". $Config->{$altsection}->{prefix} . "_$GFFFILE";
+    if ($config->{$section}->{altfile}) {
+        my $altsection = $config->{$section}->{altfile};
+        $gffout = $INITIALDIR ."/". $config->{$altsection}->{prefix} . "_$GFFFILE";
     }
     else {
-        $gffout = $INITIALDIR ."/". $Config->{$section}->{prefix} . "_$GFFFILE";
+        $gffout = $INITIALDIR ."/". $config->{$section}->{prefix} . "_$GFFFILE";
     }
-    my $type   = $Config->{$section}->{type};
-    my $label  = $Config->{$section}->{label};
-    my $command= "$nice bin/flatfile-to-json.pl --gff $gffout --out $DATADIR --type \"$type\" --trackLabel \"$label\"  --trackType CanvasFeatures --key \"$label\"";
-    warn $command;
 
-    system($command) ==0 or die $!;
+    if ($postprocess) {
+        $gffout = $gffout.".out";
+    }
+
+    my $type   = $config->{$section}->{type};
+    my $label  = $config->{$section}->{label};
+    my $command= "$nice bin/flatfile-to-json.pl --gff $gffout --out $DATADIR --type \"$type\" --trackLabel \"$label\"  --trackType CanvasFeatures --key \"$label\"";
+    warn $command unless $QUIET;
+
+    system($command)==0 or warn $! ;
+    push @include, "includes/$section.json";
+
+    return;
 }
+
+
 
 
 #time nice bin/flatfile-to-json.pl --gff ../c_elegans_gff/II.c_elegans.PRJNA13758.WS243.annotations.gff3.out.gff3 --out data/c_elegans --type gene:WormBase --trackLabel gene_from_gff --trackType CanvasFeatures --key genes_from_gff --maxLookback 1000000
