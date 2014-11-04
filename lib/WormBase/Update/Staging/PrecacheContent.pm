@@ -286,8 +286,8 @@ sub crawl_website {
 
 #	my $this_start = 0;
 	while (my $obj = <OBJECTS>) {
-	    chomp $obj;
-#	    if ($obj =~ /WBGene00230562/) {
+#	    chomp $obj;
+#	    if ($obj =~ /886184:Csp11\.Scaffold630\.g21187/) {
 #		$this_start++;
 #	    }
 #	    next if $this_start == 0;
@@ -329,7 +329,7 @@ sub crawl_website {
 #	    print join("\t",$class,$widget,$precache) . "\n";
 		
 		if ($precache) {
-		    print $obj;
+#		    print $obj;
 		    # Create a REST request of the following format:
 		    # curl -H content-type:application/json http://api.wormbase.org/rest/widget/gene/WBGene00006763/cloned_by
 
