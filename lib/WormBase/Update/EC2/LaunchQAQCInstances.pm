@@ -162,22 +162,10 @@ sub _launch_instances  {
     
 
     # ... or modencode directory for webapp instances    
-    if ($role eq 'webapp') {
-	push @mounts,'/dev/sdg=none',
-    }
-
-#	@instances = $image->run_instances(-min_count         => $instance_count,
-#					   -max_count         => $instance_count,
-#					   -key_name          => 'wormbase-development',
-#					   -security_group    => 'wormbase-development',
-#					   -instance_type     => $instance_type,
-#					   -placement_zone    => 'us-east-1d',
-#					   -shutdown_behavior => 'terminate',
-#					   -user_data         => $self->user_data,
-##					   -block_devices => [ '/dev/sdc=none' ],   # We don't want the FTP directory
-##									       '/dev/sde=ephemeral0',
-##									       '/dev/sdf=ephemeral1'],
-#	    );
+    # Lets just retain the modencode mount for now for all instances.
+    #    if ($role eq 'webapp') {
+    #	push @mounts,'/dev/sdg=none',
+    #    }
 
     my @instances = $image->run_instances(-min_count         => $instance_count,
 					  -max_count         => $instance_count,

@@ -9,7 +9,7 @@ foreach (@ARGV) { # GFF FILES
 
 while (<>) {
   chomp;
-  next if /^\#/;
+#  next if /^\#/;
   my ($ref,$source,$method,$start,$stop,$score,$strand,$phase,$group) = split /\t/;
 
   next if $source eq 'assembly_tag'; # don't want 'em, don't need 'em
