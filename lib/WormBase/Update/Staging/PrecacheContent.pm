@@ -1,4 +1,4 @@
-package WormBase::Update::Staging::PrecacheContent;
+1;2cpackage WormBase::Update::Staging::PrecacheContent;
 
 use Moose;
 use Ace;
@@ -286,7 +286,9 @@ sub crawl_website {
 
 #	my $this_start = 0;
 	while (my $obj = <OBJECTS>) {
-#	    chomp $obj;
+	    chomp $obj;
+
+
 #	    if ($obj =~ /886184:Csp11\.Scaffold630\.g21187/) {
 #		$this_start++;
 #	    }
@@ -308,9 +310,8 @@ sub crawl_website {
 	    $status{$class}{objects}++;
 	    	    
 	    foreach my $widget (@widgets) {
-		# References and human diseases are actually searches and not cached by the app.
+		# References are actually searches and not cached by the app.
 		next if $widget eq 'references';
-		next if $widget eq 'human_diseases';		
 
 		# Ignore class-level widgets.
 		next if $config->{sections}->{species}->{$class}->{widgets}->{$widget}->{display}
