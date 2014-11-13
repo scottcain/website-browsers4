@@ -329,7 +329,7 @@ sub crawl_website {
 #	    print join("\t",$class,$widget,$precache) . "\n";
 		
 		if ($precache) {
-#		    print $obj;
+		    print $obj;
 		    # Create a REST request of the following format:
 		    # curl -H content-type:application/json http://api.wormbase.org/rest/widget/gene/WBGene00006763/cloned_by
 
