@@ -16,7 +16,7 @@ sub run {
     my $self = shift;           
 
     # Discover the current qaqc environment instance.
-    my $instances = $self->get_instances({'tag:Status'  => 'qaqc-real',					
+    my $instances = $self->get_instances({'tag:Status'  => 'qaqc',					
 					  'tag:Release' => $self->release});
     
     if (@$instances > 1) { 
@@ -52,10 +52,10 @@ sub run {
 			role        => 'webapp',
 		      });
     
-    $self->tag_snapshots({ image  => $image,
-			   name   => 'wb-production',
-			   status => 'production',
-			   role   => 'webapp',
+    $self->tag_snapshots({ images  => $image,
+			   name    => 'wb-production',
+			   status  => 'production',
+			   role    => 'webapp',
 			 });
     
     $self->log->info("Creating a new production image: finished. Image id: $image");  

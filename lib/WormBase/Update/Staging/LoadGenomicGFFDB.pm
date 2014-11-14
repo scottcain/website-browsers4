@@ -43,6 +43,7 @@ sub run {
 #	next unless $name =~ /immitis|bacteriophora|loa|hapla|incognita|redivivus/;
 #	next if $name =~ /suum|xylophilus|angaria|c_sp5|c_sp11/;
 #	next unless $name =~ /redivivus|ratti|spiralis|suis|pacificus|exspectatus|volvulus|americanus|incognita|hapla|loa|contortus/;
+	next if $name =~ /elegans/;
 	my $species = WormBase->create('Species',{ symbolic_name => $name, release => $release });
 
 	$self->log->info(uc($name). ': start');	
