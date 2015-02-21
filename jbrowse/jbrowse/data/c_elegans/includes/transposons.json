@@ -15,13 +15,13 @@
          },
          "storeClass" : "JBrowse/Store/SeqFeature/NCList",
          "trackType" : "CanvasFeatures",
-         "urlTemplate" : "../tracks/Transposons/{refseq}/trackData.json",
-         "compress" : 0,
+         "urlTemplate" : "../tracks/Transposons/{refseq}/trackData.jsonz",
+         "compress" : 1,
          "type" : "CanvasFeatures",
          "category" : "Genes",
          "label" : "Transposons",
          "metadata" : {
-             "citation" : "These are transposon spans reviewed by WormBase curators."
+             "shortInfo" : "These are transposon spans reviewed by WormBase curators."
           }
       }
    ]

@@ -16,15 +16,15 @@
          },
          "storeClass" : "JBrowse/Store/SeqFeature/NCList",
          "trackType" : "CanvasFeatures",
-         "urlTemplate" : "../tracks/S. cerevisiae proteins/{refseq}/trackData.json",
-         "compress" : 0,
+         "urlTemplate" : "../tracks/S. cerevisiae proteins/{refseq}/trackData.jsonz",
+         "compress" : 1,
          "label" : "S. cerevisiae proteins",
          "type" : "CanvasFeatures",
          "subParts" : "match_part",
          "glyph" : "JBrowse/View/FeatureGlyph/Segments",
          "category" : "Sequence Similarity:Proteins",
          "metadata" : {
-            "citation" : "Matches to S. cerevisiae proteins from SGD, aligned with BLASTX (nucleotide to protein, via six-frame translation)."
+            "shortInfo" : "Matches to S. cerevisiae proteins from SGD, aligned with BLASTX (nucleotide to protein, via six-frame translation)."
          }
       }
    ]

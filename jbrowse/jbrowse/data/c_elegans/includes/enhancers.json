@@ -15,12 +15,12 @@
          "key" : "Enhancers",
          "storeClass" : "JBrowse/Store/SeqFeature/NCList",
          "trackType" : "CanvasFeatures",
-         "urlTemplate" : "../tracks/Enhancers/{refseq}/trackData.json",
-         "compress" : 0,
+         "urlTemplate" : "../tracks/Enhancers/{refseq}/trackData.jsonz",
+         "compress" : 1,
          "type" : "CanvasFeatures",
          "label" : "Enhancers",
          "metadata" : {
-            "citation" : "There should be better text here for enhancers"
+            "shortInfo" : "There should be better text here for enhancers"
          },
          "category" : "Sequence Features:Binding Sites & Regions"
       }

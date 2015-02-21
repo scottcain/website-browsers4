@@ -14,14 +14,14 @@
             "label" : "Feature in WormBase Staging"
          },
          "metadata" : {
-             "citation" : "Matches to WormBase B. malayi proteins, aligned with BLASTX (nucleotide to protein, via six-frame translation)."
+             "shortInfo" : "Matches to WormBase B. malayi proteins, aligned with BLASTX (nucleotide to protein, via six-frame translation)."
          },
          "category" : "Sequence Similarity:Proteins",
          "key" : "B. malayi proteins",
          "storeClass" : "JBrowse/Store/SeqFeature/NCList",
          "trackType" : "CanvasFeatures",
-         "urlTemplate" : "../tracks/B. malayi proteins/{refseq}/trackData.json",
-         "compress" : 0,
+         "urlTemplate" : "../tracks/B. malayi proteins/{refseq}/trackData.jsonz",
+         "compress" : 1,
          "type" : "CanvasFeatures",
          "subParts" : "match_part",
          "glyph" : "JBrowse/View/FeatureGlyph/Segments",

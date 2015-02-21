@@ -15,13 +15,13 @@
          "key" : "Transcriptionally Active Region",
          "storeClass" : "JBrowse/Store/SeqFeature/NCList",
          "trackType" : "CanvasFeatures",
-         "urlTemplate" : "../tracks/Transcriptionally Active Region/{refseq}/trackData.json",
-         "compress" : 0,
+         "urlTemplate" : "../tracks/Transcriptionally Active Region/{refseq}/trackData.jsonz",
+         "compress" : 1,
          "category" : "Transcription:Supporting Evidence",
          "type" : "CanvasFeatures",
          "label" : "Transcriptionally Active Region",
          "metadata" : {
-            "citation" : "Transcriptionally Active Regions (TARs) found by the Miller lab from tiling-array projects run as part of the modENCODE project."
+            "shortInfo" : "Transcriptionally Active Regions (TARs) found by the Miller lab from tiling-array projects run as part of the modENCODE project."
          }
       }
    ]

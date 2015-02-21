@@ -14,12 +14,12 @@
          },
          "storeClass" : "JBrowse/Store/SeqFeature/NCList",
          "trackType" : "CanvasFeatures",
-         "urlTemplate" : "../tracks/Binding regions/{refseq}/trackData.json",
-         "compress" : 0,
+         "urlTemplate" : "../tracks/Binding regions/{refseq}/trackData.jsonz",
+         "compress" : 1,
          "label" : "Binding regions",
          "type" : "CanvasFeatures",
          "metadata" : {
-            "citation" : "Regions within which there may be one or more binding sites of a non-TF, non-Histone molecule."
+            "shortInfo" : "Regions within which there may be one or more binding sites of a non-TF, non-Histone molecule."
          },
          "category" : "Sequence Features:Binding Sites & Regions"
       }

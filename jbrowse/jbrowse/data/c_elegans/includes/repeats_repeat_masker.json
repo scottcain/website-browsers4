@@ -7,14 +7,14 @@
             "height" : 4
          },
          "metadata" : {
-            "citation" : "Repetitive regions identified by RepeatMasker."
+            "shortInfo" : "Repetitive regions identified by RepeatMasker."
          },
          "category" : "Genome Structure:Assembly & Curation",
          "key" : "Repeat Region (RepeatMasker)",
          "storeClass" : "JBrowse/Store/SeqFeature/NCList",
          "trackType" : "CanvasFeatures",
-         "urlTemplate" : "../tracks/Repeat Region (RepeatMasker)/{refseq}/trackData.json", 
-         "compress" : 0,
+         "urlTemplate" : "../tracks/Repeat Region (RepeatMasker)/{refseq}/trackData.jsonz", 
+         "compress" : 1,
          "type" : "CanvasFeatures",
          "label" : "Repeat Region (RepeatMasker)"
       }

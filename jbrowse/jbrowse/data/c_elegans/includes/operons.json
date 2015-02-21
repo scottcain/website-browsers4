@@ -9,13 +9,13 @@
          "key" : "Operons",
          "storeClass" : "JBrowse/Store/SeqFeature/NCList",
          "trackType" : "CanvasFeatures",
-         "urlTemplate" : "../tracks/Operons/{refseq}/trackData.json",
-         "compress" : 0,
+         "urlTemplate" : "../tracks/Operons/{refseq}/trackData.jsonz",
+         "compress" : 1,
          "label" : "Operons",
          "category" : "Genes",
          "type" : "CanvasFeatures",
          "metadata" : {
-             "citation" : "These are operons published by Blumenthal et al, Nature 417: 851-854 (2002)."
+             "shortInfo" : "These are operons published by Blumenthal et al, Nature 417: 851-854 (2002)."
          }
       }
    ]

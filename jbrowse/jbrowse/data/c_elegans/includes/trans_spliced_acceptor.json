@@ -16,12 +16,12 @@
          },
          "storeClass" : "JBrowse/Store/SeqFeature/NCList",
          "trackType" : "CanvasFeatures",
-         "urlTemplate" : "../tracks/Trans-spliced acceptor/{refseq}/trackData.json",
-         "compress" : 0,
+         "urlTemplate" : "../tracks/Trans-spliced acceptor/{refseq}/trackData.jsonz",
+         "compress" : 1,
          "label" : "Trans-spliced acceptor",
          "type" : "CanvasFeatures",
          "metadata" : {
-            "citation" : "These are SL1 and SL2 trans-spliced acceptors published by Blumenthal et al, Nature 417: 851-854 (2002). SL1 acceptors are show in red, SL2 in green."
+            "shortInfo" : "These are SL1 and SL2 trans-spliced acceptors published by Blumenthal et al, Nature 417: 851-854 (2002). SL1 acceptors are show in red, SL2 in green."
          },
          "category" : "Transcription:Signals"
       }

@@ -7,14 +7,14 @@
             "color" : "palevioletred"
          },
          "metadata" : {
-             "citation" : "These are GeneMarkHMM gene predictions provided by Mark Borodovsky."
+             "shortInfo" : "These are GeneMarkHMM gene predictions provided by Mark Borodovsky."
          },
          "category" : "Transcription:Ab-initio predictions",
          "key" : "Prediction: GeneMarkHMM",
          "storeClass" : "JBrowse/Store/SeqFeature/NCList",
          "trackType" : "CanvasFeatures",
-         "urlTemplate" : "../tracks/Prediction: GeneMarkHMM/{refseq}/trackData.json",
-         "compress" : 0,
+         "urlTemplate" : "../tracks/Prediction: GeneMarkHMM/{refseq}/trackData.jsonz",
+         "compress" : 1,
          "type" : "CanvasFeatures",
          "label" : "Prediction: GeneMarkHMM"
       }

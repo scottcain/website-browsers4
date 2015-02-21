@@ -8,6 +8,7 @@ use FindBin qw($Bin);
 use File::Copy;
 use Cwd;
 use FileHandle;
+use File::Basename;
 use JSON;
 #use Data::Dumper;
 
@@ -51,6 +52,7 @@ names) include:
  fastafile - Path to the input FASTA file
  filedir   - Path to parent directory where releases and files can be found
  datadir   - Relative path (from the jbrowse root) to jbrowse data directory
+ jbrowsedir- Path to JBrowse directory
  nosplit   - Don't split GFF file by reference sequence 
  usenice   - Run formatting commands with Unix nice
  skipfilesplit - Don't split files or use grep to make subfiles
@@ -58,6 +60,7 @@ names) include:
  allstats  - Path to the ALLSPECIES.stats file
  includes  - Path to the json includes file
  glyphs    - Path to custom JBrowse glyphs
+ browser_data - Path to the browser_data directory where modencode files are
 
 Note that the options in the config file can be overridden with the command
 line options.
@@ -135,7 +138,7 @@ my $INITIALDIR = cwd();
 my ($GFFFILE, $FASTAFILE, $CONFIG, $DATADIR, $NOSPLITGFF, $USENICE,
     $SKIPFILESPLIT, $JBROWSEDIR, $SKIPPREPARE, $ALLSTATS, $FILEDIR,
     $QUIET, $INCLUDES, $FUNCTIONS, $ORGANISMS, $GLYPHS,$SPECIES,
-    $RELEASE);
+    $RELEASE, $BROWSER_DATA, $FTPHOST);
 my %splitfiles;
 
 GetOptions(
@@ -174,10 +177,12 @@ $INCLUDES   = $Config->{_}->{includes};
 $FUNCTIONS  = $Config->{_}->{functions};
 $ORGANISMS  = $Config->{_}->{organisms};
 $GLYPHS     = $Config->{_}->{glyphs};
+$BROWSER_DATA = $Config->{_}->{browser_data};
 $ALLSTATS ||= $Config->{_}->{allstats};
     $ALLSTATS =~ s/\$RELEASE/$RELEASE/e;
 my $nice = $USENICE ? "nice" : '';
-$JBROWSEDIR ||= "/usr/local/wormbase/website/scain/jbrowse-dev";
+$JBROWSEDIR ||=  $Config->{_}->{jbrowsedir};;
+$FTPHOST    = 'ftp://ftp.wormbase.org';
 
 #this will be added to by every track
 my @include = ("../functions.conf");
@@ -230,6 +235,9 @@ while (my $line = <AS>) {
 }
 close AS;
 
+print "Processing $species ...\n";
+
+
 #fetch the GFF and fasta files
 $species =~ /(\w_\w+?)_(\w+)$/;
 my $speciesdir = $1;
@@ -238,8 +246,22 @@ my $datapath = $FILEDIR . 'WS' . $RELEASE . '/species/' . $speciesdir . '/' . $p
 $GFFFILE   = "$speciesdir.$projectdir.WS$RELEASE.annotations-processed.gff3";
 $FASTAFILE = "$speciesdir.$projectdir.WS$RELEASE.genomic.fa";
 
-copy("$datapath/$GFFFILE.gz", '.');
-copy("$datapath/$FASTAFILE.gz", '.');
+my $copyfailed;
+copy("$datapath/$GFFFILE.gz", '.') or $copyfailed = 1;
+copy("$datapath/$FASTAFILE.gz", '.') or $copyfailed = 1;
+
+if ($copyfailed == 1) {
+    #use ftp to fetch them
+
+    my $ftpgffpath = "/pub/wormbase/releases/WS$RELEASE/species/$speciesdir/$projectdir";
+
+    my $gff = "$ftpgffpath/$GFFFILE.gz";
+    my $fasta = "$ftpgffpath/$FASTAFILE.gz";
+
+    my $quiet = $QUIET ? '-q' : '';
+    system("wget $quiet $FTPHOST$gff");
+    system("wget $quiet $FTPHOST$fasta");
+}
 
 system("gunzip -f $GFFFILE.gz");
 system("gunzip -f $FASTAFILE.gz");
@@ -267,10 +289,10 @@ unless ($SKIPFILESPLIT) {
 
     my $grepcommand = "grep -P \"$greppattern\" $GFFFILE > $gffout";
     warn $grepcommand unless $QUIET;
-    system ("$nice $grepcommand") == 0 or warn $!;
+    system ("$nice $grepcommand") == 0 or warn "$GFFFILE: $!";
 
     if ($postprocess) {
-        system("$nice $Bin/$postprocess $gffout") == 0 or warn $!;
+        system("$nice $Bin/$postprocess $gffout") == 0 or warn "postpressing $gffout: $!";
     }
   }
 }
@@ -323,6 +345,9 @@ push @include, "includes/DNA.json";
 unless (-e "$DATADIR/../organisms.conf") {
     symlink $ORGANISMS, "$DATADIR/../organisms.conf" or warn $!;
 }
+unless (-e "browser_data") {
+    symlink $BROWSER_DATA, "browser_data" or warn $!;
+}
 
 #use original or split gff for many tracks
 for my $section (@config_sections) {
@@ -334,7 +359,7 @@ for my $section (@config_sections) {
 
     for my $file (keys %splitfiles) {
         my $gfffile = $INITIALDIR ."/". $file;
-        my $command = "$nice bin/flatfile-to-json.pl --gff $gfffile --out $DATADIR --type \"$type\" --trackLabel \"$label\"  --trackType CanvasFeatures --key \"$label\" --maxLookback 1000000";
+        my $command = "$nice bin/flatfile-to-json.pl --compress --gff $gfffile --out $DATADIR --type \"$type\" --trackLabel \"$label\"  --trackType CanvasFeatures --key \"$label\" --maxLookback 1000000";
         warn $command unless $QUIET;
         system($command) ==0 or warn $!;
     }
@@ -364,6 +389,21 @@ for my $section (@config_sections) {
     next unless $speciesdata{$species}{$section};
     process_grep_track($Config, $section);
     $speciesdata{$species}{$section} = -1;
+}
+
+
+#check for species-specific include files
+my $only_species_name;
+if ($species =~ /^(\w_[a-z]+)_/) {
+    $only_species_name = $1;
+}
+if ($only_species_name) {
+    my @species_specific = glob("$INCLUDES/$only_species_name"."*");
+    for (@species_specific) {
+        #ack, in place edit of array elements
+        $_ = "includes/".basename($_);
+    }
+    push @include, @species_specific;
 }
 
 
@@ -425,28 +465,31 @@ sub process_grep_track {
     my $config = shift;
     my $section= shift;
 
-    my $postprocess = $config->{$section}->{postprocess};
     next if $config->{$section}->{origfile};
 
     my $gffout;
-    if ($config->{$section}->{altfile}) {
-        my $altsection = $config->{$section}->{altfile};
+    my $postprocess;
+    my $altsection = $config->{$section}->{altfile};
+    if ($altsection) {
         $gffout = $INITIALDIR ."/". $config->{$altsection}->{prefix} . "_$GFFFILE";
+        $postprocess = $config->{$altsection}->{postprocess};
     }
     else {
         $gffout = $INITIALDIR ."/". $config->{$section}->{prefix} . "_$GFFFILE";
+        $postprocess = $config->{$section}->{postprocess};
     }
 
     if ($postprocess) {
         $gffout = $gffout.".out";
     }
+    
 
     my $type   = $config->{$section}->{type};
     my $label  = $config->{$section}->{label};
-    my $command= "$nice bin/flatfile-to-json.pl --gff $gffout --out $DATADIR --type \"$type\" --trackLabel \"$label\"  --trackType CanvasFeatures --key \"$label\"";
+    my $command= "$nice bin/flatfile-to-json.pl --compress --gff $gffout --out $DATADIR --type \"$type\" --trackLabel \"$label\"  --trackType CanvasFeatures --key \"$label\"";
     warn $command unless $QUIET;
 
-    system($command)==0 or warn $! ;
+    system($command)==0 or warn "$gffout: $!\n" ;
 
     if (!-e "$INCLUDES/$section.json") {
         warn "\nMISSING INCLUDE FILE: $section.json\n\n";

@@ -7,14 +7,14 @@
             "color" : "bisque"
          },
          "metadata" : {
-            "citation" : "Low-complexity regions identified by Dust."
+            "shortInfo" : "Low-complexity regions identified by Dust."
          },
          "category" : "Genome Structure:Assembly & Curation",
          "key" : "Low complextity region (Dust)",
          "storeClass" : "JBrowse/Store/SeqFeature/NCList",
          "trackType" : "CanvasFeatures",
-         "urlTemplate" : "../tracks/Low complextity region (Dust)/{refseq}/trackData.json",
-         "compress" : 0,
+         "urlTemplate" : "../tracks/Low complextity region (Dust)/{refseq}/trackData.jsonz",
+         "compress" : 1,
          "type" : "CanvasFeatures",
          "label" : "Low complextity region (Dust)"
       }
