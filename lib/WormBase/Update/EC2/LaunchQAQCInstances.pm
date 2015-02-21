@@ -119,7 +119,7 @@ sub run {
 
     $self->tag_instances({ instances   => $instances,
 			   description => 'qaqc instance from AMI: ' . $self->qaqc_image,
-			   name        => 'wb-qaqc',
+			   name        => 'qaqc',
 			   status      => 'qaqc',
 			   role        => 'webapp',
 			   source_ami  => $self->qaqc_image,
@@ -127,7 +127,7 @@ sub run {
     
     $self->tag_volumes({ instances   => $instances,
 			 description => 'qaqc instance from AMI: ' . $self->qaqc_image,
-			 name        => 'wb-qaqc',  # this is the name root, appended with qualifier
+			 name        => 'qaqc',  # this is the name root, appended with qualifier
 			 status      => 'qaqc',
 			 role        => 'webapp',
 		       });
