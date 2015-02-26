@@ -36,14 +36,21 @@ sub run {
 
 	# Temporary: already built.
 #	next if $name =~ /suum/;
-#	next if $name =~ /xylophilus/;
+#	next if $name =~ /ceylanicum/;
 #	next if $name =~ /angaria/;
 #	next if $name =~ /briggsae/;
-#	next unless $name =~ /malayi|brenneri/;
-#	next unless $name =~ /immitis|bacteriophora|loa|hapla|incognita|redivivus/;
+#	next if $name =~ /malayi/;
+#	next if $name =~ /xylophilus/;
+#	next if $name =~ /brenneri/;
+#	next if $name =~ /japonica/;
+#	next if $name =~ /remanei/;
+#	next if $name =~ /sp5/;
+#	next if $name =~ /tropicalis/;
+#	next unless $name =~ /malayi|remanei/;
+#	next unless $name =~ /malayi|immitis|bacteriophora|americanus|volvulus|redivivus/;
 #	next if $name =~ /suum|xylophilus|angaria|c_sp5|c_sp11/;
 #	next unless $name =~ /redivivus|ratti|spiralis|suis|pacificus|exspectatus|volvulus|americanus|incognita|hapla|loa|contortus/;
-	next if $name =~ /elegans/;
+#	next if $name =~ /elegans/;
 	my $species = WormBase->create('Species',{ symbolic_name => $name, release => $release });
 
 	$self->log->info(uc($name). ': start');	

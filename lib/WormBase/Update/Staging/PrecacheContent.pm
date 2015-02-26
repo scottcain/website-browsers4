@@ -1,4 +1,4 @@
-1;2cpackage WormBase::Update::Staging::PrecacheContent;
+package WormBase::Update::Staging::PrecacheContent;
 
 use Moose;
 use Ace;

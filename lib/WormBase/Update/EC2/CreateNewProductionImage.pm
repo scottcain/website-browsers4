@@ -17,7 +17,9 @@ sub run {
 
     # Discover the current qaqc environment instance.
     my $instances = $self->get_instances({'tag:Status'  => 'qaqc',					
-					  'tag:Release' => $self->release});
+					  'tag:Release' => $self->release,
+					  'tag:Name'    => 'wb-qaqc-source',
+					 });
     
     if (@$instances > 1) { 
 	$self->log->warn("
@@ -35,7 +37,7 @@ sub run {
     
     # Now that I have the instance, create a new AMI from it with appropriate tags.
     # The AMI Name *must* be unique, but not the "Tag:Name"
-    my $image = $instance->create_image(-name        => 'wb-production-' . $self->release,
+    my $image = $instance->create_image(-name        => 'production-' . $self->release,
 					-description => 'wormbase production AMI',
 	);
     
@@ -47,13 +49,13 @@ sub run {
     # Add some tags to the AMI and its backing snapshots.
     $self->tag_images({ image       => $image,
 			description => "wormbase production AMI autocreated from $instance",
-			name        => 'wb-production',
+			name        => 'production',
 			status      => 'production',
 			role        => 'webapp',
 		      });
     
     $self->tag_snapshots({ images  => $image,
-			   name    => 'wb-production',
+			   name    => 'production',
 			   status  => 'production',
 			   role    => 'webapp',
 			 });

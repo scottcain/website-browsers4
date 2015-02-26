@@ -263,7 +263,7 @@ sub run {
 
     $self->tag_instances({ instances   => $instances,
 			   description => "production instance from AMI: $image",
-			   name        => 'wb-webapp',
+			   name        => 'production',
 			   status      => 'production',
 			   role        => $role,
 			   source_ami  => $self->production_image,
@@ -271,7 +271,7 @@ sub run {
 
     $self->tag_volumes({ instances   => $instances,
 			 description => "volume for production instance",
-			 name        => 'wb-webapp',  # this is the name root
+			 name        => 'production',  # this is the name root
 			 status      => 'production',
 			 role        => $role,
 		       });
