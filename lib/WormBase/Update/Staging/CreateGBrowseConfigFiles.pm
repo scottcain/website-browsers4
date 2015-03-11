@@ -260,7 +260,6 @@ sub _build_f2c {
 		       'deletion:PCoF_Million_mutation',
 		       'insertion_site:PCoF_Million_mutation',
 		       'complex_substitution:PCoF_Million_mutation',
-		       'sequence_alteration:PCoF_Million_mutation',
 		       'deletion:PCoF_Variation_project',
 		       'point_mutation:PCoF_Variation_project',
 		       'complex_substitution:PCoF_NBP_knockout',
@@ -276,7 +275,7 @@ sub _build_f2c {
 		       'SNP:Variation_project_Polymorphism',
 		       'insertion_site:Variation_project_Polymorphism',
 		       'complex_substitution:Variation_project_Polymorphism',
-		       'sequence_alteration:Variation_project_Polymorphism',
+		       'tandem_duplication:Variation_project_Polymorphism',
 		       'deletion:Allele_Polymorphism'],
 	include => 'variations_polymorphisms',
     };
@@ -288,7 +287,7 @@ sub _build_f2c {
 		       'SNP:PCoF_Variation_project_Polymorphism',
 		       'substitution:PCoF_Variation_project_Polymorphism',
 		       'complex_substitution:PCoF_Variation_project_Polymorphism',
-		       'sequence_alteration:PCoF_Variation_project_Polymorphism'],
+	               ],
 	include  => 'variations_change_of_function_polymorphisms',
     };
 
@@ -303,7 +302,7 @@ sub _build_f2c {
 		       'complex_substitution:Million_mutation',
 		       'deletion:Million_mutation',
 		       'insertion_site:Million_mutation',
-		       'sequence_alteration:Million_mutation'],
+		       'tandem_duplication:Million_mutation'],
 	include => 'variations_million_mutation_project',
     };
 
@@ -388,7 +387,7 @@ sub _build_f2c {
     # Subcategory: Translated Features
     #
 
-    $f2c->{'sequence_motif:translated_feature'} = {
+    $f2c->{'polypeptide_motif:translated_feature'} = {
 	include    => 'protein_motifs',
     };
     
@@ -527,9 +526,10 @@ sub _build_f2c {
 	include => 'tecred_tags',
     };
 
-    $f2c->{'five_prime_open_reading_frame:micro_ORF'} = {
-	include => 'micro_orf',
-    };
+# Gone in WS246
+#    $f2c->{'five_prime_open_reading_frame:micro_ORF'} = {
+#	include => 'micro_orf',
+#    };
 
     $f2c->{'PCR_product:Orfeome'} = {
 	include => 'orfeome_pcr_products',

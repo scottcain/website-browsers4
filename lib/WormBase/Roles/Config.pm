@@ -401,7 +401,7 @@ sub _build_remote_ftp_releases_dir {
 
 ####################################
 #
-# Production related configuration
+# Productionftp related configuration
 #
 ####################################
 

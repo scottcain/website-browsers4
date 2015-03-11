@@ -23,13 +23,20 @@ sub untar_acedb {
     
     my $install = join("/",$self->acedb_root,'wormbase_' . $release);
     my $source  = join("/",$self->ftp_releases_dir,$release,'acedb');
-    
+
+    $self->log->info("    $source $install");    
+
     my $acedb_group = $self->acedb_group;
     $self->_reset_dir($install);
+
     system("chgrp $acedb_group $install");
     system("chmod 2775 $install");
     chdir $install;  
+
+
+
     foreach (<$source/database*.tar.gz>) {
+    $self->log->debug("    $_");
 	my $cmd = "gunzip -c $_ | tar xvf -"; # perl test.pl  >> tmp 2>&1
 	$self->system_call($cmd,"untarring acedb files to $install");
     }

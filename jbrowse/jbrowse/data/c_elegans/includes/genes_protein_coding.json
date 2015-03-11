@@ -4,8 +4,7 @@
          "style" : {
             "className" : "feature",
             "color" : "{geneColor}",
-            "label" : "{geneLabel}",
-            "description" : "function(f) {return'protein coding';}"
+            "label" : "{geneLabel}"
          },
          "onClick" : {
             "action" : "iframeDialog",
@@ -16,13 +15,13 @@
          "key" : "Curated Genes (protein coding)",
          "storeClass" : "JBrowse/Store/SeqFeature/NCList",
          "trackType" : "CanvasFeatures",
-         "urlTemplate" : "../tracks/Curated Genes (protein coding)/{refseq}/trackData.json",
-         "compress" : 0,
+         "urlTemplate" : "../tracks/Curated Genes (protein coding)/{refseq}/trackData.jsonz",
+         "compress" : 1,
          "category" : "Genes",
          "type" : "CanvasFeatures",
          "label" : "Curated Genes (protein coding)",
          "metadata" : {
-             "citation" : "A subset of the full Curated Genes set limited to protein-coding genes only. Only the CDS is represented. Full models (with UTRs) can be seen on the 'Curated Genes' track."
+             "shortInfo" : "A subset of the full Curated Genes set limited to protein-coding genes only. Only the CDS is represented. Full models (with UTRs) can be seen on the 'Curated Genes' track."
          }
       }
    ]

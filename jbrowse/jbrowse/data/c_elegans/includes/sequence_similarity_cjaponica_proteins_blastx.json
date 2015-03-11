@@ -4,6 +4,7 @@
          "style" : {
             "className" : "feature",
             "color" : "orange",
+            "label" : false,
             "height" : 5
          },
          "key" : "C. japonica proteins",
@@ -15,13 +16,15 @@
          },
          "storeClass" : "JBrowse/Store/SeqFeature/NCList",
          "trackType" : "CanvasFeatures",
-         "urlTemplate" : "../tracks/C. japonica proteins/{refseq}/trackData.json",
-         "compress" : 0,
+         "urlTemplate" : "../tracks/C. japonica proteins/{refseq}/trackData.jsonz",
+         "compress" : 1,
          "label" : "C. japonica proteins",
          "type" : "CanvasFeatures",
          "category" : "Sequence Similarity:Proteins",
+         "subParts" : "match_part",
+         "glyph" : "JBrowse/View/FeatureGlyph/Segments",
          "metadata" : {
-            "citation" : "Matches to WormBase C. japonica proteins, aligned with BLASTX (nucleotide to protein, via six-frame translation)."
+            "shortInfo" : "Matches to WormBase C. japonica proteins, aligned with BLASTX (nucleotide to protein, via six-frame translation)."
          }
       }
    ]
