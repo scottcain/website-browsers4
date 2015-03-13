@@ -1,3 +1,14 @@
+The scripts in this directory are used to stage a new release of WormBase 
+on the development instance (or a dedicated development instance should that
+be necessary).
+
+See Google Drive / Slack for documentation:
+
+https://wormbase.slack.com/archives/staging/p1426274090000007
+
+The ancient controller sh follows for quick reference.
+
+
 #!/bin/bash 
 
 # Stage a new release of WormBase
@@ -103,3 +114,13 @@ END : load genomic gff databases; in 0 days, 22 hours, 58 minutes and 28 seconds
 15. Send notification to staff that new release is available.
 
 
+
+
+
+
+16. Rsync the ftp directory on the dev instance to the main FTP site
+
+rsync -Cav /usr/local/ftp/pub/wormbase/releases/WS246 wb-dev.oicr.on.ca:/usr/local/ftp/pub/wormbase/releases/
+
+
+17 Copy GFF databases to our primary MYSQL host (www.wormbase.org, currently).

@@ -22,13 +22,13 @@ while (<>) {
   $group  =~ s/CHROMOSOME_//;
 
   # WS240 temp: fix group for the locus/Alias problem
-  $group =~ s/locus=/Alias=/;
+#  $group =~ s/locus=/Alias=/;
 
   # WS240 temp: fix gene landmarks
-  if ($method eq 'landmark' && $source eq 'gene') {
-      $group =~ /Locus=(.*)/;
-      $group = "ID=Locus:$1;Name=$1;Alias=$1";
-  }
+#  if ($method eq 'landmark' && $source eq 'gene') {
+#      $group =~ /Locus=(.*)/;
+#      $group = "ID=Locus:$1;Name=$1;Alias=$1";
+#  }
 
   print join("\t",$ref,$source,$method,$start,$stop,$score,$strand,$phase,$group) . "\n";
 }

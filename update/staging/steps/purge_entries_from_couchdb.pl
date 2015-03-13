@@ -17,7 +17,7 @@ GetOptions('release=s' => \$release,
 if ($help || (!$release)) {
     die <<END;
     
-Usage: $0 --release WSXXX --widget [WIDGET]  --class [CLASS] { --host [HOST] } { --selective_delete }
+Usage: $0 --release WSXXX --widget [WIDGET]  --class [CLASS] { --host [HOST] } { --selective_delete } --species [SPECIES]
 
 Purge the specified class/widget UUIDs from couchdb.  For example, to purge all gene:sequence widgets
 from the production couchdb:
