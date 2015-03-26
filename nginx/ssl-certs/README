@@ -1,5 +1,22 @@
 SSL Certificate
 
+2015.03.10: Certificate expired. reissuing.
+
+Generate a new CSR and key:
+> openssl req -new -newkey rsa:2048 -nodes -keyout wormbase.org.key -out wormbase.org.csr
+
+* Copy cert to GoDaddy.
+* Get reissued cert
+* Create new chain:
+
+> cd 2015.03.10/
+> cat
+cat wormbase.org.crt gd_bundle.crt > wormbase.org.chained.crt
+
+Done!
+
+
+
 2014.04.08: Re-keying certificate due to Heartbleed leak
 
 -----BEGIN CERTIFICATE REQUEST-----
