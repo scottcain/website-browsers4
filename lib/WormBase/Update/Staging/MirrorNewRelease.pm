@@ -52,7 +52,7 @@ cd $local_path
 # -nH    omit the host from the local directory
 # --cut-dirs=3    Is this the right amount when mirroring from root?
 #wget -r -N -nH -l 20 --cut-dirs=3 ftp://ftp.sanger.ac.uk/pub2/wormbase/releases/$release
-wget -r -N -nH -l 20 --cut-dirs=4 ftp://ftp.sanger.ac.uk/$remote_path
+wget -r -N -nH -l 20 --cut-dirs=5 ftp://ftp.sanger.ac.uk/$remote_path
 END
 ;
 	my $result = system($command);
