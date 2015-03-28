@@ -77,7 +77,7 @@ has 'already_cached_via' => (
 sub run {
     my $self = shift;       
     my $release = $self->release;
-    $self->dump_object_lists();
+#    $self->dump_object_lists();
 #    $self->cache_content_to_disk('bulk_load');
 #   exit;
     $self->crawl_website();             # Crawls object by object. Slower, but uses less memory.
@@ -288,8 +288,7 @@ sub crawl_website {
 	while (my $obj = <OBJECTS>) {
 	    chomp $obj;
 
-
-#	    if ($obj =~ /886184:Csp11\.Scaffold630\.g21187/) {
+#	    if ($obj =~ /WBInteraction000130049/) {
 #		$this_start++;
 #	    }
 #	    next if $this_start == 0;
@@ -395,8 +394,8 @@ sub crawl_website {
 #		    }
 	    }
 	    
-            # Max 5 processes for parallel download
-	    my $pm = new Parallel::ForkManager(6); 
+            # Max 5 processes for parallel download, with a location for our tmpdir
+	    my $pm = new Parallel::ForkManager(6,"/mnt/mysql/tmp"); 
 	    foreach my $uri (@uris) {	       		
 		$status{$class}{uris}++;
 
