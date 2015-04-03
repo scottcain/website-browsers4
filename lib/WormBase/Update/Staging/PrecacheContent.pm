@@ -295,6 +295,7 @@ sub crawl_website {
 	while (my $obj = <OBJECTS>) {
 	    chomp $obj;
 
+
 #	    if ($obj =~ /WBGene.*/) {
 #		$this_start++;
 #	    }
@@ -409,8 +410,8 @@ sub crawl_website {
 #		    }
 	    }
 	    
-            # Max 5 processes for parallel download
-	    my $pm = new Parallel::ForkManager(6); 
+            # Max 5 processes for parallel download, with a location for our tmpdir
+	    my $pm = new Parallel::ForkManager(6,"/mnt/mysql/tmp"); 
 	    foreach my $uri (@uris) {	       		
 		$status{$class}{uris}++;
 
