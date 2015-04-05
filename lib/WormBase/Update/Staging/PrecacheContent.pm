@@ -284,7 +284,7 @@ sub crawl_website {
 	# These are actually FIELDS, not widgets.
 	# We'll correct the URL below.
 	if ($class eq 'gene' || $class eq 'transcript') {
-	    push @widgets,'fpkm';
+	    push @widgets,'fpkm_expression_summary_ls';
 	}
        
 
@@ -294,7 +294,6 @@ sub crawl_website {
 #	my $this_start = 0;
 	while (my $obj = <OBJECTS>) {
 	    chomp $obj;
-
 
 #	    if ($obj =~ /WBGene.*/) {
 #		$this_start++;
@@ -349,9 +348,9 @@ sub crawl_website {
 		    my $url = sprintf($base_url,$class,$obj,$widget);
 
 		    # The FPKM elements are fields loaded by ajax. They need to be handled uniquely.		    
-		    if ($widget eq 'fpkm') {
+		    if ($widget eq 'fpkm_expression_summary_ls') {
 			my $host = $self->queries_to;
-			$url = "$host/rest/field/$class/$obj/fpkm_expression_summary_ls";
+			$url = "$host/rest/field/$class/$obj/$widget";
 		    }
 
 		    # Have we already cached this class:obj:widget?
