@@ -66,10 +66,12 @@ print "# $g. $species_alone functional descriptions\n";
 print "# WormBase version: " . $dbh->version . "\n";
 print "# Generated: $date\n";
 
+# TH
+
 if ($format eq 'record') {
     # no header
 } else {
-    print join("\t",qq/gene_id public_name molecular_name concise_description provisional_description detailed_description gene_class_description/),"\n";
+    print join("\t",qq/gene_id public_name molecular_name concise_description provisional_description detailed_description automated_description gene_class_description/),"\n";
 }
 my $i = $dbh->fetch_many(-query=>qq{find Gene Species=$g*$species_alone});
 while (my $gene = $i->next) {
@@ -83,6 +85,7 @@ while (my $gene = $i->next) {
 #  my $brief    = $gene->Brief_description       || $no_entry;
     my $prov     = $gene->Provisional_description || $no_entry;
     my $detailed = $gene->Detailed_description    || $no_entry;
+    my $automated = $gene->Automated_description  || $no_entry;
 #  print "$gene" . ($name ? " ($name)\n" : "\n");
     my $gene_class = $gene->Gene_class;
     my $gene_class_description = $gene_class ? $gene_class->Description : 'not known';
@@ -92,10 +95,11 @@ while (my $gene = $i->next) {
 	#  print rewrap("Brief description: $brief\n");
 	print rewrap("Provisional description: $prov\n");
 	print rewrap("Detailed description: $detailed\n");
+	print rewrap("Automated description: $automated\n");
 	print rewrap("Gene class description: $gene_class_description\n");
 	print $separator;
     } else {
-	print join("\t",$gene,$name,$molecular_name,$concise,$prov,$detailed,$gene_class_description),"\n";
+	print join("\t",$gene,$name,$molecular_name,$concise,$prov,$detailed,$automated,$gene_class_description),"\n";
     }
 }
 

@@ -114,20 +114,23 @@ sub load_gffdb {
 
     # Need to strip some entries from C. elegans
     # We'll process GFF3 (for now) below.
-    if ($name =~ /elegans/) {	
-	# Fix the FASTA file
-	my $tmp = $self->tmp_dir;
-	my $reformat = "gunzip -c $fasta | perl -p -i -e 's/CHROMOSOME_//g' | gzip -c > $tmp/$name.$id.$release.genomic-renamed.fa.gz";
-	$self->system_call($reformat,$reformat);
-	$fasta = "$tmp/$name.$id.$release.genomic-renamed.fa.gz";
-    }
-    
-    $self->log->debug("processing $name ($bioproject) GFF files");
-    my $output = $bioproject->release_dir . "/$name.$id.$release.annotations-processed.gff3.gz";
-    my $cmd = $self->bin_path . "/../helpers/process_gff.pl $gff | gzip -cf > $output";
-    $bioproject->gff_file("$output"); # Swap out the GFF files to load.
-    $gff = $bioproject->gff_file;
-    $self->system_call($cmd);	
+    # No longer required (hopefully!) as of WS248
+#    if ($name =~ /elegans/) {	
+#	# Fix the FASTA file
+#	my $tmp = $self->tmp_dir;
+#	my $reformat = "gunzip -c $fasta | perl -p -i -e 's/CHROMOSOME_//g' | gzip -c > $tmp/$name.$id.$release.genomic-renamed.fa.gz";
+#	$self->system_call($reformat,$reformat);
+#	$fasta = "$tmp/$name.$id.$release.genomic-renamed.fa.gz";
+#    }
+#    
+#    $self->log->debug("processing $name ($bioproject) GFF files");
+#    my $output = $bioproject->release_dir . "/$name.$id.$release.annotations-processed.gff3.gz";
+#    my $cmd = $self->bin_path . "/../helpers/process_gff.pl $gff | gzip -cf > $output";
+#    $bioproject->gff_file("$output"); # Swap out the GFF files to load.
+#
+#    $gff = $bioproject->gff_file;
+#    $self->system_call($cmd);	
+#    my $output = $bioproject->release_dir . "/$name.$id.$release.annotations-processed.gff3.gz";
 
     $ENV{TMP} = $self->tmp_dir;
     my $tmp   = $self->tmp_dir;
