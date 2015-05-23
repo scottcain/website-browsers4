@@ -399,6 +399,18 @@ sub _build_remote_ftp_releases_dir {
 }
 
 
+has 'remote_ftp_server_parasite' => (
+    is         => 'ro',
+    default    => 'ftp://ftp.ebi.ac.uk/',
+    );
+
+has 'remote_ftp_root_parasite' => (
+    is => 'ro',
+    default => 'pub/databases/wormbase/parasite',
+    );
+
+
+
 ####################################
 #
 # Productionftp related configuration
