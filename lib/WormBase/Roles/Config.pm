@@ -385,7 +385,7 @@ has 'contact_email' => (
     
 has 'remote_ftp_root' => (
     is => 'ro',
-    default => 'pub/databases/wormbase';
+    default => 'pub/databases/wormbase',
 #    default => 'pub/consortia/wormbase'
     );
 
