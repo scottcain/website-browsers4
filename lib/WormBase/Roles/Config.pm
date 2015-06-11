@@ -374,7 +374,8 @@ has 'rds_user' => (
 
 has 'remote_ftp_server' => (
     is => 'ro',
-    default => 'ftp.sanger.ac.uk',
+    default => 'ftp.ebi.ac.uk',
+#    default => 'ftp.sanger.ac.uk',
     );
 
 has 'contact_email' => (
@@ -384,7 +385,8 @@ has 'contact_email' => (
     
 has 'remote_ftp_root' => (
     is => 'ro',
-    default => 'pub/consortia/wormbase'
+    default => 'pub/databases/wormbase',
+#    default => 'pub/consortia/wormbase'
     );
 
 has 'remote_ftp_releases_dir' => (

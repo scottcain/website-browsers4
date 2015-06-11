@@ -12,13 +12,13 @@
          "onClick" : {
             "url" : "{targetURL}",
             "action" : "iframeDialog",
-            "title" : "Feature in WormBase Staging",
-            "label" : "Feature in WormBase Staging"
+            "title" : "Feature in WormBase",
+            "label" : "Feature in WormBase"
          },
          "key" : "WormBase nematode mRNAs/ESTs (best)",
          "storeClass" : "JBrowse/Store/SeqFeature/NCList",
          "trackType" : "CanvasFeatures",
-         "urlTemplate" : "../tracks/WormBase nematode mRNAs/ESTs (best)/{refseq}/trackData.jsonz",
+         "urlTemplate" : "../tracks/WormBase nematode mRNAs_ESTs (best)/{refseq}/trackData.jsonz",
          "compress" : 1,
          "type" : "CanvasFeatures",
          "label" : "WormBase nematode mRNAs/ESTs (best)",
