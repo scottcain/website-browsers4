@@ -344,6 +344,20 @@ sub _build_ftp_species_dir {
     return $self->ftp_root . "/species";
 }
 
+has 'gbrowse_production_host' => (
+    is => 'ro',
+    lazy_build => 1,
+    );
+
+sub _build_gbrowse_production_host {
+    my $self = shift;
+    my $host = 'gbrowse.wormbase.org';  # GBrowse semi-permanent host
+
+    my @addresses = split(/\s/,`dig +short $host`);
+    my $ip        = $addresses[2];
+    return $ip;
+}
+
 
 ####################################
 #
