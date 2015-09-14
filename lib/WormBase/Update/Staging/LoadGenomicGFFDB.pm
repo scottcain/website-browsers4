@@ -13,6 +13,10 @@ has 'step' => (
 has 'desired_species' => (
     is => 'ro',
     );
+
+has 'desired_bioproject' => (
+    is => 'ro',
+    );
    
 has 'confirm_only' => (
     is => 'ro',
@@ -30,7 +34,7 @@ sub run {
     } else {
 	($species) = $self->wormbase_managed_species;
     }
-    
+ 
     my $release = $self->release;
     foreach my $name (sort { $a cmp $b } @$species) {
 
@@ -64,12 +68,19 @@ sub run {
 		$self->confirm_contents($bioproject);
 		next;
 	    }
+
+
+            my $id = $bioproject->bioproject_id;
+            if ($self->desired_bioproject and $id ne $self->desired_bioproject) {
+                $self->log->info(  "Skipping $id; it is not the requested bioproject");
+                next;
+            }
+
 	    unless ($bioproject->has_been_updated) {
 		$self->log->info(  "Skipping $name; it was not updated during this release cycle");
 		next;
 	    }
 
-	    my $id = $bioproject->bioproject_id;
 	    $self->log->info("   Processing bioproject: $id");
 
 	    $self->load_gffdb($bioproject);
