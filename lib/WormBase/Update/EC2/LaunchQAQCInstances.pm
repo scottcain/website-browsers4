@@ -40,10 +40,42 @@ my $user_data = <<END;
 
 insserv -d ec2-run-user-data
 rm -rf /usr/local/wormbase/wormbase.env
-/etc/init.d/rserve-startup 
+
+# Stop some services
+sudo /etc/init.d/jenkins stop
+sudo /etc/init.d/mongodb stop
+
+
+# Get Rserve setup
+mkdir /usr/local/wormbase/website-shared-files/html/img-static/rplots
+cd /usr/local/wormbase/website-shared-files/html/img-static/rplots/
+rm -rf WS*
+sudo -u jenkins mkdir $VERSION
+chmod 2777 $VERSION
+sudo chown -R jenkins:jenkins /usr/local/wormbase/website-shared-files/html/img-static/rplots
+sudo chown -R jenkins:jenkins /usr/local/wormbase/website-shared-files/html/img-static/rnaseq_plots
+/etc/init.d/rserve-startup start
+
 rm -rf /etc/mysql/my.cnf
+
+# Start up the app
 cd /var/lib/jenkins/jobs/staging_build/workspace
 sudo -u jenkins /usr/local/bin/uglifyjs root/js/wormbase.js -o root/js/wormbase.min.js
+sudo -u jenkins git checkout production
+sudo -u jenkins git pull
+#sudo -u jenkins ./script/wormbase-daemon.sh
+
+# Set up a new temporary directory
+sudo rm -rf /tmp
+sudo mkdir /mnt/mysql/tmp
+cd /
+sudo ln -s /mnt/mysql/tmp tmp
+sudo chmod 777 /mnt/mysql/tmp
+
+# Clear out some old acedb files
+cd /usr/local/wormbase/acedb/wormbase/database
+rm -rf readlocks new touched serverlog.wrm log.wrm
+
 
 END
 ;
@@ -155,10 +187,14 @@ sub _launch_instances  {
 
     my $role = $self->role;
 
-    # No FTP mount but enable ephemeral storage
+    # Drop some mounts and add ephemeral storage
+    # no quant data (n), datomic (p)
     my @mounts = ('/dev/sdc=none',
 		  '/dev/sde=ephemeral0',
-		  '/dev/sdf=ephemeral1');
+		  '/dev/sdf=ephemeral1',
+		  '/dev/sdp=none',
+		  '/dev/sdn=none',
+	);
     
 
     # ... or modencode directory for webapp instances    
