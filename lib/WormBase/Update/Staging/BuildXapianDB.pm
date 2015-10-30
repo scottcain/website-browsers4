@@ -262,12 +262,12 @@ species = ( { name = "c_elegans";
               fullname = "brugia malayi";
               id = 6279;
               gff3 = 1; },
-            { name = "c_sp11";
-              fullname = "caenorhabditis sp. 11";
+            { name = "c_tropicalis";
+              fullname = "caenorhabditis tropicalis";
               id = 886184;
               gff3 = 1; },
-            { name = "c_sp5";
-              fullname = "caenorhabditis sp. 5";
+            { name = "c_sinica";
+              fullname = "caenorhabditis sinica";
               id = 497871;
               gff3 = 1; },
             { name = "b_xylophilus";
