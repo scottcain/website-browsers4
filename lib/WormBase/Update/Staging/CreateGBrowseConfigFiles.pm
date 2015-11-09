@@ -215,6 +215,10 @@ sub _build_f2c {
 	include   => 'historical_genes'
     };
 
+    $f2c->{'CDS:genBlastG'} = {
+        include   => 'genblastg'
+    };
+
     
     ################################################
     #
@@ -639,7 +643,7 @@ sub run {
     my $features = { };
     foreach my $name (sort { $a cmp $b } @$species) {
 	my $species = WormBase->create('Species',{ symbolic_name => $name, release => $release });
-#	next unless $name =~ /elegans/;
+	next unless $name =~ /elegans/;
 	$self->log->info(uc($name). ': start');	
 
 	# Now, for each species, iterate over the bioproject IDs.
@@ -650,6 +654,8 @@ sub run {
 	    my $id = $bioproject->bioproject_id;
 	    my $gff= $bioproject->gff_file;       # this includes the full path.
 	   
+            next unless $id eq 'PRJNA275000';
+ 
 	    $features->{species}->{"${name}_$id"}->{gff_version} = '3';
 	    $features->{species}->{"${name}_$id"}->{file}        = $gff;
 	    $features->{species}->{"${name}_$id"}->{species}     = $name;
@@ -704,9 +710,9 @@ sub generate_config {
 	# Get the core config.
 	my $base_config = WormBase::FeatureFile->new(-file => join('/',$self->path,$self->core_config_file));
 
-#	warn $base_config;
-#	warn $self->path;
-#	warn $self->core_config_file;
+	warn $base_config;
+	warn $self->path;
+	warn $self->core_config_file;
 
         my $statfile = $self->config_destination . "/$species.stats";
         my $fh  = IO::File->new("> " . $statfile)
@@ -728,6 +734,7 @@ sub generate_config {
 	    if ($include) {
 
 		# This species has a feature that requires a new stanza. Merge it into the main config
+                warn "base config in if include: $base_config";
 		$base_config = $self->merge_to_base_config($base_config,
 							   join('/',$self->includes_directory,$include. '.track'));
 				
@@ -774,6 +781,7 @@ sub generate_config {
 		# No config found. We are either 
 		#   a) a child/sibling/non-primary feature that will be picked up later or
 		#   b) a parent feature for which no configuration exists. We should take note of these.
+                warn "hey--no include for $feature!";
 		next;
 	    }	    	   
 	}
@@ -801,31 +809,31 @@ sub generate_config {
 
 
 
-sub merge_to_base_config {
-    my ($self,$base_config,$incoming_config) = @_;
+	sub merge_to_base_config {
+	    my ($self,$base_config,$incoming_config) = @_;
+	    
+	    my $new_config;
+	    # Is this an external file or a stanza we have built
+	    if ($incoming_config =~ /[conf|track]$/) {
+		$new_config = WormBase::FeatureFile->new(-file => $incoming_config);
+	    } else {
+		$new_config = WormBase::FeatureFile->new(-text => $incoming_config);
+	    }
+	    foreach my $stanza ($new_config->setting()) {
+		foreach my $option ($new_config->setting($stanza)) {
+		    my $value = $new_config->setting($stanza => $option);
+		    $base_config->set($stanza,$option => $value);
+		}
+	    }
+	    return $base_config;
+	}    
+
+
+	# Dump the complete config to a new file.
+	sub dump_configuration {
+	    my ($self,$species,$config) = @_;
+	#    print Dumper($config);
     
-    my $new_config;
-    # Is this an external file or a stanza we have built
-    if ($incoming_config =~ /[conf|track]$/) {
-	$new_config = WormBase::FeatureFile->new(-file => $incoming_config);
-    } else {
-	$new_config = WormBase::FeatureFile->new(-text => $incoming_config);
-    }
-    foreach my $stanza ($new_config->setting()) {
-	foreach my $option ($new_config->setting($stanza)) {
-	    my $value = $new_config->setting($stanza => $option);
-	    $base_config->set($stanza,$option => $value);
-	}
-    }
-    return $base_config;
-}    
-
-
-# Dump the complete config to a new file.
-sub dump_configuration {
-    my ($self,$species,$config) = @_;
-#    print Dumper($config);
-   
     my $fh = IO::File->new("> " . $self->config_destination . "/$species.conf") 
 	or $self->log->logdie("Couldn't open the species config file: $!");
     
@@ -859,7 +867,7 @@ sub print_global_stats {
 
     my $filename = $self->config_destination . "/ALL_SPECIES.stats";
     my $fh  = IO::File->new(">" . $filename) 
-	or $self->log->logdie("$!: Couldn't open the global stats file $filename");
+	or $self->log->logdie("$!:Couldn't open the global stats file $filename");
     
     # Generate a table of ALL species with feature counts
     print $fh join("\t",'FEATURE','SOURCE','TYPE','TRACK',sort keys %{$features->{species}}),"\n";
