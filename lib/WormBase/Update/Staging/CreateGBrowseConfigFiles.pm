@@ -215,6 +215,10 @@ sub _build_f2c {
 	include   => 'historical_genes'
     };
 
+    $f2c->{'CDS:genBlastG'} = {
+        include   => 'genblastg'
+    };
+
     
     ################################################
     #
