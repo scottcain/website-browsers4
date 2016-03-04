@@ -77,9 +77,9 @@ has 'already_cached_via' => (
 sub run {
     my $self = shift;       
     my $release = $self->release;
-#    $self->dump_object_lists();
+    $self->dump_object_lists();
 #    $self->cache_content_to_disk('bulk_load');
-#   exit;
+   exit;
     $self->crawl_website();             # Crawls object by object. Slower, but uses less memory.
 #    $self->precache_classic_content();
 }
@@ -286,6 +286,12 @@ sub crawl_website {
 	if ($class eq 'gene' || $class eq 'transcript') {
 	    push @widgets,'fpkm_expression_summary_ls';
 	}
+
+
+
+	if ($class eq 'gene') {
+	    push @widgets,'alleles_other','polymorphisms';
+	}
        
 
 	my $object_list = join("/",$cache_root,'logs',"$class.ace");
@@ -333,6 +339,8 @@ sub crawl_website {
 		$precache = 1 if $class_level_precache;
 
 		$precache = 1 if $widget eq 'fpkm'; # OMG awful hack.
+		$precache = 1 if $widget eq 'alleles_other'; # OMG awful hack.
+		$precache = 1 if $widget eq 'polymorphisms'; # OMG awful hack.
 
 #	    print join("-",keys %{$config->{sections}->{species}->{$class}->{widgets}->{$widget}}) . "\n";
 #	    print join("\t",$class,$widget,$precache) . "\n";
@@ -347,8 +355,13 @@ sub crawl_website {
 
 		    my $url = sprintf($base_url,$class,$obj,$widget);
 
-		    # The FPKM elements are fields loaded by ajax. They need to be handled uniquely.		    
-		    if ($widget eq 'fpkm_expression_summary_ls') {
+		    # Some fields are loaded by AJAX now and need to be handled uniquely.
+		    if ($widget eq 'fpkm_expression_summary_ls'
+			||
+			$widget eq 'alleles_other'
+			||
+			$widget eq 'polymorphisms'			
+			) {
 			my $host = $self->queries_to;
 			$url = "$host/rest/field/$class/$obj/$widget";
 		    }
