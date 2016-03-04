@@ -9,7 +9,7 @@ use Getopt::Long;
 my ($release,$help,$path);
 GetOptions('release=s' => \$release,
 	   'help'      => \$help,
-	   'path'      => \$path,
+	   'path=s'      => \$path,
 );
 
 if ($help || (!$release)) {

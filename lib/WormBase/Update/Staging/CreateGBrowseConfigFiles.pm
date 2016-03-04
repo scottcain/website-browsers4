@@ -215,6 +215,10 @@ sub _build_f2c {
 	include   => 'historical_genes'
     };
 
+    $f2c->{'CDS:genBlastG'} = {
+        include   => 'genblastg'
+    };
+
     
     ################################################
     #
@@ -649,7 +653,7 @@ sub run {
 
 	    my $id = $bioproject->bioproject_id;
 	    my $gff= $bioproject->gff_file;       # this includes the full path.
-	    
+	   
 	    $features->{species}->{"${name}_$id"}->{gff_version} = '3';
 	    $features->{species}->{"${name}_$id"}->{file}        = $gff;
 	    $features->{species}->{"${name}_$id"}->{species}     = $name;
@@ -708,8 +712,11 @@ sub generate_config {
 #	warn $self->path;
 #	warn $self->core_config_file;
 
-	my $fh  = IO::File->new("> " . $self->config_destination . "/$species.stats")
-	    or $self->log->logdie("Couldn't open the species stats file: $!");
+        my $statfile = $self->config_destination . "/$species.stats";
+        my $fh  = IO::File->new("> " . $statfile)
+            or $self->log->logdie("Couldn't open the species stats file ($statfile): $!");
+	#my $fh  = IO::File->new("> " . $self->config_destination . "/$species.stats")
+	#    or $self->log->logdie("Couldn't open the species stats file: $!");
 	
 	print $fh "gff_version: " . $features->{species}->{$species}->{gff_version} . "\n"; 
 	print $fh "file: " . $features->{species}->{$species}->{file} . "\n";
@@ -822,7 +829,7 @@ sub merge_to_base_config {
 sub dump_configuration {
     my ($self,$species,$config) = @_;
 #    print Dumper($config);
-    
+   
     my $fh = IO::File->new("> " . $self->config_destination . "/$species.conf") 
 	or $self->log->logdie("Couldn't open the species config file: $!");
     
@@ -854,8 +861,9 @@ END
 sub print_global_stats {
     my ($self,$features) = @_;
 
-    my $fh  = IO::File->new("> " . $self->config_destination . "/ALL_SPECIES.stats") 
-	or $self->log->logdie("Couldn't open the global stats file");
+    my $filename = $self->config_destination . "/ALL_SPECIES.stats";
+    my $fh  = IO::File->new(">" . $filename) 
+	or $self->log->logdie("$!: Couldn't open the global stats file $filename");
     
     # Generate a table of ALL species with feature counts
     print $fh join("\t",'FEATURE','SOURCE','TYPE','TRACK',sort keys %{$features->{species}}),"\n";
@@ -919,6 +927,8 @@ sub _create_nucleotide_similarity_stanzas {
                 cjaponica 
                 cremanei
                 ppacificus
+                sratti
+                ovolvulus
                 dmelanogaster
                 hsapiens
                 scerevisiae
@@ -951,4 +961,5 @@ sub _create_nucleotide_similarity_stanzas {
 
 
 1;
+
 
