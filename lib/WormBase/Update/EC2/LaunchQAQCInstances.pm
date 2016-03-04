@@ -55,7 +55,7 @@ END
 #!/bin/bash
 
 # Ensure that any future AMIs created from this instance 
-# can also use user_dat
+# can also use user_data
 echo "ensuring that future AMIs created from this instance can use user-data..."
 insserv -d ec2-run-user-data
 

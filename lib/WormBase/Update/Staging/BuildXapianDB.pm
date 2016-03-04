@@ -18,7 +18,7 @@ sub run {
     system("chmod 777 $tmp_dir");
     $self->dump_objects_via_tace($tmp_dir);
     $self->dump_settings_file($tmp_dir);
-    $self->dump_pages_pseudo_ace_file($tmp_dir);
+#    $self->dump_pages_pseudo_ace_file($tmp_dir);
 
     $self->run_indexer($tmp_dir);
     $self->log->info("done creating xapian database");
