@@ -595,7 +595,7 @@ sub _build_f2c {
 
     $f2c->{'expressed_sequence_match:BLAT_Trinity_BEST'} = {
         include => 'sequence_similarity_trinity_rnaseq',
-    }
+    };
     
 
     ################################################
