@@ -57,10 +57,10 @@ $g = uc($g);
 
 
 # These really only exist for elegans at the moment.
-unless ($species =~ /elegans/) {
-    print "# No currated functional descriptions for $species yet exist in WormBase\n";
-    exit 0;
-}
+#unless ($species =~ /elegans/) {
+#    print "# No curated functional descriptions for $species yet exist in WormBase\n";
+#    exit 0;
+#}
 
 print "# $g. $species_alone functional descriptions\n";
 print "# WormBase version: " . $dbh->version . "\n";

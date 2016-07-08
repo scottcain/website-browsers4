@@ -388,24 +388,24 @@ sub update_ftp_site_symlinks {
 		    my $species_source_path = $species_path;
 		    		
 		    # Create some directories. Probably already exist.
-		    system("mkdir -p $species_dir/$species");
-		    chdir "$species_dir/$species";
+		    system("mkdir -p $species_dir/$bioproject_id/$species");
+		    chdir "$species_dir/$species/$bioproject_id";
 		    mkdir("assemblies");
 		    mkdir("gff");
 		    mkdir("annotation");
 		    mkdir("sequence");
 		    
-		    chdir "$species_dir/$species/sequence";
+		    chdir "$species_dir/$species/$bioproject_id/sequence";
 		    mkdir("genomic");
 		    mkdir("transcripts");
 		    mkdir("protein");
 		    
 		    
 		    # GFF?
-		    chdir "$species_dir/$species";
+		    chdir "$species_dir/$species/$bioproject_id";
 		    if ($file =~ /gff/) {
 			chdir("gff") or die "$!";
-			$self->update_symlink({target => "../../../releases/$release/species/$species/$bioproject_id/$file",
+			$self->update_symlink({target => "../../../../releases/$release/species/$species/$bioproject_id/$file",
 					       symlink => $file,
 					       release => $release,
 					       status  => $status,
@@ -415,7 +415,7 @@ sub update_ftp_site_symlinks {
 			
 		    } elsif ($file =~ /assembly/) {
 			chdir("assemblies") or die "$!";
-			$self->update_symlink({target => "../../../releases/$release/species/$species/$bioproject_id/$file",
+			$self->update_symlink({target => "../../../../releases/$release/species/$species/$bioproject_id/$file",
 					       symlink => $file,
 					       release => $release,
 					       status  => $status,
@@ -424,8 +424,8 @@ sub update_ftp_site_symlinks {
 					      });
 			
 		    } elsif ($file =~ /genomic|sequence/) {
-			chdir "$species_dir/$species/sequence/genomic" or die "$!";
-			$self->update_symlink({target  => "../../../../releases/$release/species/$species/$bioproject_id/$file",
+			chdir "$species_dir/$species/$bioproject_id/sequence/genomic" or die "$!";
+			$self->update_symlink({target  => "../../../../../releases/$release/species/$species/$bioproject_id/$file",
 					       symlink => $file,
 					       release => $release,
 					       status  => $status,
@@ -434,8 +434,8 @@ sub update_ftp_site_symlinks {
 					      });
 			
 		    } elsif ($file =~ /transcripts/) {
-			chdir "$species_dir/$species/sequence/transcripts" or die "$! $species";
-			$self->update_symlink({target  => "../../../../releases/$release/species/$species/$bioproject_id/$file",
+			chdir "$species_dir/$species/$bioproject/sequence/transcripts" or die "$! $species";
+			$self->update_symlink({target  => "../../../../../releases/$release/species/$species/$bioproject_id/$file",
 					       symlink => $file,
 					       release => $release,
 					       status    => $status,
@@ -444,8 +444,8 @@ sub update_ftp_site_symlinks {
 					      });
 			
 		    } elsif ($file =~ /wormpep|protein/) {
-			chdir "$species_dir/$species/sequence/protein" or die "$!";
-			$self->update_symlink({target  => "../../../../releases/$release/species/$species/$bioproject_id/$file",
+			chdir "$species_dir/$species/$bioproject_id/sequence/protein" or die "$!";
+			$self->update_symlink({target  => "../../../../../releases/$release/species/$species/$bioproject_id/$file",
 					       symlink => $file,
 					       release => $release,
 					       status  => $status,
@@ -455,12 +455,12 @@ sub update_ftp_site_symlinks {
 			
 			# best_blast_hits isn't in the annotation/ folder
 		    } elsif ($file =~ /best_blast/) {
-			chdir "$species_dir/$species";
+			chdir "$species_dir/$species/$bioproject_id";
 			mkdir("annotation");
 			chdir("annotation");
 			mkdir("best_blast_hits");
 			chdir("best_blast_hits");
-			$self->update_symlink({target  => "../../../../releases/$release/species/$species/$bioproject_id/$file",
+			$self->update_symlink({target  => "../../../../../releases/$release/species/$species/$bioproject_id/$file",
 					       symlink => $file,
 					       release => $release,
 					       status  => $status,
@@ -475,7 +475,7 @@ sub update_ftp_site_symlinks {
 		opendir DIR,"$species_path/$bioproject_id/annotation" or next;
 		while (my $file = readdir(DIR)) {
 		    next unless $file =~ /^$species/;
-		    chdir "$species_dir/$species";
+		    chdir "$species_dir/$species/$bioproject_id";
 		    
 		    mkdir("annotation");
 		    chdir("annotation");
@@ -483,7 +483,7 @@ sub update_ftp_site_symlinks {
 		    my ($description) = ($file =~ /$species.*\.WS\d\d\d\.(.*?)\..*/);
 		    mkdir($description);
 		    chdir($description);
-		    $self->update_symlink({target  => "../../../../releases/$release/species/$species/$bioproject_id/annotation/$file",
+		    $self->update_symlink({target  => "../../../../../releases/$release/species/$species/$bioproject_id/annotation/$file",
 					   symlink => $file,
 					   release => $release,
 					   status  => $status,

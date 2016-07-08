@@ -16,7 +16,7 @@ GetOptions(
            "species=s"   => \$species,
 	  );
 
-$path || die <<USAGE;
+($path || $host) || die <<USAGE;
 
 Usage: $0 [options]
    
@@ -42,7 +42,7 @@ my $count;
 
 my $total = $dbh->count(Laboratory => '*');
 
-my $i = $dbh->fetch_many(-class=>'Laboratory',-name => '*',-filled=>1) or die $dbh->error;
+my $i = $dbh->fetch_many(-class=>'Laboratory',-name => '*') or die $dbh->error;
 
 print "# WormBase Laboratory and Allele Designations\n";
 print "# WormBase, version " . $dbh->version . "\n";
