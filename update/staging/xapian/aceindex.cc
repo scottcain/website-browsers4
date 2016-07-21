@@ -19,6 +19,7 @@
  * value(10) = end
  * value(11) = strand
  * value(12) = strain (i.e. c_remanei_PRJNA248909)
+ * value(13) = bioproject (optional) (i.e. PRJNA248909)
  *
  * all tags are added as terms, unless it is a 'not_' tag
  * all 'name' or 'synonym' tags are added as synonyms to the WBid
@@ -182,10 +183,17 @@ indexLineBegin(string field_name, string line, string copy, string obj_name, Xap
     }
     doc.add_value(3, Xapian::sortable_serialise(species_id[line]));
     doc.add_value(5, line);
-    doc.add_value(12, line + doc.get_value(12)); // prepend species to bioproject
+
+    string bioproject;
+    if (doc.get_value(13).find_first_of("PRJ") == 0) {
+      bioproject = "_" + doc.get_value(13);
+    } else {
+      bioproject = "";
+    }
+    doc.add_value(12, line + bioproject); // prepend species to bioproject
     syn_doc.add_value(3, Xapian::sortable_serialise(species_id[line]));
     syn_doc.add_value(5, line);
-    syn_doc.add_value(12, line + doc.get_value(12)); // prepend species to bioproject
+    syn_doc.add_value(12, line + bioproject); // prepend species to bioproject
     indexer.index_text(line, 1 * species_weight);
     return true;
   }
@@ -302,7 +310,7 @@ indexFile(char* filename, string desc[], int desc_size, Setting &root){
           string name_prefix = obj_name.substr(0, obj_name.find_first_of(":"));
           if (name_prefix.find_first_of("PRJ") == 0) {
             // this is a bioproject prefix
-            doc.add_value(12, '_' + name_prefix); // set the bioproject
+            doc.add_value(13, name_prefix); // set the bioproject if available
           }
         }
 
