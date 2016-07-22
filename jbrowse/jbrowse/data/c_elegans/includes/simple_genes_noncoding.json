@@ -21,12 +21,13 @@
          "urlTemplate" : "../tracks/Curated Genes (noncoding)/{refseq}/trackData.jsonz",
          "compress" : 1,
          "type" : "CanvasFeatures",
-         "category" : "Genes",
+         "category": "Genes",
          "label" : "Curated Genes (noncoding)",
          "glyph" : "JBrowse/View/FeatureGlyph/Segments",
          "metadata" : {
-             "shortInfo" : "Non-coding curated gene models, including ncRNA, tRNA, miRNA, snRNA, snoRNA, piRNA, lincRNA and antisense RNA."
-         }
+            "shortInfo" : "Non-coding curated gene models, including ncRNA, tRNA, miRNA, snRNA, snoRNA, piRNA, lincRNA and antisense RNA."
+         },
+         "maxExportSpan" : 50000000
       }
    ]
 }

@@ -1,6 +1,6 @@
 {
    "tracks" : [
-      { 
+      {
          "style" : {
             "className" : "feature",
             "color" : "gray",
@@ -18,11 +18,12 @@
          "urlTemplate" : "../tracks/Transposons/{refseq}/trackData.jsonz",
          "compress" : 1,
          "type" : "CanvasFeatures",
-         "category" : "Genes",
+         "category": "Genes/Curated Genes",
          "label" : "Transposons",
          "metadata" : {
-             "shortInfo" : "These are transposon spans reviewed by WormBase curators."
-          }
+            "shortInfo" : "These are transposon spans reviewed by WormBase curators."
+         },
+         "maxExportSpan" : 50000000
       }
    ]
 }

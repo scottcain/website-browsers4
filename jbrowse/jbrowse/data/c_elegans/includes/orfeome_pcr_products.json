@@ -1,6 +1,6 @@
 {
    "tracks" : [
-      { 
+      {
          "style" : {
             "className" : "feature",
             "height" : 4,
@@ -15,8 +15,9 @@
          "urlTemplate" : "../tracks/ORFeome PCR Products/{refseq}/trackData.jsonz",
          "compress" : 1,
          "type" : "CanvasFeatures",
-         "category" : "Transcription:Supporting Evidence",
-         "label" : "ORFeome PCR Products"
+         "category": "Genes/Supporting Evidence",
+         "label" : "ORFeome PCR Products",
+         "maxExportSpan" : 50000000
       }
    ]
 }

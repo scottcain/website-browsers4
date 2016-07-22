@@ -1,6 +1,6 @@
 {
    "tracks" : [
-      { 
+      {
          "style" : {
             "className" : "feature",
             "color" : "sienna",
@@ -15,14 +15,15 @@
          "metadata" : {
             "shortInfo" : "This track shows the location and coordinates of contigs (mostly cosmids) submitted to GenBank/EMBL."
          },
-         "category" : "Genome Structure:Assembly & Curation",
+         "category": "Genome Structure/Assembly & Curation",
          "key" : "Contig submissions",
          "storeClass" : "JBrowse/Store/SeqFeature/NCList",
          "trackType" : "CanvasFeatures",
          "urlTemplate" : "../tracks/Contig submissions/{refseq}/trackData.jsonz",
          "compress" : 1,
          "type" : "CanvasFeatures",
-         "label" : "Contig submissions"
+         "label" : "Contig submissions",
+         "maxExportSpan" : 50000000
       }
    ]
 }

@@ -1,6 +1,6 @@
 {
    "tracks" : [
-      { 
+      {
          "style" : {
             "className" : "feature",
             "color" : "green",
@@ -17,12 +17,13 @@
          "trackType" : "CanvasFeatures",
          "urlTemplate" : "../tracks/Transcriptionally Active Region/{refseq}/trackData.jsonz",
          "compress" : 1,
-         "category" : "Transcription:Supporting Evidence",
+         "category": "Genes/Supporting Evidence",
          "type" : "CanvasFeatures",
          "label" : "Transcriptionally Active Region",
          "metadata" : {
             "shortInfo" : "Transcriptionally Active Regions (TARs) found by the Miller lab from tiling-array projects run as part of the modENCODE project."
-         }
+         },
+         "maxExportSpan" : 50000000
       }
    ]
 }

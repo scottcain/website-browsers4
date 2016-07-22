@@ -1,6 +1,6 @@
 {
    "tracks" : [
-      { 
+      {
          "style" : {
             "className" : "feature",
             "color" : "{geneColor}",
@@ -19,12 +19,13 @@
          "urlTemplate" : "../tracks/Curated_Genes/{refseq}/trackData.jsonz",
          "compress" : 1,
          "type" : "CanvasFeatures",
-         "category" : "Genes",
+         "category": "Genes",
          "label" : "Curated_Genes",
          "glyph" : "{geneGlyph}",
          "metadata" : {
-             "shortInfo" : "Protein-coding gene structures result from the integration of a variety of prediction methods and data sources followed by manual review and revison by WormBase curators." 
-          }
+            "shortInfo" : "Protein-coding gene structures result from the integration of a variety of prediction methods and data sources followed by manual review and revison by WormBase curators."
+         },
+         "maxExportSpan" : 50000000
       }
    ]
 }

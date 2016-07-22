@@ -23,7 +23,7 @@ sub run {
 
     # Is this a mysqldump or just a bz2?
 #    my $source = join('/',$self->ftp_releases_dir,$release,'COMPARATIVE_ANALYSIS',$self->clustal_sql . '.bz2');
-    my $source = join('/',$self->ftp_releases_dir,$release,'COMPARATIVE_ANALYSIS',$self->clustal_sql . '.gz');
+    my $source = join('/',$self->ftp_releases_dir,$release,'MULTI_SPECIES',$self->clustal_sql . '.gz');
     my $mysql_root = $self->mysql_data_dir;
 
     my $tmp_dir = $self->tmp_dir;    

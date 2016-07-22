@@ -1,6 +1,6 @@
 {
    "tracks" : [
-      { 
+      {
          "style" : {
             "className" : "feature",
             "color" : "violet",
@@ -17,12 +17,13 @@
          "trackType" : "CanvasFeatures",
          "urlTemplate" : "../tracks/PCR Assays/{refseq}/trackData.jsonz",
          "compress" : 1,
-         "category" : "Reagents",
+         "category": "Reagents",
          "metadata" : {
             "shortInfo" : "This track indicates the location of primer pairs that have been created by a number of groups."
          },
          "type" : "CanvasFeatures",
-         "label" : "PCR Assays"
+         "label" : "PCR Assays",
+         "maxExportSpan" : 50000000
       }
    ]
 }

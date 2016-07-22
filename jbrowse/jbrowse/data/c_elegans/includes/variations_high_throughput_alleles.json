@@ -1,6 +1,6 @@
 {
    "tracks" : [
-      { 
+      {
          "style" : {
             "className" : "feature",
             "color" : "{variationColor}",
@@ -20,12 +20,13 @@
          "trackType" : "CanvasFeatures",
          "urlTemplate" : "../tracks/High-throughput alleles/{refseq}/trackData.jsonz",
          "compress" : 1,
-         "category" : "Alleles, Variations, RNAi",
+         "category": "Alleles, Variations, RNAi",
          "type" : "CanvasFeatures",
          "label" : "High-throughput alleles",
          "metadata" : {
-             "shortInfo" : "These are alleles generated through high-throughput, genome-wide projects. Million Mutation Project alleles are placed in a separate track."
-         }
+            "shortInfo" : "These are alleles generated through high-throughput, genome-wide projects. Million Mutation Project alleles are placed in a separate track."
+         },
+         "maxExportSpan" : 50000000
       }
    ]
 }
