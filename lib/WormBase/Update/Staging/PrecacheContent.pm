@@ -79,7 +79,7 @@ sub run {
     my $release = $self->release;
     $self->dump_object_lists();
 #    $self->cache_content_to_disk('bulk_load');
-   exit;
+#   exit;
     $self->crawl_website();             # Crawls object by object. Slower, but uses less memory.
 #    $self->precache_classic_content();
 }
@@ -423,7 +423,7 @@ sub crawl_website {
 	    }
 	    
             # Max 5 processes for parallel download, with a location for our tmpdir
-	    my $pm = new Parallel::ForkManager(6,"/mnt/mysql/tmp"); 
+	    my $pm = new Parallel::ForkManager(6,"/usr/local/wormbase/tmp"); 
 	    foreach my $uri (@uris) {	       		
 		$status{$class}{uris}++;
 
