@@ -11,7 +11,7 @@
          "subParts" : "exon",
          "onClick" : {
             "action" : "iframeDialog",
-            "url" : "{simpleGeneURL}",
+            "url" : "{transcriptURL}",
             "label" : "Feature in WormBase",
             "title" : "Feature in WormBase"
          },
@@ -21,12 +21,21 @@
          "urlTemplate" : "../tracks/Curated Genes (noncoding)/{refseq}/trackData.jsonz",
          "compress" : 1,
          "type" : "CanvasFeatures",
-         "category" : "Genes",
+         "category": "Genes/Curated Genes",
          "label" : "Curated Genes (noncoding)",
          "glyph" : "JBrowse/View/FeatureGlyph/Segments",
          "metadata" : {
-             "shortInfo" : "Non-coding curated gene models, including ncRNA, tRNA, miRNA, snRNA, snoRNA, piRNA, lincRNA and antisense RNA."
-         }
+            "shortInfo" : "Non-coding curated gene models, including ncRNA, tRNA, miRNA, snRNA, snoRNA, piRNA, lincRNA and antisense RNA."
+         },
+        "menuTemplate" : [
+           {
+           "content" : "function(track,feature){return track.browser.plugins.FeatureSequence.callFxn(track, feature); }",
+           "iconClass" : "dijitIconDatabase",
+           "action" : "contentDialog",
+           "label" : "View Sequence"
+           }
+         ],
+         "maxExportSpan" : 50000000
       }
    ]
 }

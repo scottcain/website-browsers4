@@ -11,14 +11,15 @@
          },
          "subParts" : "match_part",
          "glyph" : "JBrowse/View/FeatureGlyph/Segments",
-         "category" : "Sequence Similarity:Nucleotide",
+         "category": "Sequence Similarity/Nucleotide",
          "key" : "Nematode.net cDNAs",
          "storeClass" : "JBrowse/Store/SeqFeature/NCList",
          "trackType" : "CanvasFeatures",
          "urlTemplate" : "../tracks/Nematode.net cDNAs/{refseq}/trackData.jsonz",
          "compress" : 1,
          "type" : "CanvasFeatures",
-         "label" : "Nematode.net cDNAs"
+         "label" : "Nematode.net cDNAs",
+         "maxExportSpan" : 50000000
       }
    ]
 }

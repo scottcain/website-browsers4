@@ -215,6 +215,10 @@ sub _build_f2c {
 	include   => 'historical_genes'
     };
 
+    $f2c->{'CDS:genBlastG'} = {
+        include   => 'genblastg'
+    };
+
     
     ################################################
     #
@@ -588,6 +592,10 @@ sub _build_f2c {
     $f2c->{'nucleotide_match:TIGR_OTHER'} = {
 	include => 'sequence_similarity_tigr_gene_models_other',
     };
+
+    $f2c->{'expressed_sequence_match:BLAT_Trinity_BEST'} = {
+        include => 'sequence_similarity_trinity_rnaseq',
+    };
     
 
     ################################################
@@ -957,4 +965,5 @@ sub _create_nucleotide_similarity_stanzas {
 
 
 1;
+
 

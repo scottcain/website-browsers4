@@ -18,7 +18,7 @@ sub run {
     system("chmod 777 $tmp_dir");
     $self->dump_objects_via_tace($tmp_dir);
     $self->dump_settings_file($tmp_dir);
-    $self->dump_pages_pseudo_ace_file($tmp_dir);
+#    $self->dump_pages_pseudo_ace_file($tmp_dir);
 
     $self->run_indexer($tmp_dir);
     $self->log->info("done creating xapian database");
@@ -37,9 +37,9 @@ sub dump_objects_via_tace {
     my $tmp_dir = shift;
     my $version = $self->release;
     $self->log->info("   --> dumping ace files for indexing");
-    open OUT,">$tmp_dir/dump_ace_for_search.script";
-    print OUT <<END;
-//tace script to dump database
+
+=pod
+
 Find Analysis
 Write $tmp_dir/Analysis.ace
 Find Anatomy_term
@@ -84,6 +84,12 @@ Find Life_stage
 Write $tmp_dir/Life_stage.ace
 Find LongText
 Write $tmp_dir/LongText.ace
+
+=cut
+
+    open OUT,">$tmp_dir/dump_ace_for_search.script";
+    print OUT <<END;
+//tace script to dump database
 Find Microarray_results
 Write $tmp_dir/Microarray_results.ace
 Find Molecule
@@ -262,12 +268,12 @@ species = ( { name = "c_elegans";
               fullname = "brugia malayi";
               id = 6279;
               gff3 = 1; },
-            { name = "c_sp11";
-              fullname = "caenorhabditis sp. 11";
+            { name = "c_tropicalis";
+              fullname = "caenorhabditis tropicalis";
               id = 886184;
               gff3 = 1; },
-            { name = "c_sp5";
-              fullname = "caenorhabditis sp. 5";
+            { name = "c_sinica";
+              fullname = "caenorhabditis sinica";
               id = 497871;
               gff3 = 1; },
             { name = "b_xylophilus";

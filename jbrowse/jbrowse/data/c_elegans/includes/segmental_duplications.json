@@ -1,6 +1,6 @@
 {
    "tracks" : [
-      { 
+      {
          "style" : {
             "className" : "feature",
             "color" : "white",
@@ -16,14 +16,15 @@
          "metadata" : {
             "shortInfo" : "Polymorphic segmental duplication as defined by the tool OrthoCluster. This feature represents one sequence from a pair of duplicons in the N2 genome."
          },
-         "category" : "Genome Structure:Assembly & Curation",
+         "category": "Genome Structure/Genome Structure",
          "key" : "Segmental duplication",
          "storeClass" : "JBrowse/Store/SeqFeature/NCList",
          "trackType" : "CanvasFeatures",
          "urlTemplate" : "../tracks/Segmental duplication/{refseq}/trackData.jsonz",
          "compress" : 1,
          "type" : "CanvasFeatures",
-         "label" : "Segmental duplication"
+         "label" : "Segmental duplication",
+         "maxExportSpan" : 50000000
       }
    ]
 }

@@ -7,7 +7,7 @@
             "borderColor" : "black",
             "height" : 6
          },
-         "category" : "Assembly",
+         "category": "Assembly",
          "key" : "BAC end reads",
          "storeClass" : "JBrowse/Store/SeqFeature/NCList",
          "trackType" : "CanvasFeatures",
@@ -16,8 +16,9 @@
          "type" : "CanvasFeatures",
          "label" : "BAC end reads",
          "metadata" : {
-             "shortInfo" : "BAC end-reads aligned to Assembly CB25 ultracontigs using BLAT. Best matches indicated in white, those with reduced but still significant nucleotide identity in gray."
-         }
+            "shortInfo" : "BAC end-reads aligned to Assembly CB25 ultracontigs using BLAT. Best matches indicated in white, those with reduced but still significant nucleotide identity in gray."
+         },
+         "maxExportSpan" : 50000000
       }
    ]
 }

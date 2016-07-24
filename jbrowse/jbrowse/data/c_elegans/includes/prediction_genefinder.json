@@ -1,19 +1,20 @@
 {
    "tracks" : [
-      { 
+      {
          "style" : {
             "className" : "feature",
             "color" : "palevioletred",
             "label" : false
          },
-         "category" : "Transcription:Ab-initio predictions",
+         "category": "Genes/Ab-initio predictions",
          "key" : "Prediction: GeneFinder",
          "storeClass" : "JBrowse/Store/SeqFeature/NCList",
          "trackType" : "CanvasFeatures",
          "urlTemplate" : "../tracks/Prediction: GeneFinder/{refseq}/trackData.jsonz",
          "compress" : 1,
          "type" : "CanvasFeatures",
-         "label" : "Prediction: GeneFinder"
+         "label" : "Prediction: GeneFinder",
+         "maxExportSpan" : 50000000
       }
    ]
 }
