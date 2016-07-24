@@ -95,7 +95,8 @@ sub _build_qaqc_image {
 	$self->display_image_metadata($i);
 	die;
     }
-    
+   
+
     # Okay, we only have a single instance.
     my $image = $i->[0];
     return $image;
@@ -273,6 +274,7 @@ sub tag_instances {
 			   Project     => 'WormBase',
 			   Client      => 'OICR',
 			   Date        => $date,
+			   CreatedBy   => $params->{createdby},
 			   Source_AMI  => $params->{source_ami},
 		       });
 	
@@ -330,6 +332,7 @@ sub tag_snapshots {
     # Is image_id not defined?
     foreach my $snapshot (@all_snaps) {
 	if ($snapshot->description =~ /$image/) {  # taken here to be image_id.
+	    print join("\t",$snapshot->description,"--matched to--",$image),"\n";
 	    push @these_snapshots,$snapshot;
 	}
     }

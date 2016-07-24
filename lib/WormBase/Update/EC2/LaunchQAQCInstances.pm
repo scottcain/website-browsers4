@@ -27,6 +27,13 @@ has 'role' => (
     default => 'webapp',
     );
 
+# This is us-east-1e, our m4.xlarge instances
+has 'subnet_id' => (
+    is => 'rw',
+    default => 'subnet-1ce4c744',   # main; us-east-1d
+);
+    
+
 has 'user_data' => (
     is => 'ro',
     lazy_build => 1
@@ -36,43 +43,59 @@ sub _build_user_data {
     my $self   = shift;
     
 my $user_data = <<END;
+#cloud-boothook
 #!/bin/bash
 
+echo "trying to run user-data" | tee /root/cloud-user-data-test.log
+
+echo "ensuring that future AMIs can run the user-data script..."
 insserv -d ec2-run-user-data
 rm -rf /usr/local/wormbase/wormbase.env
 
-# Stop some services
-sudo /etc/init.d/jenkins stop
-sudo /etc/init.d/mongodb stop
 
+# Remove the old jobs from the crontab
+touch /home/tharris/crontab.cron
+crontab /home/tharris/crontab.cron
+
+# Stop some services
+echo "stopping unnecessary services..."
+/etc/init.d/jenkins stop
+/etc/init.d/mongodb stop
 
 # Get Rserve setup
+echo "setting up the image directory..."
 mkdir /usr/local/wormbase/website-shared-files/html/img-static/rplots
 cd /usr/local/wormbase/website-shared-files/html/img-static/rplots/
 rm -rf WS*
-sudo -u jenkins mkdir $VERSION
-chmod 2777 $VERSION
-sudo chown -R jenkins:jenkins /usr/local/wormbase/website-shared-files/html/img-static/rplots
-sudo chown -R jenkins:jenkins /usr/local/wormbase/website-shared-files/html/img-static/rnaseq_plots
+sudo -u jenkins mkdir \$VERSION
+chmod 2777 \$VERSION
+chown -R jenkins:jenkins /usr/local/wormbase/website-shared-files/html/img-static/rplots
+chown -R jenkins:jenkins /usr/local/wormbase/website-shared-files/html/img-static/rnaseq_plots
 /etc/init.d/rserve-startup start
 
+# Remove the mysql configuration file
+echo "removing the mysql configuration file..."
 rm -rf /etc/mysql/my.cnf
 
 # Start up the app
+echo "setting up the app space..."
 cd /var/lib/jenkins/jobs/staging_build/workspace
+sudo -u jenkins /usr/local/bin/yuicompressor root/css/main.css -o root/css/main.min.css
 sudo -u jenkins /usr/local/bin/uglifyjs root/js/wormbase.js -o root/js/wormbase.min.js
 sudo -u jenkins git checkout production
 sudo -u jenkins git pull
 #sudo -u jenkins ./script/wormbase-daemon.sh
 
 # Set up a new temporary directory
-sudo rm -rf /tmp
-sudo mkdir /mnt/mysql/tmp
+echo "setting up temporary directories..."
+rm -rf /tmp
+mkdir /mnt/mysql/tmp
 cd /
-sudo ln -s /mnt/mysql/tmp tmp
-sudo chmod 777 /mnt/mysql/tmp
+ln -s /mnt/mysql/tmp tmp
+chmod 777 /mnt/mysql/tmp
 
 # Clear out some old acedb files
+echo "clearing out old acedb files..."
 cd /usr/local/wormbase/acedb/wormbase/database
 rm -rf readlocks new touched serverlog.wrm log.wrm
 
@@ -154,6 +177,7 @@ sub run {
 			   name        => 'qaqc',
 			   status      => 'qaqc',
 			   role        => 'webapp',
+			   createdby   => 'tharris',
 			   source_ami  => $self->qaqc_image,
 			 });
     
@@ -167,7 +191,7 @@ sub run {
 #    $self->log->info("Deleting the data mount.");
 #    $self->delete_data_volume();
     
-    $self->log->info("A qa/qc instance has been launched.");
+    $self->log->info($self->instance_count . " qa/qc instance launched.");
     $self->display_instance_metadata($instances);
 }	    
 
@@ -192,7 +216,7 @@ sub _launch_instances  {
     my @mounts = ('/dev/sdc=none',
 		  '/dev/sde=ephemeral0',
 		  '/dev/sdf=ephemeral1',
-		  '/dev/sdp=none',
+		  '/dev/sdh=none',
 		  '/dev/sdn=none',
 	);
     
@@ -205,14 +229,15 @@ sub _launch_instances  {
 
     my @instances = $image->run_instances(-min_count         => $instance_count,
 					  -max_count         => $instance_count,
-					  -key_name          => 'wormbase-development',
-					  -security_group    => 'wormbase-development',
+					  -key_name          => 'webapp-admin',
+					  -security_group_id => 'sg-5cdff127', 
+#					  -security_group    => 'webapp',
 					  -instance_type     => $instance_type,
-					  -placement_zone    => 'us-east-1d',
+#					  -placement_zone    => 'us-east-1e',
 					  -shutdown_behavior => 'terminate',
 					  -user_data         => $self->user_data,
 					  -block_devices     => \@mounts, 
-
+					  -subnet_id         => $self->subnet_id,
 	);
         
     # Wait until the instances are up and running.
