@@ -77,7 +77,7 @@ has 'already_cached_via' => (
 sub run {
     my $self = shift;       
     my $release = $self->release;
-    $self->dump_object_lists();
+#    $self->dump_object_lists();
 #    $self->cache_content_to_disk('bulk_load');
 #   exit;
     $self->crawl_website();             # Crawls object by object. Slower, but uses less memory.
@@ -423,7 +423,8 @@ sub crawl_website {
 	    }
 	    
             # Max 5 processes for parallel download, with a location for our tmpdir
-	    my $pm = new Parallel::ForkManager(6,"/usr/local/wormbase/tmp"); 
+	    system("mkdir /usr/local/wormbase/tmp/cache");
+	    my $pm = new Parallel::ForkManager(6,"/usr/local/wormbase/tmp/cache"); 
 	    foreach my $uri (@uris) {	       		
 		$status{$class}{uris}++;
 
