@@ -61,6 +61,8 @@ sub run {
 	while (my $obj = <IN>) {
 	    chomp $obj;
 	    $obj =~ s/^\s*//;
+	    next unless $obj =~ /^WBGene.*/;
+
 	    my $uuid = join('_',lc($class),lc($widget),$obj);
 	    
 	    my $data;
@@ -119,7 +121,7 @@ sub purge_entries_from_cache_log {
     open PURGED,">>$cache_root/$class.purged";
     
     while (<IN>) {
-	chomp;
+	chomp;       
 	my ($class,$obj,$name,$url,$status,$cache_stop) = split("\t");
 	next if (($name eq $widget) && defined $objects->{$obj});
 	print OUT join("\t",$class,$obj,$name,$url,$status,$cache_stop),"\n";
