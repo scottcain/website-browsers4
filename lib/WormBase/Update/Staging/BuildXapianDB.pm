@@ -38,8 +38,9 @@ sub dump_objects_via_tace {
     my $version = $self->release;
     $self->log->info("   --> dumping ace files for indexing");
 
-=pod
-
+    open OUT,">$tmp_dir/dump_ace_for_search.script";
+    print OUT <<END;
+//tace script to dump database
 Find Analysis
 Write $tmp_dir/Analysis.ace
 Find Anatomy_term
@@ -84,12 +85,6 @@ Find Life_stage
 Write $tmp_dir/Life_stage.ace
 Find LongText
 Write $tmp_dir/LongText.ace
-
-=cut
-
-    open OUT,">$tmp_dir/dump_ace_for_search.script";
-    print OUT <<END;
-//tace script to dump database
 Find Microarray_results
 Write $tmp_dir/Microarray_results.ace
 Find Molecule
