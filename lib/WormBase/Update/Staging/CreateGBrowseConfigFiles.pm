@@ -908,7 +908,7 @@ sub _create_database_stanza {
 [this_database:database]
 db_adaptor  = Bio::DB::SeqFeature::Store
 db_args     = -adaptor DBI::mysql              
-              -dsn dbi:mysql:database=${species}_${release};host=localhost
+              -dsn dbi:mysql:database=${species}_${release};host=10.0.0.181
 	      -user wormbase
 	      -pass sea3l3ganz
 search options = default, +wildcard, -stem, +fulltext, +autocomplete
