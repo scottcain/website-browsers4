@@ -322,6 +322,16 @@ sub crawl_website {
 	    $status{$class}{objects}++;
 	    	    
 	    foreach my $widget (@widgets) {
+
+		# Skip some datomic specific widgets for now
+		if ($class eq 'gene') {
+		    next if $widget eq 'overview';
+		    next if $widget eq 'mapping_data';
+		    next if $widget eq 'history';
+		    next if $widget eq 'external_links';
+		}
+
+
 		# References are actually searches and not cached by the app.
 		next if $widget eq 'references';
 
