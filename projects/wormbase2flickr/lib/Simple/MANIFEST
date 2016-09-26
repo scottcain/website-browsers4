@@ -1,8 +1,0 @@
-MANIFEST
-README
-LICENSE
-Todo
-Changes
-Build.PL
-lib/Flickr/API/Simple.pm
-t/001_load.t

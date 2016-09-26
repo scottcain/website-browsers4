@@ -1,8 +1,0 @@
-lib/Flickr/API.pm
-lib/Flickr/API/Request.pm
-lib/Flickr/API/Response.pm
-Makefile.PL
-MANIFEST
-README
-test.pl
-META.yml                                 Module meta-data (added by MakeMaker)
